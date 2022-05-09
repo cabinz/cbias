@@ -1,0 +1,35 @@
+/**
+ * Compiler is the program to be run in the console.
+ * Class Compiler is just a wrapper parsing commandline arguments and launching
+ * the underlying compiler driver who controls the concrete compilation flow.
+ */
+public class compiler{
+
+    private final static CompileConfig config = new CompileConfig();
+
+    private static final Driver driver = new Driver();
+
+    public static void main(String[] args){
+        for (int i = 0; i < args.length; i++){
+            if ("-s".equals(args[i])){
+                // presume source path is given
+                config.source = args[++i];
+            }
+            else if ("-o".equals(args[i])){
+                // presume output path is given
+                config.output = args[++i];
+            }
+            // todo: -h for help info
+            // todo: -O1/2 for opt
+            // todo: tackle with unexpected args
+        }
+        // todo: change to use the 3rd-party arg parser package
+
+        try {
+            driver.launch(config);
+        }
+        catch (Exception e){
+            System.out.println(e);
+        }
+    }
+}
