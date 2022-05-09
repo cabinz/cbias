@@ -26,8 +26,15 @@ public class Driver{
         ParseTree ast = parser.compUnit(); // Retrieve the parse tree (It's called AST but actually a CST).
 
         /* Intermediate code generation */
+        IRBuilder builder = new IRBuilder();
+        Visitor loader = new Visitor(builder);
+        loader.visit(ast); // Traversal the ast to build the IR.
 
         /* Emit the IR text to an output file for testing. */
+        IREmitter emitter = new IREmitter(
+                String.format("%s-out.ir", config.source.replace(".sy", ""))
+        );
+        emitter.emit(builder.getCurModule());
 
         /* Intermediate code optimization */
         System.out.println("Optimization has not been done.");
