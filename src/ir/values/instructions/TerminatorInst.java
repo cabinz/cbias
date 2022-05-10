@@ -2,6 +2,7 @@ package ir.values.instructions;
 
 import ir.Value;
 import ir.Type;
+import ir.values.Instruction;
 
 public class TerminatorInst {
 
@@ -33,9 +34,11 @@ public class TerminatorInst {
             StringBuilder strBuilder = new StringBuilder();
             strBuilder.append("ret ");
             if (this.getNumOperands() == 1) {
-                strBuilder.append(getOperandAt(0).type + " " + getOperandAt(0).name);
+                strBuilder.append(getOperandAt(0).type)
+                        .append(" ")
+                        .append(getOperandAt(0).name);
             } else {
-                strBuilder.append("void ");
+                strBuilder.append("void");
             }
             return strBuilder.toString();
         }

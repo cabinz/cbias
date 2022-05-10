@@ -3,9 +3,8 @@ package frontend;
 import ir.Module;
 import ir.values.Function;
 import ir.values.BasicBlock;
-import ir.values.instructions.Instruction;
+import ir.values.Instruction;
 
-import java.awt.*;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -13,7 +12,7 @@ import java.io.IOException;
  * An IREmitter object is to output the in-memory IR data structures to a file in plain-text form.
  */
 public class IREmitter {
-    private String targetFilePath;
+    private final String targetFilePath;
     /**
      * Value of the name to be retrieved by getNewName().
      * It's an incremental counter.
@@ -44,9 +43,9 @@ public class IREmitter {
                     nextName = 0; // Reset the counter for a new environment.
                     // todo: built-in function branching
                     // Assign names for each function argument.
-                    func.getArgs().forEach(funcArg -> {
-                        funcArg.name = "%" + getNewName();
-                    });
+                    for (Function.FuncArg arg : func.getArgs()) {
+                        arg.name = "%" + getNewName();
+                    }
                     // Assign names for each basic block in the function.
                     func.bbs.forEach(bb -> {
                         bb.name = getNewName();

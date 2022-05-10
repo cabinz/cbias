@@ -6,7 +6,7 @@ import ir.types.IntegerType;
 import ir.Type;
 import ir.values.BasicBlock;
 import ir.values.Function;
-import ir.values.instructions.Instruction;
+import ir.values.Instruction;
 
 import java.util.ArrayList;
 
@@ -131,10 +131,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
     @Override
     public Void visitFuncFParams(SysYParser.FuncFParamsContext ctx) {
-        ArrayList<Type> retTypeList = new ArrayList<>();
+        tmpTypeList = new ArrayList<>();
         ctx.funcFParam().forEach(arg -> {
             visit(arg);
-            retTypeList.add(tmpType);
+            tmpTypeList.add(tmpType);
         });
         return null;
     }

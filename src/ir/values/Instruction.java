@@ -1,4 +1,4 @@
-package ir.values.instructions;
+package ir.values;
 
 import ir.User;
 import ir.Type;

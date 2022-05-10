@@ -2,7 +2,6 @@ package ir.values;
 
 import ir.Value;
 import ir.Type;
-import ir.values.instructions.Instruction;
 
 import java.util.ArrayList;
 
