@@ -6,9 +6,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Each module has an instance of Scope, maintaining the symbol tables for nested
- * code blocks in the source, and other semantic info of that environment
+ * Each module has an instance of Scope, keeping track of the current scope
+ * in the source during traversal, and maintaining the symbol tables for nested
+ * code blocks in the source as well as other semantic info of that environment
  * for looking up.
+ * <br>
+ * This class is not similar to the LLVM Clang Scope, which is only one layer of
+ * the scoping hierarchy (one symbol table in the stack).
  */
 public class Scope {
 
