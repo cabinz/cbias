@@ -28,6 +28,12 @@ public class Use {
 
     /**
      * Construct a new Use edge.
+     * <br>
+     * The constructor automatically inserts the user reference to usee's uses field,
+     * and the usee reference to user's operands field.
+     * <br>
+     * The insertions of references DO NOT check the replicates in the list containers,
+     * correctness should be guaranteed by programmer.
      * @param value The value being used.
      * @param user  The user value.
      * @param position The position of the used value as an operand.
@@ -35,8 +41,9 @@ public class Use {
     public Use(Value value, User user, int position) {
         this.v = value;
         this.u = user;
+        this.pos = position;
         v.uses.add(this);
-        u.addOperandAt(value, position);
+        u.operands.add(this);
     }
     //</editor-fold>
 

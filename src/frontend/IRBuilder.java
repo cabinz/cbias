@@ -1,9 +1,12 @@
 package frontend;
 
 import ir.Module;
+import ir.Type;
+import ir.Value;
 import ir.types.FunctionType;
 import ir.values.BasicBlock;
 import ir.values.Function;
+import ir.values.Instruction;
 import ir.values.instructions.TerminatorInst;
 
 /**
@@ -98,11 +101,24 @@ public class IRBuilder {
     }
 
     /**
-     * Insert a Ret terminator at the end of current function.
+     * Insert a Ret terminator with no return value (return void)
+     * at the end of current basic block.
      * @return The terminator object inserted.
      */
     public TerminatorInst.Ret buildRet() {
         TerminatorInst.Ret ret = new TerminatorInst.Ret();
+        getCurBB().instructions.add(ret);
+        return ret;
+    }
+
+    /**
+     * Insert a Ret terminator with a specified return value
+     * at the end of current basic block.
+     * @param retVal The Value instance specified as return value.
+     * @return The terminator object inserted.
+     */
+    public TerminatorInst.Ret buildRet(Value retVal) {
+        TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal);
         getCurBB().instructions.add(ret);
         return ret;
     }

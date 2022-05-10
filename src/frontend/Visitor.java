@@ -1,13 +1,16 @@
 package frontend;
 
 import ir.Module;
+import ir.Value;
 import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.Type;
 import ir.values.BasicBlock;
+import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 public class Visitor extends SysYBaseVisitor<Void> {
@@ -20,6 +23,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     /**
      * Temporary variables for messages passed through layers visited.
      */
+    Value tmpVal;
     ArrayList<Type> tmpTypeList;
     Type tmpType;
 
@@ -45,15 +49,19 @@ public class Visitor extends SysYBaseVisitor<Void> {
         return builder.getCurModule();
     }
 
+    /*
+    Visit methods overwritten.
+     */
+
     @Override
     public Void visitCompUnit(SysYParser.CompUnitContext ctx) {
-//        System.out.println("In CompUnit");
         super.visitCompUnit(ctx);
         return null;
     }
 
-
-    //funcDef : funcType Identifier '(' (funcFParams)? ')' block
+    /**
+     * funcDef : funcType Identifier '(' (funcFParams)? ')' block
+     */
     @Override
     public Void visitFuncDef(SysYParser.FuncDefContext ctx) {
 //        System.out.println("In FuncDef");
@@ -102,24 +110,25 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         Process function body. (Visiting child)
          */
-
         visit(ctx.block());
 
         /*
-        Insert a terminator to the tail basic block of the function.
+        Check the last basic block of the function to see if there is a
+        return statement given in the source.
+        If not, insert a terminator to the end of it.
          */
         ArrayList<Instruction> instList = builder.getCurBB().instructions;
-        Instruction retInst = (instList.size() == 0) ? null : instList.get(instList.size() - 1);
+        Instruction tailInst = (instList.size() == 0) ? null : instList.get(instList.size() - 1);
         // If no instruction in the bb, or the last instruction is not a terminator.
-        if (retInst == null ||
-                retInst.cat != Instruction.InstCategory.BR
-                        && retInst.cat != Instruction.InstCategory.RET) {
+        if (tailInst == null ||
+                tailInst.cat != Instruction.InstCategory.BR
+                        && tailInst.cat != Instruction.InstCategory.RET) {
             if (function.type instanceof FunctionType f) {
                 if (f.getRetType().isVoidType()) {
                     builder.buildRet();
                 }
                 if (f.getRetType().isInteger()) {
-                    // todo: return integer
+                    builder.buildRet(Constant.ConstInt.get(0)); // Return 0 by default.
                 }
                 // todo: return float
             }
@@ -128,7 +137,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
         return null;
     }
 
-
+    /**
+     * funcFParams : funcFParam (',' funcFParam)*
+     */
     @Override
     public Void visitFuncFParams(SysYParser.FuncFParamsContext ctx) {
         tmpTypeList = new ArrayList<>();
@@ -140,6 +151,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
     }
 
 
+    /**
+     * funcFParam : bType Identifier ('[' ']' ('[' expr ']')* )?
+     */
     @Override
     public Void visitFuncFParam(SysYParser.FuncFParamContext ctx) {
         // todo: Array as function arguments
@@ -149,6 +163,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
         return null;
     }
 
+    /**
+     * block : '{' (blockItem)* '}'
+     */
     @Override
     public Void visitBlock(SysYParser.BlockContext ctx) {
         scope.scopeIn();
@@ -157,5 +174,62 @@ public class Visitor extends SysYBaseVisitor<Void> {
         return null;
     }
 
+    /**
+     * stmt : 'return' (expr)? ';'
+     */
+    @Override
+    public Void visitRetStmt(SysYParser.RetStmtContext ctx) {
+        // If there is an expression component to be returned,
+        // visit child to retrieve it.
+        if (ctx.expr() != null) {
+            visit(ctx.expr());
+            var ret = builder.buildRet(tmpVal);
+        }
+        // If not, return void.
+        else {
+            builder.buildRet();
+        }
+        return null;
+    }
+
+    /**
+     * number
+     *     : IntConst      # numInt
+     *     | FloatConst    # numFloat
+     */
+//    @Override
+//    public Void visitNumber(SysYParser.NumberContext ctx) {
+//        tmpVal = Constant.ConstInt.get();
+//    }
+
+    /**
+     * intConst
+     *     : DecIntConst
+     *     | OctIntConst
+     *     | HexIntConst
+     *     ;
+     */
+    public Void visitIntConst(SysYParser.IntConstContext ctx) {
+        // If the final result is 0xffff (65535), there might be error
+        // causing all conditional assignments below to be missed.
+        int val = 0xffff;
+
+        // Integer in decimal format, parse directly.
+        if (ctx.DecIntConst() != null) {
+            val = Integer.parseInt(ctx.DecIntConst().getText(), 10);
+        }
+        // Integer in octal format, parse directly in radix of 8.
+        else if (ctx.OctIntConst() != null) {
+            val = Integer.parseInt(ctx.OctIntConst().getText(), 8);
+        }
+        // Integer in hexadecimal format, drop the first two characters '0x'
+        else if (ctx.HexIntConst() != null) {
+            val = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
+        }
+
+        tmpVal = Constant.ConstInt.get(val);
+
+        return null;
+    }
     //</editor-fold>
 }
