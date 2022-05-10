@@ -101,8 +101,19 @@ primaryExp
     ;
 
 number
-    : IntConst
-    | FloatConst
+    : intConst
+    | floatConst
+    ;
+
+intConst
+    : DecIntConst
+    | OctIntConst
+    | HexIntConst
+    ;
+
+floatConst
+    : DecFloatConst
+    | HexFloatConst
     ;
 
 unaryExp

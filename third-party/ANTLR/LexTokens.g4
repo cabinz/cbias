@@ -3,24 +3,15 @@ lexer grammar LexTokens;
 /*
 Integer constants
 */
-IntConst
-    : DecIntConst
-    | OctIntConst
-    | HexIntConst
-    ;
-
-fragment
 DecIntConst
     : [1-9] DigitSeq
     ;
 
-fragment
 OctIntConst
     : '0'
     | [0-7]+
     ;
 
-fragment
 HexIntConst
     : ('0x'|'0X') HexDigitSeq
     ;
@@ -28,23 +19,15 @@ HexIntConst
 /*
 Float constants
 */
-FloatConst
-    : DecFloatConst
-    | HexFloatConst
-    ;
-
-fragment
 DecFloatConst
     : FracConst Exp? FloatSuffix?
     | DigitSeq Exp FloatSuffix?
     ;
 
-fragment
 HexFloatConst
     : ('0x'|'0X') (HexDigitSeq|HexFracConst) BinaryExp FloatSuffix?
     ;
 
-fragment
 FracConst
     : DigitSeq? '.' DigitSeq
     | DigitSeq '.'

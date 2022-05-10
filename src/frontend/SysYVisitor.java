@@ -1,4 +1,4 @@
-// Generated from C:/Users/cabinz/Desktop/Cbias-new/third-party/ANTLR\SysY.g4 by ANTLR 4.9.2
+// Generated from K:/Cbias/third-party/ANTLR\SysY.g4 by ANTLR 4.9.2
 package frontend;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -232,6 +232,18 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNumber(SysYParser.NumberContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link SysYParser#intConst}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIntConst(SysYParser.IntConstContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link SysYParser#floatConst}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFloatConst(SysYParser.FloatConstContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code unary1}
 	 * labeled alternative in {@link SysYParser#unaryExp}.
