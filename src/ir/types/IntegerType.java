@@ -35,6 +35,9 @@ public class IntegerType extends Type {
 
 
     //<editor-fold desc="Methods">
+    /**
+     * @return The bit width of the integer type (1 or 32).
+     */
     public int getBitWidth() {
         return bitWidth;
     }

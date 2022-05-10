@@ -85,6 +85,10 @@ public class Type {
     public boolean isInteger() {
         return (this instanceof IntegerType);
     }
+
+    public boolean isI1() {
+        return this.isInteger() && ((IntegerType) this).getBitWidth() == 1;
+    }
     //</editor-fold>
 
 }
