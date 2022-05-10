@@ -22,7 +22,7 @@ public class Instruction extends User {
         // Terminators
         RET, BR, CALL,
         // Memory operations
-        ALLOCA, LOAD, STORE
+        ZEXT, ALLOCA, LOAD, STORE
     }
 
 

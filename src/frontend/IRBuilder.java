@@ -7,6 +7,7 @@ import ir.types.FunctionType;
 import ir.values.BasicBlock;
 import ir.values.Function;
 import ir.values.Instruction;
+import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
 /**
@@ -121,6 +122,17 @@ public class IRBuilder {
         TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal);
         getCurBB().instructions.add(ret);
         return ret;
+    }
+
+    /**
+     * Insert a ZExt instruction at current position of basic block.
+     * @param srcVal The Value to be extended.
+     * @return The ZExt instruction inserted.
+     */
+    public MemoryInst.ZExt buildZExt(Value srcVal) {
+        MemoryInst.ZExt zext = new MemoryInst.ZExt(srcVal);
+        getCurBB().instructions.add(zext);
+        return zext;
     }
 
     //</editor-fold>
