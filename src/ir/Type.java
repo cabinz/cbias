@@ -8,7 +8,7 @@ import ir.types.IntegerType;
  * <br>
  * The instances of the Type class are immutable: once they are created, they are never changed.
  * Only one instance of a particular type is ever created. To enforce this, all most all Type instances
- * exist in singleton fashion. (There are also exceptions like FunctionType)
+ * exist in singleton fashion. (There are also exceptions like FunctionType and PointerType)
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Type.h#L45">
  *     LLVM IR Type Source</a>
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h">
