@@ -137,34 +137,28 @@ funcRParam
     ;
 
 mulExp
-    : unaryExp                           # mul1
-    | mulExp ('*' | '/' | '%') unaryExp  # mul2
-    ;
+    : unaryExp (('*' | '/' | '%') unaryExp)*
+    ; // Eliminate left recursion.
 
 addExp
-    : mulExp                     # add1
-    | addExp ('+' | '-') mulExp  # add2
-    ;
+    : mulExp (('+' | '-') mulExp)*
+    ; // Eliminate left recursion.
 
 relExp
-    : addExp                                   # rel1
-    | relExp ('<' | '>' | '<=' | '>=') addExp  # rel2
-    ;
+    : addExp (('<' | '>' | '<=' | '>=') addExp)*
+    ; // Eliminate left recursion.
 
 eqExp
-    : relExp                      # eq1
-    | eqExp ('==' | '!=') relExp  # eq2
-    ;
+    : relExp *(('==' | '!=') relExp)*
+    ; // Eliminate left recursion.
 
 lAndExp
-    : eqExp               # lAnd1
-    | lAndExp '&&' eqExp  # lAnd2
-    ;
+    : eqExp ('&&' eqExp)*
+    ; // Eliminate left recursion.
 
 lOrExp
-    : lAndExp              # lOr1
-    | lOrExp '||' lAndExp  # lOr2
-    ;
+    : lAndExp ('||' lAndExp)*
+    ; // Eliminate left recursion.
 
 constExp
     : addExp
