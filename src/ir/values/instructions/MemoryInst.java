@@ -15,6 +15,45 @@ import ir.values.Instruction;
 public class MemoryInst {
 
     /**
+     * Represents a ‘load’ instruction used to read from memory,
+     * which yields the result of loaded memory block.
+     * The argument (operand) to the load instruction specifies
+     * the memory address from which to load.
+     * <br>
+     * Type for Load is the type of the memory block loaded in.
+     * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L175">
+     *     LLVM IR Source: LoadInst</a>
+     * @see <a href="https://llvm.org/docs/LangRef.html#load-instruction">
+     *     LLVM Lang Ref: Load Instruction</a>
+     */
+    public static class Load extends Instruction {
+
+        //<editor-fold desc="Constructors">
+        /**
+         * @param loadedType  The type of the memory block loaded in.
+         * @param addr Value specifying the memory address from which to load. (loadedType*)
+         */
+        public Load(Type loadedType, Value addr) {
+            super(loadedType, InstCategory.LOAD, 1);
+            this.addOperandAt(addr, 0);
+        }
+        //</editor-fold>
+
+
+        //<editor-fold desc="Methods">
+        @Override
+        public String toString() {
+            Value op = this.getOperandAt(0);
+
+            // e.g. %val = load i32, i32* %ptr
+            return this.name + " = load " // %val = load
+                    + this.type + ", " // i32,
+                    + op.type + " " + op.name; // , i32* %ptr
+        }
+        //</editor-fold>
+    }
+
+    /**
      * Alloca is an instruction to allocate memory on the stack,
      * yielding an address (pointer) where the memory allocated
      * lands as result.
@@ -42,7 +81,7 @@ public class MemoryInst {
         //<editor-fold desc="Methods">
         @Override
         public String toString() {
-            return this.name + " = " + "alloca " + allocatedType.toString();
+            return this.name + " = alloca " + allocatedType.toString();
         }
         //</editor-fold>
     }
