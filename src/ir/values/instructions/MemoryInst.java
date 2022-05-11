@@ -15,6 +15,46 @@ import ir.values.Instruction;
 public class MemoryInst {
 
     /**
+     * An instruction for writing to memory.
+     * A Store has two arguments (operands): a value to store
+     * and an address at which to store it, and does NOT yield
+     * any result (yields void).
+     * <br>
+     * Thus, Type for Store is VoidType.
+     * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L304">
+     *     LLVM IR Source: StoreInst</a>
+     * @see <a href="https://llvm.org/docs/LangRef.html#store-instruction">
+     *     LLVM Lang Ref: Store Instruction</a>
+     */
+    public static class Store extends Instruction {
+
+        //<editor-fold desc="Constructors">
+        /**
+         * @param val The Value to be stored (written) back to memory.
+         * @param addr The address where the content to be written.
+         */
+        public Store(Value val, Value addr) {
+            super(Type.VoidType.getType(), InstCategory.STORE, 2);
+            this.addOperandAt(val, 0);
+            this.addOperandAt(addr, 1);
+        }
+        //</editor-fold>
+
+
+        //<editor-fold desc="Methods">
+        @Override
+        public String toString() {
+            Value val = this.getOperandAt(0);
+            Value addr = this.getOperandAt(1);
+            // e.g. store i32 3, i32* %ptr
+            return "store " // store
+                    + val.type + " " + val.name + ", " // i32 3,
+                    + addr.type + " " + addr.name; // i32* %ptr
+        }
+        //</editor-fold>
+    }
+
+    /**
      * Represents a ‘load’ instruction used to read from memory,
      * which yields the result of loaded memory block.
      * The argument (operand) to the load instruction specifies
@@ -44,7 +84,6 @@ public class MemoryInst {
         @Override
         public String toString() {
             Value op = this.getOperandAt(0);
-
             // e.g. %val = load i32, i32* %ptr
             return this.name + " = load " // %val = load
                     + this.type + ", " // i32,
@@ -66,12 +105,19 @@ public class MemoryInst {
      */
     public static class Alloca extends Instruction {
         //<editor-fold desc="Fields">
+        /**
+         * The type of memory space allocated.
+         */
         public final Type allocatedType;
 //        private boolean isInit = false;
         //</editor-fold>
 
 
         //<editor-fold desc="Constructors">
+
+        /**
+         * @param allocatedType The type of memory space allocated.
+         */
         public Alloca(Type allocatedType) {
             super(PointerType.getType(allocatedType), InstCategory.ALLOCA, 0);
             this.allocatedType = allocatedType;
@@ -81,7 +127,7 @@ public class MemoryInst {
         //<editor-fold desc="Methods">
         @Override
         public String toString() {
-            return this.name + " = alloca " + allocatedType.toString();
+            return this.name + " = alloca " + this.allocatedType;
         }
         //</editor-fold>
     }
