@@ -7,6 +7,7 @@ import ir.types.FunctionType;
 import ir.values.BasicBlock;
 import ir.values.Function;
 import ir.values.Instruction;
+import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
@@ -133,6 +134,20 @@ public class IRBuilder {
         MemoryInst.ZExt zext = new MemoryInst.ZExt(srcVal);
         getCurBB().instructions.add(zext);
         return zext;
+    }
+
+    /**
+     * Insert a binary instruction at current position of basic block.
+     * @param tag Instruction category.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return
+     */
+    public BinaryInst buildBinary(Instruction.InstCategory tag, Value lOp, Value rOp) {
+        // todo: analyze result type when introducing float type
+        BinaryInst binInst = new BinaryInst(lOp.type, tag, lOp, rOp);
+        getCurBB().instructions.add(binInst);
+        return binInst;
     }
 
     //</editor-fold>
