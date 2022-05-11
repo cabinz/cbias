@@ -10,7 +10,6 @@ import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 
 public class Visitor extends SysYBaseVisitor<Void> {
@@ -128,7 +127,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     builder.buildRet();
                 }
                 if (f.getRetType().isInteger()) {
-                    builder.buildRet(Constant.ConstInt.get(0)); // Return 0 by default.
+                    builder.buildRet(builder.buildConstant(0)); // Return 0 by default.
                 }
                 // todo: return float
             }
@@ -183,7 +182,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // visit child to retrieve it.
         if (ctx.expr() != null) {
             visit(ctx.expr());
-            var ret = builder.buildRet(tmpVal);
+            builder.buildRet(tmpVal);
         }
         // If not, return void.
         else {
@@ -191,16 +190,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
         return null;
     }
-
-    /**
-     * number
-     *     : IntConst      # numInt
-     *     | FloatConst    # numFloat
-     */
-//    @Override
-//    public Void visitNumber(SysYParser.NumberContext ctx) {
-//        tmpVal = Constant.ConstInt.get();
-//    }
 
     /**
      * intConst
@@ -227,7 +216,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             val = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
         }
 
-        tmpVal = Constant.ConstInt.get(val);
+        tmpVal = builder.buildConstant(val);
 
         return null;
     }
@@ -246,14 +235,16 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
             // Unary operators.
             String op = ctx.unaryOp().getText();
-            if (op.equals("-")) {
-                tmpVal = builder.buildBinary(Instruction.InstCategory.SUB, Constant.ConstInt.get(0), tmpVal);
-            }
-            else if (op.equals("+")) {
-                ; // Do nothing.
-            }
-            else if (op.equals("!")) {
-                tmpVal = builder.buildBinary(Instruction.InstCategory.EQ, Constant.ConstInt.get(0), tmpVal);
+            switch (op) {
+                case "-":
+                    tmpVal = builder.buildBinary(Instruction.InstCategory.SUB, builder.buildConstant(0), tmpVal);
+                    break;
+                case "+":
+                    // Do nothing.
+                    break;
+                case "!":
+                    tmpVal = builder.buildBinary(Instruction.InstCategory.EQ, builder.buildConstant(0), tmpVal);
+                    break;
             }
         }
         // Float.

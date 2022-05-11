@@ -5,6 +5,7 @@ import ir.Type;
 import ir.Value;
 import ir.types.FunctionType;
 import ir.values.BasicBlock;
+import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.instructions.BinaryInst;
@@ -13,10 +14,15 @@ import ir.values.instructions.TerminatorInst;
 
 /**
  * An IRBuilder object maintains one building process of the IR.
- * It keeps track of the module, function and basic block that currently building.
- * It has methods for creating different types of IR constructs, encapsulating type
- * casting, assignments and all the complicated works needed for initialize them,
- * as well as methods for inserting these constructions created into the IR.
+ * <br>
+ * It keeps track of the current positions of module, function and basic block
+ * during building an IR module.
+ * <br>
+ * It can be used to create different types of IR constructs and insert constructs
+ * Technically, Visitor should only use methods provided by IRBuilder to build IR
+ * (e.g. build constructs, retrieve Constants), other than directly invoking
+ * constructors of Values, which might lead to unsafe behaviors and chaos code.
+ * <br>
  */
 public class IRBuilder {
 
@@ -72,6 +78,15 @@ public class IRBuilder {
         return curBB;
     }
     //</editor-fold>
+
+    /**
+     * Retrieve a Constant.ConstInt Value.
+     * @param i The numeric value of the integer.
+     * @return The ConstInt Value with given numeric value.
+     */
+    public Constant.ConstInt buildConstant(int i) {
+        return Constant.ConstInt.get(i);
+    }
 
     /**
      * Insert a function into the module, with function name assigned.

@@ -6,6 +6,11 @@ import ir.types.IntegerType;
 
 /**
  * A constant is a value that is immutable at runtime.
+ * <br>
+ * Though is reasonable to build a factory method for creating constant
+ * on demand, Constant is implemented as normal class with public
+ * constructor. Thus, there is NO guarantee that every value of constants
+ * has only one Constant instance.
  * <ul>
  *     <li>Integer and floating point values </li>
  *     <li>Arrays </li>
