@@ -12,13 +12,25 @@ import java.util.LinkedList;
  * All Values have a Type. In different derived class of Value, Type carries various forms
  * of type information of corresponding Value instances.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Value.h#L75">
- *     LLVM IR Reference</a>
+ *     LLVM IR Source: Value</a>
  */
 
 public class Value {
 
     //<editor-fold desc="Fields">
     public Type type;
+
+    /**
+     * All values can potentially be named.
+     * The meaning of it depends on what derived Value it is.
+     * e.g.
+     * <ul>
+     *     <li>for Function, name is its identifier</li>
+     *     <li>for BasicBlock, name is its entry label</li>
+     *     <li>for instruction yielding a result, name is the
+     *     reference (register) to the result</li>
+     * </ul>
+     */
     public String name = "";
 
     /**

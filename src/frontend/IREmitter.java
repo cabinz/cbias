@@ -35,7 +35,13 @@ public class IREmitter {
     }
 
     /**
-     * To name a module, ie. to assign names for each element in the module.
+     * Naming a module, ie. to assign a identifier for each element in the module.
+     * <br>
+     * Unnamed temporaries are numbered sequentially (using a per-function incrementing counter,
+     * starting with 0). Note that basic blocks and unnamed function parameters are included in
+     * this numbering.
+     * @see <a href="https://llvm.org/docs/LangRef.html#identifiers">
+     *     LLVM Language Reference: Identifiers</a>
      * @param m The module object to be named through.
      */
     private void nameModule(Module m) {
@@ -48,10 +54,10 @@ public class IREmitter {
                     for (Function.FuncArg arg : func.getArgs()) {
                         arg.name = "%" + getNewName();
                     }
-                    // Assign names for each basic block in the function,
-                    // and each instruction yielding results in basic blocks.
+                    // Assign names (Lx) for each basic block in the function,
+                    // and each instruction yielding results (%x) in basic blocks.
                     for (BasicBlock bb : func.bbs) {
-                        bb.name = getNewName();
+                        bb.name = "L" + getNewName();
                         for (Instruction inst : bb.instructions) {
                             if (inst.hasResult) {
                                 inst.name = "%" + getNewName();
