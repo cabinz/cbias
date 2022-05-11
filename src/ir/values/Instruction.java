@@ -10,7 +10,9 @@ import ir.Type;
  * <br>
  * Type for an Instruction depends on its category.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instruction.h">
- *     LLVM IR Reference</a>
+ *     LLVM IR Source</a>
+ * @see <a href="https://llvm.org/docs/LangRef.html#instruction-reference">
+ *     LLVM Language Reference: Instruction</a>
  */
 public class Instruction extends User {
 
@@ -38,6 +40,23 @@ public class Instruction extends User {
      * An InstCategory instance indicating an instruction type.
      */
     public InstCategory cat;
+
+    /**
+     * If an instruction has result, a name (register) should be
+     * assigned for the result yielded when naming a Module.
+     * Namely, hasResult = true means an instruction needs a name.
+     * <br>
+     * Most of the instructions have results (by default this field
+     * is initialized as true), e.g.
+     * <ul>
+     *     <li>Binary instructions yield results.</li>
+     *     <li>Alloca instruction yield an addresses as results.</li>
+     *     <li>ZExt instruction yield extended results.</li>
+     * </ul>
+     * Terminators and Store instructions have no results, which need
+     * to be manually set as false by their constructors.
+     */
+    public boolean hasResult = true;
 
 //    /**
 //     * Reference of the basic block where the instruction lands.

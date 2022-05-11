@@ -10,6 +10,8 @@ import java.io.IOException;
 
 /**
  * An IREmitter object is to output the in-memory IR data structures to a file in plain-text form.
+ * @see <a href="https://llvm.org/docs/LangRef.html">
+ *     LLVM IR Language Reference</a>
  */
 public class IREmitter {
     private final String targetFilePath;
@@ -46,11 +48,16 @@ public class IREmitter {
                     for (Function.FuncArg arg : func.getArgs()) {
                         arg.name = "%" + getNewName();
                     }
-                    // Assign names for each basic block in the function.
-                    func.bbs.forEach(bb -> {
+                    // Assign names for each basic block in the function,
+                    // and each instruction yielding results in basic blocks.
+                    for (BasicBlock bb : func.bbs) {
                         bb.name = getNewName();
-                        // todo: when does an instruction need a name?
-                    });
+                        for (Instruction inst : bb.instructions) {
+                            if (inst.hasResult) {
+                                inst.name = "%" + getNewName();
+                            }
+                        }
+                    }
                 }
         );
     }

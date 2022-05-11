@@ -25,11 +25,11 @@ public class TerminatorInst {
          */
         public Ret() {
             super(Type.VoidType.getType(), InstCategory.RET, 0);
-//            needName = false;
+            this.hasResult = false;
         }
 
         /**
-         * Construct an Ret terminator returning a Value.
+         * Construct a Ret terminator returning a Value.
          * @param val
          */
         public Ret(Value val) {
