@@ -98,7 +98,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
 
         // Insert a function into the module and symbol table.
-        FunctionType funcType = new FunctionType(retType, argTypes);
+        FunctionType funcType = FunctionType.getType(retType, argTypes);
         Function function = builder.buildFunction(funcName, funcType);
         getModule().functions.add(function);
         scope.addDecl(funcName, function);

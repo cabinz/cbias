@@ -24,7 +24,7 @@ public class FunctionType extends Type {
 
 
     //<editor-fold desc="Constructors">
-    public FunctionType(Type retType, ArrayList<Type> argTypes) {
+    private FunctionType(Type retType, ArrayList<Type> argTypes) {
         this.retType = retType;
         this.argTypes = argTypes;
     }
@@ -32,6 +32,19 @@ public class FunctionType extends Type {
 
 
     //<editor-fold desc="Methods">
+
+    /**
+     * Just a wrapper of the private constructor of FunctionType,
+     * for the sake of interface consistency of retrieving type
+     * instances in Type system.
+     * @param retType Type of the value returned by the function.
+     * @param argTypes List of types of function arguments.
+     * @return
+     */
+    public static FunctionType getType(Type retType, ArrayList<Type> argTypes) {
+        return new FunctionType(retType, argTypes);
+    }
+
     public Type getRetType() {
         return retType;
     }
