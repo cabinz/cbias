@@ -138,6 +138,41 @@ public class IRBuilder {
     }
 
     /**
+     * Insert a Load instruction at the end of current basic block.
+     * @param loadedType The type of the memory block loaded in.
+     * @param addr loadedType*
+     * @return The Load instruction inserted.
+     */
+    public MemoryInst.Load buildLoad(Type loadedType, Value addr) {
+        MemoryInst.Load inst = new MemoryInst.Load(loadedType, addr);
+        getCurBB().instructions.add(inst);
+        return inst;
+    }
+
+    /**
+     * Insert a Store instruction at the end of current basic block.
+     * @param val The Value to be stored (written) back to memory.
+     * @param addr The address where the content to be written.
+     * @return The Store instruction inserted.
+     */
+    public MemoryInst.Store buildStore(Value val, Value addr) {
+        MemoryInst.Store inst = new MemoryInst.Store(val, addr);
+        getCurBB().instructions.add(inst);
+        return inst;
+    }
+
+    /**
+     * Insert a Alloca instruction at the end of current basic block.
+     * @param allocatedType The type of memory space allocated.
+     * @return The Alloca instruction inserted.
+     */
+    public MemoryInst.Alloca buildAlloca(Type allocatedType) {
+        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType);
+        getCurBB().instructions.add(inst);
+        return inst;
+    }
+
+    /**
      * Insert a ZExt instruction at current position of basic block.
      * @param srcVal The Value to be extended.
      * @return The ZExt instruction inserted.
