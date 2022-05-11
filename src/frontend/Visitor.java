@@ -198,6 +198,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
      *     | HexIntConst
      *     ;
      */
+    @Override
     public Void visitIntConst(SysYParser.IntConstContext ctx) {
         // If the final result is 0xffff (65535), there might be error
         // causing all conditional assignments below to be missed.
@@ -224,6 +225,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     /**
      * unaryExp : unaryOp unaryExp # unary3
      */
+    @Override
     public Void visitUnary3(SysYParser.Unary3Context ctx) {
         // Retrieve the expression by visiting child.
         visit(ctx.unaryExp());
@@ -245,12 +247,47 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 case "!":
                     tmpVal = builder.buildBinary(Instruction.InstCategory.EQ, builder.buildConstant(0), tmpVal);
                     break;
+                default:
             }
         }
         // Float.
         else {
             // todo: if it's a float.
         }
+        return null;
+    }
+
+    /**
+     * addExp : mulExp (('+' | '-') mulExp)*
+     */
+    @Override
+    public Void visitAddExp(SysYParser.AddExpContext ctx) {
+        // Retrieve the 1st mulExp (as the left operand) by visiting child.
+        visit(ctx.mulExp(0));
+        Value lOp = tmpVal;
+        // The 2nd and possibly more MulExp.
+        for (int i = 1; i < ctx.mulExp().size(); i++) {
+            // Retrieve the next mulExp (as the right operand) by visiting child.
+            visit(ctx.mulExp(i));
+            Value rOp = tmpVal;
+            // Check integer types of two operands.
+            if (lOp.type.isI1()) {
+                lOp = builder.buildZExt(lOp);
+            }
+            if (rOp.type.isI1()) {
+                rOp = builder.buildZExt(lOp);
+            }
+            // Generate an instruction to compute result of lOp and rOp
+            // as the new left operand for the next round.
+            switch (ctx.getChild(2 * i - 1).getText()) {
+                case "+" -> lOp = builder.buildBinary(Instruction.InstCategory.ADD, lOp, rOp);
+                case "-" -> lOp = builder.buildBinary(Instruction.InstCategory.SUB, lOp, rOp);
+                default -> { }
+            }
+        }
+
+        tmpVal = lOp;
+
         return null;
     }
     //</editor-fold>
