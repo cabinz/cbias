@@ -6,9 +6,9 @@ import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.Type;
 import ir.values.BasicBlock;
-import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
+import ir.values.Instruction.InstCategory;
 import ir.values.instructions.BinaryInst;
 
 import java.util.ArrayList;
@@ -121,8 +121,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Instruction tailInst = (instList.size() == 0) ? null : instList.get(instList.size() - 1);
         // If no instruction in the bb, or the last instruction is not a terminator.
         if (tailInst == null ||
-                tailInst.cat != Instruction.InstCategory.BR
-                        && tailInst.cat != Instruction.InstCategory.RET) {
+                tailInst.cat != InstCategory.BR
+                        && tailInst.cat != InstCategory.RET) {
             if (function.type instanceof FunctionType f) {
                 if (f.getRetType().isVoidType()) {
                     builder.buildRet();
@@ -240,13 +240,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
             String op = ctx.unaryOp().getText();
             switch (op) {
                 case "-":
-                    tmpVal = builder.buildBinary(Instruction.InstCategory.SUB, builder.buildConstant(0), tmpVal);
+                    tmpVal = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), tmpVal);
                     break;
                 case "+":
                     // Do nothing.
                     break;
                 case "!":
-                    tmpVal = builder.buildBinary(Instruction.InstCategory.EQ, builder.buildConstant(0), tmpVal);
+                    tmpVal = builder.buildBinary(InstCategory.EQ, builder.buildConstant(0), tmpVal);
                     break;
                 default:
             }
@@ -282,8 +282,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Generate an instruction to compute result of left and right operands
             // as the new left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
-                case "+" -> lOp = builder.buildBinary(Instruction.InstCategory.ADD, lOp, rOp);
-                case "-" -> lOp = builder.buildBinary(Instruction.InstCategory.SUB, lOp, rOp);
+                case "+" -> lOp = builder.buildBinary(InstCategory.ADD, lOp, rOp);
+                case "-" -> lOp = builder.buildBinary(InstCategory.SUB, lOp, rOp);
                 default -> { }
             }
         }
@@ -310,12 +310,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Generate an instruction to compute result of left and right operands
             // as the new left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
-                case "/" -> lOp = builder.buildBinary(Instruction.InstCategory.MUL, lOp, rOp);
-                case "*" -> lOp = builder.buildBinary(Instruction.InstCategory.DIV, lOp, rOp);
+                case "/" -> lOp = builder.buildBinary(InstCategory.MUL, lOp, rOp);
+                case "*" -> lOp = builder.buildBinary(InstCategory.DIV, lOp, rOp);
                 case "%" -> { // l % r => l - (l/r)*r
-                    BinaryInst div = builder.buildBinary(Instruction.InstCategory.DIV, lOp, rOp); // l/r
-                    BinaryInst mul = builder.buildBinary(Instruction.InstCategory.MUL, div, rOp); // (l/r)*r
-                    lOp = builder.buildBinary(Instruction.InstCategory.SUB, lOp, mul);
+                    BinaryInst div = builder.buildBinary(InstCategory.DIV, lOp, rOp); // l/r
+                    BinaryInst mul = builder.buildBinary(InstCategory.MUL, div, rOp); // (l/r)*r
+                    lOp = builder.buildBinary(InstCategory.SUB, lOp, mul);
                 }
                 default -> { }
             }
