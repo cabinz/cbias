@@ -9,6 +9,7 @@ import ir.values.BasicBlock;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
+import ir.values.instructions.BinaryInst;
 
 import java.util.ArrayList;
 
@@ -262,6 +263,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitAddExp(SysYParser.AddExpContext ctx) {
+        // todo: float case
         // Retrieve the 1st mulExp (as the left operand) by visiting child.
         visit(ctx.mulExp(0));
         Value lOp = tmpVal;
@@ -277,7 +279,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (rOp.type.isI1()) {
                 rOp = builder.buildZExt(lOp);
             }
-            // Generate an instruction to compute result of lOp and rOp
+            // Generate an instruction to compute result of left and right operands
             // as the new left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
                 case "+" -> lOp = builder.buildBinary(Instruction.InstCategory.ADD, lOp, rOp);
@@ -288,6 +290,38 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         tmpVal = lOp;
 
+        return null;
+    }
+
+
+    /**
+     * mulExp : unaryExp (('*' | '/' | '%') unaryExp)*
+     */
+    public Void visitMulExp(SysYParser.MulExpContext ctx) {
+        // todo: float case
+        // Retrieve the 1st unaryExp (as the left operand) by visiting child.
+        visit(ctx.unaryExp(0));
+        Value lOp = tmpVal;
+        // The 2nd and possibly more MulExp.
+        for (int i = 1; i < ctx.unaryExp().size(); i++) {
+            // Retrieve the next unaryExp (as the right operand) by visiting child.
+            visit(ctx.unaryExp(i));
+            Value rOp = tmpVal;
+            // Generate an instruction to compute result of left and right operands
+            // as the new left operand for the next round.
+            switch (ctx.getChild(2 * i - 1).getText()) {
+                case "/" -> lOp = builder.buildBinary(Instruction.InstCategory.MUL, lOp, rOp);
+                case "*" -> lOp = builder.buildBinary(Instruction.InstCategory.DIV, lOp, rOp);
+                case "%" -> { // l % r => l - (l/r)*r
+                    BinaryInst div = builder.buildBinary(Instruction.InstCategory.DIV, lOp, rOp); // l/r
+                    BinaryInst mul = builder.buildBinary(Instruction.InstCategory.MUL, div, rOp); // (l/r)*r
+                    lOp = builder.buildBinary(Instruction.InstCategory.SUB, lOp, mul);
+                }
+                default -> { }
+            }
+        }
+
+        tmpVal = lOp;
         return null;
     }
     //</editor-fold>
