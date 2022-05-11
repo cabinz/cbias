@@ -75,7 +75,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         // Get the return type. (funcType identifier)
         Type retType;
-        String strRetType = ctx.getChild(0).getText();
+        String strRetType = ctx.funcType().getText();
         if (strRetType.equals("int")) {
             retType = IntegerType.getI32();
         }
@@ -229,6 +229,37 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         tmpVal = Constant.ConstInt.get(val);
 
+        return null;
+    }
+
+    /**
+     * unaryExp : unaryOp unaryExp # unary3
+     */
+    public Void visitUnary3(SysYParser.Unary3Context ctx) {
+        // Retrieve the expression by visiting child.
+        visit(ctx.unaryExp());
+        // Integer.
+        if (tmpVal.type.isInteger()) {
+            // Conduct zero extension on i1.
+            if (tmpVal.type.isI1()) {
+                builder.buildZExt(tmpVal);
+            }
+            // Unary operators.
+            String op = ctx.unaryOp().getText();
+            if (op.equals("-")) {
+                tmpVal = builder.buildBinary(Instruction.InstCategory.SUB, Constant.ConstInt.get(0), tmpVal);
+            }
+            else if (op.equals("+")) {
+                ; // Do nothing.
+            }
+            else if (op.equals("!")) {
+                tmpVal = builder.buildBinary(Instruction.InstCategory.EQ, Constant.ConstInt.get(0), tmpVal);
+            }
+        }
+        // Float.
+        else {
+            // todo: if it's a float.
+        }
         return null;
     }
     //</editor-fold>
