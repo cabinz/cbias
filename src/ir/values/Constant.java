@@ -15,6 +15,7 @@ import ir.types.IntegerType;
  * All IR classes above are nested in Constant class.
  * Constant class has an operand list (inheriting from User).
  * <br>
+ * Type for a Constant is the type of that constant value.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Constant.h#L41">
  *     LLVM IR Reference</a>
  */

@@ -16,6 +16,8 @@ public class MemoryInst {
      * Represents Zero Extension of integer type.
      * In our case, there is only the case of extending i1 to i32,
      * thus the destination type will only be i32.
+     * <br>
+     * Type for ZExt is its destination type (i32).
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L4758">
      *     LLVM IR Source</a>
      * @see <a href="https://llvm.org/docs/LangRef.html#zext-to-instruction">

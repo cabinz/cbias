@@ -4,7 +4,11 @@ import ir.User;
 import ir.Type;
 
 /**
- * Instruction class is the base class for all the IR instructions
+ * Instruction class is the base class for all the IR instructions.
+ * Various kinds of instruction inherit it and are tagged with an
+ * InstCategory in cat field for distinction.
+ * <br>
+ * Type for an Instruction depends on its category.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instruction.h">
  *     LLVM IR Reference</a>
  */
@@ -13,12 +17,15 @@ public class Instruction extends User {
     /**
      * Each instruction instance has a field "cat" containing a InstCategory instance
      * as a tag distinguishing different instruction types.
+     * <br>
+     * NOTICE: The ordinal of each enum will be use for distinguishing different types
+     * of operations. Be careful to move them or add new ones.
      */
     public enum InstCategory {
         // Operations
-        ADD, SUB, MUL, DIV,     // Arithmetic Operators
-        LT, GT, EQ, NE, LE, GE, // Relationship (Logical) Operators
-        AND, OR,                // Bitwise Operators
+        ADD, SUB, MUL, DIV,     // Arithmetic Operations
+        LT, GT, EQ, NE, LE, GE, // Relationship (Logical) Operations
+        AND, OR,                // Bitwise Operations
         // Terminators
         RET, BR, CALL,
         // Memory operations
@@ -51,6 +58,15 @@ public class Instruction extends User {
 //    public BasicBlock getBB() {
 //        return this.bb.getParent().getVal();
 //    }
+
+    public boolean isArithmeticBinary() {
+        return this.cat.ordinal() <= InstCategory.DIV.ordinal();
+    }
+
+    public boolean isLogicalBinary() {
+        return InstCategory.LT.ordinal() <= this.cat.ordinal()
+                && this.cat.ordinal() <= InstCategory.GE.ordinal();
+    }
     //</editor-fold>
 
 }

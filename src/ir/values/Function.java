@@ -7,6 +7,17 @@ import ir.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A Function represents a single function/procedure in IR.
+ * A function basically consists of an argument list and a
+ * list of basic blocks as function body.
+ * <br>
+ * Type for a Function is FunctionType, which contains a
+ * prototype of the function (a return type and a list of
+ * argument types).
+ * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Function.h#L61">
+ *     LLVM IR Function Source</a>
+ */
 public class Function extends Value {
     /**
      * Innerclass: Represent a function formal parameter.

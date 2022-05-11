@@ -4,13 +4,15 @@ import ir.types.FunctionType;
 import ir.types.IntegerType;
 
 /**
- * Each Value instance has a type field indicating its type as an IR component.
+ * Each Value instance has a type field containing type information related to it as an IR component.
  * <br>
  * The instances of the Type class are immutable: once they are created, they are never changed.
  * Only one instance of a particular type is ever created. To enforce this, all Type instances
  * exist in singleton fashion.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Type.h#L45">
- *     LLVM IR Reference</a>
+ *     LLVM IR Type Source</a>
+ * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h">
+ *     LLVM IR Derived Types Source</a>
  */
 public class Type {
 
