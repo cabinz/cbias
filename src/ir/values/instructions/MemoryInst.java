@@ -18,7 +18,7 @@ public class MemoryInst {
      * An instruction for writing to memory.
      * A Store has two arguments (operands): a value to store
      * and an address at which to store it, and does NOT yield
-     * any result (yields void).
+     * any result (yields void, need no name).
      * <br>
      * Thus, Type for Store is VoidType.
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L304">
@@ -37,6 +37,7 @@ public class MemoryInst {
             super(Type.VoidType.getType(), InstCategory.STORE, 2);
             this.addOperandAt(val, 0);
             this.addOperandAt(addr, 1);
+            this.hasResult = false;
         }
         //</editor-fold>
 
