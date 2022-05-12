@@ -2,6 +2,7 @@ package ir;
 
 import ir.types.FunctionType;
 import ir.types.IntegerType;
+import ir.types.PointerType;
 
 /**
  * Each Value instance has a type field containing type information related to it as an IR component.
@@ -90,6 +91,10 @@ public class Type {
 
     public boolean isI1() {
         return this.isInteger() && ((IntegerType) this).getBitWidth() == 1;
+    }
+
+    public boolean isPointerType() {
+        return (this instanceof PointerType);
     }
     //</editor-fold>
 
