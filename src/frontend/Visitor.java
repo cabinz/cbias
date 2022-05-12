@@ -6,10 +6,12 @@ import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.Type;
 import ir.values.BasicBlock;
+import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.Instruction.InstCategory;
 import ir.values.instructions.BinaryInst;
+import ir.values.instructions.MemoryInst;
 
 import java.util.ArrayList;
 
@@ -165,12 +167,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
     /**
      * block : '{' (blockItem)* '}'
+     * blockItem : decl | stmt
      */
     @Override
     public Void visitBlock(SysYParser.BlockContext ctx) {
-        scope.scopeIn();
+        scope.scopeIn(); // Add a new layer of scope (a new symbol table).
         ctx.blockItem().forEach(this::visit);
-        scope.scopeOut();
+        scope.scopeOut(); // Pop it out before exiting the scope.
         return null;
     }
 
@@ -284,7 +287,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             switch (ctx.getChild(2 * i - 1).getText()) {
                 case "+" -> lOp = builder.buildBinary(InstCategory.ADD, lOp, rOp);
                 case "-" -> lOp = builder.buildBinary(InstCategory.SUB, lOp, rOp);
-                default -> { }
+                default -> {}
             }
         }
 
@@ -322,6 +325,39 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
 
         tmpVal = lOp;
+        return null;
+    }
+
+    /**
+     * varDef : Identifier ('[' constExp ']')* ('=' initVal)?
+     */
+    public Void visitVarDef(SysYParser.VarDefContext ctx) {
+        // Retrieve the name of the variable defined (text of Identifier)
+        String varName = ctx.Identifier().getText();
+        // Check symbol table
+        if (scope.curTab().get(varName) != null) {
+            throw new RuntimeException("Duplicate definition of variable name: " + varName);
+        }
+        /*
+        Scalar (no constExp)
+         */
+        if(ctx.constExp().isEmpty()) {
+            // todo: Global variable.
+
+            // todo: float (branching by type)
+            MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
+            scope.addDecl(varName, addrAllocated);
+            // If it's a definition with initialization.
+            if (ctx.initVal() != null) {
+                visit(ctx.initVal());
+                builder.buildStore(tmpVal, addrAllocated);
+            }
+        }
+
+        /*
+        todo: array (if constExp exists)
+         */
+
         return null;
     }
     //</editor-fold>
