@@ -5,6 +5,7 @@ import ir.Value;
 import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.Type;
+import ir.types.PointerType;
 import ir.values.BasicBlock;
 import ir.values.Constant;
 import ir.values.Function;
@@ -300,6 +301,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     /**
      * mulExp : unaryExp (('*' | '/' | '%') unaryExp)*
      */
+    @Override
     public Void visitMulExp(SysYParser.MulExpContext ctx) {
         // todo: float case
         // Retrieve the 1st unaryExp (as the left operand) by visiting child.
@@ -331,6 +333,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     /**
      * varDef : Identifier ('[' constExp ']')* ('=' initVal)?
      */
+    @Override
     public Void visitVarDef(SysYParser.VarDefContext ctx) {
         // Retrieve the name of the variable defined (text of Identifier)
         String varName = ctx.Identifier().getText();
@@ -358,6 +361,93 @@ public class Visitor extends SysYBaseVisitor<Void> {
         todo: array (if constExp exists)
          */
 
+        return null;
+    }
+
+    /**
+     * lVal : Identifier ('[' expr ']')*
+     * ------------------------------------------
+     * stmt : lVal '=' expr ';'     # assignment
+     * primaryExp : lVal            # primExpr2
+     * ------------------------------------------
+     * Notice that besides being a left value for
+     * assignment lVal can be a primary expression.
+     */
+    @Override
+    public Void visitLVal(SysYParser.LValContext ctx) {
+        /*
+        Retrieve the value defined previously from the symbol table.
+         */
+        String name  = ctx.Identifier().getText();
+        Value val = scope.getValByName(name);
+
+        /*
+        If the value does not exist.
+         */
+        if (val == null) {
+            throw new RuntimeException("Undefined value :" + name);
+        }
+
+        /*
+        If it does exist.
+         */
+        // Scalar values (integer and float) can be returned directly.
+        // todo: float type can be returned directly too
+        if (val.type.isInteger()) {
+            tmpVal = val;
+            return null;
+        }
+        // PointerType values might be needed to be loaded in explicitly.
+        if (val.type.isPointerType()) {
+            Type pointeeType = ((PointerType) val.type).getPointeeType();
+            // ptr* (pointer to pointer)
+            if (pointeeType.isPointerType()) {
+
+            }
+            // i32*:
+            else if (pointeeType.isInteger()) {
+                tmpVal = val;
+                return null;
+            }
+            // todo: pointer to array, float*
+
+            return null;
+        }
+        return null;
+    }
+
+
+    /**
+     * primaryExp
+     *     : '(' expr ')'  # primExpr1
+     *     | lVal          # primExpr2
+     *     | number        # primExpr3
+     * ---------------------------------------------------
+     * unaryExp
+     *     : primaryExp                         # unary1
+     *     | Identifier '(' (funcRParams)? ')'  # unary2
+     *     | unaryOp unaryExp                   # unary3
+     * ---------------------------------------------------
+     * Primary expression represents an independent value
+     * that can involve in future operations / computation
+     * in the source program.
+     * <br>
+     * Since primaryExp is a grammar symbol representing
+     * pure value, when an lVal (whose IR construct may
+     * be in PointerType) is reduced to primExp, it should
+     * be checked, and possibly a Load instruction is need
+     * to read the memory block onto register to be a pure
+     * value for instant use.
+     */
+    @Override
+    public Void visitPrimExpr2(SysYParser.PrimExpr2Context ctx) {
+        // todo: branch out if during building a Call
+        visit(ctx.lVal());
+        // Load the memory block if a PointerType Value is retrieved from lVal.
+        if (tmpVal.type.isPointerType()) {
+            Type pointeeType = ((PointerType) tmpVal.type).getPointeeType();
+            tmpVal = builder.buildLoad(pointeeType, tmpVal);
+        }
         return null;
     }
     //</editor-fold>

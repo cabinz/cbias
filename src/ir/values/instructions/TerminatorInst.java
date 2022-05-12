@@ -13,7 +13,9 @@ public class TerminatorInst {
      * Return Terminator corresponding to return statement.
      * <br>
      * Type for Ret is the return type (which maybe VoidType,
-     * IntegerType and FloatType).
+     * IntegerType and FloatType). It's noteworthy that no
+     * pointer can be returned in SysY, thus Type shouldn't
+     * be a PointerType instance.
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L2950">
      *     LLVM IR Source: ReturnInst</a>
      * @see <a href="https://llvm.org/docs/LangRef.html#ret-instruction">
