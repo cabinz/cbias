@@ -12,7 +12,7 @@ import ir.Type;
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instruction.h">
  *     LLVM IR Source</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#instruction-reference">
- *     LLVM Language Reference: Instruction</a>
+ *     LLVM LangRef: Instruction</a>
  */
 public class Instruction extends User {
 

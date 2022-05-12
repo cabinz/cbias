@@ -14,7 +14,7 @@ import java.util.ArrayList;
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h#L102">
  *     LLVM IR Source</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#function-type">
- *     LLVM Language Reference: Function Type</a>
+ *     LLVM LangRef: Function Type</a>
  */
 public class FunctionType extends Type {
     //<editor-fold desc="Fields">

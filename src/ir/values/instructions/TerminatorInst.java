@@ -15,7 +15,9 @@ public class TerminatorInst {
      * Type for Ret is the return type (which maybe VoidType,
      * IntegerType and FloatType).
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L2950">
-     *     LLVM IR Reference</a>
+     *     LLVM IR Source: ReturnInst</a>
+     * @see <a href="https://llvm.org/docs/LangRef.html#ret-instruction">
+     *     LLVM LangRef: Return Instruction</a>
      */
     public static class Ret extends Instruction {
 

@@ -12,7 +12,7 @@ import java.security.SecureRandom;
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h#L631">
  *     LLVM IR Source: PointerType</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#pointer-type">
- *     LLVM Lang Ref: Pointer Type</a>
+ *     LLVM LangRef: Pointer Type</a>
  */
 public class PointerType extends Type {
 

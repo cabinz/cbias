@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * An IREmitter object is to output the in-memory IR data structures to a file in plain-text form.
  * @see <a href="https://llvm.org/docs/LangRef.html">
- *     LLVM IR Language Reference</a>
+ *     LLVM Language Reference</a>
  */
 public class IREmitter {
     private final String targetFilePath;
@@ -41,7 +41,7 @@ public class IREmitter {
      * starting with 0). Note that basic blocks and unnamed function parameters are included in
      * this numbering.
      * @see <a href="https://llvm.org/docs/LangRef.html#identifiers">
-     *     LLVM Language Reference: Identifiers</a>
+     *     LLVM LangRef: Identifiers</a>
      * @param m The module object to be named through.
      */
     private void nameModule(Module m) {

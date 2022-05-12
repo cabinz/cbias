@@ -24,7 +24,7 @@ public class MemoryInst {
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L304">
      *     LLVM IR Source: StoreInst</a>
      * @see <a href="https://llvm.org/docs/LangRef.html#store-instruction">
-     *     LLVM Lang Ref: Store Instruction</a>
+     *     LLVM LangRef: Store Instruction</a>
      */
     public static class Store extends Instruction {
 
@@ -64,7 +64,7 @@ public class MemoryInst {
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L175">
      *     LLVM IR Source: LoadInst</a>
      * @see <a href="https://llvm.org/docs/LangRef.html#load-instruction">
-     *     LLVM Lang Ref: Load Instruction</a>
+     *     LLVM LangRef: Load Instruction</a>
      */
     public static class Load extends Instruction {
 
@@ -101,7 +101,7 @@ public class MemoryInst {
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L62">
      *     LLVM IR Source: AllocaInst</a>
      * @see <a href="https://llvm.org/docs/LangRef.html#alloca-instruction">
-     *     LLVM Language Reference: Alloca Instrucstion</a>
+     *     LLVM LangRef: Alloca Instrucstion</a>
      */
     public static class Alloca extends Instruction {
         //<editor-fold desc="Fields">
@@ -139,9 +139,9 @@ public class MemoryInst {
      * <br>
      * Type for ZExt is its destination type (i32).
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L4758">
-     *     LLVM IR Source</a>
+     *     LLVM IR Source: ZExtInst</a>
      * @see <a href="https://llvm.org/docs/LangRef.html#zext-to-instruction">
-     *     LLVM IR Docs</a>
+     *     LLVM LangRef: ZExt Instruction</a>
      */
     public static class ZExt extends Instruction {
         //<editor-fold desc="Fields">
