@@ -61,19 +61,11 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVarDecl(SysYParser.VarDeclContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code varDefUninit}
-	 * labeled alternative in {@link SysYParser#varDef}.
+	 * Visit a parse tree produced by {@link SysYParser#varDef}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVarDefUninit(SysYParser.VarDefUninitContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code varDefInit}
-	 * labeled alternative in {@link SysYParser#varDef}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVarDefInit(SysYParser.VarDefInitContext ctx);
+	T visitVarDef(SysYParser.VarDefContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code scalarInitVal}
 	 * labeled alternative in {@link SysYParser#initVal}.

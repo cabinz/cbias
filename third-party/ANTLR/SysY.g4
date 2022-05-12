@@ -34,9 +34,8 @@ varDecl
     ;
 
 varDef
-    : Identifier ('[' constExp ']')*              # varDefUninit
-    | Identifier ('[' constExp ']')* '=' initVal  # varDefInit
-    ;
+    : Identifier ('[' constExp ']')* ('=' initVal)?
+    ; // Essentially, varDef with initVal is "varDef without initVal (Alloca) + Initialization (Store)"
 
 initVal
     : expr                                # scalarInitVal
