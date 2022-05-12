@@ -1,4 +1,5 @@
 import frontend.*;
+import ir.Module;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -26,15 +27,19 @@ public class Driver{
         ParseTree ast = parser.compUnit(); // Retrieve the parse tree (It's called AST but actually a CST).
 
         /* Intermediate code generation */
-        IRBuilder builder = new IRBuilder();
-        Visitor loader = new Visitor(builder);
-        loader.visit(ast); // Traversal the ast to build the IR.
+        // Initialized all the container and tools.
+        Module module = new Module();
+        IRBuilder builder = new IRBuilder(module);
+        Visitor visitor = new Visitor(builder);
+        // Traversal the ast to build the IR.
+        visitor.visit(ast);
 
         /* Emit the IR text to an output file for testing. */
         IREmitter emitter = new IREmitter(
+                // "test.sy" -> "test-out.ir"
                 String.format("%s-out.ir", config.source.replace(".sy", ""))
         );
-        emitter.emit(builder.getCurModule());
+        emitter.emit(module);
 
         /* Intermediate code optimization */
         System.out.println("Optimization has not been done.");

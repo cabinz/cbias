@@ -37,15 +37,12 @@ public class IRBuilder {
 
 
     //<editor-fold desc="Constructors">
-
     /**
-     * If no existed module given, a new module object will be initialized
-     * automatically.
+     * @param m The module to build on.
      */
-    public IRBuilder() {
-        curMdl = new Module();
+    public IRBuilder(Module m) {
+        curMdl = m;
     }
-
     //</editor-fold>
 
 
