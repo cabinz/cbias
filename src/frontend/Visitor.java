@@ -436,5 +436,30 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
         return null;
     }
+
+    /**
+     * constDef : Identifier '=' constInitVal # scalarConstDef
+     * -------------------------------------------------------------------------
+     * constDecl
+     *     : 'const' bType constDef (',' constDef)* ';'
+     * constInitVal
+     *     : constExp                                      # scalarConstInitVal
+     *     | '{' (constInitVal (',' constInitVal)* )? '}'  # arrConstInitVal
+     */
+    @Override
+    public Void visitScalarConstDef(SysYParser.ScalarConstDefContext ctx) {
+        // Retrieve the name of the variable defined and check for duplication.
+        String varName = ctx.Identifier().getText();
+        if (scope.duplicateDecl(varName)) {
+            throw new RuntimeException("Duplicate definition of constant name: " + varName);
+        }
+
+        // Retrieve the initialized value by visiting child.
+        // Then update the symbol table.
+        visit(ctx.constInitVal());
+        scope.addDecl(varName, tmpVal);
+
+        return null;
+    }
     //</editor-fold>
 }
