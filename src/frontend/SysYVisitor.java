@@ -141,12 +141,12 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBlockItem(SysYParser.BlockItemContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code assignment}
+	 * Visit a parse tree produced by the {@code assignStmt}
 	 * labeled alternative in {@link SysYParser#stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAssignment(SysYParser.AssignmentContext ctx);
+	T visitAssignStmt(SysYParser.AssignStmtContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code exprStmt}
 	 * labeled alternative in {@link SysYParser#stmt}.

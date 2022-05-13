@@ -1330,20 +1330,6 @@ public class SysYParser extends Parser {
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class AssignmentContext extends StmtContext {
-		public LValContext lVal() {
-			return getRuleContext(LValContext.class,0);
-		}
-		public ExprContext expr() {
-			return getRuleContext(ExprContext.class,0);
-		}
-		public AssignmentContext(StmtContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitAssignment(this);
-			else return visitor.visitChildren(this);
-		}
-	}
 	public static class IfElseStmtContext extends StmtContext {
 		public CondContext cond() {
 			return getRuleContext(CondContext.class,0);
@@ -1358,6 +1344,20 @@ public class SysYParser extends Parser {
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
 			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitIfElseStmt(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class AssignStmtContext extends StmtContext {
+		public LValContext lVal() {
+			return getRuleContext(LValContext.class,0);
+		}
+		public ExprContext expr() {
+			return getRuleContext(ExprContext.class,0);
+		}
+		public AssignStmtContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitAssignStmt(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1387,7 +1387,7 @@ public class SysYParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,25,_ctx) ) {
 			case 1:
-				_localctx = new AssignmentContext(_localctx);
+				_localctx = new AssignStmtContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(223);

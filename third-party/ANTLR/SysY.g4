@@ -74,7 +74,7 @@ blockItem
     ;
 
 stmt
-    : lVal '=' expr ';'                   # assignment
+    : lVal '=' expr ';'                   # assignStmt
     | (expr)? ';'                         # exprStmt
     | block                               # blkStmt
     | 'if' '(' cond ')' stmt              # ifStmt

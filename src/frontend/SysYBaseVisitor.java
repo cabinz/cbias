@@ -157,7 +157,7 @@ public class SysYBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements S
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAssignment(SysYParser.AssignmentContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAssignStmt(SysYParser.AssignStmtContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
