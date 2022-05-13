@@ -368,35 +368,40 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Value val = scope.getValByName(name);
 
         /*
-        If the value does not exist.
+        If the value does not exist, report the semantic error.
          */
         if (val == null) {
             throw new RuntimeException("Undefined value: " + name);
         }
 
         /*
-        If it does exist.
+        There are two cases for lVal as a grammar symbol:
+        1.  If a lVal  can be reduce to a primaryExp,
+            in this case is a scalar value (IntegerType or FloatType)
+            thus the value can be returned directly.
+        2.  Otherwise, a lVal represents a left value,
+            which generates an address (PointerType Value)
+            designating a memory block for assignment.
          */
-        // Scalar values (integer and float) can be returned directly.
+        // Case 1, return directly.
         // todo: float type can be returned directly too
         if (val.type.isInteger()) {
             tmpVal = val;
             return null;
         }
-        // PointerType values might be needed to be loaded in explicitly.
+        // Case 2, return a PointerType Value.
         if (val.type.isPointerType()) {
             Type pointeeType = ((PointerType) val.type).getPointeeType();
             // ptr* (pointer to pointer)
             if (pointeeType.isPointerType()) {
 
             }
-            // i32*:
+            // i32*: Return directly.
             else if (pointeeType.isInteger()) {
                 tmpVal = val;
                 return null;
             }
-            // todo: pointer to array, float*
-
+            // todo: array*, float*
             return null;
         }
         return null;
@@ -459,6 +464,23 @@ public class Visitor extends SysYBaseVisitor<Void> {
         visit(ctx.constInitVal());
         scope.addDecl(varName, tmpVal);
 
+        return null;
+    }
+
+
+    /**
+     * stmt : lVal '=' expr ';' # assignStmt
+     */
+    @Override
+    public Void visitAssignStmt(SysYParser.AssignStmtContext ctx) {
+        // Retrieve left value (the address to store) by visiting child.
+        visit(ctx.lVal());
+        Value addr = tmpVal;
+        // Retrieve the value to be stored by visiting child.
+        visit(ctx.expr());
+        Value val = tmpVal;
+        // Build the Store instruction.
+        builder.buildStore(val, addr);
         return null;
     }
     //</editor-fold>
