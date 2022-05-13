@@ -313,8 +313,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Generate an instruction to compute result of left and right operands
             // as the new left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
-                case "/" -> lOp = builder.buildBinary(InstCategory.MUL, lOp, rOp);
-                case "*" -> lOp = builder.buildBinary(InstCategory.DIV, lOp, rOp);
+                case "/" -> lOp = builder.buildBinary(InstCategory.DIV, lOp, rOp);
+                case "*" -> lOp = builder.buildBinary(InstCategory.MUL, lOp, rOp);
                 case "%" -> { // l % r => l - (l/r)*r
                     BinaryInst div = builder.buildBinary(InstCategory.DIV, lOp, rOp); // l/r
                     BinaryInst mul = builder.buildBinary(InstCategory.MUL, div, rOp); // (l/r)*r
