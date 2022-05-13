@@ -162,13 +162,13 @@ public class IRBuilder {
     }
 
     /**
-     * Insert a Alloca instruction at the end of current basic block.
+     * Insert a Alloca instruction at the FRONT of current basic block.
      * @param allocatedType The type of memory space allocated.
      * @return The Alloca instruction inserted.
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
         MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType);
-        getCurBB().instructions.add(inst);
+        getCurBB().instructions.add(0, inst); // todo: change the container as LinkedList
         return inst;
     }
 
