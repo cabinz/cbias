@@ -11,6 +11,9 @@ import java.util.HashMap;
  * and nested code blocks in the source (as well as other semantic info of that
  * environment for looking up).
  * <br>
+ * Each Scope can trace a compiling process for a single compile unit (a module).
+ * Thus, in our case we only need one instance of Scope.
+ * <br>
  * This class is NOT similar to the LLVM Clang Scope, which represents only one layer
  * of the scoping hierarchy (a single symbol table in the stack).
  */
