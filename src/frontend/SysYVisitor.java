@@ -35,11 +35,19 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBType(SysYParser.BTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SysYParser#constDef}.
+	 * Visit a parse tree produced by the {@code scalarConstDef}
+	 * labeled alternative in {@link SysYParser#constDef}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitConstDef(SysYParser.ConstDefContext ctx);
+	T visitScalarConstDef(SysYParser.ScalarConstDefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code arrConstDef}
+	 * labeled alternative in {@link SysYParser#constDef}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrConstDef(SysYParser.ArrConstDefContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code scalarConstInitVal}
 	 * labeled alternative in {@link SysYParser#constInitVal}.
@@ -48,12 +56,12 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitScalarConstInitVal(SysYParser.ScalarConstInitValContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code listConstInitVal}
+	 * Visit a parse tree produced by the {@code arrConstInitVal}
 	 * labeled alternative in {@link SysYParser#constInitVal}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitListConstInitVal(SysYParser.ListConstInitValContext ctx);
+	T visitArrConstInitVal(SysYParser.ArrConstInitValContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SysYParser#varDecl}.
 	 * @param ctx the parse tree
@@ -61,11 +69,19 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVarDecl(SysYParser.VarDeclContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SysYParser#varDef}.
+	 * Visit a parse tree produced by the {@code scalarVarDef}
+	 * labeled alternative in {@link SysYParser#varDef}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVarDef(SysYParser.VarDefContext ctx);
+	T visitScalarVarDef(SysYParser.ScalarVarDefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code arrVarDef}
+	 * labeled alternative in {@link SysYParser#varDef}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrVarDef(SysYParser.ArrVarDefContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code scalarInitVal}
 	 * labeled alternative in {@link SysYParser#initVal}.
@@ -74,12 +90,12 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitScalarInitVal(SysYParser.ScalarInitValContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code listInitval}
+	 * Visit a parse tree produced by the {@code arrInitval}
 	 * labeled alternative in {@link SysYParser#initVal}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitListInitval(SysYParser.ListInitvalContext ctx);
+	T visitArrInitval(SysYParser.ArrInitvalContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SysYParser#funcDef}.
 	 * @param ctx the parse tree
@@ -99,11 +115,19 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFuncFParams(SysYParser.FuncFParamsContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SysYParser#funcFParam}.
+	 * Visit a parse tree produced by the {@code scalarFuncFParam}
+	 * labeled alternative in {@link SysYParser#funcFParam}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFuncFParam(SysYParser.FuncFParamContext ctx);
+	T visitScalarFuncFParam(SysYParser.ScalarFuncFParamContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code arrFuncFParam}
+	 * labeled alternative in {@link SysYParser#funcFParam}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrFuncFParam(SysYParser.ArrFuncFParamContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SysYParser#block}.
 	 * @param ctx the parse tree
@@ -192,11 +216,19 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCond(SysYParser.CondContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link SysYParser#lVal}.
+	 * Visit a parse tree produced by the {@code scalarLVal}
+	 * labeled alternative in {@link SysYParser#lVal}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitLVal(SysYParser.LValContext ctx);
+	T visitScalarLVal(SysYParser.ScalarLValContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code arrLVal}
+	 * labeled alternative in {@link SysYParser#lVal}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrLVal(SysYParser.ArrLValContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code primExpr1}
 	 * labeled alternative in {@link SysYParser#primaryExp}.

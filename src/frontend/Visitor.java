@@ -7,7 +7,6 @@ import ir.types.IntegerType;
 import ir.Type;
 import ir.types.PointerType;
 import ir.values.BasicBlock;
-import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.Instruction.InstCategory;
@@ -158,8 +157,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
      * funcFParam : bType Identifier ('[' ']' ('[' expr ']')* )?
      */
     @Override
-    public Void visitFuncFParam(SysYParser.FuncFParamContext ctx) {
-        // todo: Array as function arguments
+    public Void visitScalarFuncFParam(SysYParser.ScalarFuncFParamContext ctx) {
         // todo: float as function arguments
         // Integer argument
         tmpType = IntegerType.getI32();
@@ -331,36 +329,25 @@ public class Visitor extends SysYBaseVisitor<Void> {
     }
 
     /**
-     * varDef : Identifier ('[' constExp ']')* ('=' initVal)?
+     * varDef : Identifier ('=' initVal)? # scalarVarDef
      */
     @Override
-    public Void visitVarDef(SysYParser.VarDefContext ctx) {
+    public Void visitScalarVarDef(SysYParser.ScalarVarDefContext ctx) {
         // Retrieve the name of the variable defined (text of Identifier)
         String varName = ctx.Identifier().getText();
         // Check symbol table
         if (scope.curTab().get(varName) != null) {
             throw new RuntimeException("Duplicate definition of variable name: " + varName);
         }
-        /*
-        Scalar (no constExp)
-         */
-        if(ctx.constExp().isEmpty()) {
-            // todo: Global variable.
-
-            // todo: float (branching by type)
-            MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
-            scope.addDecl(varName, addrAllocated);
-            // If it's a definition with initialization.
-            if (ctx.initVal() != null) {
-                visit(ctx.initVal());
-                builder.buildStore(tmpVal, addrAllocated);
-            }
+        // todo: Global variable.
+        // todo: float (branching by type)
+        MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
+        scope.addDecl(varName, addrAllocated);
+        // If it's a definition with initialization.
+        if (ctx.initVal() != null) {
+            visit(ctx.initVal());
+            builder.buildStore(tmpVal, addrAllocated);
         }
-
-        /*
-        todo: array (if constExp exists)
-         */
-
         return null;
     }
 
@@ -374,7 +361,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
      * assignment lVal can be a primary expression.
      */
     @Override
-    public Void visitLVal(SysYParser.LValContext ctx) {
+    public Void visitScalarLVal(SysYParser.ScalarLValContext ctx) {
         /*
         Retrieve the value defined previously from the symbol table.
          */

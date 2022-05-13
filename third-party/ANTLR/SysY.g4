@@ -21,12 +21,13 @@ bType
     ;
 
 constDef
-    : Identifier ('[' constExp ']')* '=' constInitVal
-    ;
+    : Identifier '=' constInitVal                       # scalarConstDef
+    | Identifier ('[' constExp ']')+ '=' constInitVal   # arrConstDef
+    ; // Separate the cases of scalar and array
 
 constInitVal
     : constExp                                      # scalarConstInitVal
-    | '{' (constInitVal (',' constInitVal)* )? '}'  # listConstInitVal
+    | '{' (constInitVal (',' constInitVal)* )? '}'  # arrConstInitVal
     ;
 
 varDecl
@@ -34,13 +35,15 @@ varDecl
     ;
 
 varDef
-    : Identifier ('[' constExp ']')* ('=' initVal)?
+    : Identifier ('=' initVal)?                         # scalarVarDef
+    | Identifier ('[' constExp ']')+ ('=' initVal)?     # arrVarDef
     ; // Essentially, varDef with initVal is "varDef without initVal (Alloca) + Initialization (Store)"
+    // Separate the cases of scalar and array
 
 initVal
     : expr                                # scalarInitVal
-    | '{' (initVal (',' initVal)* )? '}'  # listInitval
-    ;
+    | '{' (initVal (',' initVal)* )? '}'  # arrInitval
+    ; // Separate the cases of scalar and array
 
 funcDef
     : funcType Identifier '(' (funcFParams)? ')' block
@@ -57,8 +60,9 @@ funcFParams
     ;
 
 funcFParam
-    : bType Identifier ('[' ']' ('[' expr ']')* )?
-    ;
+    : bType Identifier                          # scalarFuncFParam
+    | bType Identifier '[' ']' ('[' expr ']')*  # arrFuncFParam
+    ; // Separate the cases of scalar and array
 
 block
     : '{' (blockItem)* '}'
@@ -90,8 +94,9 @@ cond
     ;
 
 lVal
-    : Identifier ('[' expr ']')*
-    ;
+    : Identifier                    # scalarLVal
+    | Identifier ('[' expr ']')+    # arrLVal
+    ; // Separate the cases of scalar and array
 
 primaryExp
     : '(' expr ')'  # primExpr1
