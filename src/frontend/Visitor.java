@@ -333,10 +333,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitScalarVarDef(SysYParser.ScalarVarDefContext ctx) {
-        // Retrieve the name of the variable defined (text of Identifier)
+        // Retrieve the name of the variable defined and check for duplication.
         String varName = ctx.Identifier().getText();
-        // Check symbol table
-        if (scope.curTab().get(varName) != null) {
+        if (scope.duplicateDecl(varName)) {
             throw new RuntimeException("Duplicate definition of variable name: " + varName);
         }
         // todo: Global variable.
@@ -372,7 +371,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         If the value does not exist.
          */
         if (val == null) {
-            throw new RuntimeException("Undefined value :" + name);
+            throw new RuntimeException("Undefined value: " + name);
         }
 
         /*

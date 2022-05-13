@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Each module has an instance of Scope, keeping track of the current scope
- * in the source during traversal, and maintaining the symbol tables for nested
- * code blocks in the source as well as other semantic info of that environment
- * for looking up.
+ * A Scope keeps track of the current scope in the source during traversal of
+ * the parse tree with Visitor, maintaining all symbol tables needed by functions
+ * and nested code blocks in the source (as well as other semantic info of that
+ * environment for looking up).
  * <br>
- * This class is not similar to the LLVM Clang Scope, which is only one layer of
- * the scoping hierarchy (one symbol table in the stack).
+ * This class is NOT similar to the LLVM Clang Scope, which represents only one layer
+ * of the scoping hierarchy (a single symbol table in the stack).
  */
 public class Scope {
 
@@ -35,6 +35,15 @@ public class Scope {
 
     //<editor-fold desc="Methods">
     /**
+     * Peek the top of the symbol table stack, which is the current scope (during parse
+     * tree traversal / visiting)
+     * @return The symbol table of current scope.
+     */
+    private HashMap<String, Value> curTab() {
+        return tables.get(tables.size() - 1);
+    }
+
+    /**
      * Push a new symbol table onto the stack when scoping.
      */
     public void scopeIn() {
@@ -49,22 +58,15 @@ public class Scope {
     }
 
     /**
-     * Peek the top of the symbol table stack.
-     * @return The symbol table of current scope.
-     */
-    public HashMap<String, Value> curTab() {
-        return tables.get(tables.size() - 1);
-    }
-
-    /**
      * Add a new name-value pair into the symbol table of current scope.
      * @param name The name of the pair.
      * @param val The value of the pair.
      */
     public void addDecl(String name, Value val) {
-        // Check name repetition.
-        if(curTab().get(name) != null) {
-            throw new RuntimeException("The name has been taken.");
+        // Check name repetition. (Security check)
+        if(this.duplicateDecl(name)) {
+            throw new RuntimeException(
+                    "Try to add an declaration with an existing name into current symbol table.");
         }
         // If it's a new name.
         else {
@@ -73,7 +75,10 @@ public class Scope {
     }
 
     /**
-     * Find the object with the given name that can be used in current scope.
+     * Find the variable (value) with the given name that can be used in current scope.
+     * The variable found may be defined in an outer scope.
+     * NOTICE: Use duplicateDecl() for duplication check when defining / declaring
+     * a new variable name.
      * @param name The name to be used for searching.
      * @return The object with the name. Return null if no matched object is found.
      */
@@ -87,6 +92,16 @@ public class Scope {
         return null;
     }
 
+    /**
+     * Check if the given name has been declared in current scope (in current layer of
+     * symbol table).
+     * @param name The name (identifier) to be checked.
+     * @return True if the name has already been in current layer of symbol table. False
+     * otherwise.
+     */
+    public boolean duplicateDecl(String name) {
+        return curTab().get(name) != null;
+    }
     //</editor-fold>
 
 
