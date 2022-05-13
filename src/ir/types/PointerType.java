@@ -53,8 +53,8 @@ public class PointerType extends Type {
 
     @Override
     public String toString() {
-        // e.g. "i32* " and "i1* "
-        return pointeeType.toString() + "* ";
+        // e.g. "i32*" and "i1*"
+        return pointeeType.toString() + "*";
      }
     //</editor-fold>
 
