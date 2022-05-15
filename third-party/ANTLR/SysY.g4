@@ -121,9 +121,9 @@ floatConst
     ;
 
 unaryExp
-    : primaryExp                         # unary1
-    | Identifier '(' (funcRParams)? ')'  # unary2
-    | unaryOp unaryExp                   # unary3
+    : primaryExp                         # primUnaryExp
+    | Identifier '(' (funcRParams)? ')'  # fcallUnaryExp
+    | unaryOp unaryExp                   # oprUnaryExp
     ;
 
 unaryOp
@@ -133,11 +133,12 @@ unaryOp
     ;
 
 funcRParams
-    : funcRParam (',' funcRParam)*;
+    : funcRParam (',' funcRParam)*
+    ;
 
 funcRParam
-    : expr    # expAsRParam
-    | STRING  # stringAsRParam
+    : expr    # exprRParam
+    | STRING  # strRParam
     ;
 
 mulExp

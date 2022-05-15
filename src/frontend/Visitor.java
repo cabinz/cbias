@@ -226,10 +226,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
     }
 
     /**
-     * unaryExp : unaryOp unaryExp # unary3
+     * unaryExp : unaryOp unaryExp # oprUnaryExp
      */
     @Override
-    public Void visitUnary3(SysYParser.Unary3Context ctx) {
+    public Void visitOprUnaryExp(SysYParser.OprUnaryExpContext ctx) {
         // Retrieve the expression by visiting child.
         visit(ctx.unaryExp());
         // Integer.
@@ -239,7 +239,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 builder.buildZExt(tmpVal);
             }
             // Unary operators.
-            String op = ctx.unaryOp().getText();
+            String op = ctx.unaryExp().getText();
             switch (op) {
                 case "-":
                     tmpVal = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), tmpVal);

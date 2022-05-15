@@ -1950,40 +1950,40 @@ public class SysYParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class Unary1Context extends UnaryExpContext {
-		public PrimaryExpContext primaryExp() {
-			return getRuleContext(PrimaryExpContext.class,0);
-		}
-		public Unary1Context(UnaryExpContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitUnary1(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class Unary2Context extends UnaryExpContext {
-		public TerminalNode Identifier() { return getToken(SysYParser.Identifier, 0); }
-		public FuncRParamsContext funcRParams() {
-			return getRuleContext(FuncRParamsContext.class,0);
-		}
-		public Unary2Context(UnaryExpContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitUnary2(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class Unary3Context extends UnaryExpContext {
+	public static class OprUnaryExpContext extends UnaryExpContext {
 		public UnaryOpContext unaryOp() {
 			return getRuleContext(UnaryOpContext.class,0);
 		}
 		public UnaryExpContext unaryExp() {
 			return getRuleContext(UnaryExpContext.class,0);
 		}
-		public Unary3Context(UnaryExpContext ctx) { copyFrom(ctx); }
+		public OprUnaryExpContext(UnaryExpContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitUnary3(this);
+			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitOprUnaryExp(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class PrimUnaryExpContext extends UnaryExpContext {
+		public PrimaryExpContext primaryExp() {
+			return getRuleContext(PrimaryExpContext.class,0);
+		}
+		public PrimUnaryExpContext(UnaryExpContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitPrimUnaryExp(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class FcallUnaryExpContext extends UnaryExpContext {
+		public TerminalNode Identifier() { return getToken(SysYParser.Identifier, 0); }
+		public FuncRParamsContext funcRParams() {
+			return getRuleContext(FuncRParamsContext.class,0);
+		}
+		public FcallUnaryExpContext(UnaryExpContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitFcallUnaryExp(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1997,7 +1997,7 @@ public class SysYParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,31,_ctx) ) {
 			case 1:
-				_localctx = new Unary1Context(_localctx);
+				_localctx = new PrimUnaryExpContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(296);
@@ -2005,7 +2005,7 @@ public class SysYParser extends Parser {
 				}
 				break;
 			case 2:
-				_localctx = new Unary2Context(_localctx);
+				_localctx = new FcallUnaryExpContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(297);
@@ -2027,7 +2027,7 @@ public class SysYParser extends Parser {
 				}
 				break;
 			case 3:
-				_localctx = new Unary3Context(_localctx);
+				_localctx = new OprUnaryExpContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(303);
@@ -2158,23 +2158,23 @@ public class SysYParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class StringAsRParamContext extends FuncRParamContext {
+	public static class StrRParamContext extends FuncRParamContext {
 		public TerminalNode STRING() { return getToken(SysYParser.STRING, 0); }
-		public StringAsRParamContext(FuncRParamContext ctx) { copyFrom(ctx); }
+		public StrRParamContext(FuncRParamContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitStringAsRParam(this);
+			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitStrRParam(this);
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class ExpAsRParamContext extends FuncRParamContext {
+	public static class ExprRParamContext extends FuncRParamContext {
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public ExpAsRParamContext(FuncRParamContext ctx) { copyFrom(ctx); }
+		public ExprRParamContext(FuncRParamContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitExpAsRParam(this);
+			if ( visitor instanceof SysYVisitor ) return ((SysYVisitor<? extends T>)visitor).visitExprRParam(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2196,7 +2196,7 @@ public class SysYParser extends Parser {
 			case DecFloatConst:
 			case HexFloatConst:
 			case Identifier:
-				_localctx = new ExpAsRParamContext(_localctx);
+				_localctx = new ExprRParamContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(318);
@@ -2204,7 +2204,7 @@ public class SysYParser extends Parser {
 				}
 				break;
 			case STRING:
-				_localctx = new StringAsRParamContext(_localctx);
+				_localctx = new StrRParamContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(319);

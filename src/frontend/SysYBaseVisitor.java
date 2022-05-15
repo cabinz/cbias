@@ -290,21 +290,21 @@ public class SysYBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements S
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitUnary1(SysYParser.Unary1Context ctx) { return visitChildren(ctx); }
+	@Override public T visitPrimUnaryExp(SysYParser.PrimUnaryExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitUnary2(SysYParser.Unary2Context ctx) { return visitChildren(ctx); }
+	@Override public T visitFcallUnaryExp(SysYParser.FcallUnaryExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitUnary3(SysYParser.Unary3Context ctx) { return visitChildren(ctx); }
+	@Override public T visitOprUnaryExp(SysYParser.OprUnaryExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -325,14 +325,14 @@ public class SysYBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements S
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpAsRParam(SysYParser.ExpAsRParamContext ctx) { return visitChildren(ctx); }
+	@Override public T visitExprRParam(SysYParser.ExprRParamContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStringAsRParam(SysYParser.StringAsRParamContext ctx) { return visitChildren(ctx); }
+	@Override public T visitStrRParam(SysYParser.StrRParamContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
