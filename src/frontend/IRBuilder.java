@@ -4,6 +4,7 @@ import ir.Module;
 import ir.Type;
 import ir.Value;
 import ir.types.FunctionType;
+import ir.types.IntegerType;
 import ir.values.BasicBlock;
 import ir.values.Constant;
 import ir.values.Function;
@@ -148,7 +149,7 @@ public class IRBuilder {
      * needs to be manually built and managed by the user.
      * @param func Function Value carrying information about return type and FORMAL arguments.
      * @param args The ACTUAL arguments to be referenced by the Call.
-     * @return
+     * @return The call instruction inserted.
      */
     public TerminatorInst.Call buildCall(Function func, ArrayList<Value> args) {
         TerminatorInst.Call call = new TerminatorInst.Call(func, args);
@@ -207,11 +208,22 @@ public class IRBuilder {
      * @param tag Instruction category.
      * @param lOp Left operand.
      * @param rOp Right operand.
-     * @return
+     * @return The binary instruction inserted.
      */
     public BinaryInst buildBinary(Instruction.InstCategory tag, Value lOp, Value rOp) {
-        // todo: analyze result type when introducing float type
-        BinaryInst binInst = new BinaryInst(lOp.type, tag, lOp, rOp);
+        // Analyze the type of the result returned by the binary operation.
+        Type resType = null;
+        if (tag.isLogicalBinary()) {
+            resType = IntegerType.getI1();
+        }
+        else if (tag.isArithmeticBinary()) {
+            resType = IntegerType.getI32();
+        }
+        else {
+            // todo: float arithmetic binary operations
+        }
+        // Build the binary instruction.
+        BinaryInst binInst = new BinaryInst(resType, tag, lOp, rOp);
         getCurBB().instructions.add(binInst);
         return binInst;
     }
