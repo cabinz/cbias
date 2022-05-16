@@ -126,7 +126,7 @@ public class IRBuilder {
      */
     public TerminatorInst.Ret buildRet() {
         TerminatorInst.Ret ret = new TerminatorInst.Ret();
-        getCurBB().instructions.add(ret);
+        getCurBB().insertAtEnd(ret);
         return ret;
     }
 
@@ -138,7 +138,7 @@ public class IRBuilder {
      */
     public TerminatorInst.Ret buildRet(Value retVal) {
         TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal);
-        getCurBB().instructions.add(ret);
+        getCurBB().insertAtEnd(ret);
         return ret;
     }
 
@@ -153,7 +153,7 @@ public class IRBuilder {
      */
     public TerminatorInst.Call buildCall(Function func, ArrayList<Value> args) {
         TerminatorInst.Call call = new TerminatorInst.Call(func, args);
-        getCurBB().instructions.add(call);
+        getCurBB().insertAtEnd(call);
         return call;
     }
 
@@ -165,7 +165,7 @@ public class IRBuilder {
      */
     public MemoryInst.Load buildLoad(Type loadedType, Value addr) {
         MemoryInst.Load inst = new MemoryInst.Load(loadedType, addr);
-        getCurBB().instructions.add(inst);
+        getCurBB().insertAtEnd(inst);
         return inst;
     }
 
@@ -177,7 +177,7 @@ public class IRBuilder {
      */
     public MemoryInst.Store buildStore(Value val, Value addr) {
         MemoryInst.Store inst = new MemoryInst.Store(val, addr);
-        getCurBB().instructions.add(inst);
+        getCurBB().insertAtEnd(inst);
         return inst;
     }
 
@@ -188,7 +188,7 @@ public class IRBuilder {
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
         MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType);
-        getCurBB().instructions.add(0, inst); // todo: change the container as LinkedList
+        getCurBB().insertAtFront(inst); // todo: change the container as LinkedList
         return inst;
     }
 
@@ -199,7 +199,7 @@ public class IRBuilder {
      */
     public MemoryInst.ZExt buildZExt(Value srcVal) {
         MemoryInst.ZExt zext = new MemoryInst.ZExt(srcVal);
-        getCurBB().instructions.add(zext);
+        getCurBB().insertAtEnd(zext);
         return zext;
     }
 
@@ -224,7 +224,7 @@ public class IRBuilder {
         }
         // Build the binary instruction.
         BinaryInst binInst = new BinaryInst(resType, tag, lOp, rOp);
-        getCurBB().instructions.add(binInst);
+        getCurBB().insertAtEnd(binInst);
         return binInst;
     }
 

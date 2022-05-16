@@ -4,6 +4,8 @@ import ir.Value;
 import ir.Type;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * A basic block is simply a container of instructions that execute sequentially.
@@ -16,13 +18,13 @@ import java.util.ArrayList;
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/BasicBlock.h#L58">
  *     LLVM IR BasicBlock Source</a>
  */
-public class BasicBlock extends Value {
+public class BasicBlock extends Value implements Iterable<Instruction>{
 
     //<editor-fold desc="Fields">
     public String name;
     private ArrayList<BasicBlock> predecessors;
     private ArrayList<BasicBlock> successors;
-    public final ArrayList<Instruction> instructions = new ArrayList<>();
+    public final LinkedList<Instruction> instructions = new LinkedList<>();
     //</editor-fold>
 
     //<editor-fold desc="Constructors">
@@ -30,6 +32,34 @@ public class BasicBlock extends Value {
         super(Type.LabelType.getType());
 
         this.name = name;
+    }
+
+    /**
+     * Retrieve the last instruction in the basic block.
+     * @return The last instruction. Null if it's an empty block.
+     */
+    public Instruction getLastInst() {
+        return this.instructions.isEmpty() ? null : this.instructions.getLast();
+    }
+
+    /**
+     * Insert an instruction at the end of the basic block.
+     * @param inst The instruction to be inserted.
+     */
+    public void insertAtEnd(Instruction inst) {
+        this.instructions.addLast(inst);
+    }
+
+    /**
+     * Insert an instruction at the beginning of the basic block.
+     * @param inst The instruction to be inserted.
+     */
+    public void insertAtFront(Instruction inst) {
+        this.instructions.addFirst(inst);
+    }
+
+    public Iterator<Instruction> iterator() {
+        return instructions.iterator();
     }
     //</editor-fold>
 }

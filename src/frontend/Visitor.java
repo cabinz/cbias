@@ -158,8 +158,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         return statement given in the source.
         If not, insert a terminator to the end of it.
          */
-        ArrayList<Instruction> instList = builder.getCurBB().instructions;
-        Instruction tailInst = (instList.size() == 0) ? null : instList.get(instList.size() - 1);
+        Instruction tailInst = builder.getCurBB().getLastInst();
         // If no instruction in the bb, or the last instruction is not a terminator.
         if (tailInst == null ||
                 tailInst.cat != InstCategory.BR

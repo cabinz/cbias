@@ -101,7 +101,7 @@ public class IREmitter {
                 // Body of a function: basic blocks in it.
                 for (BasicBlock bb : func.bbs) {
                     // todo: emit the entry of a basic block
-                    for (Instruction inst : bb.instructions) {
+                    for (Instruction inst : bb) {
                         strBuilder.append(inst.toString())
                                 .append("\n");
                     }
