@@ -4,6 +4,7 @@ import ir.Module;
 import ir.Type;
 import ir.Value;
 import ir.types.FunctionType;
+import ir.types.IntegerType;
 import ir.values.BasicBlock;
 import ir.values.Constant;
 import ir.values.Function;
@@ -11,6 +12,8 @@ import ir.values.Instruction;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
+
+import java.util.ArrayList;
 
 /**
  * An IRBuilder object maintains one building process of the IR.
@@ -27,12 +30,26 @@ import ir.values.instructions.TerminatorInst;
 public class IRBuilder {
 
     //<editor-fold desc="Fields">
-    /*
-     Three current building pointers on different levels of the IR.
+
+    //<editor-fold desc="Three current building pointers for different levels of IR.">
+    /**
+     * The module currently being built.
+     * In our case with only a single compile unit to work on,
+     * this reference is in effect immutable.
      */
     private Module curMdl;
+
+    /**
+     * The function currently being built.
+     */
     private Function curFunc;
+
+    /**
+     * The basic block currently being built.
+     */
     private BasicBlock curBB;
+    //</editor-fold>
+
     //</editor-fold>
 
 
@@ -41,7 +58,7 @@ public class IRBuilder {
      * @param m The module to build on.
      */
     public IRBuilder(Module m) {
-        curMdl = m;
+        this.setCurModule(m);
     }
     //</editor-fold>
 
@@ -93,11 +110,13 @@ public class IRBuilder {
      * @param type Value type.
      * @return Reference of the function created and inserted.
      */
-    public Function buildFunction(String name, FunctionType type) {
-        Function func = new Function(type);
+    public Function buildFunction(String name, FunctionType type, boolean isExternal) {
+        Function func = new Function(type, isExternal);
         func.name = name;
+        // Add the function to the current module.
+        getCurModule().functions.add(func);
         // Set the pointer.
-        curFunc = func;
+        this.setCurFunc(func);
         return func;
     }
 
@@ -110,7 +129,7 @@ public class IRBuilder {
         BasicBlock bb = new BasicBlock(bbName);
         curFunc.bbs.add(bb);
         // Set the pointer.
-        curBB = bb;
+        this.setCurBB(bb);
         return bb;
     }
 
@@ -121,7 +140,7 @@ public class IRBuilder {
      */
     public TerminatorInst.Ret buildRet() {
         TerminatorInst.Ret ret = new TerminatorInst.Ret();
-        getCurBB().instructions.add(ret);
+        getCurBB().insertAtEnd(ret);
         return ret;
     }
 
@@ -133,8 +152,23 @@ public class IRBuilder {
      */
     public TerminatorInst.Ret buildRet(Value retVal) {
         TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal);
-        getCurBB().instructions.add(ret);
+        getCurBB().insertAtEnd(ret);
         return ret;
+    }
+
+    /**
+     * Insert a Call terminator invoking a given function with given list of arguments
+     * at the end of current basic block.
+     * The new basic block will not be automatically created by this method and
+     * needs to be manually built and managed by the user.
+     * @param func Function Value carrying information about return type and FORMAL arguments.
+     * @param args The ACTUAL arguments to be referenced by the Call.
+     * @return The call instruction inserted.
+     */
+    public TerminatorInst.Call buildCall(Function func, ArrayList<Value> args) {
+        TerminatorInst.Call call = new TerminatorInst.Call(func, args);
+        getCurBB().insertAtEnd(call);
+        return call;
     }
 
     /**
@@ -145,7 +179,7 @@ public class IRBuilder {
      */
     public MemoryInst.Load buildLoad(Type loadedType, Value addr) {
         MemoryInst.Load inst = new MemoryInst.Load(loadedType, addr);
-        getCurBB().instructions.add(inst);
+        getCurBB().insertAtEnd(inst);
         return inst;
     }
 
@@ -157,7 +191,7 @@ public class IRBuilder {
      */
     public MemoryInst.Store buildStore(Value val, Value addr) {
         MemoryInst.Store inst = new MemoryInst.Store(val, addr);
-        getCurBB().instructions.add(inst);
+        getCurBB().insertAtEnd(inst);
         return inst;
     }
 
@@ -168,7 +202,7 @@ public class IRBuilder {
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
         MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType);
-        getCurBB().instructions.add(0, inst); // todo: change the container as LinkedList
+        getCurBB().insertAtFront(inst); // todo: change the container as LinkedList
         return inst;
     }
 
@@ -179,7 +213,7 @@ public class IRBuilder {
      */
     public MemoryInst.ZExt buildZExt(Value srcVal) {
         MemoryInst.ZExt zext = new MemoryInst.ZExt(srcVal);
-        getCurBB().instructions.add(zext);
+        getCurBB().insertAtEnd(zext);
         return zext;
     }
 
@@ -188,12 +222,23 @@ public class IRBuilder {
      * @param tag Instruction category.
      * @param lOp Left operand.
      * @param rOp Right operand.
-     * @return
+     * @return The binary instruction inserted.
      */
     public BinaryInst buildBinary(Instruction.InstCategory tag, Value lOp, Value rOp) {
-        // todo: analyze result type when introducing float type
-        BinaryInst binInst = new BinaryInst(lOp.type, tag, lOp, rOp);
-        getCurBB().instructions.add(binInst);
+        // Analyze the type of the result returned by the binary operation.
+        Type resType = null;
+        if (tag.isLogicalBinary()) {
+            resType = IntegerType.getI1();
+        }
+        else if (tag.isArithmeticBinary()) {
+            resType = IntegerType.getI32();
+        }
+        else {
+            // todo: float arithmetic binary operations
+        }
+        // Build the binary instruction.
+        BinaryInst binInst = new BinaryInst(resType, tag, lOp, rOp);
+        getCurBB().insertAtEnd(binInst);
         return binInst;
     }
 

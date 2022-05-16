@@ -46,29 +46,35 @@ public class IREmitter {
      */
     private void nameModule(Module m) {
         // todo: name global variables in the module
-        m.functions.forEach(
-                func -> {
-                    nextName = 0; // Reset the counter for a new environment.
-                    // todo: built-in function branching
-                    // Assign names for each function argument.
-                    for (Function.FuncArg arg : func.getArgs()) {
-                        arg.name = "%" + getNewName();
-                    }
-                    // Assign names (Lx) for each basic block in the function,
-                    // and each instruction yielding results (%x) in basic blocks.
-                    for (BasicBlock bb : func.bbs) {
-                        bb.name = "L" + getNewName();
-                        for (Instruction inst : bb.instructions) {
-                            if (inst.hasResult) {
-                                inst.name = "%" + getNewName();
-                            }
+        for (Function func : m.functions) {
+            nextName = 0; // Reset the counter for a new environment.
+            // Only functions defined in compile unit need to be named through,
+            // while an external function having only declaration other than
+            // function body need no naming.
+            if (!func.isExternal()) {
+                // Assign names for each function argument.
+                for (var arg : func.getArgs()) {
+                    arg.name = "%" + getNewName();
+                }
+                // Assign names (Lx) for each basic block in the function,
+                // and each instruction yielding results (%x) in basic blocks.
+                for (BasicBlock bb : func.bbs) {
+                    bb.name = "L" + getNewName();
+                    for (Instruction inst : bb.instructions) {
+                        if (inst.hasResult) {
+                            inst.name = "%" + getNewName();
                         }
                     }
                 }
-        );
+            }
+        }
     }
 
-
+    /**
+     * Emit a module (compile unit) as LLVM-IR in plain-text form.
+     * @param m The module to be emitted.
+     * @throws IOException
+     */
     public void emit(Module m) throws IOException {
 
         // Initialize the module by assigning names.
@@ -82,21 +88,27 @@ public class IREmitter {
 
         // Emit IR text of the module by looping through all the functions in it.
         for (Function func : m.functions) {
-            // todo: built-in functions need nothing below.
-            // Head of a function: prototype of it.
-            strBuilder.append("define dso_local ")
-                    .append(func.toString())
-                    .append("{\n");
-            // Body of a function: basic blocks in it.
-            for (BasicBlock bb : func.bbs) {
-                // todo: emit the entry of a basic block
-                for (Instruction inst : bb.instructions) {
-                    strBuilder.append(inst.toString())
-                            .append("\n");
-                }
+            // If it's an external function with only declaration in compile unit.
+            if (func.isExternal()) {
+                strBuilder.append("declare ").append(func).append("\n");
             }
-            // Tail of a function: A right bracket to close it.
-            strBuilder.append("}\n");
+            // If it's a function defined in compile unit.
+            else {
+                // Head of a function: prototype of it.
+                strBuilder.append("define dso_local ")
+                        .append(func.toString())
+                        .append("{\n");
+                // Body of a function: basic blocks in it.
+                for (BasicBlock bb : func.bbs) {
+                    // todo: emit the entry of a basic block
+                    for (Instruction inst : bb) {
+                        strBuilder.append(inst.toString())
+                                .append("\n");
+                    }
+                }
+                // Tail of a function: A right bracket to close it.
+                strBuilder.append("}\n");
+            }
         }
 
         /*

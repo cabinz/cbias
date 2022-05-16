@@ -269,26 +269,26 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFloatConst(SysYParser.FloatConstContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code unary1}
+	 * Visit a parse tree produced by the {@code primUnaryExp}
 	 * labeled alternative in {@link SysYParser#unaryExp}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitUnary1(SysYParser.Unary1Context ctx);
+	T visitPrimUnaryExp(SysYParser.PrimUnaryExpContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code unary2}
+	 * Visit a parse tree produced by the {@code fcallUnaryExp}
 	 * labeled alternative in {@link SysYParser#unaryExp}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitUnary2(SysYParser.Unary2Context ctx);
+	T visitFcallUnaryExp(SysYParser.FcallUnaryExpContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code unary3}
+	 * Visit a parse tree produced by the {@code oprUnaryExp}
 	 * labeled alternative in {@link SysYParser#unaryExp}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitUnary3(SysYParser.Unary3Context ctx);
+	T visitOprUnaryExp(SysYParser.OprUnaryExpContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SysYParser#unaryOp}.
 	 * @param ctx the parse tree
@@ -302,19 +302,19 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFuncRParams(SysYParser.FuncRParamsContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code expAsRParam}
+	 * Visit a parse tree produced by the {@code exprRParam}
 	 * labeled alternative in {@link SysYParser#funcRParam}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpAsRParam(SysYParser.ExpAsRParamContext ctx);
+	T visitExprRParam(SysYParser.ExprRParamContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code stringAsRParam}
+	 * Visit a parse tree produced by the {@code strRParam}
 	 * labeled alternative in {@link SysYParser#funcRParam}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitStringAsRParam(SysYParser.StringAsRParamContext ctx);
+	T visitStrRParam(SysYParser.StrRParamContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link SysYParser#mulExp}.
 	 * @param ctx the parse tree

@@ -31,7 +31,16 @@ public class Instruction extends User {
         // Terminators
         RET, BR, CALL,
         // Memory operations
-        ZEXT, ALLOCA, LOAD, STORE
+        ZEXT, ALLOCA, LOAD, STORE;
+
+        public boolean isArithmeticBinary() {
+            return this.ordinal() <= InstCategory.DIV.ordinal();
+        }
+
+        public boolean isLogicalBinary() {
+            return InstCategory.LT.ordinal() <= this.ordinal()
+                    && this.ordinal() <= InstCategory.GE.ordinal();
+        }
     }
 
 
@@ -77,15 +86,6 @@ public class Instruction extends User {
 //    public BasicBlock getBB() {
 //        return this.bb.getParent().getVal();
 //    }
-
-    public boolean isArithmeticBinary() {
-        return this.cat.ordinal() <= InstCategory.DIV.ordinal();
-    }
-
-    public boolean isLogicalBinary() {
-        return InstCategory.LT.ordinal() <= this.cat.ordinal()
-                && this.cat.ordinal() <= InstCategory.GE.ordinal();
-    }
     //</editor-fold>
 
 }

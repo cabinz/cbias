@@ -26,14 +26,6 @@ public class BinaryInst extends Instruction {
      */
     public BinaryInst (Type type, InstCategory tag, Value lOp, Value rOp) {
         super(type, tag, 2);
-        // Reassign type according to the "return type" of the instruction ?
-        if (this.isLogicalBinary()) {
-            this.type = IntegerType.getI1();
-        }
-        else if (this.isArithmeticBinary()) {
-            this.type = IntegerType.getI32();
-            // todo: float arithmetic binary operations
-        }
         // Add left and right operands.
         this.addOperandAt(lOp, 0);
         this.addOperandAt(rOp, 1);

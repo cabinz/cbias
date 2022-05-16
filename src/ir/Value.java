@@ -18,7 +18,7 @@ import java.util.LinkedList;
 public class Value {
 
     //<editor-fold desc="Fields">
-    public Type type;
+    public final Type type;
 
     /**
      * All values can potentially be named.
