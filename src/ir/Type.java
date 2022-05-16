@@ -9,7 +9,8 @@ import ir.types.PointerType;
  * <br>
  * The instances of the Type class are immutable: once they are created, they are never changed.
  * Only one instance of a particular type is ever created. To enforce this, all most all Type instances
- * exist in singleton fashion. (There are also exceptions like FunctionType and PointerType)
+ * exist in singleton fashion. (There are also exceptions like FunctionType and PointerType for
+ * the sake of implementation convenience)
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Type.h#L45">
  *     LLVM IR Type Source</a>
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h">
@@ -18,19 +19,6 @@ import ir.types.PointerType;
 public class Type {
 
     //<editor-fold desc="Innerclass">
-    /**
-     * Nested Class: Type for Value object with no type.
-     */
-    public static class NonType extends Type {
-        private static NonType type = new NonType();
-
-        private NonType() {}
-
-        public static NonType getType() {
-            return type;
-        }
-    }
-
     /**
      * Nested Class: Type for function returning void.
      */
@@ -69,10 +57,6 @@ public class Type {
     //</editor-fold>
 
     //<editor-fold desc="Methods">
-    public boolean isNonType() {
-        return (this instanceof NonType);
-    }
-
     public boolean isVoidType() {
         return (this instanceof VoidType);
     }
@@ -81,7 +65,7 @@ public class Type {
         return (this instanceof LabelType);
     }
 
-    public boolean FunctionType() {
+    public boolean isFunctionType() {
         return (this instanceof FunctionType);
     }
 
