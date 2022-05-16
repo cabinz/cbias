@@ -7,13 +7,18 @@ import ir.types.IntegerType;
 import ir.Type;
 import ir.types.PointerType;
 import ir.values.BasicBlock;
+import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.Instruction.InstCategory;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class Visitor extends SysYBaseVisitor<Void> {
     //<editor-fold desc="Fields">
@@ -36,12 +41,46 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
     public Visitor (IRBuilder builder) {
         this.builder = builder;
+        this.initRuntimeFunctions();
     }
 
     //</editor-fold>
 
 
     //<editor-fold desc="Methods">
+
+    /**
+     * Add declarations of the runtime library functions to symbol table
+     * whose definitions will be linked in after assembling.
+     * This method is called by constructor and can be called only once.
+     */
+    private void initRuntimeFunctions() {
+        ArrayList<Type> emptyArgTypeList = new ArrayList<>();
+        ArrayList<Type> intArgTypeList = new ArrayList<>(Collections.singletonList(IntegerType.getI32()));
+        // getint()
+        scope.addDecl("getint",
+                builder.buildFunction("getint", FunctionType.getType(
+                        IntegerType.getI32(), emptyArgTypeList
+                ), true)
+        );
+        // putint(i32)
+        scope.addDecl("putint",
+                builder.buildFunction("putint", FunctionType.getType(
+                        Type.VoidType.getType(), intArgTypeList
+                ), true)
+        );// getch()
+        scope.addDecl("getch",
+                builder.buildFunction("getch", FunctionType.getType(
+                        IntegerType.getI32(), emptyArgTypeList
+                ), true)
+        );
+        // putch(i32)
+        scope.addDecl("putch",
+                builder.buildFunction("putch", FunctionType.getType(
+                        Type.VoidType.getType(), intArgTypeList
+                ), true)
+        );
+    }
 
     /**
      * Get the current module from the builder inside.
@@ -101,8 +140,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         // Insert a function into the module and symbol table.
         FunctionType funcType = FunctionType.getType(retType, argTypes);
-        Function function = builder.buildFunction(funcName, funcType);
-        getModule().functions.add(function);
+        Function function = builder.buildFunction(funcName, funcType, false);
         scope.addDecl(funcName, function);
 
         // Insert a basic block. Then scope in.
@@ -483,5 +521,61 @@ public class Visitor extends SysYBaseVisitor<Void> {
         builder.buildStore(val, addr);
         return null;
     }
+
+    /**
+     * unaryExp : Identifier '(' (funcRParams)? ')'  # fcallUnaryExp
+     * -------------------------------------------------------------
+     * funcRParams : funcRParam (',' funcRParam)*
+     */
+    @Override
+    public Void visitFcallUnaryExp(SysYParser.FcallUnaryExpContext ctx) {
+        // The identifier needs to be previously defined as a function
+        // and in the symbol table.
+        String name = ctx.Identifier().getText();
+        Value func = scope.getValByName(name);
+        if (func == null) {
+            throw new RuntimeException("Undefined name: " + name + ".");
+        }
+        if (!(func.type instanceof FunctionType)) {
+            // todo: isType() should belong to Value other than Type
+            throw new RuntimeException(name + " is not a function and cannot be invoked.");
+        }
+
+        // If the function has argument(s) passed, retrieve them by visiting child(ren).
+        ArrayList<Value> args = new ArrayList<>();
+        if (ctx.funcRParams() != null) {
+            var argCtxs = ctx.funcRParams().funcRParam();
+            ArrayList<Type> argTypes = ((FunctionType)func.type).getArgTypes();
+            // Loop through both the lists of context and type simultaneously.
+            for (int i = 0; i < argCtxs.size(); i++) {
+                var argCtx = argCtxs.get(i);
+                Type typeArg = argTypes.get(i);
+                // Visit child RParam.
+                visit(argCtx);
+                // Add the argument Value retrieved by visiting to the container.
+                args.add(tmpVal);
+            }
+        }
+
+        // Build a Call instruction.
+        tmpVal = builder.buildCall((Function)func, args);
+
+        return null;
+    }
+
+    /**
+     * funcRParam
+     *     : expr    # exprRParam
+     *     | STRING  # strRParam
+     */
+    @Override
+    public Void visitStrRParam(SysYParser.StrRParamContext ctx) {
+        // todo: Cope with string function argument.
+        tmpVal = null;
+
+        return null;
+    }
+
+
     //</editor-fold>
 }
