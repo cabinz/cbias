@@ -2,13 +2,14 @@ package backend.armCode;
 
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
  * The MCBasicBlock is a sequential  ARM instruction.
  *
  */
-public class MCBasicBlock {
+public class MCBasicBlock implements Iterable<MCInstruction> {
 
     private static int count = 0;
 
@@ -29,6 +30,8 @@ public class MCBasicBlock {
     public void appendInstruction(MCInstruction inst) {instructionList.addLast(inst);}
 
     public void addPredecessor(MCBasicBlock BB) {predecessors.add(BB);}
+
+    public Iterator<MCInstruction> iterator() {return instructionList.iterator();}
     //</editor-fold>
 
 

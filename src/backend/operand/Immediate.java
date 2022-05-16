@@ -13,7 +13,7 @@ public class Immediate extends MCOperand {
     //</editor-fold>
 
 
-    //<editor-fold desc="Contructor">
+    //<editor-fold desc="Constructor">
     public Immediate(int intValue) {
         super(TYPE.IMM);
         this.intValue = intValue;

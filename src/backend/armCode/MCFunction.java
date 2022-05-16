@@ -3,12 +3,13 @@ package backend.armCode;
 import ir.values.BasicBlock;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
  * This class represents a function of ARM in memory.
  */
-public class MCFunction {
+public class MCFunction  implements Iterable<MCBasicBlock> {
 
     //<editor-fold desc="Fields">
     private LinkedList<MCBasicBlock> BasicBlockList;
@@ -42,13 +43,17 @@ public class MCFunction {
      */
     public void appendBB(MCBasicBlock BasicBlock) {BasicBlockList.add(BasicBlock);}
 
-
     /**
      * Used when declare a local variable
      * @param n the size of the variable
      */
     public void addStackSize(int n) {stackSize += n;}
 
+    /**
+     * Iterable implement
+     * @return Iterator<MCBasicBlock>
+     */
+    public Iterator<MCBasicBlock> iterator(){return BasicBlockList.iterator();}
 
     //</editor-fold>
 
