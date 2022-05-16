@@ -6,7 +6,7 @@ import backend.operand.Register;
 /**
  * This class represents all instructions of ARM in memory.
  */
-public class MCInstruction {
+public abstract class MCInstruction {
 
     public enum TYPE {
         ADD,
@@ -32,13 +32,17 @@ public class MCInstruction {
         PHI
     }
 
+
     //<editor-fold desc="Fields">
-    private TYPE type;
+    private final TYPE type;
     private MCBasicBlock belongingBasicBlock;
     private MCFunction belongingFunction;
     private Shift shift;
     private ConditionField cond;
     //</editor-fold>
+
+
+    abstract public String emit();
 
 
     //<editor-fold desc="Getter & Setter">
@@ -55,20 +59,26 @@ public class MCInstruction {
 
 
     //<editor-fold desc="Constructor">
-    public MCInstruction(TYPE type, MCBasicBlock BasicBlock, MCFunction function) {this.type=type; this.belongingBasicBlock =BasicBlock; this.belongingFunction=function;}
-    public MCInstruction(TYPE type, MCBasicBlock belongingBB, MCFunction belongingFunction, Shift shift, ConditionField cond) {
+    public MCInstruction(TYPE type, MCBasicBlock BasicBlock) {
+        this.type = type;
+        this.belongingBasicBlock = BasicBlock;
+        this.belongingFunction = BasicBlock.getBelongingFunction();
+    }
+    public MCInstruction(TYPE type, MCBasicBlock belongingBB, Shift shift, ConditionField cond) {
         this.type = type;
         this.belongingBasicBlock = belongingBB;
-        this.belongingFunction = belongingFunction;
+        this.belongingFunction = belongingBB.getBelongingFunction();
         this.shift = shift;
         this.cond = cond;
     }
     //</editor-fold>
 
+
     /**
      * This class represents the shift operation of the second operand in an instruction.
      */
     public static class Shift {
+
         public enum TYPE {
             NOPE,
             ASR,//算数右移
@@ -120,5 +130,6 @@ public class MCInstruction {
         }
 
         public TYPE type = TYPE.NOPE;
+
     }
 }

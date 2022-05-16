@@ -12,7 +12,7 @@ public class MCFunction {
 
     //<editor-fold desc="Fields">
     private LinkedList<MCBasicBlock> BasicBlockList;
-    private String name;
+    private final String name;
 
     private int stackSize;
     private boolean useLR;
@@ -26,6 +26,15 @@ public class MCFunction {
 
 
     //<editor-fold desc="Useful methods">
+
+    /**
+     * This method provides a way to build mapping between IR Basic Block and assemble Basic Block.
+     * @param BB IR Basic Block
+     * @param MCBB Assemble Basic Block
+     */
+    public void addMap(BasicBlock BB, MCBasicBlock MCBB) {
+        BBmap.put(BB, MCBB);
+    }
 
     /**
      * Append at the end of the BasicBlock list to a function.
@@ -45,9 +54,10 @@ public class MCFunction {
 
     //<editor-fold desc="Getter & Setter">
     public String getName() {return name;}
-    public void setName(String name) {this.name = name;}
 
     public int getStackSize() {return stackSize;}
+
+    public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
     //</editor-fold>
 
 

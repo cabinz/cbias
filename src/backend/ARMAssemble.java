@@ -9,7 +9,26 @@ import java.util.LinkedList;
  */
 public class ARMAssemble {
 
+    //<editor-fold desc="Fileds">
     private String architecture = "armv7";
     private LinkedList<MCFunction> functionList;
+    //</editor-fold>
 
+    public MCFunction createFunction(String name){
+        var function = new MCFunction(name);
+        functionList.add(function);
+        return function;
+    }
+
+    //<editor-fold desc="Getter & Setter">
+    public String getArchitecture() {return architecture;}
+
+    public LinkedList<MCFunction> getFunctionList() {return functionList;}
+    //</editor-fold>
+
+    //<editor-fold desc="Constructor">
+    public ARMAssemble(){
+        functionList = new LinkedList<>();
+    }
+    //</editor-fold>
 }

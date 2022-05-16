@@ -15,6 +15,7 @@ public class MCBasicBlock {
     //<editor-fold desc="Fields">
     private LinkedList<MCInstruction> instructionList;
     private String label;
+
     private MCFunction belongingFunction;
 
     private ArrayList<MCBasicBlock> predecessors;
