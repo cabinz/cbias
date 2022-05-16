@@ -30,12 +30,26 @@ import java.util.ArrayList;
 public class IRBuilder {
 
     //<editor-fold desc="Fields">
-    /*
-     Three current building pointers on different levels of the IR.
+
+    //<editor-fold desc="Three current building pointers for different levels of IR.">
+    /**
+     * The module currently being built.
+     * In our case with only a single compile unit to work on,
+     * this reference is in effect immutable.
      */
     private Module curMdl;
+
+    /**
+     * The function currently being built.
+     */
     private Function curFunc;
+
+    /**
+     * The basic block currently being built.
+     */
     private BasicBlock curBB;
+    //</editor-fold>
+
     //</editor-fold>
 
 
@@ -44,7 +58,7 @@ public class IRBuilder {
      * @param m The module to build on.
      */
     public IRBuilder(Module m) {
-        curMdl = m;
+        this.setCurModule(m);
     }
     //</editor-fold>
 
@@ -102,7 +116,7 @@ public class IRBuilder {
         // Add the function to the current module.
         getCurModule().functions.add(func);
         // Set the pointer.
-        curFunc = func;
+        this.setCurFunc(func);
         return func;
     }
 
@@ -115,7 +129,7 @@ public class IRBuilder {
         BasicBlock bb = new BasicBlock(bbName);
         curFunc.bbs.add(bb);
         // Set the pointer.
-        curBB = bb;
+        this.setCurBB(bb);
         return bb;
     }
 

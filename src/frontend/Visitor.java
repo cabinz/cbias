@@ -537,7 +537,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
             throw new RuntimeException("Undefined name: " + name + ".");
         }
         if (!func.type.isFunctionType()) {
-            // todo: isType() should belong to Value other than Type
             throw new RuntimeException(name + " is not a function and cannot be invoked.");
         }
 
