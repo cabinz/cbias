@@ -77,7 +77,7 @@ public class Function extends Value {
      * @param type FunctionType with a return type and a list of formal argument types
      * @param isExternal For functions in runtime lib, it should be true.
      */
-    public Function(Type type, boolean isExternal) {
+    public Function(FunctionType type, boolean isExternal) {
         super(type);
         this.isExternal = isExternal;
 
