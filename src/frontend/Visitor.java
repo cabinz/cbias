@@ -241,20 +241,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitIntConst(SysYParser.IntConstContext ctx) {
-        // If the final result is 0xffff (65535), there might be error
-        // causing all conditional assignments below to be missed.
-        int val = 0xffff;
+        int val;
 
-        // Integer in decimal format, parse directly.
+        // DecIntConst: Integer in decimal format, parse directly.
         if (ctx.DecIntConst() != null) {
             val = Integer.parseInt(ctx.DecIntConst().getText(), 10);
         }
-        // Integer in octal format, parse directly in radix of 8.
+        // OctIntConst: Integer in octal format, parse directly in radix of 8.
         else if (ctx.OctIntConst() != null) {
             val = Integer.parseInt(ctx.OctIntConst().getText(), 8);
         }
-        // Integer in hexadecimal format, drop the first two characters '0x'
-        else if (ctx.HexIntConst() != null) {
+        // HexIntConst: Integer in hexadecimal format, drop the first two characters '0x'
+        else {
             val = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
         }
 
