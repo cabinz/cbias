@@ -29,8 +29,7 @@ public class Driver{
         /* Intermediate code generation */
         // Initialized all the container and tools.
         Module module = new Module();
-        IRBuilder builder = new IRBuilder(module);
-        Visitor visitor = new Visitor(builder);
+        Visitor visitor = new Visitor(module);
         // Traversal the ast to build the IR.
         visitor.visit(ast);
 

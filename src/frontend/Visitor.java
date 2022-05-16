@@ -7,19 +7,20 @@ import ir.types.IntegerType;
 import ir.Type;
 import ir.types.PointerType;
 import ir.values.BasicBlock;
-import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.Instruction.InstCategory;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
+/**
+ * Visitor can be regarded as a tiny construction worker traveling
+ * on the parse tree, using his tools (Builder and Scope) to build
+ * in-memory IR constructs one by one during the traversal :D
+ */
 public class Visitor extends SysYBaseVisitor<Void> {
     //<editor-fold desc="Fields">
 
@@ -39,8 +40,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
     //<editor-fold desc="Constructors">
 
-    public Visitor (IRBuilder builder) {
-        this.builder = builder;
+    public Visitor (Module module) {
+        builder = new IRBuilder(module);
         this.initRuntimeFunctions();
     }
 
