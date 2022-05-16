@@ -12,6 +12,8 @@ import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
+import java.util.ArrayList;
+
 /**
  * An IRBuilder object maintains one building process of the IR.
  * <br>
@@ -93,9 +95,11 @@ public class IRBuilder {
      * @param type Value type.
      * @return Reference of the function created and inserted.
      */
-    public Function buildFunction(String name, FunctionType type) {
-        Function func = new Function(type);
+    public Function buildFunction(String name, FunctionType type, boolean isExternal) {
+        Function func = new Function(type, isExternal);
         func.name = name;
+        // Add the function to the current module.
+        getCurModule().functions.add(func);
         // Set the pointer.
         curFunc = func;
         return func;
@@ -135,6 +139,21 @@ public class IRBuilder {
         TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal);
         getCurBB().instructions.add(ret);
         return ret;
+    }
+
+    /**
+     * Insert a Call terminator invoking a given function with given list of arguments
+     * at the end of current basic block.
+     * The new basic block will not be automatically created by this method and
+     * needs to be manually built and managed by the user.
+     * @param func Function Value carrying information about return type and FORMAL arguments.
+     * @param args The ACTUAL arguments to be referenced by the Call.
+     * @return
+     */
+    public TerminatorInst.Call buildCall(Function func, ArrayList<Value> args) {
+        TerminatorInst.Call call = new TerminatorInst.Call(func, args);
+        getCurBB().instructions.add(call);
+        return call;
     }
 
     /**
