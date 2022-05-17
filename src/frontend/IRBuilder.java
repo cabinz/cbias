@@ -13,6 +13,7 @@ import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
+import javax.sql.rowset.BaseRowSet;
 import java.util.ArrayList;
 
 /**
@@ -154,6 +155,30 @@ public class IRBuilder {
         TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal);
         getCurBB().insertAtEnd(ret);
         return ret;
+    }
+
+    /**
+     * Insert a conditional branching instruction at the end of current basic block.
+     * @param cond The condition.
+     * @param trueBlk The basic block to jump to when condition is true.
+     * @param falseBlk The basic block to jump to when condition is false.
+     * @return The conditional branching inserted.
+     */
+    public TerminatorInst.Br buildBr(Value cond, BasicBlock trueBlk, BasicBlock falseBlk) {
+        TerminatorInst.Br condBr = new TerminatorInst.Br(cond, trueBlk, falseBlk);
+        getCurBB().insertAtEnd(condBr);
+        return condBr;
+    }
+
+    /**
+     * Insert an unconditional branching instruction at the end of current basic block.
+     * @param blk The basic block to jump to.
+     * @return The unconditional branching inserted.
+     */
+    public TerminatorInst.Br buildBr(BasicBlock blk) {
+        TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk);
+        getCurBB().insertAtEnd(uncondBr);
+        return uncondBr;
     }
 
     /**
