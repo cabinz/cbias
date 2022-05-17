@@ -32,13 +32,26 @@ public abstract class MCInstruction {
         PHI
     }
 
+    /**
+     * The instance of this class represents the condition field of an instruction in ARM.
+     */
+    public enum ConditionField {
+        NOPE,
+        EQ,
+        NE,
+        GE,
+        GT,
+        LE,
+        LT
+    }
+
 
     //<editor-fold desc="Fields">
     private final TYPE type;
+    private ConditionField cond;
     private MCBasicBlock belongingBasicBlock;
     private MCFunction belongingFunction;
     private Shift shift;
-    private ConditionField cond;
     //</editor-fold>
 
 
@@ -111,25 +124,6 @@ public abstract class MCInstruction {
         public Shift(TYPE type, int imm) {this.type = type; this.immediate = imm;}
         public Shift(TYPE type, Register reg) {this.type = type; this.register = reg;}
         //</editor-fold>
-
-    }
-
-    /**
-     * This class represents the condition field of each instruction in ARM.
-     */
-    public static class ConditionField {
-
-        public enum TYPE {
-            NOPE,
-            EQ,
-            NE,
-            GE,
-            GT,
-            LE,
-            LT
-        }
-
-        public TYPE type = TYPE.NOPE;
 
     }
 }

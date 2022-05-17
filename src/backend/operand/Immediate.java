@@ -13,6 +13,11 @@ public class Immediate extends MCOperand {
     //</editor-fold>
 
 
+    public String emit() {
+        return "#" + Integer.toString(intValue);
+    }
+
+
     //<editor-fold desc="Constructor">
     public Immediate(int intValue) {
         super(TYPE.IMM);

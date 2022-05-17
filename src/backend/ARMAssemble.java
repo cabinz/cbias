@@ -1,7 +1,9 @@
 package backend;
 
 import backend.armCode.MCFunction;
+import ir.values.Function;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -12,13 +14,27 @@ public class ARMAssemble {
     //<editor-fold desc="Fields">
     private String architecture = "armv7";
     private LinkedList<MCFunction> functionList;
+    private HashMap<Function, MCFunction> functionMap;
     //</editor-fold>
 
-    public MCFunction createFunction(String name){
-        var function = new MCFunction(name);
-        functionList.add(function);
-        return function;
+    /**
+     * Create a Function in the assembly while return the corresponding MC Function.
+     * @param IRf the IR Function to be created
+     * @return the corresponding MC Function
+     */
+    public MCFunction createFunction(Function IRf){
+        var MCf = new MCFunction(IRf.name);
+        functionList.add(MCf);
+        functionMap.put(IRf, MCf);
+        return MCf;
     }
+
+    /**
+     * Find the corresponding MC Function of an IR Function
+     * @param IRf the IR Function to search
+     * @return the corresponding MC Function to find
+     */
+    public MCFunction findMapFunc(Function IRf) {return functionMap.get(IRf);}
 
     //<editor-fold desc="Getter & Setter">
     public String getArchitecture() {return architecture;}
@@ -29,6 +45,7 @@ public class ARMAssemble {
     //<editor-fold desc="Constructor">
     public ARMAssemble(){
         functionList = new LinkedList<>();
+        functionMap = new HashMap<>();
     }
     //</editor-fold>
 }

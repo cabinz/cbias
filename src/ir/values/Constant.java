@@ -49,6 +49,11 @@ public class Constant extends User {
         //</editor-fold>
 
 
+        //<editor-fold desc="Getter & Setter">
+        public int getVal() {return val;}
+        //</editor-fold>
+
+
         //<editor-fold desc="Constructors">
         private ConstInt(Type type, int val) {
             super(type);

@@ -29,19 +29,22 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
     //<editor-fold desc="Useful methods">
 
     /**
-     * This method provides a way to build mapping between IR Basic Block and assemble Basic Block.
-     * @param BB IR Basic Block
-     * @param MCBB Assemble Basic Block
+     * Append at the end of the BasicBlock list to a function.
+     * @param IRBB the BasicBlock to be appended
      */
-    public void addMap(BasicBlock BB, MCBasicBlock MCBB) {
-        BBmap.put(BB, MCBB);
+    public MCBasicBlock createBB(BasicBlock IRBB) {
+        MCBasicBlock MCBB = new MCBasicBlock(this);
+        BasicBlockList.add(MCBB);
+        BBmap.put(IRBB, MCBB);
+        return MCBB;
     }
 
     /**
-     * Append at the end of the BasicBlock list to a function.
-     * @param BasicBlock the BasicBlock to be appended
+     * Find the corresponding MC BasicBlock of an IR BasicBlock
+     * @param IRBB the IR BasicBlock to search
+     * @return the corresponding MC BasicBlock to find
      */
-    public void appendBB(MCBasicBlock BasicBlock) {BasicBlockList.add(BasicBlock);}
+    public MCBasicBlock findMapBB(BasicBlock IRBB) {return BBmap.get(IRBB);}
 
     /**
      * Used when declare a local variable
@@ -71,6 +74,7 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
         this.name = name;
         stackSize = 0;
         BasicBlockList = new LinkedList<MCBasicBlock>();
+        BBmap = new HashMap<>();
 //        argList = new LinkedList<MCOperand>();
     }
     //</editor-fold>

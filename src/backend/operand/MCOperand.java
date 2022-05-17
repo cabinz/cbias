@@ -14,4 +14,6 @@ public abstract class MCOperand {
     TYPE type;
 
     public MCOperand(TYPE type) {this.type = type;}
+
+    abstract public String emit();
 }

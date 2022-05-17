@@ -60,7 +60,7 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     public MCBasicBlock(MCFunction belongingFunction) {
         this.belongingFunction = belongingFunction;
         instructionList = new LinkedList<MCInstruction>();
-        label = ".BLOCK_" + count;
+        label = "BLOCK_" + count;
         count++;
     }
     //</editor-fold>
