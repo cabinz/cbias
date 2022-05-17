@@ -74,15 +74,14 @@ blockItem
     ;
 
 stmt
-    : lVal '=' expr ';'                   # assignStmt
-    | (expr)? ';'                         # exprStmt
-    | block                               # blkStmt
-    | 'if' '(' cond ')' stmt              # ifStmt
-    | 'if' '(' cond ')' stmt 'else' stmt  # ifElseStmt
-    | 'while' '(' cond ')' stmt           # whileStmt
-    | 'break' ';'                         # breakStmt
-    | 'continue' ';'                      # contStmt
-    | 'return' (expr)? ';'                # retStmt
+    : lVal '=' expr ';'                     # assignStmt
+    | (expr)? ';'                           # exprStmt
+    | block                                 # blkStmt
+    | 'if' '(' cond ')' stmt ('else' stmt)? # condStmt
+    | 'while' '(' cond ')' stmt             # whileStmt
+    | 'break' ';'                           # breakStmt
+    | 'continue' ';'                        # contStmt
+    | 'return' (expr)? ';'                  # retStmt
     ;
 
 expr

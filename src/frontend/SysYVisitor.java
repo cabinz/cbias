@@ -162,19 +162,12 @@ public interface SysYVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBlkStmt(SysYParser.BlkStmtContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code ifStmt}
+	 * Visit a parse tree produced by the {@code condStmt}
 	 * labeled alternative in {@link SysYParser#stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIfStmt(SysYParser.IfStmtContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code ifElseStmt}
-	 * labeled alternative in {@link SysYParser#stmt}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIfElseStmt(SysYParser.IfElseStmtContext ctx);
+	T visitCondStmt(SysYParser.CondStmtContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code whileStmt}
 	 * labeled alternative in {@link SysYParser#stmt}.
