@@ -5,7 +5,7 @@ import ir.Type;
 /**
  * Class to represent integer types, including the built-in integer types: i1 and i32.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h#L40">
- *     LLVM IR Reference</a>
+ *     LLVM LangRef: Integer Type</a>
  */
 public class IntegerType extends Type {
 

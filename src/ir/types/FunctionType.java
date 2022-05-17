@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * FunctionType. But for convenience, FunctionType is implemented in ordinary class
  * fashion without singleton / factory method strategies.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h#L102">
- *     LLVM IR Source</a>
+ *     LLVM IR Source: FunctionType</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#function-type">
  *     LLVM LangRef: Function Type</a>
  */

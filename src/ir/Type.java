@@ -11,16 +11,30 @@ import ir.types.PointerType;
  * Only one instance of a particular type is ever created. To enforce this, all most all Type instances
  * exist in singleton fashion. (There are also exceptions like FunctionType and PointerType for
  * the sake of implementation convenience)
+ * <br>
+ * In the case of SysY needed only a subset of LLVM IR type system, we categorize Types as below:
+ * <ul>
+ *     <li>Primitive Types: VoidType, IntegerType, FloatType, LabelType</li>
+ *     <li>Composed Types: PointerType, FunctionType</li>
+ * </ul>
+ * However, the concepts of "First Class Types" and "Single Value Types" in LLVM Language Reference
+ * are still useful for understanding the type system.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Type.h#L45">
- *     LLVM IR Type Source</a>
+ *     LLVM IR Source: Type</a>
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h">
- *     LLVM IR Derived Types Source</a>
+ *     LLVM IR Source: Derived Types</a>
+ * @see <a href="https://llvm.org/docs/LangRef.html#type-system">
+ *     LLVM LangRef: Type System</a>
  */
 public class Type {
 
     //<editor-fold desc="Innerclass">
     /**
-     * Nested Class: Type for function returning void.
+     * Nested Class: The void type does not represent any value and has no size.
+     * e.g. Functions returning void has VoidType,
+     * Instructions yielding no result has VoidType.
+     * @see <a href="https://llvm.org/docs/LangRef.html#void-type">
+     *     LLVM LangRef: Void Type</a>
      */
     public static class VoidType extends Type {
         private static VoidType type = new VoidType();
@@ -38,7 +52,10 @@ public class Type {
     }
 
     /**
-     * Type for BasicBlock.
+     * The label type represents code labels.
+     * Basically it's a type dedicated to BasicBlock.
+     * @see <a href="https://llvm.org/docs/LangRef.html#label-type">
+     *     LLVM LangRef: Label Type</a>
      */
     public static class LabelType extends Type {
         public static LabelType type = new LabelType();
@@ -55,6 +72,7 @@ public class Type {
         }
     }
     //</editor-fold>
+
 
     //<editor-fold desc="Methods">
     public boolean isVoidType() {
