@@ -33,21 +33,21 @@ public class MCEmitter {
     public void emitTo(ARMAssemble target, String outputPath) throws IOException {
         /* header */
         StringBuilder strBd = new StringBuilder();
-        strBd.append(".arch " + target.getArchitecture() + '\n');
-        strBd.append("\n\n\n");
-        strBd.append(".text\n");
-        strBd.append("\n\n");
+        strBd.append("\t.arch " + target.getArchitecture() + '\n');
+        strBd.append("\n");
+        strBd.append("\t.text\n");
+        strBd.append("\n");
 
         /* handle each function */
         for (MCFunction f : target.getFunctionList()) {
-            strBd.append(".global " + f.getName() + '\n');
+            strBd.append("\t.global " + f.getName() + '\n');
             strBd.append(f.getName() + ":\n");
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
                 strBd.append("." + bb.getName() + ":\n");
                 /* handle each instruction */
                 for (MCInstruction mcInstruction : bb) {
-                    strBd.append(mcInstruction.emit());
+                    strBd.append('\t' + mcInstruction.emit() + '\n');
                 }
             }
             strBd.append("\n\n");

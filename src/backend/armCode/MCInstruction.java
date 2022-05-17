@@ -47,7 +47,7 @@ public abstract class MCInstruction {
 
 
     //<editor-fold desc="Fields">
-    private final TYPE type;
+    protected final TYPE type;
     private ConditionField cond;
     private MCBasicBlock belongingBasicBlock;
     private MCFunction belongingFunction;
