@@ -3,6 +3,7 @@ package ir.values.instructions;
 import ir.Value;
 import ir.Type;
 import ir.types.FunctionType;
+import ir.values.BasicBlock;
 import ir.values.Function;
 import ir.values.Instruction;
 
@@ -121,6 +122,70 @@ public class TerminatorInst {
             } else {
                 strBuilder.append("void");
             }
+            return strBuilder.toString();
+        }
+        //</editor-fold>
+    }
+
+
+    /**
+     * A Br terminator causes control flow to transfer to a different basic block in the current function.
+     * <br>
+     * Br has two forms:
+     * <ul>
+     *     <li>Conditional Branch: has 3 operands (1 conditional variable i1, 2 destination Basic Blocks)</li>
+     *     <li>Unconditional Branch: has 1 operands (of the destination label)</li>
+     * </ul>
+     * Type for Br is LabelType (referenced by a destination BasicBlock).
+     * @see <a href="https://llvm.org/docs/LangRef.html#br-instruction">
+     *     LLVM LangRef: 'br' Instruction</a>
+     */
+    public static class Br extends Instruction {
+
+        //<editor-fold desc="Constructors">
+        /**
+         * Constructor for a conditional branching instruction.
+         * @param cond The condition.
+         * @param trueBlk The basic block to jump to when condition is true.
+         * @param falseBlk The basic block to jump to when condition is false.
+         */
+        public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk) {
+            // todo: Encapsulate numOperands to be a automatically increased counter.
+            super(Type.LabelType.getType(), InstCategory.BR, 3);
+            // todo: Type of Br should be VoidType or LabelType?
+            this.hasResult = false;
+            this.addOperandAt(cond, 0);
+            this.addOperandAt(trueBlk, 1);
+            this.addOperandAt(falseBlk, 2);
+        }
+
+        /**
+         * Constructor for an unconditional branching instruction.
+         * @param blk The basic block to jump to.
+         */
+        public Br(BasicBlock blk) {
+            super(Type.LabelType.getType(), InstCategory.BR, 1);
+            this.hasResult = false;
+            this.addOperandAt(blk, 0);
+        }
+        //</editor-fold>
+
+
+        //<editor-fold desc="Methods">
+        @Override
+        public String toString() {
+            StringBuilder strBuilder = new StringBuilder();
+            strBuilder.append("br ");
+            // Print operands.
+            for(int i = 0; i < this.getNumOperands(); i++) {
+                Value opr = getOperandAt(i);
+                strBuilder.append(opr.type).append(" ").append(opr.name);
+                // The last operand need no comma following it.
+                if (i != this.getNumOperands() - 1) {
+                    strBuilder.append(", ");
+                }
+            }
+
             return strBuilder.toString();
         }
         //</editor-fold>
