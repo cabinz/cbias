@@ -35,8 +35,8 @@ public class Driver{
 
         /* Emit the IR text to an output file for testing. */
         IREmitter emitter = new IREmitter(
-                // "test.sy" -> "test-out.ir"
-                String.format("%s-out.ir", config.source.replace(".sy", ""))
+                // "test.sy" -> "test.ll"
+                config.source.replace(".sy", ".ll")
         );
         emitter.emit(module);
 
