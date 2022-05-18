@@ -12,6 +12,7 @@ import ir.values.Instruction;
 import ir.values.Instruction.InstCategory;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
+import ir.values.instructions.TerminatorInst;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -229,6 +230,162 @@ public class Visitor extends SysYBaseVisitor<Void> {
         else {
             builder.buildRet();
         }
+        return null;
+    }
+
+    /**
+     * stmt : 'if' '(' cond ')' stmt ('else' stmt)? # condStmt
+     * --------------------------------------------------------
+     * cond : lOrExp
+     */
+    @Override
+    public Void visitCondStmt(SysYParser.CondStmtContext ctx) {
+        BasicBlock entryBlk = builder.getCurBB();
+
+        /*
+        Cope with condition expression by visiting child cond.
+         */
+        visit(ctx.cond());
+        Value cond = tmpVal; // for use of adding Br terminators.
+
+        /*
+        Build a block for jumping if condition is true.
+        Fill it by visiting child (the 1st stmt, the true branch).
+         */
+        BasicBlock trueBlk = builder.buildBB("_THEN");
+        visit(ctx.stmt(0));
+        boolean trueBlkEndWithRet = trueBlk.getLastInst() instanceof TerminatorInst.Ret;
+
+        /*
+        If there is the 2nd stmt, it means it's an IF-ELSE statement.
+        Build a block for jumping if condition is false, and fill it by visiting child.
+        Otherwise, it's an IF statement (w/o following ELSE).
+         */
+        BasicBlock falseBlk = null;
+        boolean falseBlkEndWithRet = false;
+        if (ctx.stmt(1) != null) {
+            falseBlk = builder.buildBB("_ELSE");
+            visit(ctx.stmt(1));
+            falseBlkEndWithRet = falseBlk.getLastInst() instanceof TerminatorInst.Ret;
+        }
+
+        /*
+        Add Br terminator for trueBlock and falseBlock if needed.
+         */
+        BasicBlock exitBlk = null;
+        if (!trueBlkEndWithRet || !falseBlkEndWithRet) {
+            // The exit block will be built when:
+            // "!trueBlkEndWithRet && !falseBlkEndWithRet" (under IF-ELSE)
+            // or "!trueBlkEndWithRet && no falseBlock" (i.e. IF w/o ELSE)
+            exitBlk = builder.buildBB("_EXIT");
+            if (!trueBlkEndWithRet) {
+                builder.setCurBB(trueBlk);
+                builder.buildBr(exitBlk);
+            }
+            if (falseBlk != null && !falseBlkEndWithRet) {
+                builder.setCurBB(falseBlk);
+                builder.buildBr(exitBlk);
+            }
+        }
+
+        /*
+        Add Br terminator for the entryBlock.
+         */
+        builder.setCurBB(entryBlk);
+        // IF-ELSE
+        if (falseBlk != null) {
+            builder.buildBr(cond, trueBlk, falseBlk);
+        }
+        // IF
+        else {
+            builder.buildBr(cond, trueBlk, exitBlk);
+        }
+
+        /*
+        If there is an exit block (having more content below),
+        set BB pointer to the exit and go ahead.
+         */
+        if (exitBlk != null) {
+            builder.setCurBB(exitBlk);
+        }
+
+        return null;
+    }
+
+//    /**
+//     * lOrExp : lAndExp ('||' lAndExp)*
+//     * ---------------------------------
+//     * cond : lOrExp
+//     */
+//    @Override
+//    public Void visitLOrExp(SysYParser.LOrExpContext ctx) {
+//        // todo:
+//
+//        return null;
+//    }
+
+    /**
+     * eqExp : relExp (('==' | '!=') relExp)*
+     * --------------------------------------------------
+     * relExp : addExp (('<' | '>' | '<=' | '>=') addExp)*
+     * <br>
+     * For "rel1 == rel2 == rel3", the executing order is
+     * "(rel1 == rel2) === rel3"
+     */
+    @Override
+    public Void visitEqExp(SysYParser.EqExpContext ctx) {
+        // Retrieve left operand by visiting child.
+        visit(ctx.relExp(0));
+        Value lOp = tmpVal;
+
+        for (int i = 1; i < ctx.relExp().size(); i++) {
+            // Retrieve the next relExp as the right operand by visiting child.
+            visit(ctx.relExp(i));
+            Value rOp = tmpVal;
+            // Build a comparison instruction, which yields a result
+            // to be the left operand for the next round.
+            switch (ctx.getChild(2 * i - 1).getText()) {
+                case "==" -> lOp = builder.buildBinary(InstCategory.EQ, lOp, rOp);
+                case "!=" -> lOp = builder.buildBinary(InstCategory.NE, lOp, rOp);
+                default -> {}
+            }
+        }
+        // The final result is stored in the last left operand.
+        tmpVal = lOp;
+
+        return null;
+    }
+
+    /**
+     * relExp : addExp (('<' | '>' | '<=' | '>=') addExp)*
+     * ----------------------------------------------------------
+     * <br>
+     * For "addExp1 < addExp2 >= addExp3", the executing order is
+     * "(rel1 < rel2) >= rel3"
+     */
+    @Override
+    public Void visitRelExp(SysYParser.RelExpContext ctx) {
+        // Retrieve left operand by visiting child.
+        visit(ctx.addExp(0));
+        Value lOp = tmpVal;
+
+        for (int i = 1; i < ctx.addExp().size(); i++) {
+            // Retrieve the next addExp as the right operand by visiting child.
+            visit(ctx.addExp(i));
+            Value rOp = tmpVal;
+            // Build a comparison instruction, which yields a result
+            // to be the left operand for the next round.
+            switch (ctx.getChild(2 * i - 1).getText()) {
+                case "<=" -> lOp = builder.buildBinary(InstCategory.LE, lOp, rOp);
+                case ">=" -> lOp = builder.buildBinary(InstCategory.GE, lOp, rOp);
+                case "<" -> lOp = builder.buildBinary(InstCategory.LT, lOp, rOp);
+                case ">" -> lOp = builder.buildBinary(InstCategory.GT, lOp, rOp);
+                default -> {}
+            }
+        }
+        // The final result is stored in the last left operand.
+        tmpVal = lOp;
+
         return null;
     }
 
@@ -572,7 +729,5 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         return null;
     }
-
-
     //</editor-fold>
 }
