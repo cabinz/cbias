@@ -179,7 +179,7 @@ public class TerminatorInst {
             // Print operands.
             for(int i = 0; i < this.getNumOperands(); i++) {
                 Value opr = getOperandAt(i);
-                strBuilder.append(opr.type).append(" ").append(opr.name);
+                strBuilder.append(opr.type).append(" %").append(opr.name);
                 // The last operand need no comma following it.
                 if (i != this.getNumOperands() - 1) {
                     strBuilder.append(", ");

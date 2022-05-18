@@ -59,7 +59,7 @@ public class IREmitter {
                 // Assign names (Lx) for each basic block in the function,
                 // and each instruction yielding results (%x) in basic blocks.
                 for (BasicBlock bb : func.bbs) {
-                    bb.name = "L" + getNewName();
+                    bb.name = getNewName();
                     for (Instruction inst : bb.instructions) {
                         if (inst.hasResult) {
                             inst.name = "%" + getNewName();
@@ -100,11 +100,17 @@ public class IREmitter {
                         .append("{\n");
                 // Body of a function: basic blocks in it.
                 for (BasicBlock bb : func.bbs) {
-                    // todo: emit the entry of a basic block
+                    // Emit label of the block if it's not the first block.
+                    if (!func.bbs.get(0).equals(bb)) {
+                        strBuilder.append(bb.name).append(":\n");
+                    }
+                    // Content (instructions) in the block.
                     for (Instruction inst : bb) {
                         strBuilder.append(inst.toString())
                                 .append("\n");
                     }
+//                    // FOR DEBUG
+//                    strBuilder.append("; END OF BB").append(bb.name).append("\n\n");
                 }
                 // Tail of a function: A right bracket to close it.
                 strBuilder.append("}\n");
