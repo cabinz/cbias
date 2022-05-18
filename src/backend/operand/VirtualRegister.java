@@ -10,6 +10,7 @@ public class VirtualRegister extends Register{
      * This field represents the IR value stored in.
      */
     private Value value;
+    private int intValue;
 
     @Override
     public String getName() {return Integer.toString(name);}
@@ -20,5 +21,11 @@ public class VirtualRegister extends Register{
         super(TYPE.VTR);
         this.name = name;
         this.value = value;
+    }
+
+    public VirtualRegister(int name, int intValue) {
+        super(TYPE.VTR);
+        this.name = name;
+        this.intValue = intValue;
     }
 }

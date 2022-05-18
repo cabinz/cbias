@@ -15,6 +15,6 @@ public class MCBinary extends MCInstruction {
         return type.name() + ' ' + destination.emit() + ", " + operand1.emit() + ", " + operand2.emit();
     }
 
-    public MCBinary(TYPE type, MCBasicBlock BasicBlock, Register destination, MCOperand operand1, MCOperand operand2) {super(type, BasicBlock);this.destination = destination;this.operand1 = operand1;this.operand2 = operand2;}
-    public MCBinary(TYPE type, MCBasicBlock belongingBB, Register destination, MCOperand operand1, MCOperand operand2, Shift shift, ConditionField cond) {super(type, belongingBB, shift, cond);this.operand1 = operand1;this.operand2 = operand2;this.destination = destination;}
+    public MCBinary(TYPE type, Register destination, MCOperand operand1, MCOperand operand2) {super(type);this.destination = destination;this.operand1 = operand1;this.operand2 = operand2;}
+    public MCBinary(TYPE type, Register destination, MCOperand operand1, MCOperand operand2, Shift shift, ConditionField cond) {super(type, shift, cond);this.operand1 = operand1;this.operand2 = operand2;this.destination = destination;}
 }

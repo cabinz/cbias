@@ -1,18 +1,18 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCBasicBlock;
 import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
+import backend.operand.Register;
 
 public class MCmov extends MCInstruction {
 
-    private MCOperand operand1;
-    private MCOperand operand2;
+    private Register dst;
+    private MCOperand src;
 
     public String emit(){
-        return "MOV " + operand1.emit() + ", " + operand2.emit();
+        return "MOV " + dst.emit() + ", " + src.emit();
     }
 
-    public MCmov(MCBasicBlock BasicBlock, MCOperand operand1, MCOperand operand2) {super(TYPE.MOV, BasicBlock); this.operand1 = operand1; this.operand2 = operand2;}
-    public MCmov(MCBasicBlock belongingBB, MCOperand operand1, MCOperand operand2, Shift shift, ConditionField cond) {super(TYPE.MOV, belongingBB, shift, cond); this.operand1 = operand1; this.operand2 = operand2;}
+    public MCmov(Register dst, MCOperand src) {super(TYPE.MOV); this.dst = dst; this.src = src;}
+    public MCmov(Register dst, MCOperand src, Shift shift, ConditionField cond) {super(TYPE.MOV, shift, cond); this.dst = dst; this.src = src;}
 }

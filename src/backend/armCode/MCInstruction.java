@@ -51,7 +51,7 @@ public abstract class MCInstruction {
     private ConditionField cond;
     private MCBasicBlock belongingBasicBlock;
     private MCFunction belongingFunction;
-    private Shift shift;
+    protected Shift shift;
     //</editor-fold>
 
 
@@ -72,15 +72,11 @@ public abstract class MCInstruction {
 
 
     //<editor-fold desc="Constructor">
-    public MCInstruction(TYPE type, MCBasicBlock BasicBlock) {
+    public MCInstruction(TYPE type) {
         this.type = type;
-        this.belongingBasicBlock = BasicBlock;
-        this.belongingFunction = BasicBlock.getBelongingFunction();
     }
-    public MCInstruction(TYPE type, MCBasicBlock belongingBB, Shift shift, ConditionField cond) {
+    public MCInstruction(TYPE type, Shift shift, ConditionField cond) {
         this.type = type;
-        this.belongingBasicBlock = belongingBB;
-        this.belongingFunction = belongingBB.getBelongingFunction();
         this.shift = shift;
         this.cond = cond;
     }
@@ -120,7 +116,6 @@ public abstract class MCInstruction {
 
 
         //<editor-fold desc="Constructor">
-        public Shift() {this.type = TYPE.NOPE;};
         public Shift(TYPE type, int imm) {this.type = type; this.immediate = imm;}
         public Shift(TYPE type, Register reg) {this.type = type; this.register = reg;}
         //</editor-fold>

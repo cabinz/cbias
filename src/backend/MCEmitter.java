@@ -53,6 +53,8 @@ public class MCEmitter {
             strBd.append("\n\n");
         }
 
+        strBd.append("\t.end");
+
         /* write to the file */
         FileWriter fw = new FileWriter(outputPath);
         fw.append(strBd);

@@ -4,6 +4,8 @@ import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.MCBinary;
+import backend.armCode.MCInstructions.MCstore;
+import backend.armCode.MCInstructions.MCload;
 import backend.armCode.MCInstructions.MCmov;
 import backend.operand.*;
 import ir.Module;
@@ -89,43 +91,50 @@ public class MCBuilder {
      */
     private void mapFunction(Module IRModule, ARMAssemble target) {
         for (Function IRfunc : IRModule.functions) {
+            if (IRfunc.isExternal()) continue;
             MCFunction MCfunc = target.createFunction(IRfunc);
             // TODO: 改成BFS
             for (BasicBlock IRBB : IRfunc.bbs){
                 MCBasicBlock MCBB = MCfunc.createBB(IRBB);
                 for (Instruction IRinst : IRBB) {
-                    MCInstruction MCinst = translate(IRinst, MCBB, MCfunc);
-                    MCBB.appendInstruction(MCinst);
+                    System.out.println(IRinst.toString());
+                    translate(IRinst, MCBB, MCfunc);
                 }
             }
         }
     }
 
     /**
-     * 指令选择
+     * 指令选择总模块
      * @param IRinst IR instruction to be translated
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
      * @param MCfunc The MC Function where the IR instruction belongs to
-     * @return return the corresponding assembly instruction
      */
-    private MCInstruction translate(Instruction IRinst, MCBasicBlock MCBB, MCFunction MCfunc) {
+    private void translate(Instruction IRinst, MCBasicBlock MCBB, MCFunction MCfunc) {
         if (IRinst.isRet()) {
-            return translateRet(IRinst, MCBB);
+            translateRet(IRinst, MCBB);
         }
         else if (IRinst.isAdd()) {
-            return translateAdd(IRinst, MCBB);
+            translateBinary(IRinst, MCBB, MCInstruction.TYPE.ADD);
         }
         else if (IRinst.isSub()) {
-            return translateSub(IRinst, MCBB);
+            translateBinary(IRinst, MCBB, MCInstruction.TYPE.SUB);
         }
         else if (IRinst.isMul()) {
-            return translateMul(IRinst, MCBB);
+            translateBinary(IRinst, MCBB, MCInstruction.TYPE.MUL);
         }
         else if (IRinst.isDiv()) {
-            return translateDiv(IRinst, MCBB);
+            translateBinary(IRinst, MCBB, MCInstruction.TYPE.DIV);
         }
-        else
-            return null;
+        else if (IRinst.isAlloca()) {
+            translateAlloca(IRinst, MCBB);
+        }
+        else if (IRinst.isStore()) {
+            translateStore(IRinst, MCBB);
+        }
+        else if (IRinst.isLoad()) {
+            translateLoad(IRinst, MCBB);
+        }
     }
 
     /**
@@ -135,10 +144,16 @@ public class MCBuilder {
      * @param value the value to handle
      * @return the corresponding operand
      */
-    private MCOperand findContainer(Value value) {
+    private MCOperand findContainer(Value value, boolean forceAllocReg) {
         // TODO: 识别立即数大小
         if (value instanceof Constant.ConstInt) {
-            return new Immediate(((Constant.ConstInt) value).getVal());
+            if (forceAllocReg) {
+                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+                valueMap.put(value, vr);
+                return vr;
+            }
+            else
+                return new Immediate(((Constant.ConstInt) value).getVal());
         }
         else if (value instanceof Instruction) {
             if (valueMap.containsKey(value)) {
@@ -154,70 +169,75 @@ public class MCBuilder {
             return null;
     }
 
-    private MCInstruction translateRet(Instruction IRinst, MCBasicBlock MCBB) {
-        return new MCmov(MCBB, RealRegister.get(0), findContainer(IRinst.getOperandAt(0)));
+    private void translateRet(Instruction IRinst, MCBasicBlock MCBB) {
+        MCBB.appendInstruction(new MCmov(RealRegister.get(0), findContainer(IRinst.getOperandAt(0), false)));
     }
 
-    private MCInstruction translateAdd(Instruction IRinst, MCBasicBlock MCBB) {
-        MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
-        MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
+    /**
+     * Translate the IR alloca instruction into ARM. <br/>
+     * IR Alloca will be translated into "sp := sp - 4" and "MOV Vreg, sp".<br/>
+     * To be optimized later....
+     */
+    private void translateAlloca(Instruction IRinst, MCBasicBlock MCBB) {
+        // TODO: 改成寻址方式
+        MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), new Immediate(4)));
+        MCBB.appendInstruction(new MCmov((Register) findContainer(IRinst, false), RealRegister.get(13)));
+    }
+
+    /**
+     * Translate the IR store instruction into ARM. <br/>
+     * NOTE: The first operand must be a REGISTER!!
+     * @param IRinst IR instruction to be translated
+     * @param MCBB The MC BasicBlock where the IR instruction belongs to
+     */
+    private void translateStore(Instruction IRinst, MCBasicBlock MCBB) {
+        MCOperand src = findContainer(IRinst.getOperandAt(0), false);
+        MCOperand addr = findContainer(IRinst.getOperandAt(1), false);
+        if (src instanceof Immediate) {
+            VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
+            MCBB.appendInstruction(new MCmov(register, src));
+            MCBB.appendInstruction(new MCstore(register, findContainer(IRinst.getOperandAt(1), false)));
+        }
+        else
+            MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(0), false), findContainer(IRinst.getOperandAt(1), false)));
+    }
+
+    /**
+     * translate IR load, just like its name.
+     * @param IRinst IR instruction to be translated
+     * @param MCBB The MC BasicBlock where the IR instruction belongs to
+     */
+    private void translateLoad(Instruction IRinst, MCBasicBlock MCBB) {
+        MCBB.appendInstruction(new MCload((Register) findContainer(IRinst, false), findContainer(IRinst.getOperandAt(0), false)));
+    }
+
+    /**
+     * Translate IR binary expression instruction into ARM instruction. <br/>
+     * NOTE: The first operand must be a REGISTER!!
+     * @param IRinst IR instruction to be translated
+     * @param MCBB The MC BasicBlock where the IR instruction belongs to
+     * @param type Operation type, ADD/SUB/MUL/SDIV or more?
+     */
+    private void translateBinary(Instruction IRinst, MCBasicBlock MCBB, MCInstruction.TYPE type) {
+        // TODO: 处理除法
+        MCOperand operand1 = findContainer(IRinst.getOperandAt(0), false);
+        MCOperand operand2 = findContainer(IRinst.getOperandAt(1), false);
         if (operand1 instanceof Immediate) {
             if (operand2 instanceof Immediate) {
-                VirtualRegister register = new VirtualRegister(VirtualRegCounter++, IRinst.getOperandAt(0));
-                MCmov mov = new MCmov(MCBB, register, operand1);
-                MCBB.appendInstruction(mov);
-                return new MCBinary(MCInstruction.TYPE.ADD, MCBB, (Register) findContainer(IRinst), register, operand2);
+                VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
+                MCBB.appendInstruction(new MCmov(register, operand1));
+                MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false), register, operand2));
             }
             else {
-                return new MCBinary(MCInstruction.TYPE.ADD, MCBB, (Register) findContainer(IRinst), operand2, operand1);
+                if (type != MCInstruction.TYPE.SUB)
+                    MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false), operand2, operand1));
+                else
+                    MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst, false), operand2, operand1));
             }
         }
         else {
-            return new MCBinary(MCInstruction.TYPE.ADD, MCBB, (Register) findContainer(IRinst), operand1, operand2);
+            MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false), operand1, operand2));
         }
-    }
-
-    private MCInstruction translateSub(Instruction IRinst, MCBasicBlock MCBB) {
-        MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
-        MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
-        if (operand1 instanceof Immediate) {
-            if (operand2 instanceof Immediate) {
-                VirtualRegister register = new VirtualRegister(VirtualRegCounter++, IRinst.getOperandAt(0));
-                MCmov mov = new MCmov(MCBB, register, operand1);
-                MCBB.appendInstruction(mov);
-                return new MCBinary(MCInstruction.TYPE.SUB, MCBB, (Register) findContainer(IRinst), register, operand2);
-            }
-            else {
-                return new MCBinary(MCInstruction.TYPE.RSB, MCBB, (Register) findContainer(IRinst), operand2, operand1);
-            }
-        }
-        else {
-            return new MCBinary(MCInstruction.TYPE.SUB, MCBB, (Register) findContainer(IRinst), operand1, operand2);
-        }
-    }
-
-    private MCInstruction translateMul(Instruction IRinst, MCBasicBlock MCBB) {
-        MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
-        MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
-        if (operand1 instanceof Immediate) {
-            if (operand2 instanceof Immediate) {
-                VirtualRegister register = new VirtualRegister(VirtualRegCounter++, IRinst.getOperandAt(0));
-                MCmov mov = new MCmov(MCBB, register, operand1);
-                MCBB.appendInstruction(mov);
-                return new MCBinary(MCInstruction.TYPE.MUL, MCBB, (Register) findContainer(IRinst), register, operand2);
-            }
-            else {
-                return new MCBinary(MCInstruction.TYPE.MUL, MCBB, (Register) findContainer(IRinst), operand2, operand1);
-            }
-        }
-        else {
-            return new MCBinary(MCInstruction.TYPE.MUL, MCBB, (Register) findContainer(IRinst), operand1, operand2);
-        }
-    }
-
-    // TODO: 处理除法
-    private MCInstruction translateDiv(Instruction IRinst, MCBasicBlock MCBB) {
-        return new MCBinary(MCInstruction.TYPE.DIV, MCBB, (Register) findContainer(IRinst), findContainer(IRinst.getOperandAt(0)), findContainer(IRinst.getOperandAt(1)));
     }
 
 
