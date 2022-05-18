@@ -153,7 +153,7 @@ relExp
     ; // Eliminate left recursion.
 
 eqExp
-    : relExp *(('==' | '!=') relExp)*
+    : relExp (('==' | '!=') relExp)*
     ; // Eliminate left recursion.
 
 lAndExp

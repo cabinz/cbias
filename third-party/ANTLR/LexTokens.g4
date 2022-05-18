@@ -4,12 +4,11 @@ lexer grammar LexTokens;
 Integer constants
 */
 DecIntConst
-    : [1-9] DigitSeq
+    : [1-9] [0-9]*
     ;
 
 OctIntConst
-    : '0'
-    | [0-7]+
+    : '0' [0-7]*
     ;
 
 HexIntConst
