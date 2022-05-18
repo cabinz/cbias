@@ -65,7 +65,7 @@ public class Function extends Value {
      * In our case, isExternal is only for functions supported by
      * the SysY runtime lib.
      */
-    public boolean isExternal = false;
+    private boolean isExternal = false;
     //</editor-fold>
 
 
