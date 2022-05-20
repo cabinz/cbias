@@ -14,6 +14,7 @@ public class ARMAssemble {
     //<editor-fold desc="Fields">
     private String architecture = "armv7";
     private LinkedList<MCFunction> functionList;
+
     private HashMap<Function, MCFunction> functionMap;
     //</editor-fold>
 
@@ -23,10 +24,21 @@ public class ARMAssemble {
      * @return the corresponding MC Function
      */
     public MCFunction createFunction(Function IRf){
-        var MCf = new MCFunction(IRf.name);
+        var MCf = new MCFunction(IRf.name, false);
         functionList.add(MCf);
         functionMap.put(IRf, MCf);
         return MCf;
+    }
+
+    /**
+     * Import external function. <br/>
+     * used by BL external for a unified style
+     * @param IRf
+     */
+    public void useExternalFunction(Function IRf){
+        var MCf = new MCFunction(IRf.name, true);
+        functionList.add(MCf);
+        functionMap.put(IRf, MCf);
     }
 
     /**

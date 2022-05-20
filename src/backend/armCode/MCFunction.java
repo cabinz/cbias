@@ -16,7 +16,9 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
     private final String name;
 
     private int stackSize;
+
     private boolean useLR;
+    private boolean isExternal;
 
     /**
      * Represent the map between IR basic block and machine basic block
@@ -66,15 +68,18 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
     public int getStackSize() {return stackSize;}
 
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
+
+    public boolean isExternal() {return isExternal;}
     //</editor-fold>
 
 
     //<editor-fold desc="Constructor">
-    public MCFunction(String name) {
+    public MCFunction(String name, boolean isExternal) {
         this.name = name;
         stackSize = 0;
         BasicBlockList = new LinkedList<MCBasicBlock>();
         BBmap = new HashMap<>();
+        this.isExternal = isExternal;
 //        argList = new LinkedList<MCOperand>();
     }
     //</editor-fold>

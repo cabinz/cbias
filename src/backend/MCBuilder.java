@@ -91,7 +91,10 @@ public class MCBuilder {
      */
     private void mapFunction(Module IRModule, ARMAssemble target) {
         for (Function IRfunc : IRModule.functions) {
-            if (IRfunc.isExternal()) continue;
+            if (IRfunc.isExternal()) {
+                target.useExternalFunction(IRfunc);
+                continue;
+            }
             MCFunction MCfunc = target.createFunction(IRfunc);
             // TODO: 改成BFS
             for (BasicBlock IRBB : IRfunc.bbs){
@@ -135,6 +138,9 @@ public class MCBuilder {
         else if (IRinst.isLoad()) {
             translateLoad(IRinst, MCBB);
         }
+        else if (IRinst.isCall()) {
+            translateCall(IRinst, MCBB);
+        }
     }
 
     /**
@@ -167,6 +173,18 @@ public class MCBuilder {
         }
         else
             return null;
+    }
+
+    private void translateCall(Instruction IRinst, MCBasicBlock MCBB) {
+        int oprNum = IRinst.getNumOperands();
+        for (int i=1; i<oprNum; i++) {
+            if (i <= 4) {
+                MCBB.appendInstruction(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i), false)));
+            }
+            else {
+                MCBB.appendInstruction(new MCstore());
+            }
+        }
     }
 
     private void translateRet(Instruction IRinst, MCBasicBlock MCBB) {

@@ -8,6 +8,7 @@ public class MCstore extends MCInstruction {
 
     private Register src;
     private MCOperand addr;
+    private MCOperand offset;
 
     public String emit(){
         return "STR " + src.emit() + ", " + addr.emit();

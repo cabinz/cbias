@@ -40,6 +40,7 @@ public class MCEmitter {
 
         /* handle each function */
         for (MCFunction f : target.getFunctionList()) {
+            if (f.isExternal()) continue;
             strBd.append("\t.global " + f.getName() + '\n');
             strBd.append(f.getName() + ":\n");
             /* handle each BasicBlock */

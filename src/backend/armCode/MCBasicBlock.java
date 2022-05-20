@@ -44,7 +44,6 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
 
     //<editor-fold desc="Getter & Setter">
     public LinkedList<MCInstruction> getInstructionList() {return instructionList;}
-    public void setInstructionList(LinkedList<MCInstruction> instructionList) {this.instructionList = instructionList;}
 
     public String getName() {return label;}
     public void setName(String label) {this.label = label;}
