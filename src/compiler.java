@@ -14,6 +14,7 @@ public class compiler{
             if ("-s".equals(args[i])){
                 // presume source path is given
                 config.source = args[++i];
+                config.output = config.source.replace(".sy", ".s");
             }
             else if ("-o".equals(args[i])){
                 // presume output path is given
