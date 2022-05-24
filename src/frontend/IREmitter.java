@@ -109,8 +109,8 @@ public class IREmitter {
                         strBuilder.append(inst.toString())
                                 .append("\n");
                     }
-//                    // FOR DEBUG
-//                    strBuilder.append("; END OF BB").append(bb.name).append("\n\n");
+                    // End of current bb.
+                    strBuilder.append("\n");
                 }
                 // Tail of a function: A right bracket to close it.
                 strBuilder.append("}\n");
