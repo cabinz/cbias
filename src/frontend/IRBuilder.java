@@ -164,8 +164,15 @@ public class IRBuilder {
      * @return The conditional branching inserted.
      */
     public TerminatorInst.Br buildBr(Value cond, BasicBlock trueBlk, BasicBlock falseBlk) {
+        // Create and insert a block.
         TerminatorInst.Br condBr = new TerminatorInst.Br(cond, trueBlk, falseBlk, curBB);
         getCurBB().insertAtEnd(condBr);
+        // Build the directed connections among blocks.
+        getCurBB().addSuccessor(trueBlk);
+        getCurBB().addSuccessor(falseBlk);
+        trueBlk.addPredecessor(getCurBB());
+        falseBlk.addPredecessor(getCurBB());
+
         return condBr;
     }
 
@@ -175,8 +182,13 @@ public class IRBuilder {
      * @return The unconditional branching inserted.
      */
     public TerminatorInst.Br buildBr(BasicBlock blk) {
+        // Create and insert a block.
         TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk, curBB);
         getCurBB().insertAtEnd(uncondBr);
+        // Build the directed connections among blocks.
+        getCurBB().addSuccessor(blk);
+        blk.addPredecessor(getCurBB());
+
         return uncondBr;
     }
 

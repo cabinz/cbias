@@ -60,5 +60,13 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     public Iterator<Instruction> iterator() {
         return instructions.iterator();
     }
+
+    public void addPredecessor(BasicBlock pre) {
+        this.predecessors.add(pre);
+    }
+
+    public void addSuccessor(BasicBlock suc) {
+        this.successors.add(suc);
+    }
     //</editor-fold>
 }
