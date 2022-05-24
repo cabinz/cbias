@@ -1,5 +1,6 @@
 // Generated from K:/Cbias/third-party/ANTLR\SysY.g4 by ANTLR 4.9.2
 package frontend;
+import ir.values.BasicBlock;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
@@ -1546,6 +1547,7 @@ public class SysYParser extends Parser {
 	}
 
 	public static class CondContext extends ParserRuleContext {
+
 		public LOrExpContext lOrExp() {
 			return getRuleContext(LOrExpContext.class,0);
 		}
@@ -2461,6 +2463,10 @@ public class SysYParser extends Parser {
 	}
 
 	public static class LAndExpContext extends ParserRuleContext {
+
+		public BasicBlock trueBlk;
+		public BasicBlock falseBlk;
+
 		public List<EqExpContext> eqExp() {
 			return getRuleContexts(EqExpContext.class);
 		}
@@ -2517,6 +2523,10 @@ public class SysYParser extends Parser {
 	}
 
 	public static class LOrExpContext extends ParserRuleContext {
+
+		public BasicBlock trueBlk;
+		public BasicBlock falseBlk;
+
 		public List<LAndExpContext> lAndExp() {
 			return getRuleContexts(LAndExpContext.class);
 		}
