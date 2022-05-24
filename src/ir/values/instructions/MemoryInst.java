@@ -4,6 +4,7 @@ import ir.Type;
 import ir.Value;
 import ir.types.IntegerType;
 import ir.types.PointerType;
+import ir.values.BasicBlock;
 import ir.values.Instruction;
 
 /**
@@ -33,8 +34,8 @@ public class MemoryInst {
          * @param val The Value to be stored (written) back to memory.
          * @param addr The address where the content to be written.
          */
-        public Store(Value val, Value addr) {
-            super(Type.VoidType.getType(), InstCategory.STORE, 2);
+        public Store(Value val, Value addr, BasicBlock bb) {
+            super(Type.VoidType.getType(), InstCategory.STORE, 2, bb);
             this.addOperandAt(val, 0);
             this.addOperandAt(addr, 1);
             this.hasResult = false;
@@ -74,8 +75,8 @@ public class MemoryInst {
          * @param loadedType  The type of the memory block loaded in.
          * @param addr Value specifying the memory address from which to load. (loadedType*)
          */
-        public Load(Type loadedType, Value addr) {
-            super(loadedType, InstCategory.LOAD, 1);
+        public Load(Type loadedType, Value addr, BasicBlock bb) {
+            super(loadedType, InstCategory.LOAD, 1, bb);
             this.addOperandAt(addr, 0);
         }
         //</editor-fold>
@@ -119,8 +120,8 @@ public class MemoryInst {
         /**
          * @param allocatedType The type of memory space allocated.
          */
-        public Alloca(Type allocatedType) {
-            super(PointerType.getType(allocatedType), InstCategory.ALLOCA, 0);
+        public Alloca(Type allocatedType, BasicBlock bb) {
+            super(PointerType.getType(allocatedType), InstCategory.ALLOCA, 0, bb);
             this.allocatedType = allocatedType;
         }
         //</editor-fold>
@@ -151,8 +152,8 @@ public class MemoryInst {
 
 
         //<editor-fold desc="Constructors">
-        public ZExt(Value val) {
-            super(destType, InstCategory.ZEXT, 1);
+        public ZExt(Value val, BasicBlock bb) {
+            super(destType, InstCategory.ZEXT, 1, bb);
             this.addOperandAt(val, 0);
         }
         //</editor-fold>

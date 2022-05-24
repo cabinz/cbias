@@ -140,7 +140,7 @@ public class IRBuilder {
      * @return The terminator object inserted.
      */
     public TerminatorInst.Ret buildRet() {
-        TerminatorInst.Ret ret = new TerminatorInst.Ret();
+        TerminatorInst.Ret ret = new TerminatorInst.Ret(curBB);
         getCurBB().insertAtEnd(ret);
         return ret;
     }
@@ -152,7 +152,7 @@ public class IRBuilder {
      * @return The terminator object inserted.
      */
     public TerminatorInst.Ret buildRet(Value retVal) {
-        TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal);
+        TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal, curBB);
         getCurBB().insertAtEnd(ret);
         return ret;
     }
@@ -165,7 +165,7 @@ public class IRBuilder {
      * @return The conditional branching inserted.
      */
     public TerminatorInst.Br buildBr(Value cond, BasicBlock trueBlk, BasicBlock falseBlk) {
-        TerminatorInst.Br condBr = new TerminatorInst.Br(cond, trueBlk, falseBlk);
+        TerminatorInst.Br condBr = new TerminatorInst.Br(cond, trueBlk, falseBlk, curBB);
         getCurBB().insertAtEnd(condBr);
         return condBr;
     }
@@ -176,7 +176,7 @@ public class IRBuilder {
      * @return The unconditional branching inserted.
      */
     public TerminatorInst.Br buildBr(BasicBlock blk) {
-        TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk);
+        TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk, curBB);
         getCurBB().insertAtEnd(uncondBr);
         return uncondBr;
     }
@@ -191,7 +191,7 @@ public class IRBuilder {
      * @return The call instruction inserted.
      */
     public TerminatorInst.Call buildCall(Function func, ArrayList<Value> args) {
-        TerminatorInst.Call call = new TerminatorInst.Call(func, args);
+        TerminatorInst.Call call = new TerminatorInst.Call(func, args, curBB);
         getCurBB().insertAtEnd(call);
         return call;
     }
@@ -203,7 +203,7 @@ public class IRBuilder {
      * @return The Load instruction inserted.
      */
     public MemoryInst.Load buildLoad(Type loadedType, Value addr) {
-        MemoryInst.Load inst = new MemoryInst.Load(loadedType, addr);
+        MemoryInst.Load inst = new MemoryInst.Load(loadedType, addr, curBB);
         getCurBB().insertAtEnd(inst);
         return inst;
     }
@@ -215,7 +215,7 @@ public class IRBuilder {
      * @return The Store instruction inserted.
      */
     public MemoryInst.Store buildStore(Value val, Value addr) {
-        MemoryInst.Store inst = new MemoryInst.Store(val, addr);
+        MemoryInst.Store inst = new MemoryInst.Store(val, addr, curBB);
         getCurBB().insertAtEnd(inst);
         return inst;
     }
@@ -226,7 +226,7 @@ public class IRBuilder {
      * @return The Alloca instruction inserted.
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
-        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType);
+        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType, curBB);
         getCurBB().insertAtFront(inst); // todo: change the container as LinkedList
         return inst;
     }
@@ -237,7 +237,7 @@ public class IRBuilder {
      * @return The ZExt instruction inserted.
      */
     public MemoryInst.ZExt buildZExt(Value srcVal) {
-        MemoryInst.ZExt zext = new MemoryInst.ZExt(srcVal);
+        MemoryInst.ZExt zext = new MemoryInst.ZExt(srcVal, curBB);
         getCurBB().insertAtEnd(zext);
         return zext;
     }
@@ -262,7 +262,7 @@ public class IRBuilder {
             // todo: float arithmetic binary operations
         }
         // Build the binary instruction.
-        BinaryInst binInst = new BinaryInst(resType, tag, lOp, rOp);
+        BinaryInst binInst = new BinaryInst(resType, tag, lOp, rOp, curBB);
         getCurBB().insertAtEnd(binInst);
         return binInst;
     }

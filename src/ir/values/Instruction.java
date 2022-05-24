@@ -67,25 +67,31 @@ public class Instruction extends User {
      */
     public boolean hasResult = true;
 
-//    /**
-//     * Reference of the basic block where the instruction lands.
-//     */
-//    private BasicBlock bb;
+    /**
+     * Reference of the basic block where the instruction lands.
+     */
+    private BasicBlock bb;
     //</editor-fold>
 
 
     //<editor-fold desc="Constructors">
-    public Instruction(Type type, InstCategory tag, int numOperands){
+    public Instruction(Type type, InstCategory tag, int numOperands, BasicBlock bb){
         super(type, numOperands);
         this.cat = tag;
+        this.bb = bb;
     }
     //</editor-fold>
 
 
     //<editor-fold desc="Methods">
-//    public BasicBlock getBB() {
-//        return this.bb.getParent().getVal();
-//    }
+
+    /**
+     * Get the Basic Block where the instruction lands.
+     * @return Reference of the BB.
+     */
+    public BasicBlock getBB() {
+        return this.bb;
+    }
     //</editor-fold>
 
 }

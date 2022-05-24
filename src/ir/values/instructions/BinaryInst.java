@@ -3,6 +3,7 @@ package ir.values.instructions;
 import ir.Type;
 import ir.Value;
 import ir.types.IntegerType;
+import ir.values.BasicBlock;
 import ir.values.Instruction;
 
 /**
@@ -30,8 +31,8 @@ public class BinaryInst extends Instruction {
      * @param lOp Left operand.
      * @param rOp Right operand.
      */
-    public BinaryInst (Type type, InstCategory tag, Value lOp, Value rOp) {
-        super(type, tag, 2);
+    public BinaryInst (Type type, InstCategory tag, Value lOp, Value rOp, BasicBlock bb) {
+        super(type, tag, 2, bb);
         // Add left and right operands.
         this.addOperandAt(lOp, 0);
         this.addOperandAt(rOp, 1);
