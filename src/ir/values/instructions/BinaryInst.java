@@ -32,7 +32,7 @@ public class BinaryInst extends Instruction {
      * @param rOp Right operand.
      */
     public BinaryInst (Type type, InstCategory tag, Value lOp, Value rOp, BasicBlock bb) {
-        super(type, tag, 2, bb);
+        super(type, tag, bb);
         // Add left and right operands.
         this.addOperandAt(lOp, 0);
         this.addOperandAt(rOp, 1);

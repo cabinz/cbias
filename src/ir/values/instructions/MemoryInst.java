@@ -35,7 +35,7 @@ public class MemoryInst {
          * @param addr The address where the content to be written.
          */
         public Store(Value val, Value addr, BasicBlock bb) {
-            super(Type.VoidType.getType(), InstCategory.STORE, 2, bb);
+            super(Type.VoidType.getType(), InstCategory.STORE, bb);
             this.addOperandAt(val, 0);
             this.addOperandAt(addr, 1);
             this.hasResult = false;
@@ -76,7 +76,7 @@ public class MemoryInst {
          * @param addr Value specifying the memory address from which to load. (loadedType*)
          */
         public Load(Type loadedType, Value addr, BasicBlock bb) {
-            super(loadedType, InstCategory.LOAD, 1, bb);
+            super(loadedType, InstCategory.LOAD, bb);
             this.addOperandAt(addr, 0);
         }
         //</editor-fold>
@@ -121,7 +121,7 @@ public class MemoryInst {
          * @param allocatedType The type of memory space allocated.
          */
         public Alloca(Type allocatedType, BasicBlock bb) {
-            super(PointerType.getType(allocatedType), InstCategory.ALLOCA, 0, bb);
+            super(PointerType.getType(allocatedType), InstCategory.ALLOCA, bb);
             this.allocatedType = allocatedType;
         }
         //</editor-fold>
@@ -153,7 +153,7 @@ public class MemoryInst {
 
         //<editor-fold desc="Constructors">
         public ZExt(Value val, BasicBlock bb) {
-            super(destType, InstCategory.ZEXT, 1, bb);
+            super(destType, InstCategory.ZEXT, bb);
             this.addOperandAt(val, 0);
         }
         //</editor-fold>

@@ -22,12 +22,7 @@ public class User extends Value {
      * <br>
      * To safely add operands to it, use addOperandAt().
      */
-    public LinkedList<Use> operands = new LinkedList<Use>(); // All the Use edges indicating to all the value used
-
-    /**
-     * Number of the Values the user use.
-     */
-    private int numOperands = 0;
+    public LinkedList<Use> operands = new LinkedList<Use>();
     //</editor-fold>
 
 
@@ -35,18 +30,17 @@ public class User extends Value {
     public User(Type type) {
         super(type);
     }
-
-    public User(Type type, int numOperand) {
-        super(type);
-        this.numOperands = numOperand;
-    }
     //</editor-fold>
 
 
 
     //<editor-fold desc="Methods">
+    /**
+     * Retrieve the number of Value it use.
+     * @return Number of operands of the user.
+     */
     public int getNumOperands() {
-        return numOperands;
+        return operands.size();
     }
 
     /**

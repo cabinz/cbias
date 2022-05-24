@@ -30,10 +30,6 @@ public class Constant extends User {
     public Constant(Type type) {
         super(type);
     }
-
-    public Constant(Type type, int numOperands) {
-        super(type, numOperands);
-    }
     //</editor-fold>
 
 

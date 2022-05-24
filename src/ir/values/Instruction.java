@@ -75,8 +75,8 @@ public class Instruction extends User {
 
 
     //<editor-fold desc="Constructors">
-    public Instruction(Type type, InstCategory tag, int numOperands, BasicBlock bb){
-        super(type, numOperands);
+    public Instruction(Type type, InstCategory tag, BasicBlock bb){
+        super(type);
         this.cat = tag;
         this.bb = bb;
     }

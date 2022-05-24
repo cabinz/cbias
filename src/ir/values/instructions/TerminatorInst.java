@@ -28,8 +28,7 @@ public class TerminatorInst {
          */
         public Call(Function func, ArrayList<Value> args, BasicBlock bb) {
             // Operands of Call is the Function invoked and all argument Values passed
-            // thus numOperands = 1 + args.size().
-            super(((FunctionType)func.getType()).getRetType(), InstCategory.CALL, args.size()+1, bb);
+            super(((FunctionType)func.getType()).getRetType(), InstCategory.CALL, bb);
 
             // Call instruction will yield a result if the function has non-void return type.
             this.hasResult = !this.getType().isVoidType();
@@ -94,7 +93,7 @@ public class TerminatorInst {
          * Construct an Ret terminator returning void.
          */
         public Ret(BasicBlock bb) {
-            super(Type.VoidType.getType(), InstCategory.RET, 0, bb);
+            super(Type.VoidType.getType(), InstCategory.RET, bb);
             this.hasResult = false;
         }
 
@@ -103,7 +102,7 @@ public class TerminatorInst {
          * @param val
          */
         public Ret(Value val, BasicBlock bb) {
-            super(Type.VoidType.getType(), InstCategory.RET, 1, bb);
+            super(Type.VoidType.getType(), InstCategory.RET, bb);
             this.addOperandAt(val, 0);
 //            needName = false;
         }
@@ -151,7 +150,7 @@ public class TerminatorInst {
          */
         public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk, BasicBlock bb) {
             // todo: Encapsulate numOperands to be a automatically increased counter.
-            super(Type.LabelType.getType(), InstCategory.BR, 3, bb);
+            super(Type.LabelType.getType(), InstCategory.BR, bb);
             // todo: Type of Br should be VoidType or LabelType?
             this.hasResult = false;
             this.addOperandAt(cond, 0);
@@ -164,7 +163,7 @@ public class TerminatorInst {
          * @param blk The basic block to jump to.
          */
         public Br(BasicBlock blk, BasicBlock bb) {
-            super(Type.LabelType.getType(), InstCategory.BR, 1, bb);
+            super(Type.LabelType.getType(), InstCategory.BR, bb);
             this.hasResult = false;
             this.addOperandAt(blk, 0);
         }
