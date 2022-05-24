@@ -18,7 +18,7 @@ import java.util.LinkedList;
 public class Value {
 
     //<editor-fold desc="Fields">
-    public final Type type;
+    private final Type type;
 
     /**
      * All values can potentially be named.
@@ -31,18 +31,59 @@ public class Value {
      *     reference (register) to the result</li>
      * </ul>
      */
-    public String name = "";
+    private String name = "";
 
     /**
      * The "use list" keeping track of Values using it.
      */
-    public LinkedList<Use> uses = new LinkedList<>();
+    private LinkedList<Use> uses = new LinkedList<>();
     //</editor-fold>
 
 
     //<editor-fold desc="Constructors">
     public Value(Type type) {
         this.type = type;
+    }
+    //</editor-fold>
+
+
+    //<editor-fold desc="Methods">
+
+    //<editor-fold desc="Getters">
+    public Type getType() {
+        return type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public LinkedList<Use> getUses() {
+        return uses;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Setters">
+    public void setName(String name) {
+        this.name = name;
+    }
+    //</editor-fold>
+
+    /**
+     * Add a Use to the use-list of the Value.
+     * @param u The Use to be added.
+     */
+    public void addUse(Use u) {
+        uses.add(u);
+    }
+
+    /**
+     * Remove a Use from the use-list of the Value (IF EXISTS).
+     * @param u The Use to be matched and removed.
+     * @return Return true if any Use in the list has been removed. Otherwise, false.
+     */
+    public boolean removeUse(Use u) {
+        return this.uses.removeIf(x -> x.equals(u));
     }
     //</editor-fold>
 }

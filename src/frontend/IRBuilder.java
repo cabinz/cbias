@@ -71,7 +71,6 @@ public class IRBuilder {
     }
 
     public void setCurFunc(Function func) {
-        // todo: Change bbs to be contained in LinkedList and change bb pointer automatically.
         curFunc = func;
     }
 
@@ -113,7 +112,7 @@ public class IRBuilder {
      */
     public Function buildFunction(String name, FunctionType type, boolean isExternal) {
         Function func = new Function(type, isExternal);
-        func.name = name;
+        func.setName(name);
         // Add the function to the current module.
         getCurModule().functions.add(func);
         // Set the pointer.
@@ -227,7 +226,7 @@ public class IRBuilder {
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
         MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType, curBB);
-        getCurBB().insertAtFront(inst); // todo: change the container as LinkedList
+        getCurBB().insertAtFront(inst);
         return inst;
     }
 

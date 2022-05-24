@@ -29,10 +29,10 @@ public class TerminatorInst {
         public Call(Function func, ArrayList<Value> args, BasicBlock bb) {
             // Operands of Call is the Function invoked and all argument Values passed
             // thus numOperands = 1 + args.size().
-            super(((FunctionType)func.type).getRetType(), InstCategory.CALL, args.size()+1, bb);
+            super(((FunctionType)func.getType()).getRetType(), InstCategory.CALL, args.size()+1, bb);
 
             // Call instruction will yield a result if the function has non-void return type.
-            this.hasResult = !this.type.isVoidType();
+            this.hasResult = !this.getType().isVoidType();
 
             // The function Value is the 1st operand of the Call instruction.
             this.addOperandAt(func, 0);
@@ -52,18 +52,18 @@ public class TerminatorInst {
 
             // "%res = " if the function call yields a result.
             if (this.hasResult) {
-                strBuilder.append(this.name).append(" = ");
+                strBuilder.append(this.getName()).append(" = ");
             }
             // "call i32 " or "call void"
             // + "@func(i32 %arg)"
-            strBuilder.append("call ").append(this.type).append(" ")
-                    .append("@").append(this.getOperandAt(0).name)
+            strBuilder.append("call ").append(this.getType()).append(" ")
+                    .append("@").append(this.getOperandAt(0).getName())
                     .append("(");
             for(int i = 1; i < this.getNumOperands(); i++) {
                 Value opd = this.getOperandAt(i);
-                strBuilder.append(opd.type)
+                strBuilder.append(opd.getType())
                         .append(" ")
-                        .append(opd.name);
+                        .append(opd.getName());
                 if (i != this.getNumOperands() - 1) { // The last argument need no comma following it.
                     strBuilder.append(", ");
                 }
@@ -116,9 +116,9 @@ public class TerminatorInst {
             StringBuilder strBuilder = new StringBuilder();
             strBuilder.append("ret ");
             if (this.getNumOperands() == 1) {
-                strBuilder.append(getOperandAt(0).type)
+                strBuilder.append(getOperandAt(0).getType())
                         .append(" ")
-                        .append(getOperandAt(0).name);
+                        .append(getOperandAt(0).getName());
             } else {
                 strBuilder.append("void");
             }
@@ -179,9 +179,9 @@ public class TerminatorInst {
             // Print operands.
             for(int i = 0; i < this.getNumOperands(); i++) {
                 Value opr = getOperandAt(i);
-                strBuilder.append(opr.type)
-                        .append(opr.type.isLabelType() ? " %" : " ")
-                        .append(opr.name);
+                strBuilder.append(opr.getType())
+                        .append(opr.getType().isLabelType() ? " %" : " ")
+                        .append(opr.getName());
                 // The last operand need no comma following it.
                 if (i != this.getNumOperands() - 1) {
                     strBuilder.append(", ");

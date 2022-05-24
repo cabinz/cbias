@@ -44,7 +44,7 @@ public class Function extends Value implements Iterable<BasicBlock>{
         @Override
         public String toString() {
             // e.g. "i32 %arg"
-            return this.type + " " + this.name;
+            return this.getType() + " " + this.getName();
         }
         //</editor-fold>
     }
@@ -84,7 +84,7 @@ public class Function extends Value implements Iterable<BasicBlock>{
         this.isExternal = isExternal;
 
         // Add arguments into the args list.
-        ArrayList<Type> ar = ((FunctionType)this.type).getArgTypes();
+        ArrayList<Type> ar = ((FunctionType)this.getType()).getArgTypes();
         for (int i = 0; i < ar.size(); i++) {
             args.add(new FuncArg(ar.get(i), i));
         }
@@ -124,16 +124,16 @@ public class Function extends Value implements Iterable<BasicBlock>{
 
         StringBuilder strBuilder = new StringBuilder();
         // Name of the function.
-        strBuilder.append(((FunctionType) this.type).getRetType())
+        strBuilder.append(((FunctionType) this.getType()).getRetType())
                 .append(" @")
-                .append(this.name)
+                .append(this.getName())
                 .append("(");
         // Argument list.
         for(int i = 0; i < getArgs().size(); i++) {
             // For extern function declaration, only argument types need to be
             // printed in the argument list.
             if (this.isExternal()) {
-                strBuilder.append(getArgs().get(i).type);
+                strBuilder.append(getArgs().get(i).getType());
             }
             // For a local function definition, both types and names (register)
             // need to be printed.

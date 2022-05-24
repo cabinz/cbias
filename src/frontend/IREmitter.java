@@ -54,15 +54,15 @@ public class IREmitter {
             if (!func.isExternal()) {
                 // Assign names for each function argument.
                 for (var arg : func.getArgs()) {
-                    arg.name = "%" + getNewName();
+                    arg.setName("%" + getNewName());
                 }
                 // Assign names (Lx) for each basic block in the function,
                 // and each instruction yielding results (%x) in basic blocks.
                 for (BasicBlock bb : func) {
-                    bb.name = getNewName();
+                    bb.setName(getNewName());
                     for (Instruction inst : bb.instructions) {
                         if (inst.hasResult) {
-                            inst.name = "%" + getNewName();
+                            inst.setName("%" + getNewName());
                         }
                     }
                 }
@@ -102,7 +102,7 @@ public class IREmitter {
                 for (BasicBlock bb : func) {
                     // Emit label of the block if it's not the first block.
                     if (!func.getEntryBB().equals(bb)) {
-                        strBuilder.append(bb.name).append(":\n");
+                        strBuilder.append(bb.getName()).append(":\n");
                     }
                     // Content (instructions) in the block.
                     for (Instruction inst : bb) {

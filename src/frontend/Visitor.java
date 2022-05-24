@@ -165,7 +165,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         if (tailInst == null ||
                 tailInst.cat != InstCategory.BR
                         && tailInst.cat != InstCategory.RET) {
-            if (function.type instanceof FunctionType f) {
+            if (function.getType() instanceof FunctionType f) {
                 if (f.getRetType().isVoidType()) {
                     builder.buildRet();
                 }
@@ -378,7 +378,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             visit(ctx.eqExp(i));
             // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
             // todo: gives a float
-            if(!tmpVal.type.isI1()) {
+            if(!tmpVal.getType().isI1()) {
                 tmpVal = builder.buildBinary(InstCategory.NE, tmpVal, Constant.ConstInt.get(0));
             }
 
@@ -503,9 +503,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Retrieve the expression by visiting child.
         visit(ctx.unaryExp());
         // Integer.
-        if (tmpVal.type.isInteger()) {
+        if (tmpVal.getType().isInteger()) {
             // Conduct zero extension on i1.
-            if (tmpVal.type.isI1()) {
+            if (tmpVal.getType().isI1()) {
                 builder.buildZExt(tmpVal);
             }
             // Unary operators.
@@ -545,10 +545,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
             visit(ctx.mulExp(i));
             Value rOp = tmpVal;
             // Check integer types of two operands.
-            if (lOp.type.isI1()) {
+            if (lOp.getType().isI1()) {
                 lOp = builder.buildZExt(lOp);
             }
-            if (rOp.type.isI1()) {
+            if (rOp.getType().isI1()) {
                 rOp = builder.buildZExt(lOp);
             }
             // Generate an instruction to compute result of left and right operands
@@ -655,13 +655,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         // Case 1, return directly.
         // todo: float type can be returned directly too
-        if (val.type.isInteger()) {
+        if (val.getType().isInteger()) {
             tmpVal = val;
             return null;
         }
         // Case 2, return a PointerType Value.
-        if (val.type.isPointerType()) {
-            Type pointeeType = ((PointerType) val.type).getPointeeType();
+        if (val.getType().isPointerType()) {
+            Type pointeeType = ((PointerType) val.getType()).getPointeeType();
             // ptr* (pointer to pointer)
             if (pointeeType.isPointerType()) {
 
@@ -705,8 +705,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // todo: branch out if during building a Call
         visit(ctx.lVal());
         // Load the memory block if a PointerType Value is retrieved from lVal.
-        if (tmpVal.type.isPointerType()) {
-            Type pointeeType = ((PointerType) tmpVal.type).getPointeeType();
+        if (tmpVal.getType().isPointerType()) {
+            Type pointeeType = ((PointerType) tmpVal.getType()).getPointeeType();
             tmpVal = builder.buildLoad(pointeeType, tmpVal);
         }
         return null;
@@ -768,7 +768,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         if (func == null) {
             throw new RuntimeException("Undefined name: " + name + ".");
         }
-        if (!func.type.isFunctionType()) {
+        if (!func.getType().isFunctionType()) {
             throw new RuntimeException(name + " is not a function and cannot be invoked.");
         }
 
@@ -776,7 +776,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayList<Value> args = new ArrayList<>();
         if (ctx.funcRParams() != null) {
             var argCtxs = ctx.funcRParams().funcRParam();
-            ArrayList<Type> argTypes = ((FunctionType)func.type).getArgTypes();
+            ArrayList<Type> argTypes = ((FunctionType)func.getType()).getArgTypes();
             // Loop through both the lists of context and type simultaneously.
             for (int i = 0; i < argCtxs.size(); i++) {
                 var argCtx = argCtxs.get(i);

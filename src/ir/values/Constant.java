@@ -53,7 +53,7 @@ public class Constant extends User {
         private ConstInt(Type type, int val) {
             super(type);
             this.val = val;
-            this.name = String.valueOf(val);
+            this.setName(String.valueOf(val));
         }
         //</editor-fold>
 

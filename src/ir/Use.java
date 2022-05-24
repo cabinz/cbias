@@ -42,7 +42,7 @@ public class Use {
         this.v = value;
         this.u = user;
         this.pos = position;
-        v.uses.add(this);
+        v.addUse(this);
         u.operands.add(this);
     }
     //</editor-fold>

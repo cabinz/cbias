@@ -50,8 +50,8 @@ public class MemoryInst {
             Value addr = this.getOperandAt(1);
             // e.g. store i32 3, i32* %ptr
             return "store " // store
-                    + val.type + " " + val.name + ", " // i32 3,
-                    + addr.type + " " + addr.name; // i32* %ptr
+                    + val.getType() + " " + val.getName() + ", " // i32 3,
+                    + addr.getType() + " " + addr.getName(); // i32* %ptr
         }
         //</editor-fold>
     }
@@ -87,9 +87,9 @@ public class MemoryInst {
         public String toString() {
             Value op = this.getOperandAt(0);
             // e.g. %val = load i32, i32* %ptr
-            return this.name + " = load " // %val = load
-                    + this.type + ", " // i32,
-                    + op.type + " " + op.name; // , i32* %ptr
+            return this.getName() + " = load " // %val = load
+                    + this.getType() + ", " // i32,
+                    + op.getType() + " " + op.getType(); // , i32* %ptr
         }
         //</editor-fold>
     }
@@ -129,7 +129,7 @@ public class MemoryInst {
         //<editor-fold desc="Methods">
         @Override
         public String toString() {
-            return this.name + " = alloca " + this.allocatedType;
+            return this.getName() + " = alloca " + this.allocatedType;
         }
         //</editor-fold>
     }
@@ -162,10 +162,10 @@ public class MemoryInst {
         //<editor-fold desc="Methods">
         @Override
         public String toString() {
-            return this.name
+            return this.getName()
                     + " = "
                     + "zext i1 "
-                    + this.getOperandAt(0).name
+                    + this.getOperandAt(0).getName()
                     + " to i32";
         }
         //</editor-fold>

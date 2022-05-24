@@ -30,7 +30,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     public BasicBlock(String name) {
         super(Type.LabelType.getType());
 
-        this.name = name;
+        this.setName(name);
     }
 
     /**

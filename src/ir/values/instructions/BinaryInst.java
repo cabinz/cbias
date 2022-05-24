@@ -44,7 +44,7 @@ public class BinaryInst extends Instruction {
         // Build and return a string like "%1 = add i32 %2, %3"
         return
             // Result name
-            this.name +
+            this.getName() +
             " = " +
             // Operation code
             switch (this.cat) {
@@ -52,19 +52,19 @@ public class BinaryInst extends Instruction {
                 case SUB -> "sub i32 ";
                 case MUL -> "mul i32 ";
                 case DIV -> "sdiv i32 ";
-                case LT -> "icmp slt " + this.getOperandAt(0).type + " ";
-                case LE -> "icmp sle " + this.getOperandAt(0).type + " ";
-                case GE -> "icmp sge " + this.getOperandAt(0).type + " ";
-                case GT -> "icmp sgt " + this.getOperandAt(0).type + " ";
-                case EQ -> "icmp eq " + this.getOperandAt(0).type + " ";
-                case NE -> "icmp ne " + this.getOperandAt(0).type + " ";
+                case LT -> "icmp slt " + this.getOperandAt(0).getType() + " ";
+                case LE -> "icmp sle " + this.getOperandAt(0).getType() + " ";
+                case GE -> "icmp sge " + this.getOperandAt(0).getType() + " ";
+                case GT -> "icmp sgt " + this.getOperandAt(0).getType() + " ";
+                case EQ -> "icmp eq " + this.getOperandAt(0).getType() + " ";
+                case NE -> "icmp ne " + this.getOperandAt(0).getType() + " ";
                 default -> "";
             } +
             // Left operand
-            this.getOperandAt(0).name +
+            this.getOperandAt(0).getName() +
             ", " +
             // Right operand
-            getOperandAt(1).name;
+            getOperandAt(1).getName();
     }
 
 }
