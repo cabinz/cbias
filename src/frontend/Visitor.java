@@ -7,6 +7,7 @@ import ir.types.IntegerType;
 import ir.Type;
 import ir.types.PointerType;
 import ir.values.BasicBlock;
+import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.Instruction.InstCategory;
@@ -243,35 +244,34 @@ public class Visitor extends SysYBaseVisitor<Void> {
         BasicBlock entryBlk = builder.getCurBB();
 
         /*
-        Cope with condition expression by visiting child cond.
-         */
-        visit(ctx.cond());
-        Value cond = tmpVal; // for use of adding Br terminators.
-
-        /*
-        Build a block for jumping if condition is true.
+        Build the trueBlock (a block for jumping if condition is true).
         Fill it by visiting child (the 1st stmt, the true branch).
          */
+        //<editor-fold desc="">
         BasicBlock trueBlk = builder.buildBB("_THEN");
         visit(ctx.stmt(0));
         boolean trueBlkEndWithRet = trueBlk.getLastInst() instanceof TerminatorInst.Ret;
+        //</editor-fold>
 
         /*
-        If there is the 2nd stmt, it means it's an IF-ELSE statement.
-        Build a block for jumping if condition is false, and fill it by visiting child.
+        Build the falseBlock (a block for jumping if condition is false),
+        if there is the 2nd stmt, meaning that it's an IF-ELSE statement.
         Otherwise, it's an IF statement (w/o following ELSE).
          */
+        //<editor-fold desc="">
         BasicBlock falseBlk = null;
         boolean falseBlkEndWithRet = false;
         if (ctx.stmt(1) != null) {
             falseBlk = builder.buildBB("_ELSE");
-            visit(ctx.stmt(1));
+            visit(ctx.stmt(1)); // Fill the block by visiting child.
             falseBlkEndWithRet = falseBlk.getLastInst() instanceof TerminatorInst.Ret;
         }
+        //</editor-fold>
 
         /*
         Add Br terminator for trueBlock and falseBlock if needed.
          */
+        //<editor-fold desc="">
         BasicBlock exitBlk = null;
         if (!trueBlkEndWithRet || !falseBlkEndWithRet) {
             // The exit block will be built when:
@@ -287,42 +287,119 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 builder.buildBr(exitBlk);
             }
         }
+        //</editor-fold>
 
         /*
-        Add Br terminator for the entryBlock.
+        Cope with condition expression by visiting child cond.
          */
+        //<editor-fold desc="">
         builder.setCurBB(entryBlk);
-        // IF-ELSE
-        if (falseBlk != null) {
-            builder.buildBr(cond, trueBlk, falseBlk);
-        }
-        // IF
-        else {
-            builder.buildBr(cond, trueBlk, exitBlk);
-        }
+        // Pass down blocks as inherited attributes for short-circuit evaluation.
+        ctx.cond().lOrExp().trueBlk = trueBlk;
+        ctx.cond().lOrExp().falseBlk = (falseBlk != null) ? falseBlk : exitBlk;
+
+        visit(ctx.cond());
+        //</editor-fold>
 
         /*
         If there is an exit block (having more content below),
         set BB pointer to the exit and go ahead.
          */
+        //<editor-fold desc="">
         if (exitBlk != null) {
             builder.setCurBB(exitBlk);
         }
+        //</editor-fold>
 
         return null;
     }
 
-//    /**
-//     * lOrExp : lAndExp ('||' lAndExp)*
-//     * ---------------------------------
-//     * cond : lOrExp
-//     */
-//    @Override
-//    public Void visitLOrExp(SysYParser.LOrExpContext ctx) {
-//        // todo:
-//
-//        return null;
-//    }
+    /**
+     * lOrExp : lAndExp ('||' lAndExp)*
+     * ---------------------------------
+     * cond : lOrExp
+     */
+    @Override
+    public Void visitLOrExp(SysYParser.LOrExpContext ctx) {
+        //<editor-fold desc="For first N-1 lAndExp blocks.">
+        for(int i = 0; i < ctx.lAndExp().size() - 1; i++) {
+            BasicBlock curLOrBlk = builder.getCurBB();
+            BasicBlock nxtLOrBlk = builder.buildBB("");
+
+            // Pass down blocks as inherited attributes for short-circuit evaluation.
+            ctx.lAndExp(i).falseBlk = nxtLOrBlk;
+            ctx.lAndExp(i).trueBlk = ctx.trueBlk;
+
+            builder.setCurBB(curLOrBlk);
+            visit(ctx.lAndExp(i));
+            builder.setCurBB(nxtLOrBlk);
+        }
+        //</editor-fold>
+
+
+        //<editor-fold desc="For the last lAndExp block.">
+        ctx.lAndExp(ctx.lAndExp().size() - 1).falseBlk = ctx.falseBlk;
+        ctx.lAndExp(ctx.lAndExp().size() - 1).trueBlk = ctx.trueBlk;
+        visit(ctx.lAndExp(ctx.lAndExp().size() - 1));
+        //</editor-fold>
+
+        return null;
+    }
+
+    /**
+     * lAndExp : eqExp ('&&' eqExp)*
+     * ---------------------------------
+     * lOrExp : lAndExp ('||' lAndExp)*
+     * eqExp : relExp (('==' | '!=') relExp)*
+     * --------------------------------------------------
+     * lAndExp is the smallest unit for short-circuit
+     * evaluation.
+     * <br>
+     * It's noteworthy that although nonterminals lAndExp, lOrExp, eqExp,
+     * relExp have names indicating logical AND/OR expression, equal
+     * expression, relational expression respectively, these grammar
+     * symbols also covered patterns of scalar (a single number) without
+     * logical/relational composition.
+     * <br>
+     * Technically, logical operations (covered by lAndExp, lOrExp) and
+     * condition expression (corresponding to cond) should be guaranteed
+     * to yield a boolean type (i1) value.
+     * <br>
+     * However, in SysY, all the cases above appear only in the
+     * "cond-lOrExp-lAndExp(-eqExp-relExp)" chain, therefore we only
+     * need to add one building action of "icmp" in the
+     * middle of the chain to make sure the cond node produces i1 value.
+     * Since logical AND is the atom for short circuit evaluation,
+     * we add icmp here.
+     */
+    @Override
+    public Void visitLAndExp(SysYParser.LAndExpContext ctx) {
+        for(int i = 0; i < ctx.eqExp().size(); i++) {
+            visit(ctx.eqExp(i));
+            // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
+            // todo: gives a float
+            if(!tmpVal.type.isI1()) {
+                tmpVal = builder.buildBinary(InstCategory.NE, tmpVal, Constant.ConstInt.get(0));
+            }
+
+            // For the first N-1 eqExp blocks.
+            if(i < ctx.eqExp().size() - 1) {
+                // Build following blocks for short-circuit evaluation.
+                BasicBlock originBlk = builder.getCurBB();
+                BasicBlock nxtAndBlk = builder.buildBB("");
+                // Add a branch instruction to terminate this block.
+                builder.setCurBB(originBlk);
+                builder.buildBr(tmpVal, nxtAndBlk, ctx.falseBlk);
+                builder.setCurBB(nxtAndBlk);
+            }
+            // For the last eqExp blocks.
+            else {
+                builder.buildBr(tmpVal, ctx.trueBlk, ctx.falseBlk);
+            }
+        }
+
+        return null;
+    }
 
     /**
      * eqExp : relExp (('==' | '!=') relExp)*
