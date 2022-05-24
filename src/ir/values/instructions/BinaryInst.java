@@ -56,7 +56,7 @@ public class BinaryInst extends Instruction {
                 case GE -> "icmp sge " + this.getOperandAt(0).type + " ";
                 case GT -> "icmp sgt " + this.getOperandAt(0).type + " ";
                 case EQ -> "icmp eq " + this.getOperandAt(0).type + " ";
-                case NE -> "icmp ne  " + this.getOperandAt(0).type + " ";
+                case NE -> "icmp ne " + this.getOperandAt(0).type + " ";
                 default -> "";
             } +
             // Left operand
