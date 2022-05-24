@@ -128,7 +128,7 @@ public class IRBuilder {
      */
     public BasicBlock buildBB(String bbName) {
         BasicBlock bb = new BasicBlock(bbName);
-        curFunc.bbs.add(bb);
+        curFunc.addBB(bb);
         // Set the pointer.
         this.setCurBB(bb);
         return bb;

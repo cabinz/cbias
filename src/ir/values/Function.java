@@ -5,7 +5,8 @@ import ir.types.FunctionType;
 import ir.Type;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * A Function represents a single function/procedure in IR.
@@ -18,7 +19,8 @@ import java.util.List;
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Function.h#L61">
  *     LLVM IR Function Source</a>
  */
-public class Function extends Value {
+public class Function extends Value implements Iterable<BasicBlock>{
+
     /**
      * Innerclass: Represents a FORMAL argument in a function call
      * (designating a memory block on the stack of invoked function).
@@ -57,7 +59,7 @@ public class Function extends Value {
     /**
      * Basic blocks in the function.
      */
-    public final ArrayList<BasicBlock> bbs = new ArrayList<>();
+    private final LinkedList<BasicBlock> bbs = new LinkedList<>();
 
     /**
      * If it's an extern function whose prototype (declaration) is given
@@ -100,6 +102,22 @@ public class Function extends Value {
         return isExternal;
     }
 
+    /**
+     * Get the entry basic block of the function.
+     * @return Reference to the entry block.
+     */
+    public BasicBlock getEntryBB() {
+        return bbs.getFirst();
+    }
+
+    /**
+     * Add a new basic block into the function.
+     * @param bb The block to be added.
+     */
+    public void addBB(BasicBlock bb) {
+        bbs.add(bb);
+    }
+
     @Override
     public String toString() {
         // e.g. "i32 @func(i32 arg1, i32 arg2)"
@@ -131,6 +149,11 @@ public class Function extends Value {
         strBuilder.append(")");
 
         return strBuilder.toString();
+    }
+
+    @Override
+    public Iterator<BasicBlock> iterator() {
+        return bbs.iterator();
     }
     //</editor-fold>
 
