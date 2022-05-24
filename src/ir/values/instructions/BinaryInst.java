@@ -6,19 +6,25 @@ import ir.types.IntegerType;
 import ir.values.Instruction;
 
 /**
- * BinaryInst represents instructions with two operands, i.e. binary operations.
- * It's similar to BinaryOperator in LLVM IR.
+ * BinaryInst represents instructions with two operands,
+ * e.g. binary arithmetic operations, comparison operations.
  * <br>
- * Type for BinaryInst is the result type of the operation.
+ * <ul>
+ *     <li>Type for arithmetic instructions is the type of operation result.</li>
+ *     <li>Type for comparison instructions is boolean (i1).</li>
+ * </ul>
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/InstrTypes.h#L189">
  *     LLVM IR BinaryOperator Source</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#binary-operations">
- *     LLVM IR Binary Operations Docs</a>
+ *     LLVM LangRef: Binary Operations</a>
+ * @see <a href="https://llvm.org/docs/LangRef.html#icmp-instruction">
+ *     LLVM LangRef: icmp, fcmp</a>
  */
 public class BinaryInst extends Instruction {
 
     //<editor-fold desc="Constructors">
     /**
+     * User (Builder) needs to guarantee parameters passed correct.
      * @param type Type of operation result.
      * @param tag Instruction category.
      * @param lOp Left operand.

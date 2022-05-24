@@ -13,7 +13,6 @@ import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
-import javax.sql.rowset.BaseRowSet;
 import java.util.ArrayList;
 
 /**
@@ -72,6 +71,7 @@ public class IRBuilder {
     }
 
     public void setCurFunc(Function func) {
+        // todo: Change bbs to be contained in LinkedList and change bb pointer automatically.
         curFunc = func;
     }
 
@@ -252,7 +252,7 @@ public class IRBuilder {
     public BinaryInst buildBinary(Instruction.InstCategory tag, Value lOp, Value rOp) {
         // Analyze the type of the result returned by the binary operation.
         Type resType = null;
-        if (tag.isLogicalBinary()) {
+        if (tag.isRelationalBinary()) {
             resType = IntegerType.getI1();
         }
         else if (tag.isArithmeticBinary()) {

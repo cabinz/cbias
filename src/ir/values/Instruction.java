@@ -26,8 +26,8 @@ public class Instruction extends User {
     public enum InstCategory {
         // Operations
         ADD, SUB, MUL, DIV,     // Arithmetic Operations
-        LT, GT, EQ, NE, LE, GE, // Relationship (Logical) Operations
-        AND, OR,                // Bitwise Operations
+        LT, GT, EQ, NE, LE, GE, // Relational (Comparison) Operations
+        AND, OR,                // Logical Operations
         // Terminators
         RET, BR, CALL,
         // Memory operations
@@ -37,7 +37,7 @@ public class Instruction extends User {
             return this.ordinal() <= InstCategory.DIV.ordinal();
         }
 
-        public boolean isLogicalBinary() {
+        public boolean isRelationalBinary() {
             return InstCategory.LT.ordinal() <= this.ordinal()
                     && this.ordinal() <= InstCategory.GE.ordinal();
         }
