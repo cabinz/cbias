@@ -1,3 +1,6 @@
+import backend.ARMAssemble;
+import backend.MCBuilder;
+import backend.MCEmitter;
 import frontend.*;
 import ir.Module;
 import org.antlr.v4.runtime.CharStream;
@@ -44,9 +47,12 @@ public class Driver{
         System.out.println("Optimization has not been done.");
 
         /* Target code generation */
-        System.out.println("Generation of target code has not been done.");
+        MCBuilder mcBuilder = MCBuilder.get();
+        mcBuilder.loadModule(module);
+        ARMAssemble target = mcBuilder.codeGeneration();
 
         /* Write file */
-        System.out.println("Outputting the target file has not been done.");
+        MCEmitter mcEmitter = MCEmitter.get();
+        mcEmitter.emitTo(target, config.output);
     }
 }

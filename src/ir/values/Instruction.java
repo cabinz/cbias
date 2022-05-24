@@ -83,6 +83,22 @@ public class Instruction extends User {
     //</editor-fold>
 
 
+    //<editor-fold desc="Is?">
+    public boolean isAdd   () {return this.cat == InstCategory.ADD;}
+    public boolean isSub   () {return this.cat == InstCategory.SUB;}
+    public boolean isMul   () {return this.cat == InstCategory.MUL;}
+    public boolean isDiv   () {return this.cat == InstCategory.DIV;}
+    public boolean isAnd   () {return this.cat == InstCategory.AND;}
+    public boolean isOr    () {return this.cat == InstCategory.OR;}
+    public boolean isRet   () {return this.cat == InstCategory.RET;}
+    public boolean isBr    () {return this.cat == InstCategory.BR;}
+    public boolean isCall  () {return this.cat == InstCategory.CALL;}
+    public boolean isAlloca() {return this.cat == InstCategory.ALLOCA;}
+    public boolean isLoad  () {return this.cat == InstCategory.LOAD;}
+    public boolean isStore () {return this.cat == InstCategory.STORE;}
+    //</editor-fold>
+
+
     //<editor-fold desc="Methods">
 
     /**
