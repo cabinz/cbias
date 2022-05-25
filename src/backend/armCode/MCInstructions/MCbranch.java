@@ -6,19 +6,19 @@ import backend.operand.MCOperand;
 
 public class MCbranch extends MCInstruction {
 
-    private MCBasicBlock target;
+    private String target;
 
     private boolean withLink;
 
 
     public String emit() {
         if (withLink)
-            return "BL " + target.getName();
+            return "BL " + target;
         else
-            return "B " + target.getName();
+            return "B " + target;
     }
 
-    public MCbranch(MCBasicBlock target) {super(TYPE.B);this.target = target;withLink = false;}
-    public MCbranch(MCBasicBlock target, boolean withLink) {super(TYPE.B);this.target = target;this.withLink = withLink;}
+    public MCbranch(String target) {super(TYPE.B);this.target = target;withLink = false;}
+    public MCbranch(String target, boolean withLink) {super(TYPE.B);this.target = target;this.withLink = withLink;}
 
 }

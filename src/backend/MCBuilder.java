@@ -3,10 +3,7 @@ package backend;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
-import backend.armCode.MCInstructions.MCBinary;
-import backend.armCode.MCInstructions.MCstore;
-import backend.armCode.MCInstructions.MCload;
-import backend.armCode.MCInstructions.MCmov;
+import backend.armCode.MCInstructions.*;
 import backend.operand.*;
 import ir.Module;
 import ir.Value;
@@ -100,7 +97,7 @@ public class MCBuilder {
             for (BasicBlock IRBB : IRfunc){
                 MCBasicBlock MCBB = MCfunc.createBB(IRBB);
                 for (Instruction IRinst : IRBB) {
-                    System.out.println(IRinst.toString());
+//                    System.out.println(IRinst.toString());
                     translate(IRinst, MCBB, MCfunc);
                 }
             }
@@ -176,15 +173,20 @@ public class MCBuilder {
     }
 
     private void translateCall(Instruction IRinst, MCBasicBlock MCBB) {
+        // TODO: 改成POP和PUSH，优雅
+        MCBB.appendInstruction(new MCstore(RealRegister.get(14), RealRegister.get(13), new Immediate(4)));
+
         int oprNum = IRinst.getNumOperands();
         for (int i=1; i<oprNum; i++) {
             if (i <= 4) {
                 MCBB.appendInstruction(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i), false)));
             }
             else {
-                MCBB.appendInstruction(new MCstore());
+                MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(i), false), RealRegister.get(13), new Immediate(-4)));
             }
         }
+
+        MCBB.appendInstruction(new MCbranch(IRinst.getOperandAt(0).getName(), true));
     }
 
     private void translateRet(Instruction IRinst, MCBasicBlock MCBB) {
