@@ -24,7 +24,7 @@ public class ARMAssemble {
      * @return the corresponding MC Function
      */
     public MCFunction createFunction(Function IRf){
-        var MCf = new MCFunction(IRf.name, false);
+        var MCf = new MCFunction(IRf.getName(), false);
         functionList.add(MCf);
         functionMap.put(IRf, MCf);
         return MCf;
@@ -36,7 +36,7 @@ public class ARMAssemble {
      * @param IRf
      */
     public void useExternalFunction(Function IRf){
-        var MCf = new MCFunction(IRf.name, true);
+        var MCf = new MCFunction(IRf.getName(), true);
         functionList.add(MCf);
         functionMap.put(IRf, MCf);
     }

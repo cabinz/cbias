@@ -97,7 +97,7 @@ public class MCBuilder {
             }
             MCFunction MCfunc = target.createFunction(IRfunc);
             // TODO: 改成BFS
-            for (BasicBlock IRBB : IRfunc.bbs){
+            for (BasicBlock IRBB : IRfunc){
                 MCBasicBlock MCBB = MCfunc.createBB(IRBB);
                 for (Instruction IRinst : IRBB) {
                     System.out.println(IRinst.toString());
