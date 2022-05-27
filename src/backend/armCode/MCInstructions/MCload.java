@@ -10,9 +10,10 @@ public class MCload extends MCInstruction {
     private Register dst;
     private MCOperand addr;
     private MCOperand offset;
+    private boolean write;
 
     public String emit(){
-        return "LDR " + dst.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]";
+        return "LDR " + addr.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");
     }
 
     //<editor-fold desc="Getter & Setter">
@@ -27,6 +28,7 @@ public class MCload extends MCInstruction {
 
     //<editor-fold desc="Constructor">
     public MCload(Register dst, MCOperand addr) {super(TYPE.MOV); this.dst = dst; this.addr = addr;}
-    public MCload(Register dst, MCOperand addr, MCOperand offset) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset;}
+    public MCload(Register dst, MCOperand addr, MCOperand offset) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset; this.write=false;}
+    public MCload(Register dst, MCOperand addr, MCOperand offset, boolean write) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset; this.write=write;}
     //</editor-fold>
 }

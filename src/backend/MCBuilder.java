@@ -25,7 +25,7 @@ public class MCBuilder {
 
     private MCBuilder() {
         valueMap = new HashMap<>();
-    };
+    }
 
     static public MCBuilder get() {return builder;}
     //</editor-fold>
@@ -98,7 +98,7 @@ public class MCBuilder {
                 MCBasicBlock MCBB = MCfunc.createBB(IRBB);
                 for (Instruction IRinst : IRBB) {
 //                    System.out.println(IRinst.toString());
-                    translate(IRinst, MCBB, MCfunc);
+                    translate(IRinst, MCBB);
                 }
             }
         }
@@ -108,9 +108,8 @@ public class MCBuilder {
      * 指令选择总模块
      * @param IRinst IR instruction to be translated
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
-     * @param MCfunc The MC Function where the IR instruction belongs to
      */
-    private void translate(Instruction IRinst, MCBasicBlock MCBB, MCFunction MCfunc) {
+    private void translate(Instruction IRinst, MCBasicBlock MCBB) {
         if (IRinst.isRet()) {
             translateRet(IRinst, MCBB);
         }
@@ -157,29 +156,39 @@ public class MCBuilder {
             valueMap.put(value, vr);
             return vr;
         }
-        // TODO: 识别能否直接编码立即数
         if (value instanceof Constant.ConstInt) {
-            return new Immediate(((Constant.ConstInt) value).getVal());
+            return createImmediate(((Constant.ConstInt) value).getVal());
         }
         else
             return null;
     }
 
-    private void translateCall(Instruction IRinst, MCBasicBlock MCBB) {
-        // TODO: 改成POP和PUSH，优雅
-        MCBB.appendInstruction(new MCstore(RealRegister.get(14), RealRegister.get(13), new Immediate(4)));
+    // TODO: 识别能否直接编码立即数
+    private Immediate createImmediate(int value){
+        return new Immediate(value);
+    }
 
+    /**
+     * Translate IR Call instruction into ARM instruction. <br/>
+     * Function Stack: LR, local variables, call variables <br/>
+     * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; high &emsp;&emsp;&emsp; -->> &emsp;&emsp;&emsp; low <br/>
+     * (FP先不存了吧，自己知道就好) <br/>
+     * @param IRinst IR call instruction
+     * @param MCBB The MC BasicBlock where the IR instruction belongs to
+     */
+    private void translateCall(Instruction IRinst, MCBasicBlock MCBB) {
         int oprNum = IRinst.getNumOperands();
         for (int i=1; i<oprNum; i++) {
             if (i <= 4) {
                 MCBB.appendInstruction(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i), false)));
             }
             else {
-                MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(i), false), RealRegister.get(13), new Immediate(-4)));
+                MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(i), false), RealRegister.get(13), createImmediate(-4), true));
             }
         }
-
         MCBB.appendInstruction(new MCbranch(IRinst.getOperandAt(0).getName(), true));
+        MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createImmediate(4*oprNum-4)));
+        MCBB.appendInstruction(new MCmov((Register) findContainer(IRinst, false), RealRegister.get(0)));
     }
 
     private void translateRet(Instruction IRinst, MCBasicBlock MCBB) {
@@ -192,8 +201,7 @@ public class MCBuilder {
      * To be optimized later....
      */
     private void translateAlloca(Instruction IRinst, MCBasicBlock MCBB) {
-        // TODO: 改成寻址方式
-        MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), new Immediate(4)));
+        MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createImmediate(4)));
         MCBB.appendInstruction(new MCmov((Register) findContainer(IRinst, false), RealRegister.get(13)));
     }
 
@@ -212,7 +220,7 @@ public class MCBuilder {
             MCBB.appendInstruction(new MCstore(register, findContainer(IRinst.getOperandAt(1), false)));
         }
         else
-            MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(0), false), findContainer(IRinst.getOperandAt(1), false)));
+            MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(0), false), addr));
     }
 
     /**
