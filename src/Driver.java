@@ -37,11 +37,10 @@ public class Driver{
         visitor.visit(ast);
 
         /* Emit the IR text to an output file for testing. */
-        IREmitter emitter = new IREmitter(
-                // "test.sy" -> "test.ll"
-                config.source.replace(".sy", ".ll")
-        );
-        emitter.emit(module);
+        if (config.llOut != null) {
+            IREmitter emitter = new IREmitter(config.llOut);
+            emitter.emit(module);
+        }
 
         /* Intermediate code optimization */
         System.out.println("Optimization has not been done.");

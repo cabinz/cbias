@@ -5,4 +5,5 @@
 public class CompileConfig {
     public String source;
     public String output = ".";
+    public String llOut = null;
 }

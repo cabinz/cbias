@@ -20,6 +20,10 @@ public class compiler{
                 // presume output path is given
                 config.output = args[++i];
             }
+            else if ("-emit-llvm".equals(args[i])) {
+                // presume output path is given
+                config.llOut = args[++i];
+            }
             // todo: -h for help info
             // todo: -O1/2 for opt
             // todo: tackle with unexpected args
