@@ -13,7 +13,7 @@ public class MCload extends MCInstruction {
     private boolean write;
 
     public String emit(){
-        return "LDR " + addr.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");
+        return "LDR " + dst.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");
     }
 
     //<editor-fold desc="Getter & Setter">

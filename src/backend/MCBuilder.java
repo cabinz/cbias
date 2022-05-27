@@ -21,7 +21,7 @@ import java.util.HashMap;
 public class MCBuilder {
 
     //<editor-fold desc="Singleton Pattern">
-    static private MCBuilder builder = new MCBuilder();
+    static private final MCBuilder builder = new MCBuilder();
 
     private MCBuilder() {
         valueMap = new HashMap<>();
@@ -41,7 +41,7 @@ public class MCBuilder {
     /**
      * This class records the map between values and virtual registers.
      */
-    private HashMap<Value, VirtualRegister> valueMap;
+    private final HashMap<Value, VirtualRegister> valueMap;
     //</editor-fold>
 
 
@@ -220,7 +220,7 @@ public class MCBuilder {
             MCBB.appendInstruction(new MCstore(register, findContainer(IRinst.getOperandAt(1), false)));
         }
         else
-            MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(0), false), addr));
+            MCBB.appendInstruction(new MCstore((Register) src, addr));
     }
 
     /**

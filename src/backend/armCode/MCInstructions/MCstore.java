@@ -16,7 +16,7 @@ public class MCstore extends MCInstruction {
     private boolean write;
 
     public String emit(){
-        return "STR " + addr.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");
+        return "STR " + src.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");
     }
 
     //<editor-fold desc="Getter & Setter">
