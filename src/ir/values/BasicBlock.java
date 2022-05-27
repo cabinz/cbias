@@ -21,8 +21,8 @@ import java.util.LinkedList;
 public class BasicBlock extends Value implements Iterable<Instruction>{
 
     //<editor-fold desc="Fields">
-    private ArrayList<BasicBlock> predecessors;
-    private ArrayList<BasicBlock> successors;
+    private final ArrayList<BasicBlock> predecessors = new ArrayList<>();
+    private final ArrayList<BasicBlock> successors = new ArrayList<>();
     public final LinkedList<Instruction> instructions = new LinkedList<>();
     //</editor-fold>
 
