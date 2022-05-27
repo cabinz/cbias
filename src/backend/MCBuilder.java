@@ -145,28 +145,21 @@ public class MCBuilder {
      * What's a container? I consider a MC operand as a container. IR
      * value are hold in the immediate position, or register.
      * @param value the value to handle
+     * @param forceAllocReg force allocate a virtual register if true
      * @return the corresponding operand
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
-        // TODO: 识别立即数大小
-        if (value instanceof Constant.ConstInt) {
-            if (forceAllocReg) {
-                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
-                valueMap.put(value, vr);
-                return vr;
-            }
-            else
-                return new Immediate(((Constant.ConstInt) value).getVal());
+        if (valueMap.containsKey(value)) {
+            return valueMap.get(value);
         }
-        else if (value instanceof Instruction) {
-            if (valueMap.containsKey(value)) {
-                return valueMap.get(value);
-            }
-            else {
-                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
-                valueMap.put(value, vr);
-                return vr;
-            }
+        else if (value instanceof Instruction || forceAllocReg) {
+            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            valueMap.put(value, vr);
+            return vr;
+        }
+        // TODO: 识别能否直接编码立即数
+        if (value instanceof Constant.ConstInt) {
+            return new Immediate(((Constant.ConstInt) value).getVal());
         }
         else
             return null;
@@ -250,13 +243,13 @@ public class MCBuilder {
             }
             else {
                 if (type != MCInstruction.TYPE.SUB)
-                    MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false), operand2, operand1));
+                    MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false),(Register)  operand2, operand1));
                 else
-                    MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst, false), operand2, operand1));
+                    MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst, false),(Register)  operand2, operand1));
             }
         }
         else {
-            MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false), operand1, operand2));
+            MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false),(Register) operand1, operand2));
         }
     }
 

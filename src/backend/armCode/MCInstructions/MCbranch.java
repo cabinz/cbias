@@ -1,8 +1,6 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCBasicBlock;
 import backend.armCode.MCInstruction;
-import backend.operand.MCOperand;
 
 public class MCbranch extends MCInstruction {
 
@@ -18,7 +16,7 @@ public class MCbranch extends MCInstruction {
             return "B " + target;
     }
 
-    public MCbranch(String target) {super(TYPE.B);this.target = target;withLink = false;}
-    public MCbranch(String target, boolean withLink) {super(TYPE.B);this.target = target;this.withLink = withLink;}
+    public MCbranch(String target) {super(TYPE.BRANCH);this.target = target;withLink = false;}
+    public MCbranch(String target, boolean withLink) {super(TYPE.BRANCH);this.target = target;this.withLink = withLink;}
 
 }

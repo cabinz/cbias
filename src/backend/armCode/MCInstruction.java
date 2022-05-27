@@ -8,6 +8,10 @@ import backend.operand.Register;
  */
 public abstract class MCInstruction {
 
+    /**
+     * The type of Machine Code instruction, which will be emitted directly!
+     * No more translate!
+     */
     public enum TYPE {
         ADD,
         SUB,
@@ -20,15 +24,11 @@ public abstract class MCInstruction {
         FMA,//乘加
         LongMUL,
         MOV,
-        B,
-        JMP,
-        RETURN,
+        BRANCH,
         STORE,
         LOAD,
         CMP,
-        CALL,
         GLOBAL,
-        COMMENT,
         PHI
     }
 
@@ -47,11 +47,24 @@ public abstract class MCInstruction {
 
 
     //<editor-fold desc="Fields">
+    /**
+     * This field indicates the type of instruction.
+     */
     protected final TYPE type;
+    /**
+     * The conditional field. <br/>
+     * All instructions have this,
+     */
     private ConditionField cond;
+    /**
+     * The shift field. <br/>
+     * But in fact, not all instructions have this field.
+     * So it's not reasonable to put it here. :(
+     */
+    protected Shift shift;
+
     private MCBasicBlock belongingBasicBlock;
     private MCFunction belongingFunction;
-    protected Shift shift;
     //</editor-fold>
 
 
@@ -72,6 +85,8 @@ public abstract class MCInstruction {
 
 
     //<editor-fold desc="Constructor">
+    /* The constructor only initializes the TEXT information of the instruction.
+       The relation info must be set use setter.  */
     public MCInstruction(TYPE type) {
         this.type = type;
     }
