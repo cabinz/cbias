@@ -509,7 +509,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 builder.buildZExt(tmpVal);
             }
             // Unary operators.
-            String op = ctx.unaryExp().getText();
+            String op = ctx.unaryOp().getText();
             switch (op) {
                 case "-":
                     tmpVal = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), tmpVal);
