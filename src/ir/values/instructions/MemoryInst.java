@@ -89,7 +89,7 @@ public class MemoryInst {
             // e.g. %val = load i32, i32* %ptr
             return this.getName() + " = load " // %val = load
                     + this.getType() + ", " // i32,
-                    + op.getType() + " " + op.getType(); // , i32* %ptr
+                    + op.getType() + " " + op.getName(); // , i32* %ptr
         }
         //</editor-fold>
     }
