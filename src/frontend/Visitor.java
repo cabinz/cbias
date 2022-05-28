@@ -241,75 +241,75 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitCondStmt(SysYParser.CondStmtContext ctx) {
+        /*
+        Build an EXIT block no matter if it may become dead code
+        that cannot be reached in the CFG.
+         */
         BasicBlock entryBlk = builder.getCurBB();
+        BasicBlock exitBlk = builder.buildBB("_EXIT");
 
         /*
-        Build the trueBlock (a block for jumping if condition is true).
+        Build the TRUE block (a block for jumping if condition is true).
         Fill it by visiting child (the 1st stmt, the true branch).
          */
-        //<editor-fold desc="">
-        BasicBlock trueBlk = builder.buildBB("_THEN");
+        BasicBlock trueEntryBlk = builder.buildBB("_THEN");
         visit(ctx.stmt(0));
-        boolean trueBlkEndWithRet = trueBlk.getLastInst() instanceof TerminatorInst.Ret;
-        //</editor-fold>
+        BasicBlock trueExitBlk = builder.getCurBB();
+        boolean trueBlkEndWithRet = trueExitBlk.getLastInst() instanceof TerminatorInst.Ret;
 
         /*
-        Build the falseBlock (a block for jumping if condition is false),
+        Build the FALSE block (a block for jumping if condition is false),
         if there is the 2nd stmt, meaning that it's an IF-ELSE statement.
-        Otherwise, it's an IF statement (w/o following ELSE).
+        Otherwise, it's an IF statement (w/o following ELSE), and
+        falseEntryBlk will remain null.
+
+        : if(falseEntryBlk != null) -> IF-ELSE statement
+        : if(falseEntryBlk == null) -> IF statement w/o ELSE
          */
-        //<editor-fold desc="">
-        BasicBlock falseBlk = null;
+        BasicBlock falseEntryBlk = null;
+        BasicBlock falseExitBlk = null;
         boolean falseBlkEndWithRet = false;
         if (ctx.stmt(1) != null) {
-            falseBlk = builder.buildBB("_ELSE");
+            falseEntryBlk = builder.buildBB("_ELSE");
             visit(ctx.stmt(1)); // Fill the block by visiting child.
-            falseBlkEndWithRet = falseBlk.getLastInst() instanceof TerminatorInst.Ret;
+            falseExitBlk = builder.getCurBB();
+            falseBlkEndWithRet = falseExitBlk.getLastInst() instanceof TerminatorInst.Ret;
         }
-        //</editor-fold>
 
         /*
-        Add Br terminator for trueBlock and falseBlock if needed.
+        Add Br terminator for trueExitBlock and falseExitBlock if needed (if both branches
+        end with Ret terminators.
          */
-        //<editor-fold desc="">
-        BasicBlock exitBlk = null;
-        if (!trueBlkEndWithRet || !falseBlkEndWithRet) {
-            // The exit block will be built when:
-            // "!trueBlkEndWithRet && !falseBlkEndWithRet" (under IF-ELSE)
-            // or "!trueBlkEndWithRet && no falseBlock" (i.e. IF w/o ELSE)
-            exitBlk = builder.buildBB("_EXIT");
-            if (!trueBlkEndWithRet) {
-                builder.setCurBB(trueBlk);
-                builder.buildBr(exitBlk);
-            }
-            if (falseBlk != null && !falseBlkEndWithRet) {
-                builder.setCurBB(falseBlk);
-                builder.buildBr(exitBlk);
-            }
+        // The exit block will be built when:
+        // "!trueBlkEndWithRet && !falseBlkEndWithRet" (under IF-ELSE)
+        // or "!trueBlkEndWithRet && no falseBlock" (i.e. IF w/o ELSE)
+        if (!trueBlkEndWithRet) {
+            builder.setCurBB(trueExitBlk);
+            builder.buildBr(exitBlk);
         }
-        //</editor-fold>
+        if (falseEntryBlk != null && !falseBlkEndWithRet) {
+            builder.setCurBB(falseExitBlk);
+            builder.buildBr(exitBlk);
+        }
 
         /*
         Cope with condition expression by visiting child cond.
          */
-        //<editor-fold desc="">
         builder.setCurBB(entryBlk);
         // Pass down blocks as inherited attributes for short-circuit evaluation.
-        ctx.cond().lOrExp().trueBlk = trueBlk;
-        ctx.cond().lOrExp().falseBlk = (falseBlk != null) ? falseBlk : exitBlk;
+        ctx.cond().lOrExp().trueBlk = trueEntryBlk;
+        ctx.cond().lOrExp().falseBlk = (falseEntryBlk != null) ? falseEntryBlk : exitBlk;
 
         visit(ctx.cond());
-        //</editor-fold>
 
         /*
-        If there is an exit block (having more content below),
-        set BB pointer to the exit and go ahead.
+        Force the BB pointer to point to the exitBlk, which will serve as the upstream
+        block for processing the following content.
+        Even if the exitBlk is a dead entry that cannot be reached, all the content will
+        still be processed. These dead basic blocks can be removed in the following
+        CFG analysis by the optimizer.
          */
-        //<editor-fold desc="">
-        if (exitBlk != null) {
-            builder.setCurBB(exitBlk);
-        }
-        //</editor-fold>
+        builder.setCurBB(exitBlk);
 
         return null;
     }
