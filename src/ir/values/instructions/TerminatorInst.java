@@ -102,9 +102,8 @@ public class TerminatorInst {
          * @param val
          */
         public Ret(Value val, BasicBlock bb) {
-            super(Type.VoidType.getType(), InstCategory.RET, bb);
+            this(bb);
             this.addOperandAt(val, 0);
-//            needName = false;
         }
         //</editor-fold>
 
