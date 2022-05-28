@@ -42,6 +42,8 @@ public class Driver{
             emitter.emit(module);
         }
 
+        if (config.ASMout == null) return;
+
         /* Intermediate code optimization */
         System.out.println("Optimization has not been done.");
 
@@ -52,6 +54,6 @@ public class Driver{
 
         /* Write file */
         MCEmitter mcEmitter = MCEmitter.get();
-        mcEmitter.emitTo(target, config.output);
+        mcEmitter.emitTo(target, config.ASMout);
     }
 }
