@@ -506,7 +506,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         if (tmpVal.getType().isInteger()) {
             // Conduct zero extension on i1.
             if (tmpVal.getType().isI1()) {
-                builder.buildZExt(tmpVal);
+                tmpVal = builder.buildZExt(tmpVal);
             }
             // Unary operators.
             String op = ctx.unaryOp().getText();
