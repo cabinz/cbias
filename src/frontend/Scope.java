@@ -31,7 +31,7 @@ public class Scope {
 
     //<editor-fold desc="Constructors">
     public Scope() {
-        // Push a first symbol table for the module as initialization.
+        // Push the first symbol table (the top/global scope) for the module as initialization.
         tables.add(new HashMap<>());
     }
     //</editor-fold>
@@ -47,6 +47,14 @@ public class Scope {
     }
 
     /**
+     * If the current scope is the top scope.
+     * @return True if currently under the global scope. Otherwise, return false.
+     */
+    public boolean isGlobal() {
+        return tables.size() == 1;
+    }
+
+    /**
      * Push a new symbol table onto the stack when scoping.
      */
     public void scopeIn() {
@@ -57,7 +65,12 @@ public class Scope {
      * Pop out the top symbol table from the stack when current scope exits.
      */
     public void scopeOut() {
-        tables.remove(tables.size() - 1);
+        if (this.isGlobal()) {
+            throw new RuntimeException("Try to exit the top (global) scope.\n");
+        }
+        else {
+            tables.remove(tables.size() - 1);
+        }
     }
 
     /**
