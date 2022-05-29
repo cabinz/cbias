@@ -27,10 +27,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private final Scope scope = new Scope();
 
     //<editor-fold desc="Temporary variables for passing values through layers visited.">
-    private Value tmpVal;
-    private ArrayList<Type> tmpTypeList;
-    private Type tmpType;
-    private int tmpInt;
+    private Value retVal_;
+    private ArrayList<Type> retTypeList_;
+    private Type retType_;
+    private int retInt_;
     //</editor-fold>
 
     //<editor-fold desc="Environment variables indicating the building status">
@@ -138,13 +138,19 @@ public class Visitor extends SysYBaseVisitor<Void> {
             throw new RuntimeException("Duplicate definition of constant name: " + varName);
         }
 
+        /*
+        Since SysY does NOT support pointer (meaning we don't have to worry abt memory
+        address of different constants), a constant scalar can be directly referenced as an
+        instant number by other Value (e.g. instructions), w/o the need of building an
+        Alloca instruction like variable.
+         */
+
         // Retrieve the initialized value by visiting child (scalarConstDef).
         // Then update the symbol table.
-        // Since it's a constant, it can directly be referenced as an instance number by
-        // other Value (e.g. instructions), w/o the need of building an Alloca instruction
-        // like variable.
         visit(ctx.constInitVal());
-        scope.addDecl(varName, tmpVal);
+        scope.addDecl(varName, retVal_);
+
+        // todo: array
 
         return null;
     }
@@ -160,7 +166,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             this.setGlbInit(ON);
         }
         super.visitScalarConstInitVal(ctx);
-        tmpVal = builder.buildConstant(tmpInt);
+        retVal_ = builder.buildConstant(retInt_);
         // todo: float constant
         this.setGlbInit(OFF);
         return null;
@@ -186,7 +192,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (ctx.initVal() != null) {
                 visit(ctx.initVal());
                 // todo: float init
-                glbVar = builder.buildGlbVar(varName, (Constant) tmpVal);
+                glbVar = builder.buildGlbVar(varName, (Constant) retVal_);
             }
             else {
                 glbVar = builder.buildGlbVar(varName, IntegerType.getI32());
@@ -202,7 +208,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // If it's a definition with initialization.
             if (ctx.initVal() != null) {
                 visit(ctx.initVal());
-                builder.buildStore(tmpVal, addrAllocated);
+                builder.buildStore(retVal_, addrAllocated);
             }
         }
 
@@ -223,7 +229,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         super.visitScalarInitVal(ctx);
         // Turn off global var switch.
         if (inGlbInit()) {
-            tmpVal = builder.buildConstant(tmpInt);
+            retVal_ = builder.buildConstant(retInt_);
             // todo: float constant
             this.setGlbInit(OFF);
         }
@@ -261,7 +267,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayList<Type> argTypes = new ArrayList<>();
         if (ctx.funcFParams() != null) {
             visit(ctx.funcFParams());
-            argTypes.addAll(tmpTypeList);
+            argTypes.addAll(retTypeList_);
         }
 
         /*
@@ -311,10 +317,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitFuncFParams(SysYParser.FuncFParamsContext ctx) {
-        tmpTypeList = new ArrayList<>();
+        retTypeList_ = new ArrayList<>();
         ctx.funcFParam().forEach(arg -> {
             visit(arg);
-            tmpTypeList.add(tmpType);
+            retTypeList_.add(retType_);
         });
         return null;
     }
@@ -327,7 +333,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitScalarFuncFParam(SysYParser.ScalarFuncFParamContext ctx) {
         // todo: float as function arguments
         // Integer argument
-        tmpType = IntegerType.getI32();
+        retType_ = IntegerType.getI32();
         return null;
     }
 
@@ -352,7 +358,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // visit child to retrieve it.
         if (ctx.expr() != null) {
             visit(ctx.expr());
-            builder.buildRet(tmpVal);
+            builder.buildRet(retVal_);
         }
         // If not, return void.
         else {
@@ -505,8 +511,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
             visit(ctx.eqExp(i));
             // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
             // todo: gives a float
-            if(!tmpVal.getType().isI1()) {
-                tmpVal = builder.buildBinary(InstCategory.NE, tmpVal, Constant.ConstInt.get(0));
+            if(!retVal_.getType().isI1()) {
+                retVal_ = builder.buildBinary(InstCategory.NE, retVal_, Constant.ConstInt.get(0));
             }
 
             // For the first N-1 eqExp blocks.
@@ -516,12 +522,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 BasicBlock nxtAndBlk = builder.buildBB("");
                 // Add a branch instruction to terminate this block.
                 builder.setCurBB(originBlk);
-                builder.buildBr(tmpVal, nxtAndBlk, ctx.falseBlk);
+                builder.buildBr(retVal_, nxtAndBlk, ctx.falseBlk);
                 builder.setCurBB(nxtAndBlk);
             }
             // For the last eqExp blocks.
             else {
-                builder.buildBr(tmpVal, ctx.trueBlk, ctx.falseBlk);
+                builder.buildBr(retVal_, ctx.trueBlk, ctx.falseBlk);
             }
         }
 
@@ -540,12 +546,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitEqExp(SysYParser.EqExpContext ctx) {
         // Retrieve left operand by visiting child.
         visit(ctx.relExp(0));
-        Value lOp = tmpVal;
+        Value lOp = retVal_;
 
         for (int i = 1; i < ctx.relExp().size(); i++) {
             // Retrieve the next relExp as the right operand by visiting child.
             visit(ctx.relExp(i));
-            Value rOp = tmpVal;
+            Value rOp = retVal_;
             // Build a comparison instruction, which yields a result
             // to be the left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
@@ -555,7 +561,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
         // The final result is stored in the last left operand.
-        tmpVal = lOp;
+        retVal_ = lOp;
 
         return null;
     }
@@ -571,12 +577,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitRelExp(SysYParser.RelExpContext ctx) {
         // Retrieve left operand by visiting child.
         visit(ctx.addExp(0));
-        Value lOp = tmpVal;
+        Value lOp = retVal_;
 
         for (int i = 1; i < ctx.addExp().size(); i++) {
             // Retrieve the next addExp as the right operand by visiting child.
             visit(ctx.addExp(i));
-            Value rOp = tmpVal;
+            Value rOp = retVal_;
             // Build a comparison instruction, which yields a result
             // to be the left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
@@ -588,7 +594,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
         // The final result is stored in the last left operand.
-        tmpVal = lOp;
+        retVal_ = lOp;
 
         return null;
     }
@@ -617,7 +623,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             val = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
         }
 
-        tmpInt = val;
+        retInt_ = val;
 
         return null;
     }
@@ -634,8 +640,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the value of unaryExp() by visiting child.
             visit(ctx.unaryExp());
             switch (ctx.unaryOp().getText()) {
-                case "-" -> tmpInt = -tmpInt;
-                case "!" -> tmpInt = (tmpInt == 0) ? 0 : 1;
+                case "-" -> retInt_ = -retInt_;
+                case "!" -> retInt_ = (retInt_ == 0) ? 0 : 1;
                 case "+" -> {}
             }
             // todo: float
@@ -647,15 +653,15 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the expression by visiting child.
             visit(ctx.unaryExp());
             // Integer.
-            if (tmpVal.getType().isInteger()) {
+            if (retVal_.getType().isInteger()) {
                 // Conduct zero extension on i1.
-                if (tmpVal.getType().isI1()) {
-                    tmpVal = builder.buildZExt(tmpVal);
+                if (retVal_.getType().isI1()) {
+                    retVal_ = builder.buildZExt(retVal_);
                 }
                 // Unary operators.
                 switch (ctx.unaryOp().getText()) {
-                    case "-" -> tmpVal = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), tmpVal);
-                    case "!" -> tmpVal = builder.buildBinary(InstCategory.EQ, builder.buildConstant(0), tmpVal);
+                    case "-" -> retVal_ = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), retVal_);
+                    case "!" -> retVal_ = builder.buildBinary(InstCategory.EQ, builder.buildConstant(0), retVal_);
                     case "+" -> {}
                 }
             }
@@ -679,16 +685,16 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the value of the 1st mulExp.
             // res stores the temporary result during the computation.
             visit(ctx.mulExp(0));
-            int res = tmpInt;
+            int res = retInt_;
             // Retrieve each of the rest mulExp and compute.
             for (int i = 1; i < ctx.mulExp().size(); i++) {
                 visit(ctx.mulExp(i));
                 switch (ctx.getChild(i * 2 - 1).getText()) {
-                    case "+" -> res += tmpInt;
-                    case "-" -> res -= tmpInt;
+                    case "+" -> res += retInt_;
+                    case "-" -> res -= retInt_;
                 }
             }
-            tmpInt = res;
+            retInt_ = res;
             // todo: float case
         }
         /*
@@ -698,12 +704,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // todo: float case
             // Retrieve the 1st mulExp (as the left operand) by visiting child.
             visit(ctx.mulExp(0));
-            Value lOp = tmpVal;
+            Value lOp = retVal_;
             // The 2nd and possibly more MulExp.
             for (int i = 1; i < ctx.mulExp().size(); i++) {
                 // Retrieve the next mulExp (as the right operand) by visiting child.
                 visit(ctx.mulExp(i));
-                Value rOp = tmpVal;
+                Value rOp = retVal_;
                 // Check integer types of two operands.
                 if (lOp.getType().isI1()) {
                     lOp = builder.buildZExt(lOp);
@@ -720,7 +726,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
             }
 
-            tmpVal = lOp;
+            retVal_ = lOp;
         }
 
         return null;
@@ -740,17 +746,17 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the value of the 1st unaryExp.
             // res stores the temporary result during the computation.
             visit(ctx.unaryExp(0));
-            int res = tmpInt;
+            int res = retInt_;
             // Retrieve each of the rest unaryExp and compute.
             for (int i = 1; i < ctx.unaryExp().size(); i++) {
                 visit(ctx.unaryExp(i));
                 switch (ctx.getChild(i * 2 - 1).getText()) {
-                    case "*" -> res *= tmpInt;
-                    case "/" -> res /= tmpInt;
-                    case "%" -> res %= tmpInt;
+                    case "*" -> res *= retInt_;
+                    case "/" -> res /= retInt_;
+                    case "%" -> res %= retInt_;
                 }
             }
-            tmpInt = res;
+            retInt_ = res;
             // todo: float case
         }
         /*
@@ -760,12 +766,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // todo: float case
             // Retrieve the 1st unaryExp (as the left operand) by visiting child.
             visit(ctx.unaryExp(0));
-            lOp = tmpVal;
+            lOp = retVal_;
             // The 2nd and possibly more MulExp.
             for (int i = 1; i < ctx.unaryExp().size(); i++) {
                 // Retrieve the next unaryExp (as the right operand) by visiting child.
                 visit(ctx.unaryExp(i));
-                Value rOp = tmpVal;
+                Value rOp = retVal_;
                 // Generate an instruction to compute result of left and right operands
                 // as the new left operand for the next round.
                 switch (ctx.getChild(2 * i - 1).getText()) {
@@ -778,7 +784,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     }
                 }
             }
-            tmpVal = lOp;
+            retVal_ = lOp;
         }
 
         return null;
@@ -821,7 +827,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Case 1, return directly.
         // todo: float type can be returned directly too
         if (val.getType().isInteger()) {
-            tmpVal = val;
+            retVal_ = val;
             return null;
         }
         // Case 2, return a PointerType Value.
@@ -833,7 +839,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
             // i32*: Return directly.
             else if (pointeeType.isInteger()) {
-                tmpVal = val;
+                retVal_ = val;
                 return null;
             }
             // todo: array*, float*
@@ -872,7 +878,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         if (this.inGlbInit()) {
             visit(ctx.lVal());
-            tmpInt = ((Constant.ConstInt) tmpVal).getVal();
+            retInt_ = ((Constant.ConstInt) retVal_).getVal();
         }
         /*
         Local expression: Instructions will be generated.
@@ -881,9 +887,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // todo: branch out if during building a Call
             visit(ctx.lVal());
             // Load the memory block if a PointerType Value is retrieved from lVal.
-            if (tmpVal.getType().isPointerType()) {
-                Type pointeeType = ((PointerType) tmpVal.getType()).getPointeeType();
-                tmpVal = builder.buildLoad(pointeeType, tmpVal);
+            if (retVal_.getType().isPointerType()) {
+                Type pointeeType = ((PointerType) retVal_.getType()).getPointeeType();
+                retVal_ = builder.buildLoad(pointeeType, retVal_);
             }
         }
         return null;
@@ -900,7 +906,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitNumber(SysYParser.NumberContext ctx) {
         super.visitNumber(ctx);
         if (!this.inGlbInit()) {
-            tmpVal = builder.buildConstant(tmpInt);
+            retVal_ = builder.buildConstant(retInt_);
         }
         // todo: float glb init
         return null;
@@ -913,10 +919,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitAssignStmt(SysYParser.AssignStmtContext ctx) {
         // Retrieve left value (the address to store) by visiting child.
         visit(ctx.lVal());
-        Value addr = tmpVal;
+        Value addr = retVal_;
         // Retrieve the value to be stored by visiting child.
         visit(ctx.expr());
-        Value val = tmpVal;
+        Value val = retVal_;
         // Build the Store instruction.
         builder.buildStore(val, addr);
         return null;
@@ -952,12 +958,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Visit child RParam.
                 visit(argCtx);
                 // Add the argument Value retrieved by visiting to the container.
-                args.add(tmpVal);
+                args.add(retVal_);
             }
         }
 
         // Build a Call instruction.
-        tmpVal = builder.buildCall((Function)func, args);
+        retVal_ = builder.buildCall((Function)func, args);
 
         return null;
     }
@@ -970,7 +976,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitStrRParam(SysYParser.StrRParamContext ctx) {
         // todo: Cope with string function argument.
-        tmpVal = null;
+        retVal_ = null;
 
         return null;
     }
