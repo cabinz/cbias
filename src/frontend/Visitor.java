@@ -6,10 +6,7 @@ import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.Type;
 import ir.types.PointerType;
-import ir.values.BasicBlock;
-import ir.values.Constant;
-import ir.values.Function;
-import ir.values.Instruction;
+import ir.values.*;
 import ir.values.Instruction.InstCategory;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
@@ -97,9 +94,80 @@ public class Visitor extends SysYBaseVisitor<Void> {
     Visit methods overwritten.
      */
 
+    /**
+     * compUnit : (decl | funcDef)* EOF
+     * -------------------------------------------
+     * decl : constDecl | varDecl
+     */
     @Override
     public Void visitCompUnit(SysYParser.CompUnitContext ctx) {
         super.visitCompUnit(ctx);
+        return null;
+    }
+
+    /**
+     * constDef : Identifier '=' constInitVal # scalarConstDef
+     * -------------------------------------------------------
+     * constDecl : 'const' bType constDef (',' constDef)* ';'
+     */
+    @Override
+    public Void visitScalarConstDef(SysYParser.ScalarConstDefContext ctx) {
+        // Retrieve the name of the variable defined and check for duplication.
+        String varName = ctx.Identifier().getText();
+        if (scope.duplicateDecl(varName)) {
+            throw new RuntimeException("Duplicate definition of constant name: " + varName);
+        }
+
+        // Retrieve the initialized value by visiting child (scalarConstDef).
+        // Then update the symbol table.
+        // Since it's a constant, it can directly be referenced as an instance number by
+        // other Value (e.g. instructions), w/o the need of building an Alloca instruction
+        // like variable.
+        visit(ctx.constInitVal());
+        scope.addDecl(varName, tmpVal);
+
+        return null;
+    }
+
+    /**
+     * varDef : Identifier ('=' initVal)? # scalarVarDef
+     * --------------------------------------------------------
+     * varDecl : bType varDef (',' varDef)* ';'
+     * initVal : expr # scalarInitVal
+     */
+    @Override
+    public Void visitScalarVarDef(SysYParser.ScalarVarDefContext ctx) {
+        // Retrieve the name of the variable defined and check for duplication.
+        String varName = ctx.Identifier().getText();
+        if (scope.duplicateDecl(varName)) {
+            throw new RuntimeException("Duplicate definition of variable name: " + varName);
+        }
+
+        // A global variable.
+        if (scope.isGlobal()) {
+            GlobalVariable glbVar;
+            if (ctx.initVal() != null) {
+                visit(ctx.initVal());
+                glbVar = builder.buildGlbVar(varName, (Constant) tmpVal);
+            }
+            else {
+                glbVar = builder.buildGlbVar(varName, IntegerType.getI32());
+                // todo: float (type info needs to be retrieved from sibling bType.
+            }
+            scope.addDecl(varName, glbVar);
+        }
+        // A local variable.
+        else {
+            // todo: float (branching by type)
+            MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
+            scope.addDecl(varName, addrAllocated);
+            // If it's a definition with initialization.
+            if (ctx.initVal() != null) {
+                visit(ctx.initVal());
+                builder.buildStore(tmpVal, addrAllocated);
+            }
+        }
+
         return null;
     }
 
@@ -599,28 +667,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
     }
 
     /**
-     * varDef : Identifier ('=' initVal)? # scalarVarDef
-     */
-    @Override
-    public Void visitScalarVarDef(SysYParser.ScalarVarDefContext ctx) {
-        // Retrieve the name of the variable defined and check for duplication.
-        String varName = ctx.Identifier().getText();
-        if (scope.duplicateDecl(varName)) {
-            throw new RuntimeException("Duplicate definition of variable name: " + varName);
-        }
-        // todo: Global variable.
-        // todo: float (branching by type)
-        MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
-        scope.addDecl(varName, addrAllocated);
-        // If it's a definition with initialization.
-        if (ctx.initVal() != null) {
-            visit(ctx.initVal());
-            builder.buildStore(tmpVal, addrAllocated);
-        }
-        return null;
-    }
-
-    /**
      * lVal : Identifier ('[' expr ']')*
      * ------------------------------------------
      * stmt : lVal '=' expr ';'     # assignment
@@ -711,32 +757,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
         return null;
     }
-
-    /**
-     * constDef : Identifier '=' constInitVal # scalarConstDef
-     * -------------------------------------------------------------------------
-     * constDecl
-     *     : 'const' bType constDef (',' constDef)* ';'
-     * constInitVal
-     *     : constExp                                      # scalarConstInitVal
-     *     | '{' (constInitVal (',' constInitVal)* )? '}'  # arrConstInitVal
-     */
-    @Override
-    public Void visitScalarConstDef(SysYParser.ScalarConstDefContext ctx) {
-        // Retrieve the name of the variable defined and check for duplication.
-        String varName = ctx.Identifier().getText();
-        if (scope.duplicateDecl(varName)) {
-            throw new RuntimeException("Duplicate definition of constant name: " + varName);
-        }
-
-        // Retrieve the initialized value by visiting child.
-        // Then update the symbol table.
-        visit(ctx.constInitVal());
-        scope.addDecl(varName, tmpVal);
-
-        return null;
-    }
-
 
     /**
      * stmt : lVal '=' expr ';' # assignStmt
