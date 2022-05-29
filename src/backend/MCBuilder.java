@@ -21,11 +21,11 @@ import java.util.HashMap;
 public class MCBuilder {
 
     //<editor-fold desc="Singleton Pattern">
-    static private MCBuilder builder = new MCBuilder();
+    static private final MCBuilder builder = new MCBuilder();
 
     private MCBuilder() {
         valueMap = new HashMap<>();
-    };
+    }
 
     static public MCBuilder get() {return builder;}
     //</editor-fold>
@@ -41,7 +41,7 @@ public class MCBuilder {
     /**
      * This class records the map between values and virtual registers.
      */
-    private HashMap<Value, VirtualRegister> valueMap;
+    private final HashMap<Value, VirtualRegister> valueMap;
     //</editor-fold>
 
 
@@ -97,8 +97,7 @@ public class MCBuilder {
             for (BasicBlock IRBB : IRfunc){
                 MCBasicBlock MCBB = MCfunc.createBB(IRBB);
                 for (Instruction IRinst : IRBB) {
-//                    System.out.println(IRinst.toString());
-                    translate(IRinst, MCBB, MCfunc);
+                    translate(IRinst, MCBB);
                 }
             }
         }
@@ -108,9 +107,8 @@ public class MCBuilder {
      * 指令选择总模块
      * @param IRinst IR instruction to be translated
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
-     * @param MCfunc The MC Function where the IR instruction belongs to
      */
-    private void translate(Instruction IRinst, MCBasicBlock MCBB, MCFunction MCfunc) {
+    private void translate(Instruction IRinst, MCBasicBlock MCBB) {
         if (IRinst.isRet()) {
             translateRet(IRinst, MCBB);
         }
@@ -140,57 +138,75 @@ public class MCBuilder {
         }
     }
 
+
+    //<editor-fold desc="Tools">
     /**
      * Allocate a container or find the virtual register for a IR value.<br/>
      * What's a container? I consider a MC operand as a container. IR
      * value are hold in the immediate position, or register.
      * @param value the value to handle
+     * @param forceAllocReg force allocate a virtual register if true
      * @return the corresponding operand
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
-        // TODO: 识别立即数大小
-        if (value instanceof Constant.ConstInt) {
-            if (forceAllocReg) {
-                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
-                valueMap.put(value, vr);
-                return vr;
-            }
-            else
-                return new Immediate(((Constant.ConstInt) value).getVal());
+        if (valueMap.containsKey(value)) {
+            return valueMap.get(value);
         }
-        else if (value instanceof Instruction) {
-            if (valueMap.containsKey(value)) {
-                return valueMap.get(value);
-            }
-            else {
-                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
-                valueMap.put(value, vr);
-                return vr;
-            }
+        else if (value instanceof Instruction || forceAllocReg) {
+            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            valueMap.put(value, vr);
+            return vr;
+        }
+        if (value instanceof Constant.ConstInt) {
+            return createImmediate(((Constant.ConstInt) value).getVal());
         }
         else
             return null;
     }
 
-    private void translateCall(Instruction IRinst, MCBasicBlock MCBB) {
-        // TODO: 改成POP和PUSH，优雅
-        MCBB.appendInstruction(new MCstore(RealRegister.get(14), RealRegister.get(13), new Immediate(4)));
+    /**
+     * Syntactic sugar of findContainer(Value, boolean). <br/>
+     * Default do not force allocate a virtual register. <br/>
+     * See more at findContainer(Value value, boolean forceAllocReg).
+     */
+    private MCOperand findContainer(Value value) {
+        return findContainer(value, false);
+    }
 
+
+    // TODO: 识别能否直接编码立即数
+    private Immediate createImmediate(int value){
+        return new Immediate(value);
+    }
+    //</editor-fold>
+
+
+    //<editor-fold desc="Translate functions">
+    /**
+     * Translate IR Call instruction into ARM instruction. <br/>
+     * Function Stack: LR, local variables, call variables <br/>
+     * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; high &emsp;&emsp;&emsp; -->> &emsp;&emsp;&emsp; low <br/>
+     * (FP先不存了吧，自己知道就好) <br/>
+     * @param IRinst IR call instruction
+     * @param MCBB The MC BasicBlock where the IR instruction belongs to
+     */
+    private void translateCall(Instruction IRinst, MCBasicBlock MCBB) {
         int oprNum = IRinst.getNumOperands();
         for (int i=1; i<oprNum; i++) {
             if (i <= 4) {
-                MCBB.appendInstruction(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i), false)));
+                MCBB.appendInstruction(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
             }
             else {
-                MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(i), false), RealRegister.get(13), new Immediate(-4)));
+                MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(i)), RealRegister.get(13), createImmediate(-4), true));
             }
         }
-
         MCBB.appendInstruction(new MCbranch(IRinst.getOperandAt(0).getName(), true));
+        MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createImmediate(4*oprNum-4)));
+        MCBB.appendInstruction(new MCmov((Register) findContainer(IRinst), RealRegister.get(0)));
     }
 
     private void translateRet(Instruction IRinst, MCBasicBlock MCBB) {
-        MCBB.appendInstruction(new MCmov(RealRegister.get(0), findContainer(IRinst.getOperandAt(0), false)));
+        MCBB.appendInstruction(new MCmov(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
     }
 
     /**
@@ -199,9 +215,8 @@ public class MCBuilder {
      * To be optimized later....
      */
     private void translateAlloca(Instruction IRinst, MCBasicBlock MCBB) {
-        // TODO: 改成寻址方式
-        MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), new Immediate(4)));
-        MCBB.appendInstruction(new MCmov((Register) findContainer(IRinst, false), RealRegister.get(13)));
+        MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createImmediate(4)));
+        MCBB.appendInstruction(new MCmov((Register) findContainer(IRinst), RealRegister.get(13)));
     }
 
     /**
@@ -211,15 +226,15 @@ public class MCBuilder {
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
      */
     private void translateStore(Instruction IRinst, MCBasicBlock MCBB) {
-        MCOperand src = findContainer(IRinst.getOperandAt(0), false);
-        MCOperand addr = findContainer(IRinst.getOperandAt(1), false);
+        MCOperand src = findContainer(IRinst.getOperandAt(0));
+        MCOperand addr = findContainer(IRinst.getOperandAt(1));
         if (src instanceof Immediate) {
             VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
             MCBB.appendInstruction(new MCmov(register, src));
-            MCBB.appendInstruction(new MCstore(register, findContainer(IRinst.getOperandAt(1), false)));
+            MCBB.appendInstruction(new MCstore(register, findContainer(IRinst.getOperandAt(1))));
         }
         else
-            MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(0), false), findContainer(IRinst.getOperandAt(1), false)));
+            MCBB.appendInstruction(new MCstore((Register) src, addr));
     }
 
     /**
@@ -228,7 +243,7 @@ public class MCBuilder {
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
      */
     private void translateLoad(Instruction IRinst, MCBasicBlock MCBB) {
-        MCBB.appendInstruction(new MCload((Register) findContainer(IRinst, false), findContainer(IRinst.getOperandAt(0), false)));
+        MCBB.appendInstruction(new MCload((Register) findContainer(IRinst), findContainer(IRinst.getOperandAt(0))));
     }
 
     /**
@@ -240,25 +255,25 @@ public class MCBuilder {
      */
     private void translateBinary(Instruction IRinst, MCBasicBlock MCBB, MCInstruction.TYPE type) {
         // TODO: 处理除法
-        MCOperand operand1 = findContainer(IRinst.getOperandAt(0), false);
-        MCOperand operand2 = findContainer(IRinst.getOperandAt(1), false);
+        MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
+        MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
         if (operand1 instanceof Immediate) {
             if (operand2 instanceof Immediate) {
                 VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
                 MCBB.appendInstruction(new MCmov(register, operand1));
-                MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false), register, operand2));
+                MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst), register, operand2));
             }
             else {
                 if (type != MCInstruction.TYPE.SUB)
-                    MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false), operand2, operand1));
+                    MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst),(Register)  operand2, operand1));
                 else
-                    MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst, false), operand2, operand1));
+                    MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst),(Register)  operand2, operand1));
             }
         }
         else {
-            MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, false), operand1, operand2));
+            MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst),(Register) operand1, operand2));
         }
     }
-
+    //</editor-fold>
 
 }

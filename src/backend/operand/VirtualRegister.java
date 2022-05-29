@@ -15,7 +15,7 @@ public class VirtualRegister extends Register{
     @Override
     public String getName() {return Integer.toString(name);}
 
-    public String emit() {return "VReg_" + getName();}
+    public String emit() {return "VR_" + getName();}
 
     public VirtualRegister(int name, Value value) {
         super(TYPE.VTR);
