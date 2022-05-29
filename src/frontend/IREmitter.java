@@ -3,6 +3,7 @@ package frontend;
 import ir.Module;
 import ir.values.Function;
 import ir.values.BasicBlock;
+import ir.values.GlobalVariable;
 import ir.values.Instruction;
 
 import java.io.FileWriter;
@@ -45,7 +46,6 @@ public class IREmitter {
      * @param m The module object to be named through.
      */
     private void nameModule(Module m) {
-        // todo: name global variables in the module
         for (Function func : m.functions) {
             nextName = 0; // Reset the counter for a new environment.
             // Only functions defined in compile unit need to be named through,
@@ -85,36 +85,38 @@ public class IREmitter {
         /*
          Build the whole file as a string in the string builder object.
          */
+        // Emit external functions with only declaration in compile unit.
+        for (Function func : m.externFunctions) {
+            strBuilder.append("declare ").append(func).append("\n");
+        }
 
-        // Emit IR text of the module by looping through all the functions in it.
+        // Emit global variable declarations.
+        for (GlobalVariable glbVar : m.globalVariables) {
+            strBuilder.append(glbVar).append("\n");
+        }
+
+        // Emit all the functions defined in the module.
         for (Function func : m.functions) {
-            // If it's an external function with only declaration in compile unit.
-            if (func.isExternal()) {
-                strBuilder.append("declare ").append(func).append("\n");
-            }
-            // If it's a function defined in compile unit.
-            else {
-                // Head of a function: prototype of it.
-                strBuilder.append("define dso_local ")
-                        .append(func.toString())
-                        .append("{\n");
-                // Body of a function: basic blocks in it.
-                for (BasicBlock bb : func) {
-                    // Emit label of the block if it's not the first block.
-                    if (!func.getEntryBB().equals(bb)) {
-                        strBuilder.append(bb.getName()).append(":\n");
-                    }
-                    // Content (instructions) in the block.
-                    for (Instruction inst : bb) {
-                        strBuilder.append(inst.toString())
-                                .append("\n");
-                    }
-                    // End of current bb.
-                    strBuilder.append("\n");
+            // Head of a function: prototype of it.
+            strBuilder.append("define dso_local ")
+                    .append(func.toString())
+                    .append("{\n");
+            // Body of a function: basic blocks in it.
+            for (BasicBlock bb : func) {
+                // Emit label of the block if it's not the first block.
+                if (!func.getEntryBB().equals(bb)) {
+                    strBuilder.append(bb.getName()).append(":\n");
                 }
-                // Tail of a function: A right bracket to close it.
-                strBuilder.append("}\n");
+                // Content (instructions) in the block.
+                for (Instruction inst : bb) {
+                    strBuilder.append(inst.toString())
+                            .append("\n");
+                }
+                // End of current bb.
+                strBuilder.append("\n");
             }
+            // Tail of a function: A right bracket to close it.
+            strBuilder.append("}\n");
         }
 
         /*
