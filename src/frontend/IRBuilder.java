@@ -5,10 +5,8 @@ import ir.Type;
 import ir.Value;
 import ir.types.FunctionType;
 import ir.types.IntegerType;
-import ir.values.BasicBlock;
-import ir.values.Constant;
-import ir.values.Function;
-import ir.values.Instruction;
+import ir.types.PointerType;
+import ir.values.*;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
@@ -114,7 +112,12 @@ public class IRBuilder {
         Function func = new Function(type, isExternal);
         func.setName(name);
         // Add the function to the current module.
-        getCurModule().functions.add(func);
+        if(isExternal) {
+            getCurModule().externFunctions.add(func);
+        }
+        else {
+            getCurModule().functions.add(func);
+        }
         // Set the pointer.
         this.setCurFunc(func);
         return func;
@@ -278,5 +281,26 @@ public class IRBuilder {
         return binInst;
     }
 
+    /**
+     * Build a GlbVar w/o initialization.
+     * @param name The name of the GlbVar.
+     * @param type The type of the memory block it references.
+     */
+    public GlobalVariable buildGlbVar(String name, Type type) {
+        GlobalVariable glbVar = new GlobalVariable(name, type);
+        getCurModule().addGlbVar(glbVar);
+        return glbVar;
+    }
+
+    /**
+     * Build a GlbVar with initialization.
+     * @param name The name of the GlbVar.
+     * @param init The initial value.
+     */
+    public GlobalVariable buildGlbVar(String name, Constant init) {
+        GlobalVariable glbVar = new GlobalVariable(name, init);
+        getCurModule().addGlbVar(glbVar);
+        return glbVar;
+    }
     //</editor-fold>
 }
