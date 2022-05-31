@@ -12,7 +12,6 @@ import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
-import javax.swing.event.TreeWillExpandListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Stack;
@@ -28,18 +27,15 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private final IRBuilder builder;
     private final Scope scope = new Scope();
 
-    //<editor-fold desc="Variables storing returned data from the lower layers of visiting.">
-    private Value retVal_;
-    private ArrayList<Type> retTypeList_;
-    private Type retType_;
-    private int retInt_;
-    //</editor-fold>
+    //<editor-fold desc="Back-patching infrastructures for WHILE statements.">
+    private final BasicBlock BREAK = new BasicBlock("BRK_PLACEHOLDER");
+    private final BasicBlock CONTINUE = new BasicBlock("CONT_PLACEHOLDER");
 
     /**
      * Stack for back-patching break and continue statements.
      */
     Stack<ArrayList<TerminatorInst.Br>> bpStk = new Stack<>();
-
+    //</editor-fold>
 
     //<editor-fold desc="Environment variables indicating the building status">
     private final boolean ON = true;
@@ -66,6 +62,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private boolean inGlbInit() {
         return envGlbInit;
     }
+    //</editor-fold>
+
+    //<editor-fold desc="Variables storing returned data from the lower layers of visiting.">
+    private Value retVal_;
+    private ArrayList<Type> retTypeList_;
+    private Type retType_;
+    private int retInt_;
     //</editor-fold>
 
     //</editor-fold>
@@ -1036,7 +1039,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
         BasicBlock bodyExitBlk = builder.getCurBB();
         // If the loop body doesn't end with Ret,
         // add a Br jumping back to the conditional statement.
-        if (!bodyExitBlk.getLastInst().isRet()) {
+        if (bodyExitBlk.instructions.isEmpty()
+                || bodyExitBlk.getLastInst().cat != InstCategory.BR
+                && bodyExitBlk.getLastInst().cat != InstCategory.RET) {
             builder.setCurBB(bodyExitBlk);
             builder.buildBr(condEntryBlk);
         }
@@ -1048,8 +1053,36 @@ public class Visitor extends SysYBaseVisitor<Void> {
         builder.setCurBB(exitBlk);
 
         // Pop the back-patching layer out.
-        bpStk.pop();
+        for (TerminatorInst.Br br : bpStk.pop()) {
+            if (br.getOperandAt(0) == BREAK) {
+                br.setOperandAt(exitBlk, 0);
+            }
+            else if (br.getOperandAt(0) == CONTINUE) {
+                br.setOperandAt(condEntryBlk, 0);
+            }
+            else {
+                throw new RuntimeException("Invalid block placeholder occurs in the stack.");
+            }
+        }
 
+        return null;
+    }
+
+    /**
+     * stmt : 'break' ';' # breakStmt
+     */
+    @Override
+    public Void visitBreakStmt(SysYParser.BreakStmtContext ctx) {
+        bpStk.peek().add(builder.buildBr(BREAK));
+        return null;
+    }
+
+    /**
+     * stmt : 'continue' ';' # contStmt
+     */
+    @Override
+    public Void visitContStmt(SysYParser.ContStmtContext ctx) {
+        bpStk.peek().add(builder.buildBr(CONTINUE));
         return null;
     }
     //</editor-fold>

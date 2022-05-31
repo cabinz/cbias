@@ -59,24 +59,44 @@ public class User extends Value {
 
     /**
      * At a new operand at a given position.
-     * If an existed operand has already landed on that position, it will be safely replaced.
-     * @param v The value to be added as an operand.
+     * If an existed operand has already landed on that position, an Exception will be thrown.
+     * @param val The value to be added as an operand.
      * @param pos Given operand position.
      */
-    public void addOperandAt(Value v, int pos) {
+    public void addOperandAt(Value val, int pos) {
         // Check if there is an existing operand on the given position.
+        // If there is, throw an exception.
+        for (Use use : operands) {
+            // If there is, replace with the new Value.
+            if (use.getOperandPos() == pos) {
+                throw new RuntimeException("Try to add an operand at an occupied position.");
+            }
+        }
+        // If not, add the given Value as a new use.
+        new Use(val, this, pos);
+    }
+
+    /**
+     * Set an operand at the specified position to be another Value given.
+     * If there's no existing operand matched, an Exception will be thrown.
+     * @param val The value to be set as an operand.
+     * @param pos Given operand position.
+     */
+    public void setOperandAt(Value val, int pos) {
+        // Check if there is the matched operand on the given position.
+        // If there is, redirect it safely.
         for (Use use : operands) {
             // If there is, replace with the new Value.
             if (use.getOperandPos() == pos) {
                 // Got the target use.
                 use.getValue().removeUse(use); // Remove the original use.v (from the value using it).
-                use.setValue(v); // Cover the use.v at specified position (pos) with given v.
-                v.addUse(use); // Add the new use to the value using it (the given v).
+                use.setValue(val); // Cover the use.v at specified position (pos) with given v.
+                val.addUse(use); // Add the new use to the value using it (the given v).
                 return;
             }
         }
-        // If not, insert the given Value as an operand.
-        new Use(v, this, pos);
+        // If not, throw an exception.
+        throw new RuntimeException("Try to reassign a non-existent operand.");
     }
     //</editor-fold>
 }
