@@ -13,7 +13,7 @@ public class MCbranch extends MCInstruction {
         if (withLink)
             return "BL " + target;
         else
-            return "B " + target;
+            return "B" + emitCond() + " " + target;
     }
 
     public MCbranch(String target) {super(TYPE.BRANCH);this.target = target;withLink = false;}

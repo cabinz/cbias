@@ -72,6 +72,13 @@ public abstract class MCInstruction {
 
     abstract public String emit();
 
+    protected String emitCond() {
+        if (cond == ConditionField.NOPE)
+            return "";
+        else
+            return cond.name();
+    }
+
 
     //<editor-fold desc="Getter & Setter">
     public MCBasicBlock getBelongingBB() {return belongingBasicBlock;}
