@@ -6,10 +6,7 @@ import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.Type;
 import ir.types.PointerType;
-import ir.values.BasicBlock;
-import ir.values.Constant;
-import ir.values.Function;
-import ir.values.Instruction;
+import ir.values.*;
 import ir.values.Instruction.InstCategory;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
@@ -17,6 +14,7 @@ import ir.values.instructions.TerminatorInst;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Stack;
 
 /**
  * Visitor can be regarded as a tiny construction worker traveling
@@ -26,16 +24,52 @@ import java.util.Collections;
 public class Visitor extends SysYBaseVisitor<Void> {
     //<editor-fold desc="Fields">
 
-    public IRBuilder builder;
-    public final Scope scope = new Scope();
+    private final IRBuilder builder;
+    private final Scope scope = new Scope();
 
+    //<editor-fold desc="Back-patching infrastructures for WHILE statements.">
+    private final BasicBlock BREAK = new BasicBlock("BRK_PLACEHOLDER");
+    private final BasicBlock CONTINUE = new BasicBlock("CONT_PLACEHOLDER");
 
     /**
-     * Temporary variables for messages passed through layers visited.
+     * Stack for back-patching break and continue statements.
      */
-    Value tmpVal;
-    ArrayList<Type> tmpTypeList;
-    Type tmpType;
+    Stack<ArrayList<TerminatorInst.Br>> bpStk = new Stack<>();
+    //</editor-fold>
+
+    //<editor-fold desc="Environment variables indicating the building status">
+    private final boolean ON = true;
+    private final boolean OFF = false;
+
+    /**
+     * If the visitor is currently building initialization of global
+     * variables / constants.
+     */
+    private boolean envGlbInit = false;
+
+    /**
+     * Set the environment variable of global initialization.
+     * @param stat ON / OFF
+     */
+    private void setGlbInit(boolean stat) {
+        envGlbInit = stat;
+    }
+
+    /**
+     * If the building is currently in any global initialization process.
+     * @return Yes or no.
+     */
+    private boolean inGlbInit() {
+        return envGlbInit;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Variables storing returned data from the lower layers of visiting.">
+    private Value retVal_;
+    private ArrayList<Type> retTypeList_;
+    private Type retType_;
+    private int retInt_;
+    //</editor-fold>
 
     //</editor-fold>
 
@@ -85,21 +119,132 @@ public class Visitor extends SysYBaseVisitor<Void> {
         );
     }
 
-    /**
-     * Get the current module from the builder inside.
-     * @return The current module.
-     */
-    public Module getModule() {
-        return builder.getCurModule();
-    }
+
 
     /*
     Visit methods overwritten.
      */
 
+    /**
+     * compUnit : (decl | funcDef)* EOF
+     * -------------------------------------------
+     * decl : constDecl | varDecl
+     */
     @Override
     public Void visitCompUnit(SysYParser.CompUnitContext ctx) {
         super.visitCompUnit(ctx);
+        return null;
+    }
+
+    /**
+     * constDef : Identifier '=' constInitVal # scalarConstDef
+     * -------------------------------------------------------
+     * constDecl : 'const' bType constDef (',' constDef)* ';'
+     */
+    @Override
+    public Void visitScalarConstDef(SysYParser.ScalarConstDefContext ctx) {
+        // Retrieve the name of the variable defined and check for duplication.
+        String varName = ctx.Identifier().getText();
+        if (scope.duplicateDecl(varName)) {
+            throw new RuntimeException("Duplicate definition of constant name: " + varName);
+        }
+
+        /*
+        Since SysY does NOT support pointer (meaning we don't have to worry abt memory
+        address of different constants), a constant scalar can be directly referenced as an
+        instant number by other Value (e.g. instructions), w/o the need of building an
+        Alloca instruction like variable.
+         */
+
+        // Retrieve the initialized value by visiting child (scalarConstDef).
+        // Then update the symbol table.
+        visit(ctx.constInitVal());
+        scope.addDecl(varName, retVal_);
+
+        // todo: array
+
+        return null;
+    }
+
+    /**
+     * constInitVal: constExp # scalarConstInitVal
+     * --------------------------------------------
+     * constExp : addExp
+     */
+    @Override
+    public Void visitScalarConstInitVal(SysYParser.ScalarConstInitValContext ctx) {
+        if (scope.isGlobal()) {
+            this.setGlbInit(ON);
+        }
+        super.visitScalarConstInitVal(ctx);
+        retVal_ = builder.buildConstant(retInt_);
+        // todo: float constant
+        this.setGlbInit(OFF);
+        return null;
+    }
+
+    /**
+     * varDef : Identifier ('=' initVal)? # scalarVarDef
+     * --------------------------------------------------------
+     * varDecl : bType varDef (',' varDef)* ';'
+     * initVal : expr # scalarInitVal
+     */
+    @Override
+    public Void visitScalarVarDef(SysYParser.ScalarVarDefContext ctx) {
+        // Retrieve the name of the variable defined and check for duplication.
+        String varName = ctx.Identifier().getText();
+        if (scope.duplicateDecl(varName)) {
+            throw new RuntimeException("Duplicate definition of variable name: " + varName);
+        }
+
+        // A global variable.
+        if (scope.isGlobal()) {
+            GlobalVariable glbVar;
+            if (ctx.initVal() != null) {
+                visit(ctx.initVal());
+                // todo: float init
+                glbVar = builder.buildGlbVar(varName, (Constant) retVal_);
+            }
+            else {
+                glbVar = builder.buildGlbVar(varName, IntegerType.getI32());
+                // todo: float (type info needs to be retrieved from sibling bType.
+            }
+            scope.addDecl(varName, glbVar);
+        }
+        // A local variable.
+        else {
+            // todo: float (branching by type)
+            MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
+            scope.addDecl(varName, addrAllocated);
+            // If it's a definition with initialization.
+            if (ctx.initVal() != null) {
+                visit(ctx.initVal());
+                builder.buildStore(retVal_, addrAllocated);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * initVal : expr # scalarInitVal
+     * ------------------------------------
+     * expr : addExp
+     */
+    @Override
+    public Void visitScalarInitVal(SysYParser.ScalarInitValContext ctx) {
+        // Turn on global var switch.
+        if (scope.isGlobal()) {
+            this.setGlbInit(ON);
+        }
+        super.visitScalarInitVal(ctx);
+        // Turn off global var switch.
+        if (inGlbInit()) {
+            retVal_ = builder.buildConstant(retInt_);
+            // todo: float constant
+            this.setGlbInit(OFF);
+        }
+
         return null;
     }
 
@@ -108,7 +253,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitFuncDef(SysYParser.FuncDefContext ctx) {
-//        System.out.println("In FuncDef");
 
         /*
         Collect object info.
@@ -134,7 +278,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayList<Type> argTypes = new ArrayList<>();
         if (ctx.funcFParams() != null) {
             visit(ctx.funcFParams());
-            argTypes.addAll(tmpTypeList);
+            argTypes.addAll(retTypeList_);
         }
 
         /*
@@ -162,9 +306,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         Instruction tailInst = builder.getCurBB().getLastInst();
         // If no instruction in the bb, or the last instruction is not a terminator.
-        if (tailInst == null ||
-                tailInst.cat != InstCategory.BR
-                        && tailInst.cat != InstCategory.RET) {
+        if (tailInst == null || !tailInst.cat.isTerminator()) {
             if (function.getType() instanceof FunctionType f) {
                 if (f.getRetType().isVoidType()) {
                     builder.buildRet();
@@ -184,10 +326,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitFuncFParams(SysYParser.FuncFParamsContext ctx) {
-        tmpTypeList = new ArrayList<>();
+        retTypeList_ = new ArrayList<>();
         ctx.funcFParam().forEach(arg -> {
             visit(arg);
-            tmpTypeList.add(tmpType);
+            retTypeList_.add(retType_);
         });
         return null;
     }
@@ -200,7 +342,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitScalarFuncFParam(SysYParser.ScalarFuncFParamContext ctx) {
         // todo: float as function arguments
         // Integer argument
-        tmpType = IntegerType.getI32();
+        retType_ = IntegerType.getI32();
         return null;
     }
 
@@ -225,7 +367,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // visit child to retrieve it.
         if (ctx.expr() != null) {
             visit(ctx.expr());
-            builder.buildRet(tmpVal);
+            builder.buildRet(retVal_);
         }
         // If not, return void.
         else {
@@ -241,75 +383,75 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitCondStmt(SysYParser.CondStmtContext ctx) {
-        BasicBlock entryBlk = builder.getCurBB();
+        /*
+        Build an EXIT block no matter if it may become dead code
+        that cannot be reached in the CFG.
+         */
+        BasicBlock entryBlk = builder.getCurBB(); // Store current block as entry.
+        BasicBlock exitBlk = builder.buildBB("_COND_EXIT");
 
         /*
-        Build the trueBlock (a block for jumping if condition is true).
+        Build the TRUE branch (a block for jumping if condition is true).
         Fill it by visiting child (the 1st stmt, the true branch).
          */
-        //<editor-fold desc="">
-        BasicBlock trueBlk = builder.buildBB("_THEN");
+        BasicBlock trueEntryBlk = builder.buildBB("_THEN");
         visit(ctx.stmt(0));
-        boolean trueBlkEndWithRet = trueBlk.getLastInst() instanceof TerminatorInst.Ret;
-        //</editor-fold>
+        BasicBlock trueExitBlk = builder.getCurBB();
+        boolean trueBlkEndWithRet = trueExitBlk.getLastInst() instanceof TerminatorInst.Ret;
 
         /*
-        Build the falseBlock (a block for jumping if condition is false),
+        Build the FALSE branch (a block for jumping if condition is false),
         if there is the 2nd stmt, meaning that it's an IF-ELSE statement.
-        Otherwise, it's an IF statement (w/o following ELSE).
+        Otherwise, it's an IF statement (w/o following ELSE), and
+        falseEntryBlk will remain null.
+
+        : if(falseEntryBlk != null) -> IF-ELSE statement
+        : if(falseEntryBlk == null) -> IF statement w/o ELSE
          */
-        //<editor-fold desc="">
-        BasicBlock falseBlk = null;
+        BasicBlock falseEntryBlk = null;
+        BasicBlock falseExitBlk = null;
         boolean falseBlkEndWithRet = false;
         if (ctx.stmt(1) != null) {
-            falseBlk = builder.buildBB("_ELSE");
+            falseEntryBlk = builder.buildBB("_ELSE");
             visit(ctx.stmt(1)); // Fill the block by visiting child.
-            falseBlkEndWithRet = falseBlk.getLastInst() instanceof TerminatorInst.Ret;
+            falseExitBlk = builder.getCurBB();
+            falseBlkEndWithRet = falseExitBlk.getLastInst() instanceof TerminatorInst.Ret;
         }
-        //</editor-fold>
 
         /*
-        Add Br terminator for trueBlock and falseBlock if needed.
+        Add Br terminator for trueExitBlock and falseExitBlock if needed (if both branches
+        end with Ret terminators.
          */
-        //<editor-fold desc="">
-        BasicBlock exitBlk = null;
-        if (!trueBlkEndWithRet || !falseBlkEndWithRet) {
-            // The exit block will be built when:
-            // "!trueBlkEndWithRet && !falseBlkEndWithRet" (under IF-ELSE)
-            // or "!trueBlkEndWithRet && no falseBlock" (i.e. IF w/o ELSE)
-            exitBlk = builder.buildBB("_EXIT");
-            if (!trueBlkEndWithRet) {
-                builder.setCurBB(trueBlk);
-                builder.buildBr(exitBlk);
-            }
-            if (falseBlk != null && !falseBlkEndWithRet) {
-                builder.setCurBB(falseBlk);
-                builder.buildBr(exitBlk);
-            }
+        // The exit block will be built when:
+        // "!trueBlkEndWithRet && !falseBlkEndWithRet" (under IF-ELSE)
+        // or "!trueBlkEndWithRet && no falseBlock" (i.e. IF w/o ELSE)
+        if (!trueBlkEndWithRet) {
+            builder.setCurBB(trueExitBlk);
+            builder.buildBr(exitBlk);
         }
-        //</editor-fold>
+        if (falseEntryBlk != null && !falseBlkEndWithRet) {
+            builder.setCurBB(falseExitBlk);
+            builder.buildBr(exitBlk);
+        }
 
         /*
-        Cope with condition expression by visiting child cond.
+        Cope with the condition expression by visiting child cond.
          */
-        //<editor-fold desc="">
         builder.setCurBB(entryBlk);
         // Pass down blocks as inherited attributes for short-circuit evaluation.
-        ctx.cond().lOrExp().trueBlk = trueBlk;
-        ctx.cond().lOrExp().falseBlk = (falseBlk != null) ? falseBlk : exitBlk;
+        ctx.cond().lOrExp().trueBlk = trueEntryBlk;
+        ctx.cond().lOrExp().falseBlk = (falseEntryBlk != null) ? falseEntryBlk : exitBlk;
 
         visit(ctx.cond());
-        //</editor-fold>
 
         /*
-        If there is an exit block (having more content below),
-        set BB pointer to the exit and go ahead.
+        Force the BB pointer to point to the exitBlk, which will serve as the upstream
+        block for processing the following content.
+        Even if the exitBlk is a dead entry that cannot be reached, all the content will
+        still be processed. These dead basic blocks can be removed in the following
+        CFG analysis by the optimizer.
          */
-        //<editor-fold desc="">
-        if (exitBlk != null) {
-            builder.setCurBB(exitBlk);
-        }
-        //</editor-fold>
+        builder.setCurBB(exitBlk);
 
         return null;
     }
@@ -378,8 +520,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
             visit(ctx.eqExp(i));
             // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
             // todo: gives a float
-            if(!tmpVal.getType().isI1()) {
-                tmpVal = builder.buildBinary(InstCategory.NE, tmpVal, Constant.ConstInt.get(0));
+            if(!retVal_.getType().isI1()) {
+                retVal_ = builder.buildBinary(InstCategory.NE, retVal_, Constant.ConstInt.get(0));
             }
 
             // For the first N-1 eqExp blocks.
@@ -389,12 +531,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 BasicBlock nxtAndBlk = builder.buildBB("");
                 // Add a branch instruction to terminate this block.
                 builder.setCurBB(originBlk);
-                builder.buildBr(tmpVal, nxtAndBlk, ctx.falseBlk);
+                builder.buildBr(retVal_, nxtAndBlk, ctx.falseBlk);
                 builder.setCurBB(nxtAndBlk);
             }
             // For the last eqExp blocks.
             else {
-                builder.buildBr(tmpVal, ctx.trueBlk, ctx.falseBlk);
+                builder.buildBr(retVal_, ctx.trueBlk, ctx.falseBlk);
             }
         }
 
@@ -413,12 +555,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitEqExp(SysYParser.EqExpContext ctx) {
         // Retrieve left operand by visiting child.
         visit(ctx.relExp(0));
-        Value lOp = tmpVal;
+        Value lOp = retVal_;
 
         for (int i = 1; i < ctx.relExp().size(); i++) {
             // Retrieve the next relExp as the right operand by visiting child.
             visit(ctx.relExp(i));
-            Value rOp = tmpVal;
+            Value rOp = retVal_;
             // Build a comparison instruction, which yields a result
             // to be the left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
@@ -428,7 +570,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
         // The final result is stored in the last left operand.
-        tmpVal = lOp;
+        retVal_ = lOp;
 
         return null;
     }
@@ -444,12 +586,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitRelExp(SysYParser.RelExpContext ctx) {
         // Retrieve left operand by visiting child.
         visit(ctx.addExp(0));
-        Value lOp = tmpVal;
+        Value lOp = retVal_;
 
         for (int i = 1; i < ctx.addExp().size(); i++) {
             // Retrieve the next addExp as the right operand by visiting child.
             visit(ctx.addExp(i));
-            Value rOp = tmpVal;
+            Value rOp = retVal_;
             // Build a comparison instruction, which yields a result
             // to be the left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
@@ -461,7 +603,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
         // The final result is stored in the last left operand.
-        tmpVal = lOp;
+        retVal_ = lOp;
 
         return null;
     }
@@ -490,7 +632,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             val = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
         }
 
-        tmpVal = builder.buildConstant(val);
+        retInt_ = val;
 
         return null;
     }
@@ -500,32 +642,42 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitOprUnaryExp(SysYParser.OprUnaryExpContext ctx) {
-        // Retrieve the expression by visiting child.
-        visit(ctx.unaryExp());
-        // Integer.
-        if (tmpVal.getType().isInteger()) {
-            // Conduct zero extension on i1.
-            if (tmpVal.getType().isI1()) {
-                builder.buildZExt(tmpVal);
+        /*
+        Global expression: Compute value of the expr w/o instruction generation.
+         */
+        if (this.inGlbInit()) {
+            // Retrieve the value of unaryExp() by visiting child.
+            visit(ctx.unaryExp());
+            switch (ctx.unaryOp().getText()) {
+                case "-" -> retInt_ = -retInt_;
+                case "!" -> retInt_ = (retInt_ == 0) ? 0 : 1;
+                case "+" -> {}
             }
-            // Unary operators.
-            String op = ctx.unaryExp().getText();
-            switch (op) {
-                case "-":
-                    tmpVal = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), tmpVal);
-                    break;
-                case "+":
-                    // Do nothing.
-                    break;
-                case "!":
-                    tmpVal = builder.buildBinary(InstCategory.EQ, builder.buildConstant(0), tmpVal);
-                    break;
-                default:
-            }
+            // todo: float
         }
-        // Float.
+        /*
+        Local expression: Instructions will be generated.
+         */
         else {
-            // todo: if it's a float.
+            // Retrieve the expression by visiting child.
+            visit(ctx.unaryExp());
+            // Integer.
+            if (retVal_.getType().isInteger()) {
+                // Conduct zero extension on i1.
+                if (retVal_.getType().isI1()) {
+                    retVal_ = builder.buildZExt(retVal_);
+                }
+                // Unary operators.
+                switch (ctx.unaryOp().getText()) {
+                    case "-" -> retVal_ = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), retVal_);
+                    case "!" -> retVal_ = builder.buildBinary(InstCategory.EQ, builder.buildConstant(0), retVal_);
+                    case "+" -> {}
+                }
+            }
+            // Float.
+            else {
+                // todo: if it's a float.
+            }
         }
         return null;
     }
@@ -535,32 +687,56 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitAddExp(SysYParser.AddExpContext ctx) {
-        // todo: float case
-        // Retrieve the 1st mulExp (as the left operand) by visiting child.
-        visit(ctx.mulExp(0));
-        Value lOp = tmpVal;
-        // The 2nd and possibly more MulExp.
-        for (int i = 1; i < ctx.mulExp().size(); i++) {
-            // Retrieve the next mulExp (as the right operand) by visiting child.
-            visit(ctx.mulExp(i));
-            Value rOp = tmpVal;
-            // Check integer types of two operands.
-            if (lOp.getType().isI1()) {
-                lOp = builder.buildZExt(lOp);
+        /*
+        Global expression: Compute value of the expr w/o instruction generation.
+         */
+        if (this.inGlbInit()) {
+            // Retrieve the value of the 1st mulExp.
+            // res stores the temporary result during the computation.
+            visit(ctx.mulExp(0));
+            int res = retInt_;
+            // Retrieve each of the rest mulExp and compute.
+            for (int i = 1; i < ctx.mulExp().size(); i++) {
+                visit(ctx.mulExp(i));
+                switch (ctx.getChild(i * 2 - 1).getText()) {
+                    case "+" -> res += retInt_;
+                    case "-" -> res -= retInt_;
+                }
             }
-            if (rOp.getType().isI1()) {
-                rOp = builder.buildZExt(lOp);
-            }
-            // Generate an instruction to compute result of left and right operands
-            // as the new left operand for the next round.
-            switch (ctx.getChild(2 * i - 1).getText()) {
-                case "+" -> lOp = builder.buildBinary(InstCategory.ADD, lOp, rOp);
-                case "-" -> lOp = builder.buildBinary(InstCategory.SUB, lOp, rOp);
-                default -> {}
-            }
+            retInt_ = res;
+            // todo: float case
         }
+        /*
+        Local expression: Instructions will be generated.
+         */
+        else {
+            // todo: float case
+            // Retrieve the 1st mulExp (as the left operand) by visiting child.
+            visit(ctx.mulExp(0));
+            Value lOp = retVal_;
+            // The 2nd and possibly more MulExp.
+            for (int i = 1; i < ctx.mulExp().size(); i++) {
+                // Retrieve the next mulExp (as the right operand) by visiting child.
+                visit(ctx.mulExp(i));
+                Value rOp = retVal_;
+                // Check integer types of two operands.
+                if (lOp.getType().isI1()) {
+                    lOp = builder.buildZExt(lOp);
+                }
+                if (rOp.getType().isI1()) {
+                    rOp = builder.buildZExt(lOp);
+                }
+                // Generate an instruction to compute result of left and right operands
+                // as the new left operand for the next round.
+                switch (ctx.getChild(2 * i - 1).getText()) {
+                    case "+" -> lOp = builder.buildBinary(InstCategory.ADD, lOp, rOp);
+                    case "-" -> lOp = builder.buildBinary(InstCategory.SUB, lOp, rOp);
+                    default -> {}
+                }
+            }
 
-        tmpVal = lOp;
+            retVal_ = lOp;
+        }
 
         return null;
     }
@@ -571,52 +747,55 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitMulExp(SysYParser.MulExpContext ctx) {
-        // todo: float case
-        // Retrieve the 1st unaryExp (as the left operand) by visiting child.
-        visit(ctx.unaryExp(0));
-        Value lOp = tmpVal;
-        // The 2nd and possibly more MulExp.
-        for (int i = 1; i < ctx.unaryExp().size(); i++) {
-            // Retrieve the next unaryExp (as the right operand) by visiting child.
-            visit(ctx.unaryExp(i));
-            Value rOp = tmpVal;
-            // Generate an instruction to compute result of left and right operands
-            // as the new left operand for the next round.
-            switch (ctx.getChild(2 * i - 1).getText()) {
-                case "/" -> lOp = builder.buildBinary(InstCategory.DIV, lOp, rOp);
-                case "*" -> lOp = builder.buildBinary(InstCategory.MUL, lOp, rOp);
-                case "%" -> { // l % r => l - (l/r)*r
-                    BinaryInst div = builder.buildBinary(InstCategory.DIV, lOp, rOp); // l/r
-                    BinaryInst mul = builder.buildBinary(InstCategory.MUL, div, rOp); // (l/r)*r
-                    lOp = builder.buildBinary(InstCategory.SUB, lOp, mul);
+        Value lOp;
+        /*
+        Global expression: Compute value of the expr w/o instruction generation.
+         */
+        if (this.inGlbInit()) {
+            // Retrieve the value of the 1st unaryExp.
+            // res stores the temporary result during the computation.
+            visit(ctx.unaryExp(0));
+            int res = retInt_;
+            // Retrieve each of the rest unaryExp and compute.
+            for (int i = 1; i < ctx.unaryExp().size(); i++) {
+                visit(ctx.unaryExp(i));
+                switch (ctx.getChild(i * 2 - 1).getText()) {
+                    case "*" -> res *= retInt_;
+                    case "/" -> res /= retInt_;
+                    case "%" -> res %= retInt_;
                 }
-                default -> { }
             }
+            retInt_ = res;
+            // todo: float case
+        }
+        /*
+        Local expression: Instructions will be generated.
+         */
+        else {
+            // todo: float case
+            // Retrieve the 1st unaryExp (as the left operand) by visiting child.
+            visit(ctx.unaryExp(0));
+            lOp = retVal_;
+            // The 2nd and possibly more MulExp.
+            for (int i = 1; i < ctx.unaryExp().size(); i++) {
+                // Retrieve the next unaryExp (as the right operand) by visiting child.
+                visit(ctx.unaryExp(i));
+                Value rOp = retVal_;
+                // Generate an instruction to compute result of left and right operands
+                // as the new left operand for the next round.
+                switch (ctx.getChild(2 * i - 1).getText()) {
+                    case "/" -> lOp = builder.buildBinary(InstCategory.DIV, lOp, rOp);
+                    case "*" -> lOp = builder.buildBinary(InstCategory.MUL, lOp, rOp);
+                    case "%" -> { // l % r => l - (l/r)*r
+                        BinaryInst div = builder.buildBinary(InstCategory.DIV, lOp, rOp); // l/r
+                        BinaryInst mul = builder.buildBinary(InstCategory.MUL, div, rOp); // (l/r)*r
+                        lOp = builder.buildBinary(InstCategory.SUB, lOp, mul);
+                    }
+                }
+            }
+            retVal_ = lOp;
         }
 
-        tmpVal = lOp;
-        return null;
-    }
-
-    /**
-     * varDef : Identifier ('=' initVal)? # scalarVarDef
-     */
-    @Override
-    public Void visitScalarVarDef(SysYParser.ScalarVarDefContext ctx) {
-        // Retrieve the name of the variable defined and check for duplication.
-        String varName = ctx.Identifier().getText();
-        if (scope.duplicateDecl(varName)) {
-            throw new RuntimeException("Duplicate definition of variable name: " + varName);
-        }
-        // todo: Global variable.
-        // todo: float (branching by type)
-        MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
-        scope.addDecl(varName, addrAllocated);
-        // If it's a definition with initialization.
-        if (ctx.initVal() != null) {
-            visit(ctx.initVal());
-            builder.buildStore(tmpVal, addrAllocated);
-        }
         return null;
     }
 
@@ -648,7 +827,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
         There are two cases for lVal as a grammar symbol:
         1.  If a lVal  can be reduce to a primaryExp,
             in this case is a scalar value (IntegerType or FloatType)
-            thus the value can be returned directly.
+            thus the value can be returned directly, which will then
+            be handled by visitPrimExpr2().
         2.  Otherwise, a lVal represents a left value,
             which generates an address (PointerType Value)
             designating a memory block for assignment.
@@ -656,7 +836,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Case 1, return directly.
         // todo: float type can be returned directly too
         if (val.getType().isInteger()) {
-            tmpVal = val;
+            retVal_ = val;
             return null;
         }
         // Case 2, return a PointerType Value.
@@ -668,7 +848,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
             // i32*: Return directly.
             else if (pointeeType.isInteger()) {
-                tmpVal = val;
+                retVal_ = val;
                 return null;
             }
             // todo: array*, float*
@@ -702,41 +882,44 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitPrimExpr2(SysYParser.PrimExpr2Context ctx) {
-        // todo: branch out if during building a Call
-        visit(ctx.lVal());
-        // Load the memory block if a PointerType Value is retrieved from lVal.
-        if (tmpVal.getType().isPointerType()) {
-            Type pointeeType = ((PointerType) tmpVal.getType()).getPointeeType();
-            tmpVal = builder.buildLoad(pointeeType, tmpVal);
+        /*
+        Global expression: Compute value of the expr w/o instruction generation.
+         */
+        if (this.inGlbInit()) {
+            visit(ctx.lVal());
+            retInt_ = ((Constant.ConstInt) retVal_).getVal();
+        }
+        /*
+        Local expression: Instructions will be generated.
+         */
+        else {
+            // todo: branch out if during building a Call
+            visit(ctx.lVal());
+            // Load the memory block if a PointerType Value is retrieved from lVal.
+            if (retVal_.getType().isPointerType()) {
+                Type pointeeType = ((PointerType) retVal_.getType()).getPointeeType();
+                retVal_ = builder.buildLoad(pointeeType, retVal_);
+            }
         }
         return null;
     }
 
     /**
-     * constDef : Identifier '=' constInitVal # scalarConstDef
-     * -------------------------------------------------------------------------
-     * constDecl
-     *     : 'const' bType constDef (',' constDef)* ';'
-     * constInitVal
-     *     : constExp                                      # scalarConstInitVal
-     *     | '{' (constInitVal (',' constInitVal)* )? '}'  # arrConstInitVal
+     * number
+     *     : intConst
+     *     | floatConst
+     * -------------------------------------
+     * primaryExp : number # primExpr3
      */
     @Override
-    public Void visitScalarConstDef(SysYParser.ScalarConstDefContext ctx) {
-        // Retrieve the name of the variable defined and check for duplication.
-        String varName = ctx.Identifier().getText();
-        if (scope.duplicateDecl(varName)) {
-            throw new RuntimeException("Duplicate definition of constant name: " + varName);
+    public Void visitNumber(SysYParser.NumberContext ctx) {
+        super.visitNumber(ctx);
+        if (!this.inGlbInit()) {
+            retVal_ = builder.buildConstant(retInt_);
         }
-
-        // Retrieve the initialized value by visiting child.
-        // Then update the symbol table.
-        visit(ctx.constInitVal());
-        scope.addDecl(varName, tmpVal);
-
+        // todo: float glb init
         return null;
     }
-
 
     /**
      * stmt : lVal '=' expr ';' # assignStmt
@@ -745,10 +928,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitAssignStmt(SysYParser.AssignStmtContext ctx) {
         // Retrieve left value (the address to store) by visiting child.
         visit(ctx.lVal());
-        Value addr = tmpVal;
+        Value addr = retVal_;
         // Retrieve the value to be stored by visiting child.
         visit(ctx.expr());
-        Value val = tmpVal;
+        Value val = retVal_;
         // Build the Store instruction.
         builder.buildStore(val, addr);
         return null;
@@ -784,12 +967,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Visit child RParam.
                 visit(argCtx);
                 // Add the argument Value retrieved by visiting to the container.
-                args.add(tmpVal);
+                args.add(retVal_);
             }
         }
 
         // Build a Call instruction.
-        tmpVal = builder.buildCall((Function)func, args);
+        retVal_ = builder.buildCall((Function)func, args);
 
         return null;
     }
@@ -802,8 +985,101 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitStrRParam(SysYParser.StrRParamContext ctx) {
         // todo: Cope with string function argument.
-        tmpVal = null;
+        retVal_ = null;
 
+        return null;
+    }
+
+    /**
+     * stmt : 'while' '(' cond ')' stmt # whileStmt
+     */
+    @Override
+    public Void visitWhileStmt(SysYParser.WhileStmtContext ctx) {
+        // Deepen by one layer of nested loop.
+        bpStk.push(new ArrayList<>());
+
+        /*
+        Build an EXIT block no matter if it may become dead code
+        that cannot be reached in the CFG.
+         */
+        BasicBlock entryBlk = builder.getCurBB(); // Store current block as entry.
+        BasicBlock bodyEntryBlk = builder.buildBB("_LOOP_BODY");
+        BasicBlock exitBlk = builder.buildBB("_WHILE_EXIT");
+
+        /*
+        Cope with the condition expression by visiting child cond.
+         */
+        // Start a new block as the entry of loop continuing check for
+        // jumping back at the end of the loop body.
+        // If being currently in an empty block, treat it as the check
+        // entry directly.
+        BasicBlock condEntryBlk;
+        if(!entryBlk.instructions.isEmpty()) {
+            condEntryBlk = builder.buildBB("_WHILE_COND");
+            builder.setCurBB(entryBlk);
+            builder.buildBr(condEntryBlk);
+        }
+        else {
+            condEntryBlk = entryBlk;
+        }
+        // Pass down blocks as inherited attributes for short-circuit evaluation.
+        ctx.cond().lOrExp().trueBlk = bodyEntryBlk;
+        ctx.cond().lOrExp().falseBlk = exitBlk;
+
+        builder.setCurBB(condEntryBlk);
+        visit(ctx.cond());
+
+        /*
+        Build the loop BODY.
+         */
+        builder.setCurBB(bodyEntryBlk);
+        visit(ctx.stmt());
+        BasicBlock bodyExitBlk = builder.getCurBB();
+        // If the loop body doesn't end with Ret,
+        // add a Br jumping back to the conditional statement.
+        if (bodyExitBlk.instructions.isEmpty()
+                || !bodyExitBlk.getLastInst().cat.isTerminator()) {
+            builder.setCurBB(bodyExitBlk);
+            builder.buildBr(condEntryBlk);
+        }
+
+        /*
+        Force the BB pointer to point to the exitBlk just as the conditional
+        statement regardless of dead code prevention.
+         */
+        builder.setCurBB(exitBlk);
+
+        // Pop the back-patching layer out.
+        for (TerminatorInst.Br br : bpStk.pop()) {
+            if (br.getOperandAt(0) == BREAK) {
+                br.setOperandAt(exitBlk, 0);
+            }
+            else if (br.getOperandAt(0) == CONTINUE) {
+                br.setOperandAt(condEntryBlk, 0);
+            }
+            else {
+                throw new RuntimeException("Invalid block placeholder occurs in the stack.");
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * stmt : 'break' ';' # breakStmt
+     */
+    @Override
+    public Void visitBreakStmt(SysYParser.BreakStmtContext ctx) {
+        bpStk.peek().add(builder.buildBr(BREAK));
+        return null;
+    }
+
+    /**
+     * stmt : 'continue' ';' # contStmt
+     */
+    @Override
+    public Void visitContStmt(SysYParser.ContStmtContext ctx) {
+        bpStk.peek().add(builder.buildBr(CONTINUE));
         return null;
     }
     //</editor-fold>

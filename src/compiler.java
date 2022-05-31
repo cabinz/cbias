@@ -14,11 +14,15 @@ public class compiler{
             if ("-s".equals(args[i])){
                 // presume source path is given
                 config.source = args[++i];
-                config.output = config.source.replace(".sy", ".s");
+//                config.ASMout = config.source.replace(".sy", ".s");
             }
             else if ("-o".equals(args[i])){
                 // presume output path is given
-                config.output = args[++i];
+                config.ASMout = args[++i];
+            }
+            else if ("-emit-llvm".equals(args[i])) {
+                // presume output path is given
+                config.llOut = args[++i];
             }
             // todo: -h for help info
             // todo: -O1/2 for opt

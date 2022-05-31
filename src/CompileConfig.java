@@ -4,5 +4,6 @@
  */
 public class CompileConfig {
     public String source;
-    public String output = ".";
+    public String ASMout;
+    public String llOut = null;
 }

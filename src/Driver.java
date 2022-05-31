@@ -37,11 +37,12 @@ public class Driver{
         visitor.visit(ast);
 
         /* Emit the IR text to an output file for testing. */
-        IREmitter emitter = new IREmitter(
-                // "test.sy" -> "test.ll"
-                config.source.replace(".sy", ".ll")
-        );
-        emitter.emit(module);
+        if (config.llOut != null) {
+            IREmitter emitter = new IREmitter(config.llOut);
+            emitter.emit(module);
+        }
+
+        if (config.ASMout == null) return;
 
         /* Intermediate code optimization */
         System.out.println("Optimization has not been done.");
@@ -53,6 +54,6 @@ public class Driver{
 
         /* Write file */
         MCEmitter mcEmitter = MCEmitter.get();
-        mcEmitter.emitTo(target, config.output);
+        mcEmitter.emitTo(target, config.ASMout);
     }
 }
