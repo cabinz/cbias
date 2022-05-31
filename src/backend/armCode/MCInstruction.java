@@ -4,7 +4,9 @@ package backend.armCode;
 import backend.operand.Register;
 
 /**
- * This class represents all instructions of ARM in memory.
+ * This class represents all instructions of ARM in memory. <br/>
+ * All instructions' constructor is about the text info, which will be emitted.
+ * The relational info need to be set using setter.
  */
 public abstract class MCInstruction {
 

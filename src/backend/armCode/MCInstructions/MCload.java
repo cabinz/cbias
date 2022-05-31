@@ -9,7 +9,16 @@ public class MCload extends MCInstruction {
 
     private Register dst;
     private MCOperand addr;
+    /**
+     * Addressing offset. <br/>
+     * In ARM, this can be <br/>
+     * &nbsp; - 12 bits immediate <br/>
+     * &nbsp; - a register
+     */
     private MCOperand offset;
+    /**
+     * Whether write to the sp
+     */
     private boolean write;
 
     public String emit(){
