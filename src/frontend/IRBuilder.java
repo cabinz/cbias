@@ -8,6 +8,7 @@ import ir.types.IntegerType;
 import ir.types.PointerType;
 import ir.values.*;
 import ir.values.instructions.BinaryInst;
+import ir.values.instructions.CallInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
@@ -204,8 +205,8 @@ public class IRBuilder {
      * @param args The ACTUAL arguments to be referenced by the Call.
      * @return The call instruction inserted.
      */
-    public TerminatorInst.Call buildCall(Function func, ArrayList<Value> args) {
-        TerminatorInst.Call call = new TerminatorInst.Call(func, args, curBB);
+    public CallInst buildCall(Function func, ArrayList<Value> args) {
+        CallInst call = new CallInst(func, args, curBB);
         getCurBB().insertAtEnd(call);
         return call;
     }
