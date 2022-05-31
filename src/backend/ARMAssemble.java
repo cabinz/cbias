@@ -33,13 +33,20 @@ public class ARMAssemble {
     /**
      * Import external function. <br/>
      * used by BL external for a unified style
-     * @param IRf
+     * @param IRFunc the external IR Function to be used
      */
-    public void useExternalFunction(Function IRf){
-        var MCf = new MCFunction(IRf.getName(), true);
-        functionList.add(MCf);
-        functionMap.put(IRf, MCf);
+    public void useExternalFunction(Function IRFunc){
+        var MCFunc = new MCFunction(IRFunc.getName(), true);
+        functionList.add(MCFunc);
+        functionMap.put(IRFunc, MCFunc);
     }
+
+    /**
+     * Find the corresponding MC Function of an IR Function
+     * @param IRFunc the IR Function to search
+     * @return the corresponding MC Function to find
+     */
+    public MCFunction findMCFunc(Function IRFunc) {return functionMap.get(IRFunc);}
 
     /**
      * Find the corresponding MC Function of an IR Function

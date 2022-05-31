@@ -33,6 +33,8 @@ public class MCBuilder {
     //<editor-fold desc="Fields">
     private Module IRModule;
 
+    private ARMAssemble target;
+
     /**
      * This is used to name the virtual register.
      */
@@ -67,7 +69,7 @@ public class MCBuilder {
      * @return generated ARM assemble target
      */
     public ARMAssemble codeGeneration() {
-        ARMAssemble target = new ARMAssemble();
+        target = new ARMAssemble();
         mapGlobalVariable(IRModule, target);
         mapFunction(IRModule, target);
 
@@ -239,7 +241,7 @@ public class MCBuilder {
             }
         }
         /* Branch */
-        MCBB.appendInstruction(new MCbranch(IRinst.getOperandAt(0).getName(), true));
+        MCBB.appendInstruction(new MCbranch(target.findMCFunc((Function) IRinst.getOperandAt(0))));
         /* Stack balancing */
         if (oprNum > 4)
             MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstint(4*oprNum-4, MCBB)));

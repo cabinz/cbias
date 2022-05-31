@@ -46,7 +46,7 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
      * @param IRBB the IR BasicBlock to search
      * @return the corresponding MC BasicBlock to find
      */
-    public MCBasicBlock findMapBB(BasicBlock IRBB) {return BBmap.get(IRBB);}
+    public MCBasicBlock findMCBB(BasicBlock IRBB) {return BBmap.get(IRBB);}
 
     /**
      * Used when declare a local variable
@@ -77,7 +77,7 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
     public MCFunction(String name, boolean isExternal) {
         this.name = name;
         stackSize = 0;
-        BasicBlockList = new LinkedList<MCBasicBlock>();
+        BasicBlockList = new LinkedList<>();
         BBmap = new HashMap<>();
         this.isExternal = isExternal;
 //        argList = new LinkedList<MCOperand>();
