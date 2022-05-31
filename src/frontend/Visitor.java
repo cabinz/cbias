@@ -306,9 +306,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         Instruction tailInst = builder.getCurBB().getLastInst();
         // If no instruction in the bb, or the last instruction is not a terminator.
-        if (tailInst == null ||
-                tailInst.cat != InstCategory.BR
-                        && tailInst.cat != InstCategory.RET) {
+        if (tailInst == null || !tailInst.cat.isTerminator()) {
             if (function.getType() instanceof FunctionType f) {
                 if (f.getRetType().isVoidType()) {
                     builder.buildRet();
@@ -1040,8 +1038,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // If the loop body doesn't end with Ret,
         // add a Br jumping back to the conditional statement.
         if (bodyExitBlk.instructions.isEmpty()
-                || bodyExitBlk.getLastInst().cat != InstCategory.BR
-                && bodyExitBlk.getLastInst().cat != InstCategory.RET) {
+                || !bodyExitBlk.getLastInst().cat.isTerminator()) {
             builder.setCurBB(bodyExitBlk);
             builder.buildBr(condEntryBlk);
         }

@@ -29,7 +29,9 @@ public class Instruction extends User {
         LT, GT, EQ, NE, LE, GE, // Relational (Comparison) Operations
         AND, OR,                // Logical Operations
         // Terminators
-        RET, BR, CALL,
+        RET, BR,
+        // Invocation
+        CALL,
         // Memory operations
         ZEXT, ALLOCA, LOAD, STORE;
 
@@ -40,6 +42,11 @@ public class Instruction extends User {
         public boolean isRelationalBinary() {
             return InstCategory.LT.ordinal() <= this.ordinal()
                     && this.ordinal() <= InstCategory.GE.ordinal();
+        }
+
+        public boolean isTerminator() {
+            return InstCategory.RET.ordinal() <= this.ordinal()
+                    && this.ordinal() <= InstCategory.BR.ordinal();
         }
     }
 
