@@ -12,8 +12,10 @@ import ir.values.instructions.BinaryInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
+import javax.swing.event.TreeWillExpandListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Stack;
 
 /**
  * Visitor can be regarded as a tiny construction worker traveling
@@ -26,12 +28,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private final IRBuilder builder;
     private final Scope scope = new Scope();
 
-    //<editor-fold desc="Temporary variables for passing values through layers visited.">
+    //<editor-fold desc="Variables storing returned data from the lower layers of visiting.">
     private Value retVal_;
     private ArrayList<Type> retTypeList_;
     private Type retType_;
     private int retInt_;
     //</editor-fold>
+
+    /**
+     * Stack for back-patching break and continue statements.
+     */
+    Stack<ArrayList<TerminatorInst.Br>> bpStk = new Stack<>();
+
 
     //<editor-fold desc="Environment variables indicating the building status">
     private final boolean ON = true;
@@ -378,11 +386,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Build an EXIT block no matter if it may become dead code
         that cannot be reached in the CFG.
          */
-        BasicBlock entryBlk = builder.getCurBB();
-        BasicBlock exitBlk = builder.buildBB("_EXIT");
+        BasicBlock entryBlk = builder.getCurBB(); // Store current block as entry.
+        BasicBlock exitBlk = builder.buildBB("_COND_EXIT");
 
         /*
-        Build the TRUE block (a block for jumping if condition is true).
+        Build the TRUE branch (a block for jumping if condition is true).
         Fill it by visiting child (the 1st stmt, the true branch).
          */
         BasicBlock trueEntryBlk = builder.buildBB("_THEN");
@@ -391,7 +399,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         boolean trueBlkEndWithRet = trueExitBlk.getLastInst() instanceof TerminatorInst.Ret;
 
         /*
-        Build the FALSE block (a block for jumping if condition is false),
+        Build the FALSE branch (a block for jumping if condition is false),
         if there is the 2nd stmt, meaning that it's an IF-ELSE statement.
         Otherwise, it's an IF statement (w/o following ELSE), and
         falseEntryBlk will remain null.
@@ -426,7 +434,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
 
         /*
-        Cope with condition expression by visiting child cond.
+        Cope with the condition expression by visiting child cond.
          */
         builder.setCurBB(entryBlk);
         // Pass down blocks as inherited attributes for short-circuit evaluation.
@@ -977,6 +985,70 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitStrRParam(SysYParser.StrRParamContext ctx) {
         // todo: Cope with string function argument.
         retVal_ = null;
+
+        return null;
+    }
+
+    /**
+     * stmt : 'while' '(' cond ')' stmt # whileStmt
+     */
+    @Override
+    public Void visitWhileStmt(SysYParser.WhileStmtContext ctx) {
+        // Deepen by one layer of nested loop.
+        bpStk.push(new ArrayList<>());
+
+        /*
+        Build an EXIT block no matter if it may become dead code
+        that cannot be reached in the CFG.
+         */
+        BasicBlock entryBlk = builder.getCurBB(); // Store current block as entry.
+        BasicBlock bodyEntryBlk = builder.buildBB("_LOOP_BODY");
+        BasicBlock exitBlk = builder.buildBB("_WHILE_EXIT");
+
+        /*
+        Cope with the condition expression by visiting child cond.
+         */
+        // Start a new block as the entry of loop continuing check for
+        // jumping back at the end of the loop body.
+        // If being currently in an empty block, treat it as the check
+        // entry directly.
+        BasicBlock condEntryBlk;
+        if(!entryBlk.instructions.isEmpty()) {
+            condEntryBlk = builder.buildBB("_WHILE_COND");
+            builder.setCurBB(entryBlk);
+            builder.buildBr(condEntryBlk);
+        }
+        else {
+            condEntryBlk = entryBlk;
+        }
+        // Pass down blocks as inherited attributes for short-circuit evaluation.
+        ctx.cond().lOrExp().trueBlk = bodyEntryBlk;
+        ctx.cond().lOrExp().falseBlk = exitBlk;
+
+        builder.setCurBB(condEntryBlk);
+        visit(ctx.cond());
+
+        /*
+        Build the loop BODY.
+         */
+        builder.setCurBB(bodyEntryBlk);
+        visit(ctx.stmt());
+        BasicBlock bodyExitBlk = builder.getCurBB();
+        // If the loop body doesn't end with Ret,
+        // add a Br jumping back to the conditional statement.
+        if (!bodyExitBlk.getLastInst().isRet()) {
+            builder.setCurBB(bodyExitBlk);
+            builder.buildBr(condEntryBlk);
+        }
+
+        /*
+        Force the BB pointer to point to the exitBlk just as the conditional
+        statement regardless of dead code prevention.
+         */
+        builder.setCurBB(exitBlk);
+
+        // Pop the back-patching layer out.
+        bpStk.pop();
 
         return null;
     }
