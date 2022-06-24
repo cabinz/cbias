@@ -4,12 +4,13 @@ import backend.armCode.MCFunction;
 import ir.values.Function;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
  * This class represent an object file to be emitted.
  */
-public class ARMAssemble {
+public class ARMAssemble implements Iterable<MCFunction>{
 
     //<editor-fold desc="Fields">
     private String architecture = "armv7";
@@ -48,12 +49,7 @@ public class ARMAssemble {
      */
     public MCFunction findMCFunc(Function IRFunc) {return functionMap.get(IRFunc);}
 
-    /**
-     * Find the corresponding MC Function of an IR Function
-     * @param IRf the IR Function to search
-     * @return the corresponding MC Function to find
-     */
-    public MCFunction findMapFunc(Function IRf) {return functionMap.get(IRf);}
+    public Iterator<MCFunction> iterator(){return functionList.iterator();}
 
     //<editor-fold desc="Getter & Setter">
     public String getArchitecture() {return architecture;}

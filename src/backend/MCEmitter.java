@@ -39,7 +39,7 @@ public class MCEmitter {
         strBd.append("\n");
 
         /* handle each function */
-        for (MCFunction f : target.getFunctionList()) {
+        for (MCFunction f : target) {
             if (f.isExternal()) continue;
             strBd.append("\t.global " + f.getName() + '\n');
             strBd.append(f.getName() + ":\n");
