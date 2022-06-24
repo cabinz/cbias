@@ -110,6 +110,8 @@ public class TerminatorInst {
 
 
         //<editor-fold desc="Methods">
+        public boolean isCondJmp() {return operands.size() == 3;}
+
         @Override
         public String toString() {
             StringBuilder strBuilder = new StringBuilder();

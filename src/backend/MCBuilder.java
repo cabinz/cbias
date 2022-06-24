@@ -137,6 +137,9 @@ public class MCBuilder {
         else if (IRinst.isCall()) {
             translateCall(IRinst, MCBB);
         }
+        else if (IRinst.isBr()) {
+            translateBr(IRinst, MCBB);
+        }
     }
 
 
@@ -293,6 +296,38 @@ public class MCBuilder {
      */
     private void translateLoad(Instruction IRinst, MCBasicBlock MCBB) {
         MCBB.appendInst(new MCload((Register) findContainer(IRinst, MCBB), findContainer(IRinst.getOperandAt(0), MCBB)));
+    }
+
+    /**
+     * Translate IR br instruction into ARM branch and a lot of condition calculate in front.
+     * @param IRinst IR instruction to be translated
+     * @param MCBB The MC BasicBlock where the IR instruction belongs to
+     */
+    private void translateBr(Instruction IRinst, MCBasicBlock MCBB) {
+        if (((TerminatorInst.Br) IRinst).isCondJmp()) {
+            if (IRinst.getOperandAt(0) instanceof Constant.ConstInt) {
+                int cond = ((Constant.ConstInt) IRinst.getOperandAt(0)).getVal();
+                if (cond == 0)
+                    MCBB.appendInst(new MCbranch(MCBB.findMCBB((BasicBlock) IRinst.getOperandAt(2))));
+                else
+                    MCBB.appendInst(new MCbranch(MCBB.findMCBB((BasicBlock) IRinst.getOperandAt(1))));
+            }
+            else {
+                translateIcmp((Instruction) IRinst.getOperandAt(0), MCBB);
+                MCBB.appendInst(new MCbranch(MCBB.findMCBB((BasicBlock) IRinst.getOperandAt(1))));
+            }
+        }
+        else {
+            MCBB.appendInst(new MCbranch(MCBB.findMCBB((BasicBlock) IRinst.getOperandAt(0))));
+        }
+    }
+
+    /**
+     * @param IRinst
+     * @param MCBB
+     */
+    private void translateIcmp(Instruction IRinst, MCBasicBlock MCBB) {
+
     }
 
     /**

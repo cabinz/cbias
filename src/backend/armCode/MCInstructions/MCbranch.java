@@ -16,6 +16,8 @@ public class MCbranch extends MCInstruction {
     public String emit() {
         if (withLink)
             return "BL " + target;
+        else if (getCond() == null)
+            return "B " + target;
         else
             return "B" + emitCond() + " " + target;
     }
@@ -29,6 +31,13 @@ public class MCbranch extends MCInstruction {
 
     public MCbranch(MCBasicBlock target) {
         super(TYPE.BRANCH);
+        this.target = target.getName();
+        withLink = false;
+        targetBB = target;
+    }
+
+    public MCbranch(MCBasicBlock target, ConditionField cond) {
+        super(TYPE.BRANCH, null, cond);
         this.target = target.getName();
         withLink = false;
         targetBB = target;
