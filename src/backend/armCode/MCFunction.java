@@ -42,11 +42,15 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
     }
 
     /**
-     * Find the corresponding MC BasicBlock of an IR BasicBlock
+     * Find the corresponding MC BasicBlock of an IR BasicBlock<br/>
+     * (If not exited, create one)
      * @param IRBB the IR BasicBlock to search
      * @return the corresponding MC BasicBlock to find
      */
-    public MCBasicBlock findMCBB(BasicBlock IRBB) {return BBmap.get(IRBB);}
+    public MCBasicBlock findMCBB(BasicBlock IRBB) {
+        MCBasicBlock MCBB = BBmap.get(IRBB);
+        return MCBB==null ?createBB(IRBB) :MCBB;
+    }
 
     /**
      * Used when declare a local variable

@@ -1,8 +1,6 @@
 package backend;
 
-import backend.armCode.MCBasicBlock;
-import backend.armCode.MCFunction;
-import backend.armCode.MCInstruction;
+import backend.armCode.*;
 import backend.armCode.MCInstructions.*;
 import backend.operand.*;
 import ir.Module;
@@ -11,6 +9,7 @@ import ir.values.BasicBlock;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.Instruction;
+import ir.values.instructions.TerminatorInst;
 
 import java.util.HashMap;
 
@@ -97,7 +96,7 @@ public class MCBuilder {
             MCFunction MCfunc = target.createFunction(IRfunc);
             // TODO: 改成BFS
             for (BasicBlock IRBB : IRfunc){
-                MCBasicBlock MCBB = MCfunc.createBB(IRBB);
+                MCBasicBlock MCBB = MCfunc.findMCBB(IRBB);
                 for (Instruction IRinst : IRBB) {
                     translate(IRinst, MCBB);
                 }
@@ -106,7 +105,7 @@ public class MCBuilder {
     }
 
     /**
-     * 指令选择总模块
+     * 指令选择总模块，该函数仅会向MCBB中插入指令，块间关联和其他关系描述由指令自身完成
      * @param IRinst IR instruction to be translated
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
      */
@@ -267,6 +266,8 @@ public class MCBuilder {
      * Translate the IR alloca instruction into ARM. <br/>
      * IR Alloca will be translated into "sp := sp - 4" and "MOV Vreg, sp".<br/>
      * To be optimized later....
+     * @param IRinst IR instruction to be translated
+     * @param MCBB The MC BasicBlock where the IR instruction belongs to
      */
     private void translateAlloca(Instruction IRinst, MCBasicBlock MCBB) {
         MCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(4, MCBB)));
@@ -286,7 +287,7 @@ public class MCBuilder {
     }
 
     /**
-     * translate IR load, just like its name.
+     * Translate IR load, just like its name.
      * @param IRinst IR instruction to be translated
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
      */

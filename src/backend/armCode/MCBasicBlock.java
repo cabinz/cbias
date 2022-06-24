@@ -1,6 +1,8 @@
 package backend.armCode;
 
 
+import ir.values.BasicBlock;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -28,15 +30,17 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     //<editor-fold desc="Useful methods">
     public void prependInst(MCInstruction inst) {
         instructionList.addFirst(inst);
-        inst.setBelongingBB(this);
+        inst.setBelongBB(this);
     }
 
     public void appendInst(MCInstruction inst) {
         instructionList.addLast(inst);
-        inst.setBelongingBB(this);
+        inst.setBelongBB(this);
     }
 
     public void addPredecessor(MCBasicBlock BB) {predecessors.add(BB);}
+
+    public MCBasicBlock findMCBB(BasicBlock IRBB) {return belongFunc.findMCBB(IRBB);}
 
     public Iterator<MCInstruction> iterator() {return instructionList.iterator();}
     //</editor-fold>

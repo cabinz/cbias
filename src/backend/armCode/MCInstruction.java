@@ -67,8 +67,8 @@ public abstract class MCInstruction {
      */
     protected Shift shift;
 
-    private MCBasicBlock belongingBasicBlock;
-    private MCFunction belongingFunction;
+    protected MCBasicBlock belongBasicBlock;
+    protected MCFunction belongFunc;
     //</editor-fold>
 
 
@@ -83,13 +83,13 @@ public abstract class MCInstruction {
 
 
     //<editor-fold desc="Getter & Setter">
-    public MCBasicBlock getBelongingBB() {return belongingBasicBlock;}
-    public MCFunction getBelongingFunction() {return belongingFunction;}
+    public MCBasicBlock getBelongBB() {return belongBasicBlock;}
+    public MCFunction getBelongFunc() {return belongFunc;}
     public Shift getShift() {return shift;}
     public ConditionField getCond() {return cond;}
 
-    public void setBelongingBB(MCBasicBlock belongingBB) {this.belongingBasicBlock = belongingBB;}
-    public void setBelongingFunction(MCFunction function) {this.belongingFunction = function;}
+    public void setBelongBB(MCBasicBlock belongBB) {this.belongBasicBlock = belongBB;}
+    public void setBelongFunc(MCFunction function) {this.belongFunc = function;}
     public void setShift(Shift shift) {this.shift = shift;}
     public void setCond(ConditionField cond) {this.cond = cond;}
     //</editor-fold>
