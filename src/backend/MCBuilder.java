@@ -166,7 +166,7 @@ public class MCBuilder {
             if (forceAllocReg){
                 VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((Constant.ConstInt) value).getVal());
                 valueMap.put(value, vr);
-                MCBB.appendInstruction(new MCmov(vr, temp));
+                MCBB.appendInst(new MCmov(vr, temp));
                 return vr;
             }
             else
@@ -222,7 +222,7 @@ public class MCBuilder {
         else{
             VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
             // TODO: 可能要换成LDR？
-            MCBB.appendInstruction(new MCmov(vr, new Immediate(value)));
+            MCBB.appendInst(new MCmov(vr, new Immediate(value)));
             return vr;
         }
     }
@@ -243,24 +243,24 @@ public class MCBuilder {
         /* Argument push */
         for (int i=oprNum; i>=1; i++) {
             if (i <= 4) {
-                MCBB.appendInstruction(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i), MCBB)));
+                MCBB.appendInst(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i), MCBB)));
             }
             else {
-                MCBB.appendInstruction(new MCstore((Register) findContainer(IRinst.getOperandAt(i), MCBB), RealRegister.get(13), createConstInt(-4, MCBB), true));
+                MCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), MCBB), RealRegister.get(13), createConstInt(-4, MCBB), true));
             }
         }
         /* Branch */
-        MCBB.appendInstruction(new MCbranch(target.findMCFunc((Function) IRinst.getOperandAt(0))));
+        MCBB.appendInst(new MCbranch(target.findMCFunc((Function) IRinst.getOperandAt(0))));
         /* Stack balancing */
         if (oprNum > 4)
-            MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(4*oprNum-4, MCBB)));
+            MCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(4*oprNum-4, MCBB)));
         /* Save result */
-        MCBB.appendInstruction(new MCmov((Register) findContainer(IRinst, MCBB), RealRegister.get(0)));
+        MCBB.appendInst(new MCmov((Register) findContainer(IRinst, MCBB), RealRegister.get(0)));
     }
 
     private void translateRet(Instruction IRinst, MCBasicBlock MCBB) {
         if (IRinst.getNumOperands() != 0)
-            MCBB.appendInstruction(new MCmov(RealRegister.get(0), findContainer(IRinst.getOperandAt(0), MCBB)));
+            MCBB.appendInst(new MCmov(RealRegister.get(0), findContainer(IRinst.getOperandAt(0), MCBB)));
     }
 
     /**
@@ -269,8 +269,8 @@ public class MCBuilder {
      * To be optimized later....
      */
     private void translateAlloca(Instruction IRinst, MCBasicBlock MCBB) {
-        MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(4, MCBB)));
-        MCBB.appendInstruction(new MCmov((Register) findContainer(IRinst, MCBB), RealRegister.get(13)));
+        MCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(4, MCBB)));
+        MCBB.appendInst(new MCmov((Register) findContainer(IRinst, MCBB), RealRegister.get(13)));
     }
 
     /**
@@ -282,7 +282,7 @@ public class MCBuilder {
     private void translateStore(Instruction IRinst, MCBasicBlock MCBB) {
         MCOperand src = findContainer(IRinst.getOperandAt(0), MCBB, true);
         MCOperand addr = findContainer(IRinst.getOperandAt(1), MCBB);
-        MCBB.appendInstruction(new MCstore((Register) src, addr));
+        MCBB.appendInst(new MCstore((Register) src, addr));
     }
 
     /**
@@ -291,7 +291,7 @@ public class MCBuilder {
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
      */
     private void translateLoad(Instruction IRinst, MCBasicBlock MCBB) {
-        MCBB.appendInstruction(new MCload((Register) findContainer(IRinst, MCBB), findContainer(IRinst.getOperandAt(0), MCBB)));
+        MCBB.appendInst(new MCload((Register) findContainer(IRinst, MCBB), findContainer(IRinst.getOperandAt(0), MCBB)));
     }
 
     /**
@@ -308,17 +308,17 @@ public class MCBuilder {
         if (operand1 instanceof Immediate) {
             if (operand2 instanceof Immediate) {
                 VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), MCBB, true);
-                MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, MCBB), register, operand2));
+                MCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst, MCBB), register, operand2));
             }
             else {
                 if (type != MCInstruction.TYPE.SUB)
-                    MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, MCBB),(Register)  operand2, operand1));
+                    MCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst, MCBB),(Register)  operand2, operand1));
                 else
-                    MCBB.appendInstruction(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst, MCBB),(Register)  operand2, operand1));
+                    MCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst, MCBB),(Register)  operand2, operand1));
             }
         }
         else {
-            MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, MCBB),(Register) operand1, operand2));
+            MCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst, MCBB),(Register) operand1, operand2));
         }
     }
     //</editor-fold>

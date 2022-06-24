@@ -17,7 +17,7 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     private LinkedList<MCInstruction> instructionList;
     private String label;
 
-    private MCFunction belongingFunction;
+    private MCFunction belongFunc;
 
     private ArrayList<MCBasicBlock> predecessors;
     private MCBasicBlock falseSuccessor;
@@ -26,12 +26,12 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
 
 
     //<editor-fold desc="Useful methods">
-    public void prependInstruction(MCInstruction inst) {
+    public void prependInst(MCInstruction inst) {
         instructionList.addFirst(inst);
         inst.setBelongingBB(this);
     }
 
-    public void appendInstruction(MCInstruction inst) {
+    public void appendInst(MCInstruction inst) {
         instructionList.addLast(inst);
         inst.setBelongingBB(this);
     }
@@ -48,8 +48,8 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     public String getName() {return label;}
     public void setName(String label) {this.label = label;}
 
-    public MCFunction getBelongingFunction() {return belongingFunction;}
-    public void setBelongingFunction(MCFunction belongingFunction) {this.belongingFunction = belongingFunction;}
+    public MCFunction getBelongFunc() {return belongFunc;}
+    public void setBelongFunc(MCFunction belongFunc) {this.belongFunc = belongFunc;}
 
     public ArrayList<MCBasicBlock> getPredecessors() {return predecessors;}
     public void setPredecessors(ArrayList<MCBasicBlock> predecessors) {this.predecessors = predecessors;}
@@ -64,13 +64,13 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
 
     //<editor-fold desc="Constructor">
     public MCBasicBlock(MCFunction belongingFunction) {
-        this.belongingFunction = belongingFunction;
+        this.belongFunc = belongingFunction;
         instructionList = new LinkedList<MCInstruction>();
         label = "BLOCK_" + count;
         count++;
     }
     public MCBasicBlock(MCFunction belongingFunction, String label) {
-        this.belongingFunction = belongingFunction;
+        this.belongFunc = belongingFunction;
         instructionList = new LinkedList<MCInstruction>();
         this.label = label;
     }
