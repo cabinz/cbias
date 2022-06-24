@@ -29,6 +29,8 @@ public abstract class MCInstruction {
         BRANCH,
         STORE,
         LOAD,
+        PUSH,
+        POP,
         CMP,
         GLOBAL,
         PHI
