@@ -232,7 +232,7 @@ public class MCBuilder {
     //<editor-fold desc="Translate functions">
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
-     * Function Stack: LR, local variables, call variables <br/>
+     * Function Stack: parameter, LR & others, local variables<br/>
      * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; high &emsp;&emsp;&emsp; -->> &emsp;&emsp;&emsp; low <br/>
      * (FP先不存了吧，自己知道就好) <br/>
      * @param IRinst IR call instruction
@@ -241,7 +241,7 @@ public class MCBuilder {
     private void translateCall(Instruction IRinst, MCBasicBlock MCBB) {
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
-        for (int i=1; i<oprNum; i++) {
+        for (int i=oprNum; i>=1; i++) {
             if (i <= 4) {
                 MCBB.appendInstruction(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i), MCBB)));
             }
