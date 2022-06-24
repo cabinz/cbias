@@ -155,13 +155,22 @@ public class MCBuilder {
         if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
-        else if (value instanceof Instruction || forceAllocReg) {
+        else if (value instanceof Instruction) {
             VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
             valueMap.put(value, vr);
             return vr;
         }
-        if (value instanceof Constant.ConstInt) {
-            return createConstInt(((Constant.ConstInt) value).getVal(), MCBB);
+        else if (value instanceof Constant.ConstInt) {
+            MCOperand temp = createConstInt(((Constant.ConstInt) value).getVal(), MCBB);
+            if (temp instanceof Register) return temp;
+            if (forceAllocReg){
+                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((Constant.ConstInt) value).getVal());
+                valueMap.put(value, vr);
+                MCBB.appendInstruction(new MCmov(vr, temp));
+                return vr;
+            }
+            else
+                return temp;
         }
         else
             return null;
@@ -271,15 +280,9 @@ public class MCBuilder {
      * @param MCBB The MC BasicBlock where the IR instruction belongs to
      */
     private void translateStore(Instruction IRinst, MCBasicBlock MCBB) {
-        MCOperand src = findContainer(IRinst.getOperandAt(0), MCBB);
+        MCOperand src = findContainer(IRinst.getOperandAt(0), MCBB, true);
         MCOperand addr = findContainer(IRinst.getOperandAt(1), MCBB);
-        if (src instanceof Immediate) {
-            VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), MCBB, true);
-            MCBB.appendInstruction(new MCmov(register, src));
-            MCBB.appendInstruction(new MCstore(register, addr));
-        }
-        else
-            MCBB.appendInstruction(new MCstore((Register) src, addr));
+        MCBB.appendInstruction(new MCstore((Register) src, addr));
     }
 
     /**
@@ -305,7 +308,6 @@ public class MCBuilder {
         if (operand1 instanceof Immediate) {
             if (operand2 instanceof Immediate) {
                 VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), MCBB, true);
-                MCBB.appendInstruction(new MCmov(register, operand1));
                 MCBB.appendInstruction(new MCBinary(type, (Register) findContainer(IRinst, MCBB), register, operand2));
             }
             else {
