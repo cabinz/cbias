@@ -185,7 +185,7 @@ public class MCBuilder {
     }
 
     /**
-     * Syntactic sugar of {@link backend.MCBuilder#findContainer(Value, boolean)}. <br/>
+     * Syntactic sugar of {@link #findContainer(Value, boolean)}. <br/>
      * Default do not force allocate a virtual register. <br/>
      */
     private MCOperand findContainer(Value value) {
@@ -234,6 +234,11 @@ public class MCBuilder {
         }
     }
 
+    /**
+     * Map the IR icmp into ARM condition field.
+     * @param IRinst icmp instruction
+     * @return the corresponding ARM condition field
+     */
     private MCInstruction.ConditionField mapToArmCond(BinaryInst IRinst) {
         switch (IRinst.cat){
             case EQ: return MCInstruction.ConditionField.EQ;
@@ -246,6 +251,11 @@ public class MCBuilder {
         }
     }
 
+    /**
+     * Reverse the ARM condition field.
+     * @param cond ARM condition field to be reversed
+     * @return the reversed result
+     */
     private MCInstruction.ConditionField reverseCond(MCInstruction.ConditionField cond) {
         switch (cond){
             case EQ: return MCInstruction.ConditionField.NE;
@@ -349,14 +359,15 @@ public class MCBuilder {
     /**
      * Translate the IR icmp into a lot of ARM calculation.
      * @param icmp IR instruction to be translated
+     * @return the corresponding ARM condition field of icmp
      */
-    private MCInstruction.ConditionField translateIcmp(BinaryInst icmp) {
+    private MCInstruction.ConditionField translateIcmp(BinaryInst icmp, boolean saveResult) {
         Value value1 = icmp.getOperandAt(0);
         Value value2 = icmp.getOperandAt(1);
         if (value1 instanceof Instruction && ((Instruction) value1).isIcmp())
-            translateIcmp((BinaryInst) value1);
+            translateIcmp((BinaryInst) value1, true);
         if (value2 instanceof Instruction && ((Instruction) value2).isIcmp())
-            translateIcmp((BinaryInst) value2);
+            translateIcmp((BinaryInst) value2, true);
 
         MCOperand operand1 = findContainer(value1);
         MCOperand operand2 = findContainer(value2);
@@ -371,7 +382,20 @@ public class MCBuilder {
 
         curMCBB.appendInst(new MCcmp((Register) operand1, operand2));
 
+        if (saveResult) {
+            curMCBB.appendInst(new MCmov((Register) findContainer(icmp), createConstInt(1), armCond));
+            curMCBB.appendInst(new MCmov((Register) findContainer(icmp), createConstInt(0), reverseCond(armCond)));
+        }
+
         return armCond;
+    }
+
+    /**
+     * Syntactic sugar of {@link #translateIcmp(BinaryInst, boolean)} <br/>
+     * Default do NOT save the result to a register.
+     */
+    private MCInstruction.ConditionField translateIcmp(BinaryInst icmp) {
+        return translateIcmp(icmp, false);
     }
 
     /**

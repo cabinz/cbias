@@ -14,5 +14,5 @@ public class MCmov extends MCInstruction {
     }
 
     public MCmov(Register dst, MCOperand src) {super(TYPE.MOV); this.dst = dst; this.src = src;}
-    public MCmov(Register dst, MCOperand src, Shift shift, ConditionField cond) {super(TYPE.MOV, shift, cond); this.dst = dst; this.src = src;}
+    public MCmov(Register dst, MCOperand src, ConditionField cond) {super(TYPE.MOV, null, cond); this.dst = dst; this.src = src;}
 }
