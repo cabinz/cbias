@@ -240,15 +240,15 @@ public class MCBuilder {
      * @return the corresponding ARM condition field
      */
     private MCInstruction.ConditionField mapToArmCond(BinaryInst IRinst) {
-        switch (IRinst.cat){
-            case EQ: return MCInstruction.ConditionField.EQ;
-            case NE: return MCInstruction.ConditionField.NE;
-            case GE: return MCInstruction.ConditionField.GE;
-            case LE: return MCInstruction.ConditionField.LE;
-            case GT: return MCInstruction.ConditionField.GT;
-            case LT: return MCInstruction.ConditionField.LT;
-            default: return null;
-        }
+        return switch (IRinst.cat) {
+            case EQ -> MCInstruction.ConditionField.EQ;
+            case NE -> MCInstruction.ConditionField.NE;
+            case GE -> MCInstruction.ConditionField.GE;
+            case LE -> MCInstruction.ConditionField.LE;
+            case GT -> MCInstruction.ConditionField.GT;
+            case LT -> MCInstruction.ConditionField.LT;
+            default -> null;
+        };
     }
 
     /**
@@ -257,15 +257,15 @@ public class MCBuilder {
      * @return the reversed result
      */
     private MCInstruction.ConditionField reverseCond(MCInstruction.ConditionField cond) {
-        switch (cond){
-            case EQ: return MCInstruction.ConditionField.NE;
-            case NE: return MCInstruction.ConditionField.EQ;
-            case GE: return MCInstruction.ConditionField.LT;
-            case LE: return MCInstruction.ConditionField.GT;
-            case GT: return MCInstruction.ConditionField.LE;
-            case LT: return MCInstruction.ConditionField.GE;
-            default: return null;
-        }
+        return switch (cond) {
+            case EQ -> MCInstruction.ConditionField.NE;
+            case NE -> MCInstruction.ConditionField.EQ;
+            case GE -> MCInstruction.ConditionField.LT;
+            case LE -> MCInstruction.ConditionField.GT;
+            case GT -> MCInstruction.ConditionField.LE;
+            case LT -> MCInstruction.ConditionField.GE;
+            default -> null;
+        };
     }
     //</editor-fold>
 
