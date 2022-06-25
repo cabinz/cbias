@@ -104,12 +104,7 @@ public class Instruction extends User {
     public boolean isAlloca() {return this.cat == InstCategory.ALLOCA;}
     public boolean isLoad  () {return this.cat == InstCategory.LOAD;}
     public boolean isStore () {return this.cat == InstCategory.STORE;}
-    public boolean isIcmp  () {return this.cat == InstCategory.LT
-                                   || this.cat == InstCategory.GT
-                                   || this.cat == InstCategory.EQ
-                                   || this.cat == InstCategory.NE
-                                   || this.cat == InstCategory.LE
-                                   || this.cat == InstCategory.GE;}
+    public boolean isIcmp  () {return this.cat.isRelationalBinary();}
     //</editor-fold>
 
 

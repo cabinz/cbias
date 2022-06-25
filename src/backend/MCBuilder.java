@@ -233,6 +233,30 @@ public class MCBuilder {
             return vr;
         }
     }
+
+    private MCInstruction.ConditionField mapToArmCond(BinaryInst IRinst) {
+        switch (IRinst.cat){
+            case EQ: return MCInstruction.ConditionField.EQ;
+            case NE: return MCInstruction.ConditionField.NE;
+            case GE: return MCInstruction.ConditionField.GE;
+            case LE: return MCInstruction.ConditionField.LE;
+            case GT: return MCInstruction.ConditionField.GT;
+            case LT: return MCInstruction.ConditionField.LT;
+            default: return null;
+        }
+    }
+
+    private MCInstruction.ConditionField reverseCond(MCInstruction.ConditionField cond) {
+        switch (cond){
+            case EQ: return MCInstruction.ConditionField.NE;
+            case NE: return MCInstruction.ConditionField.EQ;
+            case GE: return MCInstruction.ConditionField.LT;
+            case LE: return MCInstruction.ConditionField.GT;
+            case GT: return MCInstruction.ConditionField.LE;
+            case LT: return MCInstruction.ConditionField.GE;
+            default: return null;
+        }
+    }
     //</editor-fold>
 
 
@@ -323,11 +347,31 @@ public class MCBuilder {
     }
 
     /**
-     * Translate the IR icmp into a lot of ARM calcuclation.
-     * @param IRinst IR instruction to be translated
+     * Translate the IR icmp into a lot of ARM calculation.
+     * @param icmp IR instruction to be translated
      */
-    private void translateIcmp(Instruction IRinst, MCBasicBlock MCBB) {
+    private MCInstruction.ConditionField translateIcmp(BinaryInst icmp) {
+        Value value1 = icmp.getOperandAt(0);
+        Value value2 = icmp.getOperandAt(1);
+        if (value1 instanceof Instruction && ((Instruction) value1).isIcmp())
+            translateIcmp((BinaryInst) value1);
+        if (value2 instanceof Instruction && ((Instruction) value2).isIcmp())
+            translateIcmp((BinaryInst) value2);
 
+        MCOperand operand1 = findContainer(value1);
+        MCOperand operand2 = findContainer(value2);
+        MCInstruction.ConditionField armCond = mapToArmCond(icmp);
+        /* ICMP operands can not be const int at the same time */
+        if (operand1 instanceof Immediate && !(operand2 instanceof Immediate)){
+            MCOperand temp = operand1;
+            operand1 = operand2;
+            operand2 = temp;
+            armCond = reverseCond(armCond);
+        }
+
+        curMCBB.appendInst(new MCcmp((Register) operand1, operand2));
+
+        return armCond;
     }
 
     /**

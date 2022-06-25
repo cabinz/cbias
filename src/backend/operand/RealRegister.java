@@ -5,8 +5,8 @@ import java.util.ArrayList;
 /**
  * This class represents a real physical register in the CPU.<br/>
  * In ARM, there's 16 registers, in which only 0 to 12 can be used.
- * The 13th register is used as Stack Pointer, the 14th used as
- * Link Register, the 15th used as Program Counter, the 16th used
+ * The r13 register is used as Stack Pointer, the r14 used as
+ * Link Register, the r15 used as Program Counter, the 16th used
  * as CPSR.
  */
 public class RealRegister extends Register{
