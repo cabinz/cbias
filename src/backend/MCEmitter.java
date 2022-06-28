@@ -3,10 +3,12 @@ package backend;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
+import backend.operand.Label;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * This class is a Singleton Pattern class, emitting the memory
@@ -52,6 +54,22 @@ public class MCEmitter {
                 }
             }
             strBd.append("\n\n");
+        }
+
+        /* handle each global variable */
+        List<Label> globalVars = target.getGlobalVars();
+        if (!globalVars.isEmpty()) {
+            strBd.append("\t.data\n");
+            strBd.append("\t.align 4\n");
+            for (Label label : globalVars) {
+                strBd.append("\t.global " + label.emit() + '\n');
+                strBd.append(label.emit() + ":\t");
+                if (label.isArray()) {
+                }
+                else {
+                    strBd.append(".word\t" + label.getVal() + '\n');
+                }
+            }
         }
 
         strBd.append("\t.end");

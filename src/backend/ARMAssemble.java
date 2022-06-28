@@ -2,6 +2,7 @@ package backend;
 
 import backend.armCode.MCFunction;
 import backend.operand.Label;
+import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;
 
@@ -60,7 +61,11 @@ public class ARMAssemble implements Iterable<MCFunction>{
      * @return the corresponding label
      */
     public Label addGlobalVariable(GlobalVariable gv) {
-        var label = new Label(gv.getName());
+        Label label;
+        if (gv.isArray()) // TODO:FIX
+            label = new Label(gv.getName(), ((Constant.ConstInt) gv.getInitVal()).getVal());
+        else
+            label = new Label(gv.getName(), ((Constant.ConstInt) gv.getInitVal()).getVal());
         globalVars.add(label);
         glbVarMap.put(gv, label);
         return label;
@@ -79,6 +84,8 @@ public class ARMAssemble implements Iterable<MCFunction>{
     public String getArchitecture() {return architecture;}
 
     public LinkedList<MCFunction> getFunctionList() {return functionList;}
+
+    public LinkedList<Label> getGlobalVars() {return globalVars;}
     //</editor-fold>
 
     //<editor-fold desc="Constructor">

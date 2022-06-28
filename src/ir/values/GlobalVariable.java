@@ -70,6 +70,14 @@ public class GlobalVariable extends User {
     }
     //</editor-fold>
 
+    public Constant getInitVal() {
+        return initVal;
+    }
+
+    public boolean isArray() {
+        return ((PointerType) getType()).getPointeeType().isArrayType();
+    }
+
     /**
      * If it is a global constant.
      * @return True if it is. Otherwise, false.
