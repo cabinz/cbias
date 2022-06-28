@@ -34,7 +34,9 @@ public class Instruction extends User {
         // Invocation
         CALL,
         // Memory operations
-        ZEXT, ALLOCA, LOAD, STORE;
+        ZEXT, ALLOCA, LOAD, STORE,
+        // Others
+        GEP;
 
         public boolean isArithmeticBinary() {
             return this.ordinal() <= InstCategory.DIV.ordinal();
