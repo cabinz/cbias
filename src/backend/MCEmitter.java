@@ -7,7 +7,6 @@ import backend.operand.Label;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -19,7 +18,7 @@ import java.util.List;
 public class MCEmitter {
 
     //<editor-fold desc="Singleton Pattern">
-    private static MCEmitter emitter = new MCEmitter();
+    private static final MCEmitter emitter = new MCEmitter();
 
     private MCEmitter(){}
 
@@ -72,6 +71,7 @@ public class MCEmitter {
             }
         }
 
+        strBd.append("\n\n");
         strBd.append("\t.end");
 
         /* write to the file */

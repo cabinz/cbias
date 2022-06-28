@@ -16,12 +16,12 @@ import java.util.LinkedList;
 public class ARMAssemble implements Iterable<MCFunction>{
 
     //<editor-fold desc="Fields">
-    private String architecture = "armv7";
-    private LinkedList<MCFunction> functionList;
-    private LinkedList<Label> globalVars;
+    private final String architecture = "armv7";
+    private final LinkedList<MCFunction> functionList;
+    private final LinkedList<Label> globalVars;
 
-    private HashMap<Function, MCFunction> functionMap;
-    private HashMap<GlobalVariable, Label> glbVarMap;
+    private final HashMap<Function, MCFunction> functionMap;
+    private final HashMap<GlobalVariable, Label> glbVarMap;
     //</editor-fold>
 
     /**
@@ -62,10 +62,11 @@ public class ARMAssemble implements Iterable<MCFunction>{
      */
     public Label addGlobalVariable(GlobalVariable gv) {
         Label label;
+        /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
         if (gv.isArray()) // TODO:FIX
-            label = new Label(gv.getName(), ((Constant.ConstInt) gv.getInitVal()).getVal());
+            label = new Label(gv.getName().substring(1), ((Constant.ConstInt) gv.getInitVal()).getVal());
         else
-            label = new Label(gv.getName(), ((Constant.ConstInt) gv.getInitVal()).getVal());
+            label = new Label(gv.getName().substring(1), ((Constant.ConstInt) gv.getInitVal()).getVal());
         globalVars.add(label);
         glbVarMap.put(gv, label);
         return label;
