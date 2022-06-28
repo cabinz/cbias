@@ -1,5 +1,6 @@
 package ir;
 
+import ir.types.ArrayType;
 import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.types.PointerType;
@@ -97,6 +98,9 @@ public class Type {
 
     public boolean isPointerType() {
         return (this instanceof PointerType);
+    }
+    public boolean isArrayType() {
+        return (this instanceof ArrayType);
     }
     //</editor-fold>
 

@@ -4,6 +4,8 @@ import ir.User;
 import ir.Type;
 import ir.types.IntegerType;
 
+import java.util.ArrayList;
+
 /**
  * A constant is a value that is immutable at runtime.
  * <br>
@@ -76,7 +78,38 @@ public class Constant extends User {
         //</editor-fold>
     }
 
-    // todo int array
+
+    /**
+     * Nested class for (integer/float) constant array in initialization.
+     */
+    public static class ConstArray extends Constant {
+
+        /**
+         * All the Constants in the arr will be the operands of the User.
+         * @param type ArrayType for the array.
+         * @param arr ArrayList of Constants for initializing the ConstArray.
+         */
+        public ConstArray(Type type, ArrayList<Constant> arr) {
+            super(type);
+            for (int i = 0; i < arr.size(); i++) {
+                addOperandAt(arr.get(i), i);
+            }
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder strBuilder = new StringBuilder();
+            strBuilder.append(this.getType()).append(" [");
+            for(int i = 0; i < this.getNumOperands(); i++) {
+                strBuilder.append(this.getOperandAt(i));
+                if(i < this.getNumOperands() - 1){
+                    strBuilder.append(", ");
+                }
+            }
+            strBuilder.append("]");
+            return strBuilder.toString();
+        }
+    }
 
     // todo float, and float array
 }

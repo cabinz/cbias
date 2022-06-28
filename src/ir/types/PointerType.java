@@ -19,14 +19,36 @@ public class PointerType extends Type {
     //<editor-fold desc="Fields">
     /**
      * Type of the pointed-to memory space.
+     * (i.e. Type of the element one step up on the pointing chain.)
      */
     private Type pointeeType;
+
+    public Type getPointeeType() {
+        return pointeeType;
+    }
+
+    /**
+     * Type of the ultimate atom element tracing up the pointing chain.
+     */
+    private Type rootType;
+
+    public Type getRootType() {
+        return rootType;
+    }
+
     //</editor-fold>
 
 
     //<editor-fold desc="Constructors">
     private PointerType(Type pointeeType) {
         this.pointeeType = pointeeType;
+
+        if(pointeeType.isPointerType()) {
+            rootType = ((PointerType) pointeeType).getRootType();
+        }
+        else {
+            this.rootType = pointeeType;
+        }
     }
     //</editor-fold>
 
@@ -41,14 +63,6 @@ public class PointerType extends Type {
      */
     public static PointerType getType(Type pointeeType) {
         return new PointerType(pointeeType);
-    }
-
-    /**
-     * Retrieve the type of the pointed-to memory space.
-     * @return Type of the pointed-to memory space.
-     */
-    public Type getPointeeType() {
-        return pointeeType;
     }
 
     @Override

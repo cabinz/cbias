@@ -7,10 +7,7 @@ import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.types.PointerType;
 import ir.values.*;
-import ir.values.instructions.BinaryInst;
-import ir.values.instructions.CallInst;
-import ir.values.instructions.MemoryInst;
-import ir.values.instructions.TerminatorInst;
+import ir.values.instructions.*;
 
 import java.util.ArrayList;
 
@@ -99,6 +96,16 @@ public class IRBuilder {
      */
     public Constant.ConstInt buildConstant(int i) {
         return Constant.ConstInt.get(i);
+    }
+
+    /**
+     * Retrieve a Constant.ConstArray Value.
+     * @param arrType The ArrayType carrying necessary info.
+     * @param arr An array of (integer/float) Constants for initialization the array.
+     * @return The ConstArray.
+     */
+    public Constant.ConstArray buildConstArr(Type arrType, ArrayList<Constant> arr) {
+        return new Constant.ConstArray(arrType, arr);
     }
 
     /**
@@ -302,6 +309,19 @@ public class IRBuilder {
         GlobalVariable glbVar = new GlobalVariable(name, init);
         getCurModule().addGlbVar(glbVar);
         return glbVar;
+    }
+
+
+    /**
+     * Insert a GEP instruction at current position of basic block.
+     * @param ptr The Value in PointerType (the first address of an array).
+     * @param indices The indices for dereference.
+     * @return The GEP instruction inserted.
+     */
+    public GetElemPtrInst buildGEP(Value ptr, ArrayList<Value> indices) {
+        GetElemPtrInst gepInst = new GetElemPtrInst(ptr, indices, curBB);
+        getCurBB().insertAtEnd(gepInst);
+        return gepInst;
     }
     //</editor-fold>
 }
