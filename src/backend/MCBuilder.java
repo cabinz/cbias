@@ -5,10 +5,7 @@ import backend.armCode.MCInstructions.*;
 import backend.operand.*;
 import ir.Module;
 import ir.Value;
-import ir.values.BasicBlock;
-import ir.values.Constant;
-import ir.values.Function;
-import ir.values.Instruction;
+import ir.values.*;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.TerminatorInst;
 
@@ -81,7 +78,8 @@ public class MCBuilder {
     }
 
     private void mapGlobalVariable(Module IRModule, ARMAssemble target) {
-
+        for (GlobalVariable gv : IRModule.globalVariables)
+            target.addGlobalVariable(gv);
     }
 
     /**

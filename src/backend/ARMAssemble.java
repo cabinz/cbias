@@ -1,7 +1,9 @@
 package backend;
 
 import backend.armCode.MCFunction;
+import backend.operand.Label;
 import ir.values.Function;
+import ir.values.GlobalVariable;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,8 +17,10 @@ public class ARMAssemble implements Iterable<MCFunction>{
     //<editor-fold desc="Fields">
     private String architecture = "armv7";
     private LinkedList<MCFunction> functionList;
+    private LinkedList<Label> globalVars;
 
     private HashMap<Function, MCFunction> functionMap;
+    private HashMap<GlobalVariable, Label> glbVarMap;
     //</editor-fold>
 
     /**
@@ -49,6 +53,26 @@ public class ARMAssemble implements Iterable<MCFunction>{
      */
     public MCFunction findMCFunc(Function IRFunc) {return functionMap.get(IRFunc);}
 
+    /**
+     * Create a GlobalVariable in ARM for an
+     * IR GlobalVariable, while return the corresponding label
+     * @param gv the IR global variable
+     * @return the corresponding label
+     */
+    public Label addGlobalVariable(GlobalVariable gv) {
+        var label = new Label(gv.getName());
+        globalVars.add(label);
+        glbVarMap.put(gv, label);
+        return label;
+    }
+
+    /**
+     * Find the corresponding data label
+     * @param gv the IR global var to be search
+     * @return the corresponding label
+     */
+    public Label findGlobalVar(GlobalVariable gv) {return glbVarMap.get(gv);}
+
     public Iterator<MCFunction> iterator(){return functionList.iterator();}
 
     //<editor-fold desc="Getter & Setter">
@@ -60,7 +84,9 @@ public class ARMAssemble implements Iterable<MCFunction>{
     //<editor-fold desc="Constructor">
     public ARMAssemble(){
         functionList = new LinkedList<>();
+        globalVars = new LinkedList<>();
         functionMap = new HashMap<>();
+        glbVarMap = new HashMap<>();
     }
     //</editor-fold>
 }

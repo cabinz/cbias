@@ -9,7 +9,8 @@ public abstract class MCOperand {
     public enum TYPE {
         IMM,
         VTR,
-        RLR
+        RLR,
+        GBV
     }
     TYPE type;
 
