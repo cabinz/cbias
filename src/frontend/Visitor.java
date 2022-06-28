@@ -1207,13 +1207,27 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         Retrieve the array element.
          */
-        for (SysYParser.ExprContext exprContext : ctx.expr()) {
-            visit(exprContext);
-            val = builder.buildGEP(val, new ArrayList<>() {{
-                add(builder.buildConstant(0));
-                add(retVal_);
-            }});
+        Type valType = ((PointerType) val.getType()).getPointeeType();
+        // An array.
+        if (valType.isArrayType()) {
+            for (SysYParser.ExprContext exprContext : ctx.expr()) {
+                visit(exprContext);
+                val = builder.buildGEP(val, new ArrayList<>() {{
+                    add(builder.buildConstant(0));
+                    add(retVal_);
+                }});
+            }
         }
+        // A pointer (An array passed into as an argument in a function)
+        else {
+            for (SysYParser.ExprContext exprContext : ctx.expr()) {
+                visit(exprContext);
+                val = builder.buildGEP(val, new ArrayList<>() {{
+                    add(retVal_);
+                }});
+            }
+        }
+
         retVal_ = val;
 
         return null;
