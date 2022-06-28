@@ -49,6 +49,9 @@ public class GlobalVariable extends User {
         if(type.isInteger()) {
             this.initVal = Constant.ConstInt.get(0);
         }
+        else if(type.isArrayType()) {
+            this.initVal = null;
+        }
         // todo: float constant
     }
 
@@ -95,14 +98,19 @@ public class GlobalVariable extends User {
         // e.g. "@a = dso_local [global | constant] i32 1"
         StringBuilder strBuilder = new StringBuilder();
         strBuilder.append(this.getName()).append(" = dso_local ") // "@Glb = dso_local "
-                .append(this.isConstant() ? "constant " : "global ") // "[global | constant] "
-                .append(this.initVal);
-//        Type constTy = this.getConstType();
-//        if (constTy.isInteger()) {
-//            strBuilder.append(initVal); // "i32 1"
-//        }
+                .append(this.isConstant() ? "constant " : "global "); // "[global | constant] "
 
-        // todo: float and array type
+        // uninitialized array
+        if (initVal == null) {
+            Type arrType = ((PointerType) this.getType()).getPointeeType();
+            strBuilder.append(arrType)
+                    .append(" zeroinitializer");
+        }
+        else {
+            strBuilder.append(initVal);
+        }
+
+        // todo: float type
         return strBuilder.toString();
     }
 }
