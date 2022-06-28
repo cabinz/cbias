@@ -166,6 +166,12 @@ public class MCBuilder {
             valueMap.put(value, vr);
             return vr;
         }
+        else if (value instanceof GlobalVariable) {
+            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            valueMap.put(value, vr);
+            curMCBB.appendInst(new MCmov(vr, target.findGlobalVar((GlobalVariable) value)));
+            return vr;
+        }
         else if (value instanceof Constant.ConstInt) {
             MCOperand temp = createConstInt(((Constant.ConstInt) value).getVal());
             if (temp instanceof Register) return temp;
