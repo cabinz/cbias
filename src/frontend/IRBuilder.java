@@ -193,6 +193,13 @@ public class IRBuilder {
      * @return The unconditional branching inserted.
      */
     public TerminatorInst.Br buildBr(BasicBlock blk) {
+        /*
+        Security Check.
+         */
+        if (getCurBB().getLastInst() != null && getCurBB().getLastInst().isBr()) {
+            throw new RuntimeException("Cannot insert a Br after another Br.");
+        }
+
         // Create and insert a block.
         TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk, curBB);
         getCurBB().insertAtEnd(uncondBr);
