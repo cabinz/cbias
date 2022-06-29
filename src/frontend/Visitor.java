@@ -726,7 +726,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
         BasicBlock trueEntryBlk = builder.buildBB("_THEN");
         visit(ctx.stmt(0));
         BasicBlock trueExitBlk = builder.getCurBB();
-        boolean trueBlkEndWithRet = trueExitBlk.getLastInst() instanceof TerminatorInst.Ret;
+        // Get trueBlkEndWithTerminator flag.
+        Instruction trueExitBlkLastInst = trueExitBlk.getLastInst();
+        boolean trueBlkEndWithTerminator = trueExitBlkLastInst != null &&
+                (trueExitBlkLastInst.isRet() || trueExitBlkLastInst.isBr());
 
         /*
         Build the FALSE branch (a block for jumping if condition is false),
@@ -739,12 +742,15 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         BasicBlock falseEntryBlk = null;
         BasicBlock falseExitBlk = null;
-        boolean falseBlkEndWithRet = false;
+        boolean falseBlkEndWithTerminator = false;
         if (ctx.stmt(1) != null) {
             falseEntryBlk = builder.buildBB("_ELSE");
             visit(ctx.stmt(1)); // Fill the block by visiting child.
             falseExitBlk = builder.getCurBB();
-            falseBlkEndWithRet = falseExitBlk.getLastInst() instanceof TerminatorInst.Ret;
+            // Get falseBlkEndWithTerminator flag.
+            Instruction falseExitBlkLastInst = falseExitBlk.getLastInst();
+            falseBlkEndWithTerminator = falseExitBlkLastInst != null &&
+                (falseExitBlkLastInst.isRet() || falseExitBlkLastInst.isBr());
         }
 
         /*
@@ -752,13 +758,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
         end with Ret terminators.
          */
         // The exit block will be built when:
-        // "!trueBlkEndWithRet && !falseBlkEndWithRet" (under IF-ELSE)
-        // or "!trueBlkEndWithRet && no falseBlock" (i.e. IF w/o ELSE)
-        if (!trueBlkEndWithRet) {
+        // "!trueBlkEndWithTerminator && !falseBlkEndWithTerminator" (under IF-ELSE)
+        // or "!trueBlkEndWithTerminator && no falseBlock" (i.e. IF w/o ELSE)
+        if (!trueBlkEndWithTerminator) {
             builder.setCurBB(trueExitBlk);
             builder.buildBr(exitBlk);
         }
-        if (falseEntryBlk != null && !falseBlkEndWithRet) {
+        if (falseEntryBlk != null && !falseBlkEndWithTerminator) {
             builder.setCurBB(falseExitBlk);
             builder.buildBr(exitBlk);
         }
