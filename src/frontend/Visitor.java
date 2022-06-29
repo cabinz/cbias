@@ -64,6 +64,28 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private boolean inGlbInit() {
         return envGlbInit;
     }
+
+    /**
+     * If the visitor is currently building a function call (invocation).
+     */
+    private boolean envFuncCall = false;
+
+    /**
+     * Set the environment variable of function call.
+     * @param stat ON / OFF
+     */
+    private void setFuncCall(boolean stat) {
+        envFuncCall = stat;
+    }
+
+    /**
+     * If the visitor is currently building a function call (invocation).
+     * @return Yes or no.
+     */
+    private boolean inFuncCall() {
+        return envFuncCall;
+    }
+
     //</editor-fold>
 
     //<editor-fold desc="Variables storing returned data from the lower layers of visiting.">
@@ -1195,12 +1217,16 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (pointeeType.isPointerType()) {
 
             }
-            // i32*: Return directly.
-            else if (pointeeType.isInteger()) {
+            // i32* / float*.
+            else {
+                // Load it up when being a real argument of a function call.
+                // Otherwise, return directly for being a left value.
+                if (inFuncCall()) {
+                    val = builder.buildLoad(pointeeType, val);
+                }
                 retVal_ = val;
-                return null;
             }
-            // todo: array*, float*
+
             return null;
         }
         return null;
@@ -1260,9 +1286,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
      *     | number        # primExpr3
      * ---------------------------------------------------
      * unaryExp
-     *     : primaryExp                         # unary1
-     *     | Identifier '(' (funcRParams)? ')'  # unary2
-     *     | unaryOp unaryExp                   # unary3
+     *     : primaryExp                         # primUnaryExp
+     *     | Identifier '(' (funcRParams)? ')'  # fcallUnaryExp
+     *     | unaryOp unaryExp                   # oprUnaryExp
      * ---------------------------------------------------
      * Primary expression represents an independent value
      * that can involve in future operations / computation
@@ -1288,10 +1314,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Local expression: Instructions will be generated.
          */
         else {
-            // todo: branch out if during building a Call
             visit(ctx.lVal());
-            // Load the memory block if a PointerType Value is retrieved from lVal.
-            if (retVal_.getType().isPointerType()) {
+            // If it's not in a function call,
+            // load the memory block pointed by the PointerType Value retrieved from lVal.
+            if (!inFuncCall() && retVal_.getType().isPointerType()) {
                 Type pointeeType = ((PointerType) retVal_.getType()).getPointeeType();
                 retVal_ = builder.buildLoad(pointeeType, retVal_);
             }
@@ -1339,6 +1365,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitFcallUnaryExp(SysYParser.FcallUnaryExpContext ctx) {
+        setFuncCall(ON);
+
         // The identifier needs to be previously defined as a function
         // and in the symbol table.
         String name = ctx.Identifier().getText();
@@ -1369,6 +1397,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Build a Call instruction.
         retVal_ = builder.buildCall((Function)func, args);
 
+        setFuncCall(OFF);
         return null;
     }
 
