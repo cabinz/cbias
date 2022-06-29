@@ -896,6 +896,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the next relExp as the right operand by visiting child.
             visit(ctx.relExp(i));
             Value rOp = retVal_;
+            // Extend if one Opd is i32 and another is i1.
+            if(lOp.getType().isI32() && rOp.getType().isI1()) {
+                rOp = builder.buildZExt(rOp);
+            }
+            if(rOp.getType().isI32() && lOp.getType().isI1()) {
+                lOp = builder.buildZExt(lOp);
+            }
             // Build a comparison instruction, which yields a result
             // to be the left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {
@@ -927,6 +934,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the next addExp as the right operand by visiting child.
             visit(ctx.addExp(i));
             Value rOp = retVal_;
+            // Same as visitEqExp above: Extend if one Opd is i32 and another is i1.
+            if(lOp.getType().isI32() && rOp.getType().isI1()) {
+                rOp = builder.buildZExt(rOp);
+            }
+            if(rOp.getType().isI32() && lOp.getType().isI1()) {
+                lOp = builder.buildZExt(lOp);
+            }
             // Build a comparison instruction, which yields a result
             // to be the left operand for the next round.
             switch (ctx.getChild(2 * i - 1).getText()) {

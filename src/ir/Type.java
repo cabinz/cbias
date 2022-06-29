@@ -96,6 +96,10 @@ public class Type {
         return this.isInteger() && ((IntegerType) this).getBitWidth() == 1;
     }
 
+    public boolean isI32() {
+        return this.isInteger() && ((IntegerType) this).getBitWidth() == 32;
+    }
+
     public boolean isPointerType() {
         return (this instanceof PointerType);
     }
