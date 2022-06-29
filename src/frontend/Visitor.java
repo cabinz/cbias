@@ -559,11 +559,15 @@ public class Visitor extends SysYBaseVisitor<Void> {
             visit(ctx.funcFParams());
             argTypes.addAll(retTypeList_);
         }
+        retTypeList_ = new ArrayList<>(); // Clear the list for next func def.
 
         /*
         Build IR.
          */
-
+        // Security check (allow no nested definition of functions)
+        if (!scope.isGlobal()) {
+            throw new RuntimeException("Nested definition of function: " + funcName);
+        }
         // Insert a function into the module and symbol table.
         FunctionType funcType = FunctionType.getType(retType, argTypes);
         Function function = builder.buildFunction(funcName, funcType, false);
@@ -572,6 +576,27 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Insert a basic block. Then scope in.
         BasicBlock bb = builder.buildBB(funcName + "_ENTRY");
         scope.scopeIn();
+
+        /*
+        Allocate all the formal arguments INSIDE the scope of the function.
+         */
+        for (int i = 0; i < function.getArgs().size(); i++) {
+            Function.FuncArg arg = function.getArgs().get(i);
+            // Allocate a local memory on the stack for the arg.
+            MemoryInst.Alloca localVar = builder.buildAlloca(arg.getType());
+            // Add the memory allocated to the symbol table.
+            // It's an ugly way to retrieve the name of the args
+            // since no elegant way is found so far.
+            String argName = null;
+            if (ctx.funcFParams().funcFParam(i) instanceof SysYParser.ScalarFuncFParamContext ctxArg) {
+                argName = ctxArg.Identifier().getText();
+            } else if (ctx.funcFParams().funcFParam(i) instanceof SysYParser.ArrFuncFParamContext ctxArg) {
+                argName = ctxArg.Identifier().getText();
+            }
+            scope.addDecl(argName, localVar);
+            // Copy the value to the local memory.
+            builder.buildStore(arg, localVar);
+        }
 
         /*
         Process function body. (Visiting child)
@@ -597,6 +622,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
 
+        /*
+        Scope out.
+         */
+        scope.scopeOut();
+
         return null;
     }
 
@@ -606,16 +636,16 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitFuncFParams(SysYParser.FuncFParamsContext ctx) {
         retTypeList_ = new ArrayList<>();
-        ctx.funcFParam().forEach(arg -> {
-            visit(arg);
+        for (SysYParser.FuncFParamContext funcFParamContext : ctx.funcFParam()) {
+            visit(funcFParamContext);
             retTypeList_.add(retType_);
-        });
+        }
         return null;
     }
 
 
     /**
-     * funcFParam : bType Identifier ('[' ']' ('[' expr ']')* )?
+     * funcFParam : bType Identifier  # scalarFuncFParam
      */
     @Override
     public Void visitScalarFuncFParam(SysYParser.ScalarFuncFParamContext ctx) {
@@ -624,6 +654,26 @@ public class Visitor extends SysYBaseVisitor<Void> {
         retType_ = IntegerType.getI32();
         return null;
     }
+
+    /**
+     * funcFParam : bType Identifier '[' ']' ('[' expr ']')*  # arrFuncFParam
+     */
+    @Override
+    public Void visitArrFuncFParam(SysYParser.ArrFuncFParamContext ctx) {
+        ArrayList<Integer> dimLens = new ArrayList<>();
+        for (SysYParser.ExprContext exprContext : ctx.expr()) {
+            visit(exprContext);
+            dimLens.add(retInt_);
+        }
+        // todo: float type fParam
+        Type arrType = IntegerType.getI32();
+        for (int i = dimLens.size(); i > 0; i--) {
+            arrType = PointerType.getType(arrType);
+        }
+        retType_ = PointerType.getType(arrType);
+        return null;
+    }
+
 
     /**
      * block : '{' (blockItem)* '}'
@@ -1157,13 +1207,27 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         Retrieve the array element.
          */
-        for (SysYParser.ExprContext exprContext : ctx.expr()) {
-            visit(exprContext);
-            val = builder.buildGEP(val, new ArrayList<>() {{
-                add(builder.buildConstant(0));
-                add(retVal_);
-            }});
+        Type valType = ((PointerType) val.getType()).getPointeeType();
+        // An array.
+        if (valType.isArrayType()) {
+            for (SysYParser.ExprContext exprContext : ctx.expr()) {
+                visit(exprContext);
+                val = builder.buildGEP(val, new ArrayList<>() {{
+                    add(builder.buildConstant(0));
+                    add(retVal_);
+                }});
+            }
         }
+        // A pointer (An array passed into as an argument in a function)
+        else {
+            for (SysYParser.ExprContext exprContext : ctx.expr()) {
+                visit(exprContext);
+                val = builder.buildGEP(val, new ArrayList<>() {{
+                    add(retVal_);
+                }});
+            }
+        }
+
         retVal_ = val;
 
         return null;
