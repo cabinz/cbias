@@ -1213,9 +1213,16 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Case 2, return a PointerType Value.
         if (val.getType().isPointerType()) {
             Type pointeeType = ((PointerType) val.getType()).getPointeeType();
-            // ptr* (pointer to pointer)
+            // i32**: Return i32*.
             if (pointeeType.isPointerType()) {
-
+                retVal_ = builder.buildLoad(pointeeType, val);
+            }
+            // [2 x i32]*: Return i32*
+            else if (pointeeType.isArrayType()) {
+                retVal_ = builder.buildGEP(val, new ArrayList<>(){{
+                    add(builder.buildConstant(0));
+                    add(builder.buildConstant(0));
+                }});
             }
             // i32* / float*.
             else {
@@ -1266,9 +1273,19 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
         // A pointer (An array passed into as an argument in a function)
         else {
-            for (SysYParser.ExprContext exprContext : ctx.expr()) {
-                visit(exprContext);
+            MemoryInst.Load load = builder.buildLoad(
+                    ((PointerType) val.getType()).getPointeeType(),
+                    val
+            );
+            visit(ctx.expr(0));
+            val = builder.buildGEP(load, new ArrayList<>() {{
+                add(retVal_);
+            }});
+
+            for (int i = 1; i < ctx.expr().size(); i++) {
+                visit(ctx.expr(i));
                 val = builder.buildGEP(val, new ArrayList<>() {{
+                    add(builder.buildConstant(0));
                     add(retVal_);
                 }});
             }
