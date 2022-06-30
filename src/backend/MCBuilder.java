@@ -385,15 +385,17 @@ public class MCBuilder {
         if (value2 instanceof Instruction && ((Instruction) value2).isIcmp())
             translateIcmp((BinaryInst) value2, true);
 
-        MCOperand operand1 = findContainer(value1);
-        MCOperand operand2 = findContainer(value2);
+        MCOperand operand1;
+        MCOperand operand2;
         MCInstruction.ConditionField armCond = mapToArmCond(icmp);
-        /* ICMP operands can not be const int at the same time */
-        if (operand1.isImmediate() && !(operand2 instanceof Immediate)){
-            MCOperand temp = operand1;
-            operand1 = operand2;
-            operand2 = temp;
+        if (value1 instanceof Constant.ConstInt && !(value2 instanceof Constant.ConstInt)){
+            operand1 = findContainer(value2);
+            operand2 = findContainer(value1);
             armCond = reverseCond(armCond);
+        }
+        else {
+            operand1 = findContainer(value1, true);
+            operand2 = findContainer(value2);
         }
 
         curMCBB.appendInst(new MCcmp((Register) operand1, operand2));
