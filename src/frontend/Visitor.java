@@ -68,22 +68,22 @@ public class Visitor extends SysYBaseVisitor<Void> {
     /**
      * If the visitor is currently building a function call (invocation).
      */
-    private boolean envFuncCall = false;
+    private boolean envBuildFCall = false;
 
     /**
-     * Set the environment variable of function call.
+     * Set the environment variable of building function call.
      * @param stat ON / OFF
      */
-    private void setFuncCall(boolean stat) {
-        envFuncCall = stat;
+    private void setBuildFCall(boolean stat) {
+        envBuildFCall = stat;
     }
 
     /**
      * If the visitor is currently building a function call (invocation).
      * @return Yes or no.
      */
-    private boolean inFuncCall() {
-        return envFuncCall;
+    private boolean inBuildFCall() {
+        return envBuildFCall;
     }
 
     //</editor-fold>
@@ -1197,7 +1197,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         There are two cases for lVal as a grammar symbol:
         1.  If a lVal  can be reduce to a primaryExp,
-            in this case is a scalar value (IntegerType or FloatType)
+            in this case it is a scalar value (IntegerType or FloatType)
             thus the value can be returned directly, which will then
             be handled by visitPrimExpr2().
         2.  Otherwise, a lVal represents a left value,
@@ -1228,7 +1228,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             else {
                 // Load it up when being a real argument of a function call.
                 // Otherwise, return directly for being a left value.
-                if (inFuncCall()) {
+                if (inBuildFCall()) {
                     val = builder.buildLoad(pointeeType, val);
                 }
                 retVal_ = val;
@@ -1334,10 +1334,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
             visit(ctx.lVal());
             // If it's not in a function call,
             // load the memory block pointed by the PointerType Value retrieved from lVal.
-            if (!inFuncCall() && retVal_.getType().isPointerType()) {
+            if (!inBuildFCall() && retVal_.getType().isPointerType()) {
                 Type pointeeType = ((PointerType) retVal_.getType()).getPointeeType();
                 retVal_ = builder.buildLoad(pointeeType, retVal_);
             }
+
         }
         return null;
     }
@@ -1382,7 +1383,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitFcallUnaryExp(SysYParser.FcallUnaryExpContext ctx) {
-        setFuncCall(ON);
+        setBuildFCall(ON);
 
         // The identifier needs to be previously defined as a function
         // and in the symbol table.
@@ -1406,15 +1407,21 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 Type typeArg = argTypes.get(i);
                 // Visit child RParam.
                 visit(argCtx);
+                Value arg = retVal_;
+                // If the typeArg requires an immediate scalar while argCtx (lVal)
+                // returns a pointer, load it up.
+                if (!typeArg.isPointerType() && retVal_.getType().isPointerType()) {
+                    arg = builder.buildLoad(typeArg, arg);
+                }
                 // Add the argument Value retrieved by visiting to the container.
-                args.add(retVal_);
+                args.add(arg);
             }
         }
 
         // Build a Call instruction.
         retVal_ = builder.buildCall((Function)func, args);
 
-        setFuncCall(OFF);
+        setBuildFCall(OFF);
         return null;
     }
 
