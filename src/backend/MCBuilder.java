@@ -4,15 +4,15 @@ import backend.armCode.*;
 import backend.armCode.MCInstructions.*;
 import backend.operand.*;
 import ir.Module;
+import ir.Type;
 import ir.Value;
-import ir.values.BasicBlock;
-import ir.values.Constant;
-import ir.values.Function;
-import ir.values.Instruction;
-import ir.values.instructions.BinaryInst;
-import ir.values.instructions.TerminatorInst;
+import ir.types.ArrayType;
+import ir.types.PointerType;
+import ir.values.*;
+import ir.values.instructions.*;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * This class is used to CodeGen, or translate LLVM IR into ARM assemble
@@ -81,7 +81,8 @@ public class MCBuilder {
     }
 
     private void mapGlobalVariable(Module IRModule, ARMAssemble target) {
-
+        for (GlobalVariable gv : IRModule.globalVariables)
+            target.addGlobalVariable(gv);
     }
 
     /**
@@ -118,34 +119,37 @@ public class MCBuilder {
      */
     private void translate(Instruction IRinst) {
         if (IRinst.isRet()) {
-            translateRet(IRinst);
+            translateRet((TerminatorInst.Ret) IRinst);
         }
         else if (IRinst.isAdd()) {
-            translateBinary(IRinst, MCInstruction.TYPE.ADD);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.ADD);
         }
         else if (IRinst.isSub()) {
-            translateBinary(IRinst, MCInstruction.TYPE.SUB);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.SUB);
         }
         else if (IRinst.isMul()) {
-            translateBinary(IRinst, MCInstruction.TYPE.MUL);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.MUL);
         }
         else if (IRinst.isDiv()) {
-            translateBinary(IRinst, MCInstruction.TYPE.DIV);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.DIV);
         }
         else if (IRinst.isAlloca()) {
-            translateAlloca(IRinst);
+            translateAlloca((MemoryInst.Alloca) IRinst);
         }
         else if (IRinst.isStore()) {
-            translateStore(IRinst);
+            translateStore((MemoryInst.Store) IRinst);
         }
         else if (IRinst.isLoad()) {
-            translateLoad(IRinst);
+            translateLoad((MemoryInst.Load) IRinst);
         }
         else if (IRinst.isCall()) {
-            translateCall(IRinst);
+            translateCall((CallInst) IRinst);
         }
         else if (IRinst.isBr()) {
-            translateBr(IRinst);
+            translateBr((TerminatorInst.Br) IRinst);
+        }
+        else if (IRinst.isGEP()) {
+            translateGEP((GetElemPtrInst) IRinst);
         }
     }
 
@@ -166,6 +170,12 @@ public class MCBuilder {
         else if (value instanceof Instruction) {
             VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
             valueMap.put(value, vr);
+            return vr;
+        }
+        else if (value instanceof GlobalVariable) {
+            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            valueMap.put(value, vr);
+            curMCBB.appendInst(new MCmov(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
         }
         else if (value instanceof Constant.ConstInt) {
@@ -278,7 +288,7 @@ public class MCBuilder {
      * (FP先不存了吧，自己知道就好) <br/>
      * @param IRinst IR call instruction
      */
-    private void translateCall(Instruction IRinst) {
+    private void translateCall(CallInst IRinst) {
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
         for (int i=oprNum; i>=1; i++) {
@@ -298,7 +308,7 @@ public class MCBuilder {
         curMCBB.appendInst(new MCmov((Register) findContainer(IRinst), RealRegister.get(0)));
     }
 
-    private void translateRet(Instruction IRinst) {
+    private void translateRet(TerminatorInst.Ret IRinst) {
         if (IRinst.getNumOperands() != 0)
             curMCBB.appendInst(new MCmov(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
     }
@@ -309,8 +319,16 @@ public class MCBuilder {
      * To be optimized later....
      * @param IRinst IR instruction to be translated
      */
-    private void translateAlloca(Instruction IRinst) {
-        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(4)));
+    private void translateAlloca(MemoryInst.Alloca IRinst) {
+        int offset = 0;
+        Type allocated = IRinst.getAllocatedType();
+        if (allocated.isInteger() || allocated.isPointerType()) {
+            offset = 4;
+        }
+        else if (allocated.isArrayType()) {
+            offset = ((ArrayType) allocated).getSize() * 4;
+        }
+        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(offset)));
         curMCBB.appendInst(new MCmov((Register) findContainer(IRinst), RealRegister.get(13)));
     }
 
@@ -319,7 +337,7 @@ public class MCBuilder {
      * NOTE: The first operand must be a REGISTER!!
      * @param IRinst IR instruction to be translated
      */
-    private void translateStore(Instruction IRinst) {
+    private void translateStore(MemoryInst.Store IRinst) {
         MCOperand src = findContainer(IRinst.getOperandAt(0), true);
         MCOperand addr = findContainer(IRinst.getOperandAt(1));
         curMCBB.appendInst(new MCstore((Register) src, addr));
@@ -329,7 +347,7 @@ public class MCBuilder {
      * Translate IR load, just like its name.
      * @param IRinst IR instruction to be translated
      */
-    private void translateLoad(Instruction IRinst) {
+    private void translateLoad(MemoryInst.Load IRinst) {
         curMCBB.appendInst(new MCload((Register) findContainer(IRinst), findContainer(IRinst.getOperandAt(0))));
     }
 
@@ -337,8 +355,8 @@ public class MCBuilder {
      * Translate IR br instruction into ARM branch and a lot of condition calculate in front.
      * @param IRinst IR instruction to be translated
      */
-    private void translateBr(Instruction IRinst) {
-        if (((TerminatorInst.Br) IRinst).isCondJmp()) {
+    private void translateBr(TerminatorInst.Br IRinst) {
+        if (IRinst.isCondJmp()) {
             if (IRinst.getOperandAt(0) instanceof Constant.ConstInt) {
                 int cond = ((Constant.ConstInt) IRinst.getOperandAt(0)).getVal();
                 if (cond == 0)
@@ -369,15 +387,17 @@ public class MCBuilder {
         if (value2 instanceof Instruction && ((Instruction) value2).isIcmp())
             translateIcmp((BinaryInst) value2, true);
 
-        MCOperand operand1 = findContainer(value1);
-        MCOperand operand2 = findContainer(value2);
+        MCOperand operand1;
+        MCOperand operand2;
         MCInstruction.ConditionField armCond = mapToArmCond(icmp);
-        /* ICMP operands can not be const int at the same time */
-        if (operand1 instanceof Immediate && !(operand2 instanceof Immediate)){
-            MCOperand temp = operand1;
-            operand1 = operand2;
-            operand2 = temp;
+        if (value1 instanceof Constant.ConstInt && !(value2 instanceof Constant.ConstInt)){
+            operand1 = findContainer(value2);
+            operand2 = findContainer(value1);
             armCond = reverseCond(armCond);
+        }
+        else {
+            operand1 = findContainer(value1, true);
+            operand2 = findContainer(value2);
         }
 
         curMCBB.appendInst(new MCcmp((Register) operand1, operand2));
@@ -404,12 +424,12 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      * @param type Operation type, ADD/SUB/MUL/SDIV or more?
      */
-    private void translateBinary(Instruction IRinst, MCInstruction.TYPE type) {
+    private void translateBinary(BinaryInst IRinst, MCInstruction.TYPE type) {
         // TODO: 处理除法
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
-        if (operand1 instanceof Immediate) {
-            if (operand2 instanceof Immediate) {
+        if (operand1.isImmediate()) {
+            if (operand2.isImmediate()) {
                 VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
                 curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst), register, operand2));
             }
@@ -422,6 +442,48 @@ public class MCBuilder {
         }
         else {
             curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst),(Register) operand1, operand2));
+        }
+    }
+
+    private void translateGEP(GetElemPtrInst IRinst) {
+        // 不能确定的elementType是否是一层指针
+        Type elemetType = ((PointerType) IRinst.getOperandAt(0).getType()).getPointeeType();
+        /* The number of GEP */
+        int operandNum = IRinst.getNumOperands() - 1;
+        /* The length of each dimension */
+        List<Integer> lengths = null;
+        if (elemetType.isArrayType())
+            lengths = ((ArrayType) elemetType).getDimSize();
+
+        /* Prepare, dst = addr + totalOffset */
+        Register addr = (Register) findContainer(IRinst.getOperandAt(0));
+        int totalOffset = 0;
+        Register dst = (Register) findContainer(IRinst);
+
+        for (int i=1; i<=operandNum; i++) {
+            /* offset size of this level = index * scale */
+            MCOperand index = findContainer(IRinst.getOperandAt(i));
+            int scale = 4;
+            if (lengths != null)
+                for (int j=i-1; j<lengths.size(); j++)
+                    scale *= lengths.get(j);
+
+            if (index.isImmediate()) {
+                int offset = scale * ((Immediate) index).getIntValue();
+                if (i == operandNum) {
+                    totalOffset += offset;
+                    if (totalOffset == 0)
+                        curMCBB.appendInst(new MCmov(dst, addr));
+                    else
+                        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, addr, createConstInt(totalOffset)));
+                    addr = dst;
+                }
+                else
+                    totalOffset += offset;
+            }
+            else {
+                System.out.println("出现操作立即数范围的寻址地址，报错");
+            }
         }
     }
     //</editor-fold>

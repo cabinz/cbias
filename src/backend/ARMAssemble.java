@@ -1,7 +1,10 @@
 package backend;
 
 import backend.armCode.MCFunction;
+import backend.operand.Label;
+import ir.values.Constant;
 import ir.values.Function;
+import ir.values.GlobalVariable;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,10 +16,12 @@ import java.util.LinkedList;
 public class ARMAssemble implements Iterable<MCFunction>{
 
     //<editor-fold desc="Fields">
-    private String architecture = "armv7";
-    private LinkedList<MCFunction> functionList;
+    private final String architecture = "armv7";
+    private final LinkedList<MCFunction> functionList;
+    private final LinkedList<Label> globalVars;
 
-    private HashMap<Function, MCFunction> functionMap;
+    private final HashMap<Function, MCFunction> functionMap;
+    private final HashMap<GlobalVariable, Label> glbVarMap;
     //</editor-fold>
 
     /**
@@ -49,18 +54,47 @@ public class ARMAssemble implements Iterable<MCFunction>{
      */
     public MCFunction findMCFunc(Function IRFunc) {return functionMap.get(IRFunc);}
 
+    /**
+     * Create a GlobalVariable in ARM for an
+     * IR GlobalVariable, while return the corresponding label
+     * @param gv the IR global variable
+     * @return the corresponding label
+     */
+    public Label addGlobalVariable(GlobalVariable gv) {
+        Label label;
+        /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
+        if (gv.isArray()) // TODO:FIX
+            label = new Label(gv.getName().substring(1), ((Constant.ConstInt) gv.getInitVal()).getVal());
+        else
+            label = new Label(gv.getName().substring(1), ((Constant.ConstInt) gv.getInitVal()).getVal());
+        globalVars.add(label);
+        glbVarMap.put(gv, label);
+        return label;
+    }
+
+    /**
+     * Find the corresponding data label
+     * @param gv the IR global var to be search
+     * @return the corresponding label
+     */
+    public Label findGlobalVar(GlobalVariable gv) {return glbVarMap.get(gv);}
+
     public Iterator<MCFunction> iterator(){return functionList.iterator();}
 
     //<editor-fold desc="Getter & Setter">
     public String getArchitecture() {return architecture;}
 
     public LinkedList<MCFunction> getFunctionList() {return functionList;}
+
+    public LinkedList<Label> getGlobalVars() {return globalVars;}
     //</editor-fold>
 
     //<editor-fold desc="Constructor">
     public ARMAssemble(){
         functionList = new LinkedList<>();
+        globalVars = new LinkedList<>();
         functionMap = new HashMap<>();
+        glbVarMap = new HashMap<>();
     }
     //</editor-fold>
 }

@@ -16,8 +16,6 @@ public class MCbranch extends MCInstruction {
     public String emit() {
         if (withLink)
             return "BL " + target;
-        else if (getCond() == null)
-            return "B " + target;
         else
             return "B" + emitCond() + " " + target;
     }

@@ -9,9 +9,15 @@ public abstract class MCOperand {
     public enum TYPE {
         IMM,
         VTR,
-        RLR
+        RLR,
+        GBV
     }
     TYPE type;
+
+    public boolean isImmediate  () {return type == TYPE.IMM;}
+    public boolean isVirtualReg () {return type == TYPE.VTR;}
+    public boolean isRealReg    () {return  type == TYPE.RLR;}
+    public boolean isGlobalVar  () {return type == TYPE.GBV;}
 
     public MCOperand(TYPE type) {this.type = type;}
 
