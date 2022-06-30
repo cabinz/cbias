@@ -4,7 +4,9 @@ import backend.armCode.*;
 import backend.armCode.MCInstructions.*;
 import backend.operand.*;
 import ir.Module;
+import ir.Type;
 import ir.Value;
+import ir.types.ArrayType;
 import ir.values.*;
 import ir.values.instructions.BinaryInst;
 import ir.values.instructions.CallInst;
@@ -316,7 +318,15 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      */
     private void translateAlloca(MemoryInst.Alloca IRinst) {
-        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(4)));
+        int offset = 0;
+        Type allocated = IRinst.getAllocatedType();
+        if (allocated.isInteger() || allocated.isPointerType()) {
+            offset = 4;
+        }
+        else if (allocated.isArrayType()) {
+            offset = ((ArrayType) allocated).getSize() * 4;
+        }
+        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(offset)));
         curMCBB.appendInst(new MCmov((Register) findContainer(IRinst), RealRegister.get(13)));
     }
 
