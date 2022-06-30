@@ -117,29 +117,50 @@ public class Visitor extends SysYBaseVisitor<Void> {
      * This method is called by constructor and can be called only once.
      */
     private void initRuntimeFunctions() {
+        // Return types.
+        Type i32Ty = IntegerType.getI32();
+        Type voidTy = Type.VoidType.getType();
+        Type ptrI32Ty = PointerType.getType(i32Ty);
+        // Argument type lists.
         ArrayList<Type> emptyArgTypeList = new ArrayList<>();
-        ArrayList<Type> intArgTypeList = new ArrayList<>(Collections.singletonList(IntegerType.getI32()));
+        ArrayList<Type> intArgTypeList = new ArrayList<>() {{add(i32Ty);}};
+
+
         // getint()
         scope.addDecl("getint",
                 builder.buildFunction("getint", FunctionType.getType(
-                        IntegerType.getI32(), emptyArgTypeList
+                        i32Ty , emptyArgTypeList
                 ), true)
         );
         // putint(i32)
         scope.addDecl("putint",
                 builder.buildFunction("putint", FunctionType.getType(
-                        Type.VoidType.getType(), intArgTypeList
+                        voidTy, intArgTypeList
                 ), true)
         );// getch()
         scope.addDecl("getch",
                 builder.buildFunction("getch", FunctionType.getType(
-                        IntegerType.getI32(), emptyArgTypeList
+                        i32Ty, emptyArgTypeList
                 ), true)
         );
         // putch(i32)
         scope.addDecl("putch",
                 builder.buildFunction("putch", FunctionType.getType(
-                        Type.VoidType.getType(), intArgTypeList
+                        voidTy, intArgTypeList
+                ), true)
+        );
+        // getarray()
+        ArrayList<Type> iptrArgTypeList = new ArrayList<>() {{add(ptrI32Ty);}};
+        scope.addDecl("getarray",
+                builder.buildFunction("getarray", FunctionType.getType(
+                        i32Ty, iptrArgTypeList
+                ), true)
+        );
+        // putarray(i32, i32*)
+        ArrayList<Type> putarrayArgTypeList = new ArrayList<>() {{add(i32Ty); add(ptrI32Ty);}};
+        scope.addDecl("putarray",
+                builder.buildFunction("putarray", FunctionType.getType(
+                        voidTy, putarrayArgTypeList
                 ), true)
         );
     }
