@@ -242,12 +242,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         // todo: float type array
         // The type of the basic element in the array.
-        Type arrType = IntegerType.getI32();
+        Type tmpType = IntegerType.getI32();
         // Build the final type of the array
         // by looping through the dimLens from the inside out.
         for (int i = dimLens.size(); i > 0; i--) {
-            arrType = ArrayType.getType(arrType, dimLens.get(i - 1));
+            tmpType = ArrayType.getType(tmpType, dimLens.get(i - 1));
         }
+        ArrayType arrType = (ArrayType) tmpType;
 
         /*
         Global array.
@@ -495,10 +496,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
         // Build the arrType bottom-up (reversely).
         // todo: float arr type
-        Type arrType = IntegerType.getI32();
+        Type tmpType = IntegerType.getI32();
         for (int i = dimLens.size(); i > 0; i--) {
-            arrType = ArrayType.getType(arrType, dimLens.get(i - 1));
+            tmpType = ArrayType.getType(tmpType, dimLens.get(i - 1));
         }
+        ArrayType arrType = (ArrayType) tmpType;
 
         /*
         Global array.

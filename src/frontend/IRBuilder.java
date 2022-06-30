@@ -3,6 +3,7 @@ package frontend;
 import ir.Module;
 import ir.Type;
 import ir.Value;
+import ir.types.ArrayType;
 import ir.types.FunctionType;
 import ir.types.IntegerType;
 import ir.types.PointerType;
@@ -101,11 +102,43 @@ public class IRBuilder {
     /**
      * Retrieve a Constant.ConstArray Value.
      * @param arrType The ArrayType carrying necessary info.
-     * @param arr An array of (integer/float) Constants for initialization the array.
+     * @param initList An linear (no-nested) array of (integer/float) Constants for initialization the array.
      * @return The ConstArray.
      */
-    public Constant.ConstArray buildConstArr(Type arrType, ArrayList<Constant> arr) {
-        return new Constant.ConstArray(arrType, arr);
+    public Constant.ConstArray buildConstArr(ArrayType arrType, ArrayList<Constant> initList) {
+        /*
+        Retrieve number of total elements in the array to be generated.
+         */
+        int numTotElem = 1;
+        Type type = arrType;
+        while (type.isArrayType()) {
+            numTotElem *= ((ArrayType) type).getLen();
+            type = ((ArrayType) type).getElemType();
+        }
+
+        if (arrType.getElemType().isArrayType()) {
+            /*
+            Build the nested initList from the given linear initList.
+             */
+            ArrayList<Constant> nestedInitList = new ArrayList<>();
+            int j = 0;
+            int step = numTotElem / arrType.getLen();
+            while(j < initList.size()) {
+                nestedInitList.add(
+                        buildConstArr(
+                                (ArrayType) arrType.getElemType(),
+                                new ArrayList<>(initList.subList(j, j + step))
+                        )
+                );
+                j += step;
+            }
+
+            return new Constant.ConstArray(arrType, nestedInitList);
+        }
+        else {
+            return new Constant.ConstArray(arrType, initList);
+        }
+
     }
 
     /**
