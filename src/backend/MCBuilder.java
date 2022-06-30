@@ -7,6 +7,8 @@ import ir.Module;
 import ir.Value;
 import ir.values.*;
 import ir.values.instructions.BinaryInst;
+import ir.values.instructions.CallInst;
+import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
 import java.util.HashMap;
@@ -116,34 +118,34 @@ public class MCBuilder {
      */
     private void translate(Instruction IRinst) {
         if (IRinst.isRet()) {
-            translateRet(IRinst);
+            translateRet((TerminatorInst.Ret) IRinst);
         }
         else if (IRinst.isAdd()) {
-            translateBinary(IRinst, MCInstruction.TYPE.ADD);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.ADD);
         }
         else if (IRinst.isSub()) {
-            translateBinary(IRinst, MCInstruction.TYPE.SUB);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.SUB);
         }
         else if (IRinst.isMul()) {
-            translateBinary(IRinst, MCInstruction.TYPE.MUL);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.MUL);
         }
         else if (IRinst.isDiv()) {
-            translateBinary(IRinst, MCInstruction.TYPE.DIV);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.DIV);
         }
         else if (IRinst.isAlloca()) {
-            translateAlloca(IRinst);
+            translateAlloca((MemoryInst.Alloca) IRinst);
         }
         else if (IRinst.isStore()) {
-            translateStore(IRinst);
+            translateStore((MemoryInst.Store) IRinst);
         }
         else if (IRinst.isLoad()) {
-            translateLoad(IRinst);
+            translateLoad((MemoryInst.Load) IRinst);
         }
         else if (IRinst.isCall()) {
-            translateCall(IRinst);
+            translateCall((CallInst) IRinst);
         }
         else if (IRinst.isBr()) {
-            translateBr(IRinst);
+            translateBr((TerminatorInst.Br) IRinst);
         }
     }
 
@@ -282,7 +284,7 @@ public class MCBuilder {
      * (FP先不存了吧，自己知道就好) <br/>
      * @param IRinst IR call instruction
      */
-    private void translateCall(Instruction IRinst) {
+    private void translateCall(CallInst IRinst) {
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
         for (int i=oprNum; i>=1; i++) {
@@ -302,7 +304,7 @@ public class MCBuilder {
         curMCBB.appendInst(new MCmov((Register) findContainer(IRinst), RealRegister.get(0)));
     }
 
-    private void translateRet(Instruction IRinst) {
+    private void translateRet(TerminatorInst.Ret IRinst) {
         if (IRinst.getNumOperands() != 0)
             curMCBB.appendInst(new MCmov(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
     }
@@ -313,7 +315,7 @@ public class MCBuilder {
      * To be optimized later....
      * @param IRinst IR instruction to be translated
      */
-    private void translateAlloca(Instruction IRinst) {
+    private void translateAlloca(MemoryInst.Alloca IRinst) {
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(4)));
         curMCBB.appendInst(new MCmov((Register) findContainer(IRinst), RealRegister.get(13)));
     }
@@ -323,7 +325,7 @@ public class MCBuilder {
      * NOTE: The first operand must be a REGISTER!!
      * @param IRinst IR instruction to be translated
      */
-    private void translateStore(Instruction IRinst) {
+    private void translateStore(MemoryInst.Store IRinst) {
         MCOperand src = findContainer(IRinst.getOperandAt(0), true);
         MCOperand addr = findContainer(IRinst.getOperandAt(1));
         curMCBB.appendInst(new MCstore((Register) src, addr));
@@ -333,7 +335,7 @@ public class MCBuilder {
      * Translate IR load, just like its name.
      * @param IRinst IR instruction to be translated
      */
-    private void translateLoad(Instruction IRinst) {
+    private void translateLoad(MemoryInst.Load IRinst) {
         curMCBB.appendInst(new MCload((Register) findContainer(IRinst), findContainer(IRinst.getOperandAt(0))));
     }
 
@@ -341,8 +343,8 @@ public class MCBuilder {
      * Translate IR br instruction into ARM branch and a lot of condition calculate in front.
      * @param IRinst IR instruction to be translated
      */
-    private void translateBr(Instruction IRinst) {
-        if (((TerminatorInst.Br) IRinst).isCondJmp()) {
+    private void translateBr(TerminatorInst.Br IRinst) {
+        if (IRinst.isCondJmp()) {
             if (IRinst.getOperandAt(0) instanceof Constant.ConstInt) {
                 int cond = ((Constant.ConstInt) IRinst.getOperandAt(0)).getVal();
                 if (cond == 0)
@@ -408,7 +410,7 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      * @param type Operation type, ADD/SUB/MUL/SDIV or more?
      */
-    private void translateBinary(Instruction IRinst, MCInstruction.TYPE type) {
+    private void translateBinary(BinaryInst IRinst, MCInstruction.TYPE type) {
         // TODO: 处理除法
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
