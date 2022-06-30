@@ -2,7 +2,6 @@ package backend;
 
 import backend.armCode.MCFunction;
 import backend.operand.Label;
-import ir.Use;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;

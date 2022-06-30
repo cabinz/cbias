@@ -63,13 +63,25 @@ public class MCEmitter {
             for (Label label : globalVars) {
                 strBd.append("\t.global " + label.emit() + '\n');
                 strBd.append(label.emit() + ":\n");
+
+                int count = 0;
                 for (Integer tmp : label.getIntial()) {
-                    strBd.append("\t.word\t" + tmp + '\n');
+                    if (tmp == 0)
+                        count++;
+                    else {
+                        if (count != 0) {
+                            strBd.append("\t.zero\t" + count * 4 + '\n');
+                            count = 0;
+                        }
+                        strBd.append("\t.word\t" + tmp + '\n');
+                    }
                 }
+                if (count != 0)
+                    strBd.append("\t.zero\t" + count * 4 + '\n');
             }
+            strBd.append("\n\n");
         }
 
-        strBd.append("\n\n");
         strBd.append("\t.end");
 
         /* write to the file */
