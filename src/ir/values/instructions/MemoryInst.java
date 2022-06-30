@@ -110,9 +110,13 @@ public class MemoryInst {
         /**
          * The type of memory space allocated.
          */
-        public final Type allocatedType;
+        private final Type allocatedType;
 //        private boolean isInit = false;
         //</editor-fold>
+
+        public Type getAllocatedType() {
+            return allocatedType;
+        }
 
 
         //<editor-fold desc="Constructors">
