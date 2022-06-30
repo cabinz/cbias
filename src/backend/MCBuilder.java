@@ -7,10 +7,12 @@ import ir.Module;
 import ir.Type;
 import ir.Value;
 import ir.types.ArrayType;
+import ir.types.PointerType;
 import ir.values.*;
 import ir.values.instructions.*;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * This class is used to CodeGen, or translate LLVM IR into ARM assemble
@@ -444,7 +446,45 @@ public class MCBuilder {
     }
 
     private void translateGEP(GetElemPtrInst IRinst) {
+        // 不能确定的elementType是否是一层指针
+        Type elemetType = ((PointerType) IRinst.getOperandAt(0).getType()).getPointeeType();
+        /* The number of GEP */
+        int operandNum = IRinst.getNumOperands() - 1;
+        /* The length of each dimension */
+        List<Integer> lengths = null;
+        if (elemetType.isArrayType())
+            lengths = ((ArrayType) elemetType).getDimSize();
 
+        /* Prepare, dst = addr + totalOffset */
+        Register addr = (Register) findContainer(IRinst.getOperandAt(0));
+        int totalOffset = 0;
+        Register dst = (Register) findContainer(IRinst);
+
+        for (int i=1; i<=operandNum; i++) {
+            /* offset size of this level = index * scale */
+            MCOperand index = findContainer(IRinst.getOperandAt(i));
+            int scale = 4;
+            if (lengths != null)
+                for (int j=i-1; j<lengths.size(); j++)
+                    scale *= lengths.get(j);
+
+            if (index.isImmediate()) {
+                int offset = scale * ((Immediate) index).getIntValue();
+                if (i == operandNum) {
+                    totalOffset += offset;
+                    if (totalOffset == 0)
+                        curMCBB.appendInst(new MCmov(dst, addr));
+                    else
+                        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, addr, createConstInt(totalOffset)));
+                    addr = dst;
+                }
+                else
+                    totalOffset += offset;
+            }
+            else {
+                System.out.println("出现操作立即数范围的寻址地址，报错");
+            }
+        }
     }
     //</editor-fold>
 
