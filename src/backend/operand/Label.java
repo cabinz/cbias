@@ -1,26 +1,24 @@
 package backend.operand;
 
+import java.util.ArrayList;
+
 public class Label extends MCOperand {
 
-    private String name;
-    private int val;
+    private final String name;
+    private final ArrayList<Integer> intial;
 
-    private boolean isArray = false;
+    public boolean isArray() {return intial.size() != 1;}
 
-    public boolean isArray() {return isArray;}
-
-    public int getVal() {
-        return val;
-    }
+    public ArrayList<Integer> getIntial() {return intial;}
 
     @Override
     public String emit() {
         return name;
     }
 
-    public Label(String name, int val) {
+    public Label(String name, ArrayList<Integer> initial) {
         super(TYPE.GBV);
         this.name = name;
-        this.val = val;
+        this.intial = initial;
     }
 }

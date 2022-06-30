@@ -62,11 +62,9 @@ public class MCEmitter {
             strBd.append("\t.align 4\n");
             for (Label label : globalVars) {
                 strBd.append("\t.global " + label.emit() + '\n');
-                strBd.append(label.emit() + ":\t");
-                if (label.isArray()) {
-                }
-                else {
-                    strBd.append(".word\t" + label.getVal() + '\n');
+                strBd.append(label.emit() + ":\n");
+                for (Integer tmp : label.getIntial()) {
+                    strBd.append("\t.word\t" + tmp + '\n');
                 }
             }
         }
