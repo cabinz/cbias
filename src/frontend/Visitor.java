@@ -711,7 +711,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // todo: float type fParam
         Type arrType = IntegerType.getI32();
         for (int i = dimLens.size(); i > 0; i--) {
-            arrType = PointerType.getType(arrType);
+            arrType = ArrayType.getType(arrType, dimLens.get(i - 1));
         }
         retType_ = PointerType.getType(arrType);
         return null;
