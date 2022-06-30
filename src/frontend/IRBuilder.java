@@ -256,7 +256,7 @@ public class IRBuilder {
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
         MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType, curBB);
-        getCurBB().insertAtFront(inst);
+        getCurFunc().getEntryBB().insertAtFront(inst);
         return inst;
     }
 
