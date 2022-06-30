@@ -10,7 +10,7 @@ public class MCmov extends MCInstruction {
     private MCOperand src;
 
     public String emit(){
-        return "MOV " + dst.emit() + ", " + src.emit();
+        return "MOV" + emitCond() + " " + dst.emit() + ", " + src.emit();
     }
 
     public MCmov(Register dst, MCOperand src) {super(TYPE.MOV); this.dst = dst; this.src = src;}

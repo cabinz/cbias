@@ -75,7 +75,7 @@ public abstract class MCInstruction {
     abstract public String emit();
 
     protected String emitCond() {
-        if (cond == ConditionField.NOPE)
+        if (cond == ConditionField.NOPE || cond == null)
             return "";
         else
             return cond.name();
