@@ -756,10 +756,19 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitCondStmt(SysYParser.CondStmtContext ctx) {
         /*
+        Store current block to add on it a Br to entryBlk.
+        And then build the entry block of the condition statement.
+         */
+        BasicBlock preBlk = builder.getCurBB();
+        BasicBlock entryBlk = builder.buildBB("_COND_ENTRY");
+        // Add a Br from the old preBlk to the new entryBlk.
+        builder.setCurBB(preBlk);
+        builder.buildBr(entryBlk);
+
+        /*
         Build an EXIT block no matter if it may become dead code
         that cannot be reached in the CFG.
          */
-        BasicBlock entryBlk = builder.getCurBB(); // Store current block as entry.
         BasicBlock exitBlk = builder.buildBB("_COND_EXIT");
 
         /*
