@@ -125,42 +125,54 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayList<Type> emptyArgTypeList = new ArrayList<>();
         ArrayList<Type> intArgTypeList = new ArrayList<>() {{add(i32Ty);}};
 
-
-        // getint()
+        // i32 getint()
         scope.addDecl("getint",
                 builder.buildFunction("getint", FunctionType.getType(
                         i32Ty , emptyArgTypeList
                 ), true)
         );
-        // putint(i32)
+        // void putint(i32)
         scope.addDecl("putint",
                 builder.buildFunction("putint", FunctionType.getType(
                         voidTy, intArgTypeList
                 ), true)
-        );// getch()
+        );
+        // i32 getch()
         scope.addDecl("getch",
                 builder.buildFunction("getch", FunctionType.getType(
                         i32Ty, emptyArgTypeList
                 ), true)
         );
-        // putch(i32)
+        // void putch(i32)
         scope.addDecl("putch",
                 builder.buildFunction("putch", FunctionType.getType(
                         voidTy, intArgTypeList
                 ), true)
         );
-        // getarray()
+        // i32 getarray(i32, i32*)
         ArrayList<Type> iptrArgTypeList = new ArrayList<>() {{add(ptrI32Ty);}};
         scope.addDecl("getarray",
                 builder.buildFunction("getarray", FunctionType.getType(
                         i32Ty, iptrArgTypeList
                 ), true)
         );
-        // putarray(i32, i32*)
+        // void putarray(i32, i32*)
         ArrayList<Type> putarrayArgTypeList = new ArrayList<>() {{add(i32Ty); add(ptrI32Ty);}};
         scope.addDecl("putarray",
                 builder.buildFunction("putarray", FunctionType.getType(
                         voidTy, putarrayArgTypeList
+                ), true)
+        );
+        // void starttime()
+        scope.addDecl("starttime",
+                builder.buildFunction("starttime", FunctionType.getType(
+                        voidTy, emptyArgTypeList
+                ), true)
+        );
+        // void stoptime()
+        scope.addDecl("stoptime",
+                builder.buildFunction("stoptime", FunctionType.getType(
+                        voidTy, emptyArgTypeList
                 ), true)
         );
     }
