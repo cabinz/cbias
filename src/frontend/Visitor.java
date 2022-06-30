@@ -1448,10 +1448,24 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Visit child RParam.
                 visit(argCtx);
                 Value arg = retVal_;
+                /*
+                Argument type matching check.
+                 */
                 // If the typeArg requires an immediate scalar while argCtx (lVal)
                 // returns a pointer, load it up.
-                if (!typeArg.isPointerType() && retVal_.getType().isPointerType()) {
+                if (!typeArg.isPointerType() && arg.getType().isPointerType()) {
                     arg = builder.buildLoad(typeArg, arg);
+                }
+                // If the typeArg requires a pointer to a 1-d array (i32*/float*)
+                // while argCtx returns a pointer to ArrayType Value (e.g. [2 x i32]*),
+                // use GEP to retrieve a correct pointer.
+                if (typeArg.isPointerType() && !((PointerType) typeArg).getPointeeType().isArrayType()) {
+                    while (((PointerType) arg.getType()).getPointeeType().isArrayType()) {
+                        arg = builder.buildGEP(arg, new ArrayList<>() {{
+                            add(builder.buildConstant(0));
+                            add(builder.buildConstant(0));
+                        }});
+                    }
                 }
                 // Add the argument Value retrieved by visiting to the container.
                 args.add(arg);
