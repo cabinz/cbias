@@ -1106,11 +1106,21 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the 1st mulExp (as the left operand) by visiting child.
             visit(ctx.mulExp(0));
             Value lOp = retVal_;
+
             // The 2nd and possibly more MulExp.
             for (int i = 1; i < ctx.mulExp().size(); i++) {
                 // Retrieve the next mulExp (as the right operand) by visiting child.
                 visit(ctx.mulExp(i));
                 Value rOp = retVal_;
+
+                // Check if the lOp/rOp is a pointer. if it is, load it up.
+                if (lOp.getType().isPointerType()) {
+                    lOp = builder.buildLoad(((PointerType) lOp.getType()).getPointeeType(), lOp);
+                }
+                if (rOp.getType().isPointerType()) {
+                    rOp = builder.buildLoad(((PointerType) rOp.getType()).getPointeeType(), rOp);
+                }
+
                 // Check integer types of two operands.
                 if (lOp.getType().isI1()) {
                     lOp = builder.buildZExt(lOp);
@@ -1168,11 +1178,20 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the 1st unaryExp (as the left operand) by visiting child.
             visit(ctx.unaryExp(0));
             lOp = retVal_;
+
             // The 2nd and possibly more MulExp.
             for (int i = 1; i < ctx.unaryExp().size(); i++) {
                 // Retrieve the next unaryExp (as the right operand) by visiting child.
                 visit(ctx.unaryExp(i));
                 Value rOp = retVal_;
+                // Check if the lOp/rOp is a pointer. if it is, load it up.
+                if (lOp.getType().isPointerType()) {
+                    lOp = builder.buildLoad(((PointerType) lOp.getType()).getPointeeType(), lOp);
+                }
+                if (rOp.getType().isPointerType()) {
+                    rOp = builder.buildLoad(((PointerType) rOp.getType()).getPointeeType(), rOp);
+                }
+
                 // Generate an instruction to compute result of left and right operands
                 // as the new left operand for the next round.
                 switch (ctx.getChild(2 * i - 1).getText()) {
