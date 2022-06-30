@@ -1510,11 +1510,20 @@ public class Visitor extends SysYBaseVisitor<Void> {
         bpStk.push(new ArrayList<>());
 
         /*
+        Store current block to add on it a Br to entryBlk.
+        And then build the entry block of the while statement.
+         */
+        BasicBlock preBlk = builder.getCurBB();
+        BasicBlock entryBlk = builder.buildBB("_WHILE_ENTRY");
+        // Add a Br from the old preBlk to the new entryBlk.
+        builder.setCurBB(preBlk);
+        builder.buildBr(entryBlk);
+
+        /*
         Build an EXIT block no matter if it may become dead code
         that cannot be reached in the CFG.
          */
-        BasicBlock entryBlk = builder.getCurBB(); // Store current block as entry.
-        BasicBlock bodyEntryBlk = builder.buildBB("_LOOP_BODY");
+        BasicBlock bodyEntryBlk = builder.buildBB("_WHILE_BODY");
         BasicBlock exitBlk = builder.buildBB("_WHILE_EXIT");
 
         /*
