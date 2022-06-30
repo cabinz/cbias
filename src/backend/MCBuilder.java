@@ -8,10 +8,7 @@ import ir.Type;
 import ir.Value;
 import ir.types.ArrayType;
 import ir.values.*;
-import ir.values.instructions.BinaryInst;
-import ir.values.instructions.CallInst;
-import ir.values.instructions.MemoryInst;
-import ir.values.instructions.TerminatorInst;
+import ir.values.instructions.*;
 
 import java.util.HashMap;
 
@@ -148,6 +145,9 @@ public class MCBuilder {
         }
         else if (IRinst.isBr()) {
             translateBr((TerminatorInst.Br) IRinst);
+        }
+        else if (IRinst.isGEP()) {
+            translateGEP((GetElemPtrInst) IRinst);
         }
     }
 
@@ -389,7 +389,7 @@ public class MCBuilder {
         MCOperand operand2 = findContainer(value2);
         MCInstruction.ConditionField armCond = mapToArmCond(icmp);
         /* ICMP operands can not be const int at the same time */
-        if (operand1 instanceof Immediate && !(operand2 instanceof Immediate)){
+        if (operand1.isImmediate() && !(operand2 instanceof Immediate)){
             MCOperand temp = operand1;
             operand1 = operand2;
             operand2 = temp;
@@ -424,8 +424,8 @@ public class MCBuilder {
         // TODO: 处理除法
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
-        if (operand1 instanceof Immediate) {
-            if (operand2 instanceof Immediate) {
+        if (operand1.isImmediate()) {
+            if (operand2.isImmediate()) {
                 VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
                 curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst), register, operand2));
             }
@@ -439,6 +439,10 @@ public class MCBuilder {
         else {
             curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst),(Register) operand1, operand2));
         }
+    }
+
+    private void translateGEP(GetElemPtrInst IRinst) {
+
     }
     //</editor-fold>
 

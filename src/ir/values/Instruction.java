@@ -107,6 +107,7 @@ public class Instruction extends User {
     public boolean isLoad  () {return this.cat == InstCategory.LOAD;}
     public boolean isStore () {return this.cat == InstCategory.STORE;}
     public boolean isIcmp  () {return this.cat.isRelationalBinary();}
+    public boolean isGEP   () {return this.cat == InstCategory.GEP;}
     //</editor-fold>
 
 
