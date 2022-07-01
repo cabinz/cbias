@@ -54,7 +54,6 @@ public class Instruction extends User {
     }
 
 
-    //<editor-fold desc="Fields">
     /**
      * An InstCategory instance indicating an instruction type.
      */
@@ -81,19 +80,19 @@ public class Instruction extends User {
      * Reference of the basic block where the instruction lands.
      */
     private BasicBlock bb;
-    //</editor-fold>
+
+    public BasicBlock getBB() {
+        return this.bb;
+    }
 
 
-    //<editor-fold desc="Constructors">
     public Instruction(Type type, InstCategory tag, BasicBlock bb){
         super(type);
         this.cat = tag;
         this.bb = bb;
     }
-    //</editor-fold>
 
 
-    //<editor-fold desc="Is?">
     public boolean isAdd   () {return this.cat == InstCategory.ADD;}
     public boolean isSub   () {return this.cat == InstCategory.SUB;}
     public boolean isMul   () {return this.cat == InstCategory.MUL;}
@@ -108,18 +107,29 @@ public class Instruction extends User {
     public boolean isStore () {return this.cat == InstCategory.STORE;}
     public boolean isIcmp  () {return this.cat.isRelationalBinary();}
     public boolean isGEP   () {return this.cat == InstCategory.GEP;}
-    //</editor-fold>
-
-
-    //<editor-fold desc="Methods">
 
     /**
-     * Get the Basic Block where the instruction lands.
-     * @return Reference of the BB.
+     * Remove the instruction from the BasicBlock holding it.
      */
-    public BasicBlock getBB() {
-        return this.bb;
+    public void removeSelf() {
+        this.getBB().instructions.remove(this);
     }
-    //</editor-fold>
 
+    /**
+     * Insert a new one at the front of the instruction.
+     * @param inst The instruction to be inserted.
+     */
+    public void insertBefore(Instruction inst) {
+        var instList = this.getBB().instructions;
+        instList.add(instList.indexOf(inst), inst);
+    }
+
+    /**
+     * Insert a new instruction as the next one of the current.
+     * @param inst The instruction to be inserted.
+     */
+    public void insertAfter(Instruction inst) {
+        var instList = this.getBB().instructions;
+        instList.add(instList.indexOf(inst) + 1, inst);
+    }
 }
