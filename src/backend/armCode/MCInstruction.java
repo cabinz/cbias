@@ -19,7 +19,7 @@ public abstract class MCInstruction {
         SUB,
         RSB,//逆向减法
         MUL,
-        DIV,
+        SDIV,
         AND,
         ORR,
         BIC,//位清零

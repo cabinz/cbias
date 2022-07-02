@@ -131,7 +131,7 @@ public class MCBuilder {
             translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.MUL);
         }
         else if (IRinst.isDiv()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.DIV);
+            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.SDIV);
         }
         else if (IRinst.isAlloca()) {
             translateAlloca((MemoryInst.Alloca) IRinst);
@@ -425,7 +425,7 @@ public class MCBuilder {
      * @param type Operation type, ADD/SUB/MUL/SDIV or more?
      */
     private void translateBinary(BinaryInst IRinst, MCInstruction.TYPE type) {
-        // TODO: 处理除法
+        // TODO: Optimization
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
         if (operand1.isImmediate()) {
@@ -445,6 +445,9 @@ public class MCBuilder {
         }
     }
 
+    /**
+     * Translate IR GEP. Calculate the address of an element. <br/>
+     */
     private void translateGEP(GetElemPtrInst IRinst) {
         // 不能确定的elementType是否是一层指针
         Type elemetType = ((PointerType) IRinst.getOperandAt(0).getType()).getPointeeType();
