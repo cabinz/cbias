@@ -29,40 +29,28 @@ import java.util.ArrayList;
  */
 public class Constant extends User {
 
-    //<editor-fold desc="Constructors">
     public Constant(Type type) {
         super(type);
     }
-    //</editor-fold>
-
 
     /**
      * Nested class ConstInt instantiates the IR of i32 integer constant in source.
      */
     public static class ConstInt extends Constant {
-        //<editor-fold desc="Fields">
         /**
          * The mathematical value of the constant integer.
          */
         private int val;
-        //</editor-fold>
-
-
-        //<editor-fold desc="Getter & Setter">
         public int getVal() {return val;}
-        //</editor-fold>
 
 
-        //<editor-fold desc="Constructors">
+        //<editor-fold desc="Factory Method">
         private ConstInt(Type type, int val) {
             super(type);
             this.val = val;
             this.setName(String.valueOf(val));
         }
-        //</editor-fold>
 
-
-        //<editor-fold desc="Methods">
         /**
          * Retrieve an IR Constant instance of given integer.
          * @param val Mathematical value of the integer.
@@ -71,12 +59,12 @@ public class Constant extends User {
         public static ConstInt get(int val) {
             return new ConstInt(IntegerType.getI32(), val);
         }
+        //</editor-fold>
 
         @Override
         public String toString() {
-            return "i32 " + this.val;
+            return this.getType() + " " + this.val;
         }
-        //</editor-fold>
     }
 
 
