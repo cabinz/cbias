@@ -12,8 +12,6 @@ import backend.operand.Register;
  */
 public class MCMove extends MCInstruction {
 
-    // TODO: MVN: move negative
-
     private Register dst;
     private MCOperand src;
 

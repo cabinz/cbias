@@ -187,7 +187,7 @@ public class MCBuilder {
             return vr;
         }
         else if (value instanceof Constant.ConstInt) {
-            // TODO: 顺序问题，是否寻找之前剩下的立即数
+            // 顺序问题，是否寻找之前剩下的立即数？
             MCOperand temp = createConstInt(((Constant.ConstInt) value).getVal());
             if (temp instanceof Register) return temp;
             if (forceAllocReg){
@@ -318,6 +318,7 @@ public class MCBuilder {
                 curMCBB.appendInst(new MCMove(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
             }
             else {
+                // 可能要换成push？
                 curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), true), RealRegister.get(13), createConstInt(-4), true));
             }
         }
@@ -451,7 +452,7 @@ public class MCBuilder {
      * @param type Operation type, ADD/SUB/MUL/SDIV or more?
      */
     private void translateBinary(BinaryInst IRinst, MCInstruction.TYPE type) {
-        // TODO: Optimization
+        // TODO: 2的整数倍乘法，常量除法
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
         if (operand1.isImmediate()) {
@@ -511,7 +512,7 @@ public class MCBuilder {
                     totalOffset += offset;
             }
             else {
-                // TODO
+                // TODO: 寻址优化
                 System.out.println("出现操作立即数范围的寻址地址，报错");
             }
         }
