@@ -2,6 +2,7 @@ package ir.values;
 
 import ir.User;
 import ir.Type;
+import ir.types.FloatType;
 import ir.types.IntegerType;
 
 import java.util.ArrayList;
@@ -76,6 +77,39 @@ public class Constant extends User {
             return "i32 " + this.val;
         }
         //</editor-fold>
+    }
+
+
+    public static class ConstFloat extends Constant {
+        /**
+         * The mathematical value of the constant float.
+         */
+        private float val;
+
+        public float getVal() {
+            return val;
+        }
+
+        //<editor-fold desc="Factory Method">
+        private ConstFloat(float val) {
+            super(FloatType.getType());
+            this.val = val;
+        }
+
+        /**
+         * Retrieve an IR Constant instance of given float.
+         * @param val Mathematical value of the float.
+         * @return Corresponding ConstFloat instance created.
+         */
+        public ConstFloat get(float val) {
+            return new ConstFloat(val);
+        }
+        //</editor-fold>
+
+        @Override
+        public String toString() {
+            return this.getType() + " " + this.val;
+        }
     }
 
 
