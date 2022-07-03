@@ -335,7 +335,8 @@ public class MCBuilder {
 
     private void translateRet(TerminatorInst.Ret IRinst) {
         if (IRinst.getNumOperands() != 0)
-            curMCBB.appendInst(new MCReturn(findContainer(IRinst.getOperandAt(0))));
+            curMCBB.appendInst(new MCMove(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
+        curMCBB.appendInst(new MCReturn(findContainer(IRinst.getOperandAt(0))));
     }
 
     /**
