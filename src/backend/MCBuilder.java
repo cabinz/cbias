@@ -175,7 +175,7 @@ public class MCBuilder {
         else if (value instanceof GlobalVariable) {
             VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
             valueMap.put(value, vr);
-            curMCBB.appendInst(new MCmov(vr, target.findGlobalVar((GlobalVariable) value)));
+            curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
         }
         else if (value instanceof Constant.ConstInt) {
@@ -184,7 +184,7 @@ public class MCBuilder {
             if (forceAllocReg){
                 VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((Constant.ConstInt) value).getVal());
                 valueMap.put(value, vr);
-                curMCBB.appendInst(new MCmov(vr, temp));
+                curMCBB.appendInst(new MCMove(vr, temp));
                 return vr;
             }
             else
@@ -239,7 +239,7 @@ public class MCBuilder {
         else{
             VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
             // TODO: 可能要换成LDR？
-            curMCBB.appendInst(new MCmov(vr, new Immediate(value)));
+            curMCBB.appendInst(new MCMove(vr, new Immediate(value)));
             return vr;
         }
     }
@@ -293,7 +293,7 @@ public class MCBuilder {
         /* Argument push */
         for (int i=oprNum; i>=1; i++) {
             if (i <= 4) {
-                curMCBB.appendInst(new MCmov(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
+                curMCBB.appendInst(new MCMove(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
             }
             else {
                 curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i)), RealRegister.get(13), createConstInt(-4), true));
@@ -305,12 +305,12 @@ public class MCBuilder {
         if (oprNum > 4)
             curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(4*oprNum-4)));
         /* Save result */
-        curMCBB.appendInst(new MCmov((Register) findContainer(IRinst), RealRegister.get(0)));
+        curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
     }
 
     private void translateRet(TerminatorInst.Ret IRinst) {
         if (IRinst.getNumOperands() != 0)
-            curMCBB.appendInst(new MCmov(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
+            curMCBB.appendInst(new MCMove(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
     }
 
     /**
@@ -329,7 +329,7 @@ public class MCBuilder {
             offset = ((ArrayType) allocated).getSize() * 4;
         }
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(offset)));
-        curMCBB.appendInst(new MCmov((Register) findContainer(IRinst), RealRegister.get(13)));
+        curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(13)));
     }
 
     /**
@@ -403,8 +403,8 @@ public class MCBuilder {
         curMCBB.appendInst(new MCcmp((Register) operand1, operand2));
 
         if (saveResult) {
-            curMCBB.appendInst(new MCmov((Register) findContainer(icmp), createConstInt(1), armCond));
-            curMCBB.appendInst(new MCmov((Register) findContainer(icmp), createConstInt(0), reverseCond(armCond)));
+            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(1), armCond));
+            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), reverseCond(armCond)));
         }
 
         return armCond;
@@ -476,7 +476,7 @@ public class MCBuilder {
                 if (i == operandNum) {
                     totalOffset += offset;
                     if (totalOffset == 0)
-                        curMCBB.appendInst(new MCmov(dst, addr));
+                        curMCBB.appendInst(new MCMove(dst, addr));
                     else
                         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, addr, createConstInt(totalOffset)));
                     addr = dst;
