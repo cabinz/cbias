@@ -287,6 +287,8 @@ public class MCBuilder {
      * @param IRinst IR call instruction
      */
     private void translateCall(CallInst IRinst) {
+        curFunc.useLR = true;
+
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
         for (int i=oprNum; i>=1; i--) {
@@ -304,6 +306,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(4*oprNum-4)));
         /* Save result */
         curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
+
+        curFunc.useLR = true;
     }
 
     private void translateRet(TerminatorInst.Ret IRinst) {
@@ -328,6 +332,8 @@ public class MCBuilder {
         }
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(offset)));
         curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(13)));
+
+        curFunc.addStackSize(offset);
     }
 
     /**

@@ -17,7 +17,7 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
 
     private int stackSize;
 
-    private boolean useLR;
+    public boolean useLR;
     private boolean isExternal;
 
     /**
