@@ -26,6 +26,7 @@ public abstract class MCInstruction {
         FMA,//乘加
         LongMUL,
         MOV,
+        RET,
         BRANCH,
         STORE,
         LOAD,

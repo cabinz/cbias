@@ -164,6 +164,7 @@ public class MCBuilder {
      * @return the corresponding operand
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
+        // TODO: Parameter passing
         if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
@@ -287,8 +288,6 @@ public class MCBuilder {
      * @param IRinst IR call instruction
      */
     private void translateCall(CallInst IRinst) {
-        curFunc.useLR = true;
-
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
         for (int i=oprNum; i>=1; i--) {
@@ -312,7 +311,7 @@ public class MCBuilder {
 
     private void translateRet(TerminatorInst.Ret IRinst) {
         if (IRinst.getNumOperands() != 0)
-            curMCBB.appendInst(new MCMove(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
+            curMCBB.appendInst(new MCReturn(findContainer(IRinst.getOperandAt(0))));
     }
 
     /**
