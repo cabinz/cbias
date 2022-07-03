@@ -238,8 +238,7 @@ public class MCBuilder {
             return new Immediate(value);
         else{
             VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
-            // TODO: 可能要换成LDR？
-            curMCBB.appendInst(new MCMove(vr, new Immediate(value)));
+            curMCBB.appendInst(new MCMove(vr, new Immediate(value), true));
             return vr;
         }
     }
