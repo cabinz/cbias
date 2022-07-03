@@ -2,6 +2,7 @@ package ir.values;
 
 import ir.User;
 import ir.Type;
+import ir.types.ArrayType;
 import ir.types.FloatType;
 import ir.types.IntegerType;
 
@@ -103,20 +104,57 @@ public class Constant extends User {
 
     /**
      * Nested class for (integer/float) constant array in initialization.
+     * <br>
+     * All the Constants in the array will be the operands of it.
      */
     public static class ConstArray extends Constant {
 
+        //<editor-fold desc="Factory Method">
         /**
-         * All the Constants in the arr will be the operands of the User.
-         * @param type ArrayType for the array.
-         * @param arr ArrayList of Constants for initializing the ConstArray.
+         * Construct a constant array.
+         * @param arrType ArrayType for the array.
+         * @param initList ArrayList of Constants for initializing the ConstArray.
          */
-        public ConstArray(Type type, ArrayList<Constant> arr) {
-            super(type);
-            for (int i = 0; i < arr.size(); i++) {
-                addOperandAt(arr.get(i), i);
+        private ConstArray(ArrayType arrType, ArrayList<Constant> initList) {
+            super(arrType);
+            for (int i = 0; i < initList.size(); i++) {
+                addOperandAt(initList.get(i), i);
             }
         }
+
+        /**
+         * Retrieve a constant array with a list of initial values (Constants).
+         * @param arrType The ArrayType.
+         * @param initList ArrayList of Constants in a same Type.
+         *                 The length of it needs to match with the arrType.
+         * @return The ConstArray instance required.
+         */
+        public static ConstArray get(ArrayType arrType, ArrayList<Constant> initList) {
+            /*
+            Security Checks.
+             */
+            // Check length.
+            if (initList.size() == 0) {
+                throw new RuntimeException("Try to retrieve a ConstArray with length of 0.");
+            }
+            if (initList.size() != arrType.getLen()) {
+                throw new RuntimeException("Array Type length doesn't match the length of the init list.");
+            }
+            // Check type.
+            for (Constant elem : initList) {
+                if (arrType.getElemType() != elem.getType()) {
+                    throw new RuntimeException(
+                            "Try to get a ConstArray with different types of constants in the initialized list."
+                    );
+                }
+            }
+
+            /*
+            Retrieve the instance and return it.
+             */
+            return new ConstArray(arrType, initList);
+        }
+        //</editor-fold>
 
         @Override
         public String toString() {

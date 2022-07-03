@@ -133,10 +133,10 @@ public class IRBuilder {
                 j += step;
             }
 
-            return new Constant.ConstArray(arrType, nestedInitList);
+            return Constant.ConstArray.get(arrType, nestedInitList);
         }
         else {
-            return new Constant.ConstArray(arrType, initList);
+            return Constant.ConstArray.get(arrType, initList);
         }
 
     }
