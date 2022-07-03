@@ -25,7 +25,7 @@ public class Instruction extends User {
      * of operations. Be careful to move them or add new ones.
      */
     public enum InstCategory {
-        // Operations
+        // Computing Operations
         ADD, SUB, MUL, DIV,     // Arithmetic Operations
         LT, GT, EQ, NE, LE, GE, // Relational (Comparison) Operations
         AND, OR,                // Logical Operations
@@ -35,6 +35,8 @@ public class Instruction extends User {
         CALL,
         // Memory operations
         ZEXT, ALLOCA, LOAD, STORE,
+        // Casting operations
+        FPTOSI, SITOFP,
         // Others
         GEP;
 
