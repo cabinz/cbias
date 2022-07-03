@@ -34,9 +34,9 @@ public class Instruction extends User {
         // Invocation
         CALL,
         // Memory operations
-        ZEXT, ALLOCA, LOAD, STORE,
+        ALLOCA, LOAD, STORE,
         // Casting operations
-        FPTOSI, SITOFP,
+        ZEXT, FPTOSI, SITOFP,
         // Others
         GEP;
 

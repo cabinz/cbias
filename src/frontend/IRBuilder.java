@@ -290,8 +290,8 @@ public class IRBuilder {
      * @param srcVal The Value to be extended.
      * @return The ZExt instruction inserted.
      */
-    public MemoryInst.ZExt buildZExt(Value srcVal) {
-        MemoryInst.ZExt zext = new MemoryInst.ZExt(srcVal, curBB);
+    public CastInst.ZExt buildZExt(Value srcVal) {
+        CastInst.ZExt zext = new CastInst.ZExt(srcVal, curBB);
         getCurBB().insertAtEnd(zext);
         return zext;
     }
