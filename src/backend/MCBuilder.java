@@ -500,16 +500,14 @@ public class MCBuilder {
 
             if (index.isImmediate()) {
                 int offset = scale * ((Immediate) index).getIntValue();
+                totalOffset += offset;
                 if (i == operandNum) {
-                    totalOffset += offset;
                     if (totalOffset == 0)
                         curMCBB.appendInst(new MCMove(dst, addr));
                     else
                         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, addr, createConstInt(totalOffset)));
                     addr = dst;
                 }
-                else
-                    totalOffset += offset;
             }
             else {
                 // TODO: 寻址优化

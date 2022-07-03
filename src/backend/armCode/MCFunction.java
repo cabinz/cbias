@@ -12,18 +12,18 @@ import java.util.LinkedList;
 public class MCFunction  implements Iterable<MCBasicBlock> {
 
     //<editor-fold desc="Fields">
-    private LinkedList<MCBasicBlock> BasicBlockList;
+    private final LinkedList<MCBasicBlock> BasicBlockList;
     private final String name;
 
     private int stackSize;
 
     public boolean useLR;
-    private boolean isExternal;
+    private final boolean isExternal;
 
     /**
      * Represent the map between IR basic block and machine basic block
      */
-    private HashMap<BasicBlock, MCBasicBlock> BBmap;
+    private final HashMap<BasicBlock, MCBasicBlock> BBmap;
 //    private LinkedList<MCOperand> argList;
     //</editor-fold>
 
