@@ -28,7 +28,6 @@ public class TerminatorInst {
      */
     public static class Ret extends Instruction {
 
-        //<editor-fold desc="Constructors">
         /**
          * Construct a Ret terminator returning void.
          */
@@ -45,10 +44,8 @@ public class TerminatorInst {
             this(bb);
             this.addOperandAt(val, 0);
         }
-        //</editor-fold>
 
 
-        //<editor-fold desc="Methods">
         @Override
         public String toString() {
             StringBuilder strBuilder = new StringBuilder();
@@ -62,7 +59,6 @@ public class TerminatorInst {
             }
             return strBuilder.toString();
         }
-        //</editor-fold>
     }
 
 
@@ -74,13 +70,14 @@ public class TerminatorInst {
      *     <li>Conditional Branch: has 3 operands (1 conditional variable i1, 2 destination Basic Blocks)</li>
      *     <li>Unconditional Branch: has 1 operands (of the destination label)</li>
      * </ul>
-     * Type for Br is LabelType (referenced by a destination BasicBlock).
+     * Type for Br is VoidType. (Br changes the control flow but returns nothing)
      * @see <a href="https://llvm.org/docs/LangRef.html#br-instruction">
      *     LLVM LangRef: 'br' Instruction</a>
+     * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L3032">
+     *     LLVM Source: BrachInst</a>
      */
     public static class Br extends Instruction {
 
-        //<editor-fold desc="Constructors">
         /**
          * Constructor for a conditional branching instruction.
          * @param cond The condition.
@@ -88,9 +85,7 @@ public class TerminatorInst {
          * @param falseBlk The basic block to jump to when condition is false.
          */
         public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk, BasicBlock bb) {
-            // todo: Encapsulate numOperands to be a automatically increased counter.
             super(Type.LabelType.getType(), InstCategory.BR, bb);
-            // todo: Type of Br should be VoidType or LabelType?
             this.hasResult = false;
             this.addOperandAt(cond, 0);
             this.addOperandAt(trueBlk, 1);
@@ -106,10 +101,7 @@ public class TerminatorInst {
             this.hasResult = false;
             this.addOperandAt(blk, 0);
         }
-        //</editor-fold>
 
-
-        //<editor-fold desc="Methods">
         public boolean isCondJmp() {return operands.size() == 3;}
 
         @Override
@@ -130,6 +122,5 @@ public class TerminatorInst {
 
             return strBuilder.toString();
         }
-        //</editor-fold>
     }
 }
