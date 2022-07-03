@@ -214,7 +214,7 @@ public class MCBuilder {
      * @param n the to be determined
      * @return the result
      */
-    private boolean canEncodeImm(int n) {
+    public static boolean canEncodeImm(int n) {
         for (int ror = 0; ror < 32; ror += 2) {
             /* checkout whether the highest 24 bits is all 0. */
             if ((n & ~0xFF) == 0) {
@@ -283,15 +283,14 @@ public class MCBuilder {
     //<editor-fold desc="Translate functions">
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
-     * Function Stack: parameter, LR & others, local variables<br/>
+     * Function Stack: parameter, context(registers & lr), local variables<br/>
      * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; high &emsp;&emsp;&emsp; -->> &emsp;&emsp;&emsp; low <br/>
-     * (FP先不存了吧，自己知道就好) <br/>
      * @param IRinst IR call instruction
      */
     private void translateCall(CallInst IRinst) {
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
-        for (int i=oprNum; i>=1; i++) {
+        for (int i=oprNum; i>=1; i--) {
             if (i <= 4) {
                 curMCBB.appendInst(new MCMove(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
             }
