@@ -23,11 +23,11 @@ public class MCMove extends MCInstruction {
         if (src.isGlobalVar())
             return "MOVW" + emitCond() + ' ' + dst.emit() + ", :lower16:" + src.emit() + "\n\tMOVT" + emitCond() + ' ' + dst.emit() + ", :upper16:" + src.emit();
         else if (exceededLimit) {
-            if (MCBuilder.canEncodeImm(-((Immediate) src).getIntValue())) {
-                return "MVN" + emitCond() + ' ' + dst.emit() + ", " + src.emit();
+            int value = ((Immediate) src).getIntValue();
+            if (MCBuilder.canEncodeImm(-value)) {
+                return "MVN" + emitCond() + ' ' + dst.emit() + ", #" + -value;
             }
             else {
-                int value = ((Immediate) src).getIntValue();
                 int high16 = value >>> 16;
                 int low16 = value & 0xFFFF;
                 if (high16 == 0)
