@@ -29,6 +29,7 @@ public class Instruction extends User {
         ADD, SUB, MUL, DIV,     // Arithmetic Operations
         LT, GT, EQ, NE, LE, GE, // Relational (Comparison) Operations
         AND, OR,                // Logical Operations
+        FNEG,                   // Unary Operator Operations
         // Terminators
         RET, BR,
         // Invocation
@@ -40,6 +41,7 @@ public class Instruction extends User {
         // Others
         GEP;
 
+        // todo: FNEG and float arithmetrics
         public boolean isArithmeticBinary() {
             return this.ordinal() <= InstCategory.DIV.ordinal();
         }
