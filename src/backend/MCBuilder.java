@@ -36,6 +36,7 @@ public class MCBuilder {
     private ARMAssemble target;
 
     /* Current MC function & basic block */
+    private Function curIRFunc;
     private MCFunction curFunc;
     private MCBasicBlock curMCBB;
 
@@ -95,18 +96,25 @@ public class MCBuilder {
      */
     private void mapFunction(Module IRModule, ARMAssemble target) {
         for (Function IRfunc : IRModule.functions) {
+            //System.out.println(IRfunc.getName());
             if (IRfunc.isExternal()) {
                 target.useExternalFunction(IRfunc);
                 continue;
             }
+
+            VirtualRegCounter = 0;
+            curIRFunc = IRfunc;
             curFunc = target.createFunction(IRfunc);
+
             /* This loop is to create the MC basic block in the same order of IR */
             for (BasicBlock IRBB : IRfunc)
                 curFunc.createBB(IRBB);
+
             // TODO: 改成BFS
             for (BasicBlock IRBB : IRfunc){
                 curMCBB = curFunc.findMCBB(IRBB);
                 for (Instruction IRinst : IRBB) {
+                    //System.out.println("\tNOW: " + IRinst.toString());
                     translate(IRinst);
                 }
             }
@@ -164,7 +172,6 @@ public class MCBuilder {
      * @return the corresponding operand
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
-        // TODO: Parameter passing
         if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
@@ -180,6 +187,7 @@ public class MCBuilder {
             return vr;
         }
         else if (value instanceof Constant.ConstInt) {
+            // TODO: 顺序问题，是否寻找之前剩下的立即数
             MCOperand temp = createConstInt(((Constant.ConstInt) value).getVal());
             if (temp instanceof Register) return temp;
             if (forceAllocReg){
@@ -190,6 +198,21 @@ public class MCBuilder {
             }
             else
                 return temp;
+        }
+        else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
+            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            valueMap.put(value, vr);
+            int pos = ((Function.FuncArg) value).getPos();
+            MCBasicBlock entry = curFunc.getEntryBlock();
+            if (pos < 4) {
+                entry.prependInst(new MCMove(vr, RealRegister.get(pos)));
+            }
+            else {
+                VirtualRegister tmp = new VirtualRegister(VirtualRegCounter++, (pos-4)*4);
+                entry.prependInst(new MCload(vr, RealRegister.get(13), tmp));
+                entry.prependInst(new MCMove(tmp, createConstInt((pos-4)*4)));
+            }
+            return vr;
         }
         else
             return null;
@@ -290,19 +313,19 @@ public class MCBuilder {
     private void translateCall(CallInst IRinst) {
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
-        for (int i=oprNum; i>=1; i--) {
+        for (int i=oprNum-1; i>=1; i--) {
             if (i <= 4) {
                 curMCBB.appendInst(new MCMove(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
             }
             else {
-                curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i)), RealRegister.get(13), createConstInt(-4), true));
+                curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), true), RealRegister.get(13), createConstInt(-4), true));
             }
         }
         /* Branch */
         curMCBB.appendInst(new MCbranch(target.findMCFunc((Function) IRinst.getOperandAt(0))));
         /* Stack balancing */
-        if (oprNum > 4)
-            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(4*oprNum-4)));
+        if (oprNum > 5)
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(4*oprNum-20)));
         /* Save result */
         curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
 

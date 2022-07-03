@@ -52,6 +52,10 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
         return MCBB==null ?createBB(IRBB) :MCBB;
     }
 
+    public MCBasicBlock getEntryBlock() {
+        return BasicBlockList.getFirst();
+    }
+
     /**
      * Used when declare a local variable
      * @param n the size of the variable

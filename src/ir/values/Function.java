@@ -32,6 +32,10 @@ public class Function extends Value implements Iterable<BasicBlock>{
         //</editor-fold>
 
 
+        public int getPos() {
+            return pos;
+        }
+
         //<editor-fold desc="Constructors">
         public FuncArg(Type type, int pos) {
             super(type);
