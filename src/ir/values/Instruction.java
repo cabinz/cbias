@@ -36,7 +36,7 @@ public class Instruction extends User {
         // Memory operations
         ZEXT, ALLOCA, LOAD, STORE,
         // Others
-        GEP;
+        GEP, PHI;
 
         public boolean isArithmeticBinary() {
             return this.ordinal() <= InstCategory.DIV.ordinal();
