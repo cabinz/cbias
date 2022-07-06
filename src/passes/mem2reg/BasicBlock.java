@@ -1,7 +1,9 @@
 package passes.mem2reg;
 
+import ir.Value;
 import ir.values.Instruction;
 import ir.values.instructions.MemoryInst;
+import ir.values.instructions.PhiInst;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -21,7 +23,11 @@ class BasicBlock implements Iterable<Instruction> {
     /**
      * Local variables which are changed in this block.
      */
-    Set<MemoryInst.Alloca> changedVar = new HashSet<>();
+    Set<MemoryInst.Alloca> definedVar = new HashSet<>();
+
+    Map<MemoryInst.Alloca, PhiInst> importPhiMap = new HashMap<>();
+
+    Map<MemoryInst.Alloca, Value> latestDefineMap = new HashMap<>();
 
     public BasicBlock(ir.values.BasicBlock basicBlock){
         this.basicBlock = basicBlock;

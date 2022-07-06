@@ -58,7 +58,9 @@ public class Use {
     }
 
     public void setValue(Value v) {
+        this.v.removeUse(this);
         this.v = v;
+        this.v.addUse(this);
     }
     //</editor-fold>
 }

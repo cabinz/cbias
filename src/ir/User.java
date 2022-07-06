@@ -89,9 +89,7 @@ public class User extends Value {
             // If there is, replace with the new Value.
             if (use.getOperandPos() == pos) {
                 // Got the target use.
-                use.getValue().removeUse(use); // Remove the original use.v (from the value using it).
                 use.setValue(val); // Cover the use.v at specified position (pos) with given v.
-                val.addUse(use); // Add the new use to the value using it (the given v).
                 return;
             }
         }
