@@ -10,6 +10,8 @@ public abstract class MCOperand {
         IMM,
         VTR,
         RLR,
+        EVTR,
+        ERLR,
         GBV
     }
     TYPE type;
