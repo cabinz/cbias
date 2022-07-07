@@ -328,6 +328,24 @@ public class IRBuilder {
     }
 
     /**
+     * Insert a unary instruction at current position of basic block.
+     * @param tag Instruction category.
+     * @param opd The single operand of the instruction.
+     * @return The unary instruction inserted.
+     */
+    public UnaryOpInst buildUnary(Instruction.InstCategory tag, Value opd) {
+        // Analyze the type of the result returned by the binary operation.
+        Type resType = null;
+        switch (tag) {
+            case FNEG -> resType = FloatType.getType();
+        }
+        // Build the binary instruction.
+        UnaryOpInst unaryInst = new UnaryOpInst(resType, tag, opd, curBB);
+        getCurBB().insertAtEnd(unaryInst);
+        return unaryInst;
+    }
+
+    /**
      * Build a GlbVar w/o initialization.
      * @param name The name of the GlbVar.
      * @param type The type of the memory block it references.

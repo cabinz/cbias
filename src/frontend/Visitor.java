@@ -1132,7 +1132,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
             // Float.
             else {
-                // todo: if it's a float.
+                switch (ctx.unaryOp().getText()) {
+                    case "-" -> retVal_ = builder.buildUnary(InstCategory.FNEG, retVal_);
+                    case "+" -> {}
+                }
             }
         }
         return null;
