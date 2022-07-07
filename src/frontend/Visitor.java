@@ -404,6 +404,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitScalarVarDef(SysYParser.ScalarVarDefContext ctx) {
+        // The text of the grammar symbol bType ("int" / "float")
+        String bType = ctx.getParent().getChild(0).getText();
+
         // Retrieve the name of the variable defined and check for duplication.
         String varName = ctx.Identifier().getText();
         if (scope.duplicateDecl(varName)) {
@@ -415,19 +418,25 @@ public class Visitor extends SysYBaseVisitor<Void> {
             GlobalVariable glbVar;
             if (ctx.initVal() != null) {
                 visit(ctx.initVal());
-                // todo: float init
                 glbVar = builder.buildGlbVar(varName, (Constant) retVal_);
             }
             else {
-                glbVar = builder.buildGlbVar(varName, IntegerType.getI32());
-                // todo: float (type info needs to be retrieved from sibling bType.
+                switch (bType) {
+                    case "int" -> glbVar = builder.buildGlbVar(varName, IntegerType.getI32());
+                    case "float" -> glbVar = builder.buildGlbVar(varName, FloatType.getType());
+                    default -> throw new RuntimeException("Unsupported type."); // Impossible case.
+                }
             }
             scope.addDecl(varName, glbVar);
         }
         // A local variable.
         else {
-            // todo: float (branching by type)
-            MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
+            MemoryInst.Alloca addrAllocated;
+            switch (bType) {
+                case "int" -> addrAllocated = builder.buildAlloca(IntegerType.getI32());
+                case "float" -> addrAllocated = builder.buildAlloca(FloatType.getType());
+                default -> throw new RuntimeException("Unsupported type."); // Impossible case.
+            }
             scope.addDecl(varName, addrAllocated);
             // If it's a definition with initialization.
             if (ctx.initVal() != null) {
@@ -453,8 +462,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
         super.visitScalarInitVal(ctx);
         // Turn off global var switch.
         if (inGlbInit()) {
-            retVal_ = builder.buildConstant(retInt_);
-            // todo: float constant
+            switch (getConveyedType()) {
+                case INT -> retVal_ = builder.buildConstant(retInt_);
+                case FLT -> retVal_ = builder.buildConstant(retFloat_);
+            }
             this.setGlbInit(OFF);
         }
 
@@ -1046,22 +1057,38 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitIntConst(SysYParser.IntConstContext ctx) {
-        int val;
+        int ret;
 
         // DecIntConst: Integer in decimal format, parse directly.
         if (ctx.DecIntConst() != null) {
-            val = Integer.parseInt(ctx.DecIntConst().getText(), 10);
+            ret = Integer.parseInt(ctx.DecIntConst().getText(), 10);
         }
         // OctIntConst: Integer in octal format, parse directly in radix of 8.
         else if (ctx.OctIntConst() != null) {
-            val = Integer.parseInt(ctx.OctIntConst().getText(), 8);
+            ret = Integer.parseInt(ctx.OctIntConst().getText(), 8);
         }
         // HexIntConst: Integer in hexadecimal format, drop the first two characters '0x'
         else {
-            val = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
+            ret = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
         }
 
-        retInt_ = val;
+        setConveyedType(DataType.INT);
+        retInt_ = ret;
+
+        return null;
+    }
+
+    /**
+     * floatConst
+     *     : DecFloatConst
+     *     | HexFloatConst
+     */
+    @Override
+    public Void visitFloatConst(SysYParser.FloatConstContext ctx) {
+        float ret = Float.parseFloat(ctx.getChild(0).getText());
+
+        setConveyedType(DataType.FLT);
+        retFloat_ = ret;
 
         return null;
     }
@@ -1194,6 +1221,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the value of the 1st unaryExp.
             // res stores the temporary result during the computation.
             visit(ctx.unaryExp(0));
+
             int res = retInt_;
             // Retrieve each of the rest unaryExp and compute.
             for (int i = 1; i < ctx.unaryExp().size(); i++) {
@@ -1205,7 +1233,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
             }
             retInt_ = res;
-            // todo: float case
         }
         /*
         Local expression: Instructions will be generated.
@@ -1431,9 +1458,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitNumber(SysYParser.NumberContext ctx) {
         super.visitNumber(ctx);
         if (!this.inGlbInit()) {
-            retVal_ = builder.buildConstant(retInt_);
+            switch (getConveyedType()) {
+                case INT -> retVal_ = builder.buildConstant(retInt_);
+                case FLT -> retVal_ = builder.buildConstant(retFloat_);
+            }
+
         }
-        // todo: float glb init
         return null;
     }
 
