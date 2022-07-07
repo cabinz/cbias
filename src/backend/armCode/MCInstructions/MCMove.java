@@ -15,7 +15,7 @@ public class MCMove extends MCInstruction {
     private Register dst;
     private MCOperand src;
 
-    private boolean exceededLimit;
+    private boolean exceededLimit = false;
 
     public String emit(){
         if (src.isGlobalVar())
