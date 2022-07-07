@@ -3,10 +3,7 @@ package frontend;
 import ir.Module;
 import ir.Type;
 import ir.Value;
-import ir.types.ArrayType;
-import ir.types.FunctionType;
-import ir.types.IntegerType;
-import ir.types.PointerType;
+import ir.types.*;
 import ir.values.*;
 import ir.values.instructions.*;
 
@@ -97,6 +94,15 @@ public class IRBuilder {
      */
     public Constant.ConstInt buildConstant(int i) {
         return Constant.ConstInt.get(i);
+    }
+
+    /**
+     * Retrieve a Constant.ConstFloat Value.
+     * @param f The numeric value of the float.
+     * @return The ConstInt Value with given numeric value.
+     */
+    public Constant.ConstFloat buildConstant(float f) {
+        return Constant.ConstFloat.get(f);
     }
 
     /**
