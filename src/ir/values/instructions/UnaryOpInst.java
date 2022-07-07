@@ -20,6 +20,7 @@ public class UnaryOpInst extends Instruction {
 
     @Override
     public String toString() {
+        Value opd = this.getOperandAt(0);
         // e.g. "%4 = fneg float %3"
         return
                 this.getName() + " = " // "%4 = "
@@ -29,6 +30,6 @@ public class UnaryOpInst extends Instruction {
                     default -> "";
                 }
                 // The operand
-                + this.getOperandAt(0); // "float %3"
+                + opd.getType() + " " + opd.getName(); // "float %3"
     }
 }
