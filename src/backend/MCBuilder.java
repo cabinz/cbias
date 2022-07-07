@@ -455,6 +455,7 @@ public class MCBuilder {
      */
     private void translateBinary(BinaryInst IRinst, MCInstruction.TYPE type) {
         // TODO: 2的整数倍乘法，常量除法
+        // TODO: ADD&SUB的operand2可以为为立即数，MUL和SDIV不行
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
         if (operand1.isImmediate()) {
