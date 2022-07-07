@@ -11,7 +11,7 @@ import java.util.ArrayList;
  */
 public class RealRegister extends Register{
 
-    private String name;
+    private final String name;
 
     @Override
     public String getName() {return name;}
@@ -20,13 +20,13 @@ public class RealRegister extends Register{
         return name;
     }
 
-    //<editor-fold desc="Singleton Pattern">
+    //<editor-fold desc="Multition Pattern">
     private RealRegister(String name) {
         super(TYPE.RLR);
         this.name = name;
     }
 
-    static private ArrayList<RealRegister> regs = new ArrayList<>();
+    static private final ArrayList<RealRegister> regs = new ArrayList<>();
 
     static {
         regs.add(new RealRegister("r0"));
