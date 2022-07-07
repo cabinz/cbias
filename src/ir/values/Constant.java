@@ -83,6 +83,7 @@ public class Constant extends User {
         private ConstFloat(float val) {
             super(FloatType.getType());
             this.val = val;
+            this.setName(String.valueOf(val));
         }
 
         /**
@@ -90,7 +91,7 @@ public class Constant extends User {
          * @param val Mathematical value of the float.
          * @return Corresponding ConstFloat instance created.
          */
-        public ConstFloat get(float val) {
+        public static ConstFloat get(float val) {
             return new ConstFloat(val);
         }
         //</editor-fold>
@@ -170,6 +171,4 @@ public class Constant extends User {
             return strBuilder.toString();
         }
     }
-
-    // todo float, and float array
 }
