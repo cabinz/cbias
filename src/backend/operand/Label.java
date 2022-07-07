@@ -2,6 +2,9 @@ package backend.operand;
 
 import java.util.ArrayList;
 
+/**
+ * This label is created for global variable, not for the basic block or other
+ */
 public class Label extends MCOperand {
 
     private final String name;
