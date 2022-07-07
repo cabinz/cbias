@@ -9,6 +9,9 @@ import ir.values.instructions.PhiInst;
 
 import java.util.*;
 
+/**
+ * Mem2reg optimize
+ */
 public class Mem2reg{
 
     public static void optimize(Module module) {
@@ -28,6 +31,7 @@ public class Mem2reg{
         wrappedFunction.forEach(Mem2reg::insertEmptyPhi);
         wrappedFunction.forEach(Mem2reg::processInstructions);
         wrappedFunction.forEach(Mem2reg::fillEmptyPhi);
+        wrappedFunction.forEach(basicBlock -> Mem2reg.removeOptimizedVariable(basicBlock,promotableVariables));
     }
 
     /**
@@ -120,14 +124,6 @@ public class Mem2reg{
                 }
             }
         });
-        // 'instructions' is changed during the following 'forEach', so we must clone one.
-        @SuppressWarnings("unchecked")
-        var instructions = (List<Instruction>) basicBlock.getUnwrappedBB().instructions.clone();
-        instructions.forEach(instruction -> {
-            if (instruction instanceof MemoryInst.Load || instruction instanceof MemoryInst.Store || instruction instanceof MemoryInst.Alloca){
-                instruction.removeSelf();
-            }
-        });
     }
 
     /**
@@ -142,6 +138,29 @@ public class Mem2reg{
                     map.put(previousBasicBlock.getUnwrappedBB(), previousBasicBlock.latestDefineMap.get(alloca))
             );
             phiInst.setPhiMapping(map);
+        });
+    }
+
+    private static void removeOptimizedVariable(BasicBlock basicBlock, Collection<MemoryInst.Alloca> variables){
+        // 'instructions' is changed during the following 'forEach', so we must clone one.
+        @SuppressWarnings("unchecked")
+        var instructions = (List<Instruction>) basicBlock.getUnwrappedBB().instructions.clone();
+        instructions.forEach(instruction -> {
+            if(instruction instanceof MemoryInst.Load){
+                var address = instruction.getOperandAt(0);
+                if(address instanceof MemoryInst.Alloca && variables.contains(address)){
+                    instruction.removeSelf();
+                }
+            }
+            if(instruction instanceof MemoryInst.Store){
+                var address = instruction.getOperandAt(1);
+                if(address instanceof MemoryInst.Alloca && variables.contains(address)){
+                    instruction.removeSelf();
+                }
+            }
+            if(instruction instanceof MemoryInst.Alloca && variables.contains(instruction)){
+                instruction.removeSelf();
+            }
         });
     }
 

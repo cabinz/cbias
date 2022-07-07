@@ -10,7 +10,7 @@ public class PassManager {
      *
      * @param module The module to be optimized.
      */
-    public void runPasses(Module module){
+    public static void runPasses(Module module){
         Mem2reg.optimize(module);
     }
 }

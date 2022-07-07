@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import passes.PassManager;
 
 /**
  * A Driver object is the one actually coping with the compilation flow,
@@ -36,6 +37,10 @@ public class Driver{
         // Traversal the ast to build the IR.
         visitor.visit(ast);
 
+        /* Intermediate code optimization */
+        PassManager.runPasses(module);
+        //System.out.println("Optimization has not been done.");
+
         /* Emit the IR text to an output file for testing. */
         if (config.llOut != null) {
             IREmitter emitter = new IREmitter(config.llOut);
@@ -43,9 +48,6 @@ public class Driver{
         }
 
         if (config.ASMout == null) return;
-
-        /* Intermediate code optimization */
-        System.out.println("Optimization has not been done.");
 
         /* Target code generation */
         MCBuilder mcBuilder = MCBuilder.get();
