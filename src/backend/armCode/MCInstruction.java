@@ -42,7 +42,7 @@ public abstract class MCInstruction {
         VCMP,
         VCVT,
         VMOV,
-        VMSR,
+        VMRS,
         VLDR,
         VSTR
     }
