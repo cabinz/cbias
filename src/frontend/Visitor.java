@@ -2,11 +2,8 @@ package frontend;
 
 import ir.Module;
 import ir.Value;
-import ir.types.ArrayType;
-import ir.types.FunctionType;
-import ir.types.IntegerType;
+import ir.types.*;
 import ir.Type;
-import ir.types.PointerType;
 import ir.values.*;
 import ir.values.Instruction.InstCategory;
 import ir.values.instructions.BinaryInst;
@@ -15,7 +12,6 @@ import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Stack;
 
 /**
@@ -24,7 +20,6 @@ import java.util.Stack;
  * in-memory IR constructs one by one during the traversal :D
  */
 public class Visitor extends SysYBaseVisitor<Void> {
-    //<editor-fold desc="Fields">
 
     private final IRBuilder builder;
     private final Scope scope = new Scope();
@@ -37,7 +32,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
      * Stack for back-patching break and continue statements.
      */
     Stack<ArrayList<TerminatorInst.Br>> bpStk = new Stack<>();
-    //</editor-fold>
 
     //<editor-fold desc="Environment variables indicating the building status">
     private final boolean ON = true;
@@ -86,6 +80,25 @@ public class Visitor extends SysYBaseVisitor<Void> {
         return envBuildFCall;
     }
 
+    /**
+     * The enum is for indicating which data type returned from the lower layer
+     * for visiting method. (INT -> read retInt_, FLT -> read retFlt_)
+     */
+    private enum DataType {FLT, INT};
+
+    /**
+     * Represents data type returned from the lower layer of visiting method.
+     */
+    private DataType envConveyedType = null;
+
+    private DataType getConveyedType() {
+        return envConveyedType;
+    }
+
+    private void setConveyedType(DataType dataType) {
+        envConveyedType = dataType;
+    }
+
     //</editor-fold>
 
     //<editor-fold desc="Variables storing returned data from the lower layers of visiting.">
@@ -94,6 +107,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private Type retType_;
     private ArrayList<Type> retTypeList_;
     private int retInt_;
+    private float retFloat_;
     //</editor-fold>
 
     //</editor-fold>
