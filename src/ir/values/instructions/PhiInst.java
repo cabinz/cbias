@@ -23,12 +23,15 @@ public class PhiInst extends Instruction {
     @Override
     public String toString() {
         var builder = new StringBuilder();
-        builder.append("phi");
+        builder.append(this.getName());
+        builder.append(" = ");
+        builder.append("phi ");
+        builder.append(this.getType().toString());
 
         final Boolean[] isFirstBranch = {true}; // Only in this cay can we change the value inside lambda.
         phiMapping.forEach((basicBlock, value) -> {
             builder.append(isFirstBranch[0] ?' ':',');
-            builder.append(String.format("[%s,%s]",value.getName(),basicBlock.getName()));
+            builder.append(String.format("[%s,%s]",value.getName(),"%"+basicBlock.getName()));
             isFirstBranch[0] = false;
         });
 
