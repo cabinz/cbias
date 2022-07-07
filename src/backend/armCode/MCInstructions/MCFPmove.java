@@ -9,10 +9,10 @@ import backend.operand.Register;
 /**
  * This class represent the register transfer instructions of VFP, <br/>
  * including VMOV & VMRS. The instruction is legal ONLY when transferring:<br/>
- * &nbsp;&nbsp;&nbsp; an immediate to extension <br/>
- * &nbsp;&nbsp;&nbsp; from core to extension <br/>
- * &nbsp;&nbsp;&nbsp; from extension to core <br/>
- * &nbsp;&nbsp;&nbsp; from extension to extension (except MRS)<br/>
+ * &#09; an immediate to extension <br/>
+ * &#09; from core to extension <br/>
+ * &#09; from extension to core <br/>
+ * &#09; from extension to extension (except MRS)<br/>
  * @see <a href="https://developer.arm.com/documentation/ddi0406/latest/">
  *     ARM Architecture Reference Manual ARMv7 edition </a> A4.12 Page: A4-29
  */

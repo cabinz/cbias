@@ -8,7 +8,8 @@ import backend.operand.ExtensionRegister;
  * instruction in ARM, including the VADD, VSUB, VMUL, VDIV. <br/>
  * MCFP = Machine Code Float Point
  * @see <a href="https://developer.arm.com/documentation/ddi0406/latest/">
- *     ARM Architecture Reference Manual ARMv7 edition </a> A4.14 Page: A4-38
+ *     ARM Architecture Reference Manual ARMv7 edition </a> <br/>
+ *     A4.14 Page: A4-38
  */
 public class MCFPBinary extends MCInstruction {
 
