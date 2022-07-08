@@ -6,15 +6,21 @@ import ir.Value;
 import ir.values.Instruction;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
+import passes.Pass;
 
 import java.util.*;
 
 /**
  * Mem2reg optimize
  */
-public class Mem2reg{
+public class Mem2reg implements Pass {
 
-    public static void optimize(Module module) {
+    @Override
+    public void runOnModule(Module module) {
+        Mem2reg.optimize(module);
+    }
+
+    private static void optimize(Module module) {
         module.functions.forEach(Mem2reg::optimize);
     }
 
@@ -163,5 +169,4 @@ public class Mem2reg{
             }
         });
     }
-
 }
