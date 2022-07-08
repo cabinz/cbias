@@ -3,12 +3,15 @@ package passes.mem2reg;
 import ir.Module;
 import ir.Use;
 import ir.Value;
+import ir.values.Constant;
 import ir.values.Instruction;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
 import passes.Pass;
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Mem2reg optimize
@@ -92,12 +95,29 @@ public class Mem2reg implements Pass {
      * @param basicBlock The block which needs to insert PHI.
      */
     private static void insertEmptyPhi(BasicBlock basicBlock){
-        basicBlock.npdVar.forEach( npdVar -> {
-            var phiInst = new PhiInst(npdVar.getAllocatedType(), basicBlock.getUnwrappedBB());
-            basicBlock.getUnwrappedBB().insertAtFront(phiInst);
-            basicBlock.importPhiMap.put(npdVar,phiInst);
-            basicBlock.latestDefineMap.put(npdVar,phiInst);
-        });
+        if(basicBlock.previousBasicBlocks.size()==0){
+            /* Entry block should not contain phi inst.
+             * If the size of npdVar is not 0, it causes an undefined-behavior.
+             * The code may be well-defined, but if it contains complex branches, the compiler cannot find out so.
+             * In this case, we just assume the initial value is 0.
+             */
+            basicBlock.npdVar.forEach(npdVar -> {
+                Constant constant;
+                if(npdVar.getAllocatedType().isInteger()){
+                    constant = Constant.ConstInt.get(0);
+                }else{
+                    throw new RuntimeException("Float constant is not implemented yet.");
+                }
+                basicBlock.latestDefineMap.put(npdVar,constant);
+            });
+        }else{
+            basicBlock.npdVar.forEach( npdVar -> {
+                var phiInst = new PhiInst(npdVar.getAllocatedType(), basicBlock.getUnwrappedBB());
+                basicBlock.getUnwrappedBB().insertAtFront(phiInst);
+                basicBlock.importPhiMap.put(npdVar,phiInst);
+                basicBlock.latestDefineMap.put(npdVar,phiInst);
+            });
+        }
     }
 
     /**
