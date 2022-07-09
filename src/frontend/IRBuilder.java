@@ -190,7 +190,7 @@ public class IRBuilder {
      */
     public TerminatorInst.Ret buildRet() {
         // Security checks.
-        if (!getCurFunc().getType().isVoidType()) {
+        if (!getCurFunc().getType().getRetType().isVoidType()) {
             throw new RuntimeException("Try to return void with Ret inst in a non-void function.");
         }
         // Construct, insert, and return.
@@ -207,7 +207,7 @@ public class IRBuilder {
      */
     public TerminatorInst.Ret buildRet(Value retVal) {
         // Security checks.
-        if (retVal.getType() != getCurFunc().getType()) {
+        if (retVal.getType() != getCurFunc().getType().getRetType()) {
             throw new RuntimeException(
                     "The type of retVal doesn't match with the return type defined in the function prototype.");
         }
