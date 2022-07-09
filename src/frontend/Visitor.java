@@ -701,7 +701,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
                             add(builder.buildConstant(finalI));
                         }});
                     }
-                    builder.buildStore(retValList_.get(i), gep);
+
+                    // Type matching check and conversion.
+                    Value initVal = retValList_.get(i);
+                    if (initVal.getType().isInteger() && arrType.getElemType().isFloat()) {
+                        initVal = builder.buildSitofp(initVal);
+                    }
+                    else if (initVal.getType().isFloat() && arrType.getElemType().isInteger()) {
+                        initVal = builder.buildFptosi(initVal, (IntegerType) arrType.getElemType());
+                    }
+
+                    // Assign the initial value with a Store.
+                    builder.buildStore(initVal, gep);
                 }
             }
         }
