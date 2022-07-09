@@ -99,7 +99,7 @@ public class CastInst {
             // e.g. "%6 = sitofp i32 %5 to float"
             Value opd = this.getOperandAt(0);
             return this.getName() + " = sitofp "// "%6 = sitofp "
-                    + opd // "i32 %5"
+                    + opd.getType() + " " + opd.getName() // "i32 %5"
                     + " to " + this.getType(); // " to float"
         }
     }
