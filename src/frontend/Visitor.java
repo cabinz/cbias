@@ -1727,7 +1727,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         if (this.inGlbInit()) {
             visit(ctx.lVal());
-            retInt_ = ((Constant.ConstInt) retVal_).getVal();
+            if (retVal_.getType().isInteger()) {
+                retInt_ = ((Constant.ConstInt) retVal_).getVal();
+                setConveyedType(DataType.INT);
+            }
+            else {
+                retFloat_ = ((Constant.ConstFloat) retVal_).getVal();
+                setConveyedType(DataType.FLT);
+            }
         }
         /*
         Local expression: Instructions will be generated.
