@@ -351,27 +351,6 @@ public class IRBuilder {
         return sitofp;
     }
 
-    /**
-     * Insert a binary instruction at current position of basic block.
-     * @param tag Instruction category.
-     * @param lOp Left operand.
-     * @param rOp Right operand.
-     * @return The binary instruction inserted.
-     */
-    public BinaryInst buildBinary(Instruction.InstCategory tag, Value lOp, Value rOp) {
-        // Analyze the type of the result returned by the binary operation.
-        Type resType = null;
-        if (tag.isRelationalBinary()) {
-            resType = IntegerType.getI1();
-        }
-        else if (tag.isArithmeticBinary()) {
-            resType = IntegerType.getI32();
-        }
-        // Build the binary instruction.
-        BinaryInst binInst = new BinaryInst(resType, tag, lOp, rOp, curBB);
-        getCurBB().insertAtEnd(binInst);
-        return binInst;
-    }
 
     /**
      * Insert an Add instruction at current position of basic block.
@@ -499,6 +478,54 @@ public class IRBuilder {
         // Insert and return the inst.
         getCurBB().insertAtEnd(instDiv);
         return instDiv;
+    }
+
+    /**
+     * Insert a comparison (relational) instruction at current position of basic block.
+     * ICMP/FCMP will be automatically determined according to the types
+     * @param opr The string of the operator.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryInst buildComparison(String opr, Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+
+        BinaryInst inst = null;
+        if (lOp.getType().isInteger()) {
+            switch (opr) {
+                case "<=" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.LE, lOp, rOp, curBB);
+                case ">=" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.GE, lOp, rOp, curBB);
+                case "<" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.LT, lOp, rOp, curBB);
+                case ">" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.GT, lOp, rOp, curBB);
+                case "==" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.EQ, lOp, rOp, curBB);
+                case "!=" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.NE, lOp, rOp, curBB);
+                default -> {}
+            }
+        }
+        // Floating point comparison.
+        else {
+            switch (opr) {
+                case "<=" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.FLE, lOp, rOp, curBB);
+                case ">=" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.FGE, lOp, rOp, curBB);
+                case "<" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.FLT, lOp, rOp, curBB);
+                case ">" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.FGT, lOp, rOp, curBB);
+                case "==" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.FEQ, lOp, rOp, curBB);
+                case "!=" -> inst = new BinaryInst(IntegerType.getI1(), Instruction.InstCategory.FNE, lOp, rOp, curBB);
+                default -> {}
+            }
+        }
+
+        if (inst == null) {
+            throw new RuntimeException("Operand '" + opr + "' cannot be recognized.");
+        }
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(inst);
+        return inst;
     }
 
     /**

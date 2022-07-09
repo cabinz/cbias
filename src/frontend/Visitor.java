@@ -1003,12 +1003,21 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitLAndExp(SysYParser.LAndExpContext ctx) {
         for(int i = 0; i < ctx.eqExp().size(); i++) {
             visit(ctx.eqExp(i));
-            // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
-            // todo: gives a float
-            if(!retVal_.getType().isI1()) {
-                retVal_ = builder.buildBinary(InstCategory.NE, retVal_, Constant.ConstInt.get(0));
+
+            /*
+            Type conversions of the condition.
+             */
+            if(retVal_.getType().isI32()) { // i32 -> i1
+                // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
+                retVal_ = builder.buildComparison("!=", retVal_, Constant.ConstInt.get(0));
+            }
+            else if (retVal_.getType().isFloat()) { // float -> i1
+                retVal_ = builder.buildFptosi(retVal_, IntegerType.getI1());
             }
 
+            /*
+            Build the branching.
+             */
             // For the first N-1 eqExp blocks.
             if(i < ctx.eqExp().size() - 1) {
                 // Build following blocks for short-circuit evaluation.
@@ -1046,20 +1055,32 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the next relExp as the right operand by visiting child.
             visit(ctx.relExp(i));
             Value rOp = retVal_;
-            // Extend if one Opd is i32 and another is i1.
-            if(lOp.getType().isI32() && rOp.getType().isI1()) {
-                rOp = builder.buildZExt(rOp);
+
+            /*
+            Implicit type conversions.
+             */
+            if (lOp.getType().isFloat() && !rOp.getType().isFloat()) {
+                rOp = builder.buildSitofp(rOp);
             }
-            if(rOp.getType().isI32() && lOp.getType().isI1()) {
-                lOp = builder.buildZExt(lOp);
+            else if (!lOp.getType().isFloat() && rOp.getType().isFloat()) {
+                lOp = builder.buildSitofp(lOp);
             }
-            // Build a comparison instruction, which yields a result
-            // to be the left operand for the next round.
-            switch (ctx.getChild(2 * i - 1).getText()) {
-                case "==" -> lOp = builder.buildBinary(InstCategory.EQ, lOp, rOp);
-                case "!=" -> lOp = builder.buildBinary(InstCategory.NE, lOp, rOp);
-                default -> {}
+            else {
+                // Extend if one Opd is i32 and another is i1.
+                if(lOp.getType().isI32() && rOp.getType().isI1()) {
+                    rOp = builder.buildZExt(rOp);
+                }
+                if(rOp.getType().isI32() && lOp.getType().isI1()) {
+                    lOp = builder.buildZExt(lOp);
+                }
             }
+
+            /*
+            Build a comparison instruction, which yields a result
+            to be the left operand for the next round.
+             */
+            String opr = ctx.getChild(2 * i - 1).getText(); // The comparison operator.
+            lOp = builder.buildComparison(opr, lOp, rOp);
         }
         // The final result is stored in the last left operand.
         retVal_ = lOp;
@@ -1084,22 +1105,32 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the next addExp as the right operand by visiting child.
             visit(ctx.addExp(i));
             Value rOp = retVal_;
-            // Same as visitEqExp above: Extend if one Opd is i32 and another is i1.
-            if(lOp.getType().isI32() && rOp.getType().isI1()) {
-                rOp = builder.buildZExt(rOp);
+
+            /*
+            Implicit type conversions.
+             */
+            if (lOp.getType().isFloat() && !rOp.getType().isFloat()) {
+                rOp = builder.buildSitofp(rOp);
             }
-            if(rOp.getType().isI32() && lOp.getType().isI1()) {
-                lOp = builder.buildZExt(lOp);
+            else if (!lOp.getType().isFloat() && rOp.getType().isFloat()) {
+                lOp = builder.buildSitofp(lOp);
             }
-            // Build a comparison instruction, which yields a result
-            // to be the left operand for the next round.
-            switch (ctx.getChild(2 * i - 1).getText()) {
-                case "<=" -> lOp = builder.buildBinary(InstCategory.LE, lOp, rOp);
-                case ">=" -> lOp = builder.buildBinary(InstCategory.GE, lOp, rOp);
-                case "<" -> lOp = builder.buildBinary(InstCategory.LT, lOp, rOp);
-                case ">" -> lOp = builder.buildBinary(InstCategory.GT, lOp, rOp);
-                default -> {}
+            else {
+                // Same as visitEqExp above: Extend if one Opd is i32 and another is i1.
+                if (lOp.getType().isI32() && rOp.getType().isI1()) {
+                    rOp = builder.buildZExt(rOp);
+                }
+                if (rOp.getType().isI32() && lOp.getType().isI1()) {
+                    lOp = builder.buildZExt(lOp);
+                }
             }
+
+            /*
+            Build a comparison instruction, which yields a result
+            to be the left operand for the next round.
+             */
+            String opr = ctx.getChild(2 * i - 1).getText(); // The comparison operator.
+            lOp = builder.buildComparison(opr, lOp, rOp);
         }
         // The final result is stored in the last left operand.
         retVal_ = lOp;
@@ -1184,8 +1215,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
                 // Unary operators.
                 switch (ctx.unaryOp().getText()) {
-                    case "-" -> retVal_ = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), retVal_);
-                    case "!" -> retVal_ = builder.buildBinary(InstCategory.EQ, builder.buildConstant(0), retVal_);
+                    case "-" -> retVal_ = builder.buildSub(builder.buildConstant(0), retVal_);
+                    case "!" -> retVal_ = builder.buildComparison("==", builder.buildConstant(0), retVal_);
                     case "+" -> {}
                 }
             }
@@ -1193,6 +1224,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             else {
                 switch (ctx.unaryOp().getText()) {
                     case "-" -> retVal_ = builder.buildUnary(InstCategory.FNEG, retVal_);
+                    case "!" -> retVal_ = builder.buildComparison("==", builder.buildConstant(.0f), retVal_);
                     case "+" -> {}
                 }
             }
