@@ -261,7 +261,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Value initVal = retVal_;
 
         // Type matching check and implicit type conversion.
-        String bType = ctx.getParent().getChild(0).getText();
+        String bType = ctx.getParent().getChild(1).getText();
         switch(bType) {
             case "int" -> {
                 if (initVal.getType().isFloat()) {
@@ -464,13 +464,36 @@ public class Visitor extends SysYBaseVisitor<Void> {
             throw new RuntimeException("Duplicate definition of variable name: " + varName);
         }
 
-        // A global variable.
+        /*
+        A global variable.
+         */
         if (scope.isGlobal()) {
             GlobalVariable glbVar;
+
+            // With initialization.
             if (ctx.initVal() != null) {
                 visit(ctx.initVal());
-                glbVar = builder.buildGlbVar(varName, (Constant) retVal_);
+                Value initVal = retVal_;
+                // Type matching check and conversion.
+                switch (bType) {
+                    case "int" -> {
+                        if (initVal.getType().isFloat()) {
+                            float numericVal = ((Constant.ConstFloat) initVal).getVal();
+                            initVal = builder.buildConstant((int) numericVal);
+                        }
+                    }
+                    case "float" -> {
+                        if (initVal.getType().isInteger()) {
+                            int numericVal = ((Constant.ConstInt) initVal).getVal();
+                            initVal = builder.buildConstant((float) numericVal);
+                        }
+                    }
+                }
+                // Build the glb var.
+                glbVar = builder.buildGlbVar(varName, (Constant) initVal);
             }
+
+            // W/o initialization.
             else {
                 switch (bType) {
                     case "int" -> glbVar = builder.buildGlbVar(varName, IntegerType.getI32());
@@ -478,9 +501,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     default -> throw new RuntimeException("Unsupported type."); // Impossible case.
                 }
             }
+
+            // Update the symbol table.
             scope.addDecl(varName, glbVar);
         }
-        // A local variable.
+
+        /*
+        A local variable.
+         */
         else {
             MemoryInst.Alloca addrAllocated;
             switch (bType) {
@@ -522,7 +550,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
         super.visitScalarInitVal(ctx);
         // Turn off global var switch.
-        if (inGlbInit()) {
+        if (this.inGlbInit()) {
             switch (getConveyedType()) {
                 case INT -> retVal_ = builder.buildConstant(retInt_);
                 case FLT -> retVal_ = builder.buildConstant(retFloat_);
@@ -1194,12 +1222,27 @@ public class Visitor extends SysYBaseVisitor<Void> {
         if (this.inGlbInit()) {
             // Retrieve the value of unaryExp() by visiting child.
             visit(ctx.unaryExp());
-            switch (ctx.unaryOp().getText()) {
-                case "-" -> retInt_ = -retInt_;
-                case "!" -> retInt_ = (retInt_ == 0) ? 0 : 1;
-                case "+" -> {}
+            switch (getConveyedType()) {
+                // Integer constant folding.
+                case INT -> {
+                    switch (ctx.unaryOp().getText()) {
+                        case "-" -> retInt_ = -retInt_;
+                        case "!" -> retInt_ = (retInt_ == 0) ? 0 : 1;
+                        case "+" -> {}
+                    }
+                }
+
+                // Float constant folding.
+                case FLT -> {
+                    switch (ctx.unaryOp().getText()) {
+                        case "-" -> retFloat_ = -retFloat_;
+                        case "!" -> retFloat_ = (retFloat_ == .0f) ? 0 : 1;
+                        case "+" -> {}
+                    }
+                }
+
+                default -> {}
             }
-            // todo: float
         }
         /*
         Local expression: Instructions will be generated.
@@ -1241,21 +1284,88 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Global expression: Compute value of the expr w/o instruction generation.
          */
         if (this.inGlbInit()) {
-            // Retrieve the value of the 1st mulExp.
-            // res stores the temporary result during the computation.
+            int rOpInt = 0;
+            float rOpFloat = 0;
+
+            // Retrieve the value of the 1st unaryExp.
             visit(ctx.mulExp(0));
-            int res = retInt_;
-            // Retrieve each of the rest mulExp and compute.
-            for (int i = 1; i < ctx.mulExp().size(); i++) {
-                visit(ctx.mulExp(i));
-                switch (ctx.getChild(i * 2 - 1).getText()) {
-                    case "+" -> res += retInt_;
-                    case "-" -> res -= retInt_;
+            // A variable capturing the datatype of the left operand.
+            var curType = this.getConveyedType();
+
+            switch (curType) {
+                // When the 1st operand is an integer,
+                // there might be implicit type promotion during the computation.
+                case INT -> {
+                    rOpInt = retInt_;
+                    for (int i = 1; i < ctx.mulExp().size(); i++) {
+                        visit(ctx.mulExp(i));
+
+                        // Auto type promotion.
+                        if (this.getConveyedType() == DataType.FLT) {
+                            if (curType == DataType.INT) {
+                                rOpFloat = rOpInt;
+                                curType = DataType.FLT;
+                            }
+                            // Arithmetics.
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "+" -> rOpFloat += retFloat_;
+                                case "-" -> rOpFloat -= retFloat_;
+                                default -> throw new RuntimeException("Unsupported operation in visitMulExp().");
+                            }
+                        }
+                        // Otherwise (conveyedType == INT)
+                        else {
+                            if (curType == DataType.INT) {
+                                switch (ctx.getChild(i * 2 - 1).getText()) {
+                                    case "+" -> rOpInt += retInt_;
+                                    case "-" -> rOpInt -= retInt_;
+                                }
+                            }
+                            else {
+                                switch (ctx.getChild(i * 2 - 1).getText()) {
+                                    case "+" -> rOpFloat += retInt_;
+                                    case "-" -> rOpFloat -= retInt_;
+                                    default -> throw new RuntimeException("Unsupported operation in visitMulExp().");
+                                }
+                            }
+                        }
+                    }
                 }
+
+                // When the 1st operand is a float, no auto type promotion.
+                case FLT -> {
+                    rOpFloat = retFloat_;
+                    for (int i = 1; i < ctx.mulExp().size(); i++) {
+                        visit(ctx.mulExp(i));
+
+                        if (this.getConveyedType() == DataType.INT) {
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "+" -> rOpFloat += retInt_;
+                                case "-" -> rOpFloat -= retInt_;
+                            }
+                        } else {
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "+" -> rOpFloat += retFloat_;
+                                case "-" -> rOpFloat -= retFloat_;
+                            }
+                        }
+                    }
+                }
+
+                // Error.
+                default ->
+                        throw new RuntimeException("Unsupported Datatype in visitMulExp().");
             }
-            retInt_ = res;
-            // todo: float case
+
+            // Set the conveyedType and store the return value.
+            this.setConveyedType(curType);
+            switch (curType) {
+                case INT -> retInt_ = rOpInt;
+                case FLT -> retFloat_ = rOpFloat;
+            }
         }
+
+
         /*
         Local expression: Instructions will be generated.
          */
@@ -1312,22 +1422,88 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Global expression: Compute value of the expr w/o instruction generation.
          */
         if (this.inGlbInit()) {
-            // Retrieve the value of the 1st unaryExp.
-            // res stores the temporary result during the computation.
-            visit(ctx.unaryExp(0));
+            int rOpInt = 0;
+            float rOpFloat = 0;
 
-            int res = retInt_;
-            // Retrieve each of the rest unaryExp and compute.
-            for (int i = 1; i < ctx.unaryExp().size(); i++) {
-                visit(ctx.unaryExp(i));
-                switch (ctx.getChild(i * 2 - 1).getText()) {
-                    case "*" -> res *= retInt_;
-                    case "/" -> res /= retInt_;
-                    case "%" -> res %= retInt_;
+            // Retrieve the value of the 1st unaryExp.
+            visit(ctx.unaryExp(0));
+            // A variable capturing the datatype of the left operand.
+            var curType = this.getConveyedType();
+
+            switch (curType) {
+                // When the 1st operand is an integer,
+                // there might be implicit type promotion during the computation.
+                case INT -> {
+                    rOpInt = retInt_;
+                    for (int i = 1; i < ctx.unaryExp().size(); i++) {
+                        visit(ctx.unaryExp(i));
+
+                        // Auto type promotion.
+                        if (this.getConveyedType() == DataType.FLT) {
+                            if (curType == DataType.INT) {
+                                rOpFloat = rOpInt;
+                                curType = DataType.FLT;
+                            }
+                            // Arithmetics.
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "*" -> rOpFloat *= retFloat_;
+                                case "/" -> rOpFloat /= retFloat_;
+                                default -> throw new RuntimeException("Unsupported operation in visitMulExp().");
+                            }
+                        }
+                        // Otherwise (conveyedType == INT)
+                        else {
+                            if (curType == DataType.INT) {
+                                switch (ctx.getChild(i * 2 - 1).getText()) {
+                                    case "*" -> rOpInt *= retInt_;
+                                    case "/" -> rOpInt /= retInt_;
+                                    case "%" -> rOpInt %= retInt_;
+                                }
+                            }
+                            else {
+                                switch (ctx.getChild(i * 2 - 1).getText()) {
+                                    case "*" -> rOpFloat *= retInt_;
+                                    case "/" -> rOpFloat /= retInt_;
+                                    default -> throw new RuntimeException("Unsupported operation in visitMulExp().");
+                                }
+                            }
+                        }
+                    }
                 }
+
+                // When the 1st operand is a float, no auto type promotion.
+                case FLT -> {
+                    rOpFloat = retFloat_;
+                    for (int i = 1; i < ctx.unaryExp().size(); i++) {
+                        visit(ctx.unaryExp(i));
+
+                        if (this.getConveyedType() == DataType.INT) {
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "*" -> rOpFloat *= retInt_;
+                                case "/" -> rOpFloat /= retInt_;
+                            }
+                        } else {
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "*" -> rOpFloat *= retFloat_;
+                                case "/" -> rOpFloat /= retFloat_;
+                            }
+                        }
+                    }
+                }
+
+                // Error.
+                default ->
+                    throw new RuntimeException("Unsupported Datatype in visitMulExp().");
             }
-            retInt_ = res;
+
+            // Set the conveyedType and store the return value.
+            this.setConveyedType(curType);
+            switch (curType) {
+                case INT -> retInt_ = rOpInt;
+                case FLT -> retFloat_ = rOpFloat;
+            }
         }
+
         /*
         Local expression: Instructions will be generated.
          */
