@@ -71,12 +71,13 @@ public class BinaryInst extends Instruction {
                 case EQ -> "icmp eq " + this.getOperandAt(0).getType() + " ";
                 case NE -> "icmp ne " + this.getOperandAt(0).getType() + " ";
                 // Floating point comparisons.
-                case FLT -> "fcmp slt " + this.getOperandAt(0).getType() + " ";
-                case FLE -> "fcmp sle " + this.getOperandAt(0).getType() + " ";
-                case FGE -> "fcmp sge " + this.getOperandAt(0).getType() + " ";
-                case FGT -> "fcmp sgt " + this.getOperandAt(0).getType() + " ";
-                case FEQ -> "fcmp eq " + this.getOperandAt(0).getType() + " ";
-                case FNE -> "fcmp ne " + this.getOperandAt(0).getType() + " ";
+                // SysY doesn't support NaN/Inf, thus no ult/ule/... are needed.
+                case FLT -> "fcmp olt " + this.getOperandAt(0).getType() + " ";
+                case FLE -> "fcmp ole " + this.getOperandAt(0).getType() + " ";
+                case FGE -> "fcmp oge " + this.getOperandAt(0).getType() + " ";
+                case FGT -> "fcmp ogt " + this.getOperandAt(0).getType() + " ";
+                case FEQ -> "fcmp oeq " + this.getOperandAt(0).getType() + " ";
+                case FNE -> "fcmp one " + this.getOperandAt(0).getType() + " ";
                 // Error.
                 default -> throw new RuntimeException("Try to print with an unsupported InstCategory.");
             }
