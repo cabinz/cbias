@@ -134,11 +134,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private void initRuntimeFunctions() {
         // Return types.
         Type i32Ty = IntegerType.getI32();
+        Type floatTy = FloatType.getType();
         Type voidTy = Type.VoidType.getType();
         Type ptrI32Ty = PointerType.getType(i32Ty);
+        Type ptrFloatTy = PointerType.getType(floatTy);
         // Argument type lists.
         ArrayList<Type> emptyArgTypeList = new ArrayList<>();
         ArrayList<Type> intArgTypeList = new ArrayList<>() {{add(i32Ty);}};
+        ArrayList<Type> floatArgTypeList = new ArrayList<>() {{add(floatTy);}};
 
         // i32 getint()
         scope.addDecl("getint",
@@ -150,6 +153,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
         scope.addDecl("putint",
                 builder.buildFunction("putint", FunctionType.getType(
                         voidTy, intArgTypeList
+                ), true)
+        );
+        // i32 getfloat()
+        scope.addDecl("getfloat",
+                builder.buildFunction("getfloat", FunctionType.getType(
+                        floatTy , emptyArgTypeList
+                ), true)
+        );
+        // void putfloat(float)
+        scope.addDecl("putfloat",
+                builder.buildFunction("putfloat", FunctionType.getType(
+                        voidTy, floatArgTypeList
                 ), true)
         );
         // i32 getch()
@@ -164,20 +179,32 @@ public class Visitor extends SysYBaseVisitor<Void> {
                         voidTy, intArgTypeList
                 ), true)
         );
-        // i32 getarray(i32, i32*)
-        ArrayList<Type> iptrArgTypeList = new ArrayList<>() {{add(ptrI32Ty);}};
+        // i32 getarray(i32*)
         scope.addDecl("getarray",
                 builder.buildFunction("getarray", FunctionType.getType(
-                        i32Ty, iptrArgTypeList
+                        i32Ty, new ArrayList<>() {{add(ptrI32Ty);}}
                 ), true)
         );
         // void putarray(i32, i32*)
-        ArrayList<Type> putarrayArgTypeList = new ArrayList<>() {{add(i32Ty); add(ptrI32Ty);}};
         scope.addDecl("putarray",
                 builder.buildFunction("putarray", FunctionType.getType(
-                        voidTy, putarrayArgTypeList
+                        voidTy, new ArrayList<>() {{add(i32Ty); add(ptrI32Ty);}}
                 ), true)
         );
+
+        // i32 getfarray(float*)
+        scope.addDecl("getfarray",
+                builder.buildFunction("getfarray", FunctionType.getType(
+                        i32Ty, new ArrayList<>() {{add(ptrFloatTy);}}
+                ), true)
+        );
+        // void putfarray(i32, float*)
+        scope.addDecl("putfarray",
+                builder.buildFunction("putfarray", FunctionType.getType(
+                        voidTy, new ArrayList<>() {{add(i32Ty); add(ptrFloatTy);}}
+                ), true)
+        );
+
         // void starttime()
         scope.addDecl("starttime",
                 builder.buildFunction("starttime", FunctionType.getType(
