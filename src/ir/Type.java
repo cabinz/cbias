@@ -1,9 +1,6 @@
 package ir;
 
-import ir.types.ArrayType;
-import ir.types.FunctionType;
-import ir.types.IntegerType;
-import ir.types.PointerType;
+import ir.types.*;
 
 /**
  * Each Value instance has a type field containing type information related to it as an IR component.
@@ -100,9 +97,14 @@ public class Type {
         return this.isInteger() && ((IntegerType) this).getBitWidth() == 32;
     }
 
+    public boolean isFloat() {
+        return (this instanceof FloatType);
+    }
+
     public boolean isPointerType() {
         return (this instanceof PointerType);
     }
+
     public boolean isArrayType() {
         return (this instanceof ArrayType);
     }
