@@ -1524,13 +1524,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // The identifier needs to be previously defined as a function
         // and in the symbol table.
         String name = ctx.Identifier().getText();
-        Value func = scope.getValByName(name);
-        if (func == null) {
+        Value val = scope.getValByName(name);
+        if (val == null) {
             throw new RuntimeException("Undefined name: " + name + ".");
         }
-        if (!func.getType().isFunctionType()) {
+        if (!val.getType().isFunctionType()) {
             throw new RuntimeException(name + " is not a function and cannot be invoked.");
         }
+        Function func = (Function) val;
 
         // If the function has argument(s) passed, retrieve them by visiting child(ren).
         ArrayList<Value> args = new ArrayList<>();
@@ -1563,13 +1564,20 @@ public class Visitor extends SysYBaseVisitor<Void> {
                         }});
                     }
                 }
+                // sitofp and fptosi
+                if (typeArg.isI32() && arg.getType().isFloat()) {
+                    arg = builder.buildFptosi(arg, (IntegerType) typeArg);
+                }
+                else if (typeArg.isFloat() && arg.getType().isI32()) {
+                    arg = builder.buildSitofp(arg);
+                }
                 // Add the argument Value retrieved by visiting to the container.
                 args.add(arg);
             }
         }
 
         // Build a Call instruction.
-        retVal_ = builder.buildCall((Function)func, args);
+        retVal_ = builder.buildCall(func, args);
 
         setBuildFCall(OFF);
         return null;
