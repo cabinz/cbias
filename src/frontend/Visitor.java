@@ -886,7 +886,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // visit child to retrieve it.
         if (ctx.expr() != null) {
             visit(ctx.expr());
-            builder.buildRet(retVal_);
+
+            // Return type matching check and conversion.
+            Value retVal = retVal_;
+            Type retType = builder.getCurFunc().getType().getRetType(); // The return type defined in the prototype.
+            if (retVal.getType().isInteger() && retType.isFloat()) {
+                retVal = builder.buildSitofp(retVal);
+            }
+            else if (retVal.getType().isFloat() && retType.isInteger()) {
+                retVal = builder.buildFptosi(retVal, (IntegerType) retType);
+            }
+
+            builder.buildRet(retVal);
         }
         // If not, return void.
         else {
