@@ -189,6 +189,11 @@ public class IRBuilder {
      * @return The terminator object inserted.
      */
     public TerminatorInst.Ret buildRet() {
+        // Security checks.
+        if (!getCurFunc().getType().isVoidType()) {
+            throw new RuntimeException("Try to return void with Ret inst in a non-void function.");
+        }
+        // Construct, insert, and return.
         TerminatorInst.Ret ret = new TerminatorInst.Ret(curBB);
         getCurBB().insertAtEnd(ret);
         return ret;
@@ -201,6 +206,12 @@ public class IRBuilder {
      * @return The terminator object inserted.
      */
     public TerminatorInst.Ret buildRet(Value retVal) {
+        // Security checks.
+        if (retVal.getType() != getCurFunc().getType()) {
+            throw new RuntimeException(
+                    "The type of retVal doesn't match with the return type defined in the function prototype.");
+        }
+        // Construct, insert, and return.
         TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal, curBB);
         getCurBB().insertAtEnd(ret);
         return ret;
@@ -233,7 +244,6 @@ public class IRBuilder {
         if (getCurBB().getLastInst() != null && getCurBB().getLastInst().isBr()) {
             throw new RuntimeException("Cannot insert a Br after another Br.");
         }
-
         // Create and insert a block.
         TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk, curBB);
         getCurBB().insertAtEnd(uncondBr);
@@ -297,6 +307,11 @@ public class IRBuilder {
      * @return The ZExt instruction inserted.
      */
     public CastInst.ZExt buildZExt(Value srcVal) {
+        // Security checks.
+        if (!srcVal.getType().isI1()) {
+            throw new RuntimeException("A non-i1 src Value is given.");
+        }
+        // Construct, insert, and return.
         CastInst.ZExt zext = new CastInst.ZExt(srcVal, curBB);
         getCurBB().insertAtEnd(zext);
         return zext;
@@ -310,6 +325,11 @@ public class IRBuilder {
      * @return The fptosi instruction inserted.
      */
     public CastInst.Fptosi buildFptosi(Value srcVal, IntegerType destType) {
+        // Security checks.
+        if (!srcVal.getType().isFloat()) {
+            throw new RuntimeException("A non-floatingPoint src Value is given.");
+        }
+        // Construct, insert, and return.
         CastInst.Fptosi fptosi = new CastInst.Fptosi(srcVal, destType, curBB);
         getCurBB().insertAtEnd(fptosi);
         return fptosi;
@@ -321,6 +341,11 @@ public class IRBuilder {
      * @return The sitofp instruction inserted.
      */
     public CastInst.Sitofp buildSitofp(Value srcVal) {
+        // Security checks.
+        if (!srcVal.getType().isInteger()) {
+            throw new RuntimeException("A non-integer src Value is given.");
+        }
+        // Construct, insert, and return.
         CastInst.Sitofp sitofp = new CastInst.Sitofp(srcVal, curBB);
         getCurBB().insertAtEnd(sitofp);
         return sitofp;
@@ -342,9 +367,6 @@ public class IRBuilder {
         else if (tag.isArithmeticBinary()) {
             resType = IntegerType.getI32();
         }
-        else {
-            // todo: float arithmetic binary operations
-        }
         // Build the binary instruction.
         BinaryInst binInst = new BinaryInst(resType, tag, lOp, rOp, curBB);
         getCurBB().insertAtEnd(binInst);
@@ -362,8 +384,7 @@ public class IRBuilder {
     public BinaryInst buildAdd(Value lOp, Value rOp) {
         // Security checks.
         if (lOp.getType() != rOp.getType()) {
-            throw new RuntimeException("Unmatched types for buildAdd(): [lOp] "
-                    + lOp.getType() + ", [rOp] " + rOp.getType());
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
         }
 
         // Constructor the Add instruction (for integers and floats respectively)
@@ -376,7 +397,7 @@ public class IRBuilder {
             instAdd = new BinaryInst(FloatType.getType(), Instruction.InstCategory.FADD, lOp, rOp, curBB);
         }
         else {
-            throw new RuntimeException("Unsupported type for buildAdd(): " + type);
+            throw new RuntimeException("Unsupported type: " + type);
         }
 
         // Insert and return the inst.
@@ -395,8 +416,7 @@ public class IRBuilder {
     public BinaryInst buildSub(Value lOp, Value rOp) {
         // Security checks.
         if (lOp.getType() != rOp.getType()) {
-            throw new RuntimeException("Unmatched types for buildSub(): [lOp] "
-                    + lOp.getType() + ", [rOp] " + rOp.getType());
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
         }
 
         // Constructor the Sub instruction (for integers and floats respectively)
@@ -409,7 +429,7 @@ public class IRBuilder {
             instSub = new BinaryInst(FloatType.getType(), Instruction.InstCategory.FSUB, lOp, rOp, curBB);
         }
         else {
-            throw new RuntimeException("Unsupported type for buildSub(): " + type);
+            throw new RuntimeException("Unsupported type: " + type);
         }
 
         // Insert and return the inst.
@@ -428,8 +448,7 @@ public class IRBuilder {
     public BinaryInst buildMul(Value lOp, Value rOp) {
         // Security checks.
         if (lOp.getType() != rOp.getType()) {
-            throw new RuntimeException("Unmatched types for buildMul(): [lOp] "
-                    + lOp.getType() + ", [rOp] " + rOp.getType());
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
         }
 
         // Constructor the Mul instruction (for integers and floats respectively)
@@ -442,7 +461,7 @@ public class IRBuilder {
             instMul = new BinaryInst(FloatType.getType(), Instruction.InstCategory.FMUL, lOp, rOp, curBB);
         }
         else {
-            throw new RuntimeException("Unsupported type for buildMul(): " + type);
+            throw new RuntimeException("Unsupported type: " + type);
         }
 
         // Insert and return the inst.
@@ -461,8 +480,7 @@ public class IRBuilder {
     public BinaryInst buildDiv(Value lOp, Value rOp) {
         // Security checks.
         if (lOp.getType() != rOp.getType()) {
-            throw new RuntimeException("Unmatched types for buildDiv(): [lOp] "
-                    + lOp.getType() + ", [rOp] " + rOp.getType());
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
         }
 
         // Constructor the Div instruction (for integers and floats respectively)
@@ -475,7 +493,7 @@ public class IRBuilder {
             instDiv = new BinaryInst(FloatType.getType(), Instruction.InstCategory.FDIV, lOp, rOp, curBB);
         }
         else {
-            throw new RuntimeException("Unsupported type for buildDiv(): " + type);
+            throw new RuntimeException("Unsupported type: " + type);
         }
 
         // Insert and return the inst.
