@@ -317,9 +317,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
             dimLens.add(dimLen);
         }
 
-        // todo: float type array
         // The type of the basic element in the array.
-        Type tmpType = IntegerType.getI32();
+        Type tmpType = null;
+        // Retrieve the basic element type.
+        String bType = ctx.getParent().getChild(1).getText();
+        switch (bType) {
+            case "int" -> tmpType = IntegerType.getI32();
+            case "float" -> tmpType = FloatType.getType();
+        }
         // Build the final type of the array
         // by looping through the dimLens from the inside out.
         for (int i = dimLens.size(); i > 0; i--) {
@@ -620,9 +625,15 @@ public class Visitor extends SysYBaseVisitor<Void> {
             int dimLen = retInt_;
             dimLens.add(dimLen);
         }
+
+        Type tmpType = null;
+        // Retrieve the basic element type.
+        String bType = ctx.getParent().getChild(0).getText();
+        switch (bType) {
+            case "int" -> tmpType = IntegerType.getI32();
+            case "float" -> tmpType = FloatType.getType();
+        }
         // Build the arrType bottom-up (reversely).
-        // todo: float arr type
-        Type tmpType = IntegerType.getI32();
         for (int i = dimLens.size(); i > 0; i--) {
             tmpType = ArrayType.getType(tmpType, dimLens.get(i - 1));
         }
@@ -641,10 +652,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 visit(ctx.initVal());
                 this.setGlbInit(OFF);
                 // Convert the Values returned into Constants.
-                // todo: It can also be a float initList
                 ArrayList<Constant> initList = new ArrayList<>();
                 for (Value val : retValList_) {
-                    initList.add((Constant.ConstInt) val);
+                    initList.add((Constant) val);
                 }
                 // Build the const array, set it to be a global variable and put it into the symbol table.
                 Constant.ConstArray initArr = builder.buildConstArr(arrType, initList);
