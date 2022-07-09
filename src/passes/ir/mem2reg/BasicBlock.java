@@ -8,9 +8,7 @@ import ir.values.instructions.PhiInst;
 import java.util.*;
 import java.util.function.Consumer;
 
-class BasicBlock implements Iterable<Instruction> {
-
-    ir.values.BasicBlock basicBlock;
+class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction> {
 
     List<BasicBlock> previousBasicBlocks = new ArrayList<>();
     List<BasicBlock> followingBasicBlocks = new ArrayList<>();
@@ -30,26 +28,12 @@ class BasicBlock implements Iterable<Instruction> {
     Map<MemoryInst.Alloca, Value> latestDefineMap = new HashMap<>();
 
     public BasicBlock(ir.values.BasicBlock basicBlock){
-        this.basicBlock = basicBlock;
+        super(basicBlock);
     }
 
     @Override
     public Iterator<Instruction> iterator() {
-        return getUnwrappedBB().iterator();
-    }
-
-    @Override
-    public void forEach(Consumer<? super Instruction> action) {
-        getUnwrappedBB().forEach(action);
-    }
-
-    @Override
-    public Spliterator<Instruction> spliterator() {
-        return getUnwrappedBB().spliterator();
-    }
-
-    public ir.values.BasicBlock getUnwrappedBB(){
-        return basicBlock;
+        return getRawBasicBlock().iterator();
     }
 
     public void addPreviousBasicBlock(BasicBlock basicBlock){
@@ -68,7 +52,7 @@ class BasicBlock implements Iterable<Instruction> {
      * @param allocaInstSet The set of instruction to be filtered.
      */
     public void filterUnpromotableAllocaInst(Set<MemoryInst.Alloca> allocaInstSet){
-        basicBlock.forEach(instruction -> {
+        rawBasicBlock.forEach(instruction -> {
             if(!instruction.isLoad() && !instruction.isStore()){
                 instruction.operands.forEach(use -> {
                     if(use.getValue() instanceof MemoryInst.Alloca){

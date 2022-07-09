@@ -110,8 +110,8 @@ public class Mem2reg implements IRPass {
             });
         }else{
             basicBlock.npdVar.forEach( npdVar -> {
-                var phiInst = new PhiInst(npdVar.getAllocatedType(), basicBlock.getUnwrappedBB());
-                basicBlock.getUnwrappedBB().insertAtFront(phiInst);
+                var phiInst = new PhiInst(npdVar.getAllocatedType(), basicBlock.getRawBasicBlock());
+                basicBlock.getRawBasicBlock().insertAtFront(phiInst);
                 basicBlock.importPhiMap.put(npdVar,phiInst);
                 basicBlock.latestDefineMap.put(npdVar,phiInst);
             });
@@ -159,7 +159,7 @@ public class Mem2reg implements IRPass {
         basicBlock.importPhiMap.forEach((alloca, phiInst) -> {
             var map = new HashMap<ir.values.BasicBlock, Value>();
             basicBlock.previousBasicBlocks.forEach(previousBasicBlock ->
-                    map.put(previousBasicBlock.getUnwrappedBB(), previousBasicBlock.latestDefineMap.get(alloca))
+                    map.put(previousBasicBlock.getRawBasicBlock(), previousBasicBlock.latestDefineMap.get(alloca))
             );
             phiInst.setPhiMapping(map);
         });
@@ -168,7 +168,7 @@ public class Mem2reg implements IRPass {
     private static void removeOptimizedVariable(BasicBlock basicBlock, Collection<MemoryInst.Alloca> variables){
         // 'instructions' is changed during the following 'forEach', so we must clone one.
         @SuppressWarnings("unchecked")
-        var instructions = (List<Instruction>) basicBlock.getUnwrappedBB().instructions.clone();
+        var instructions = (List<Instruction>) basicBlock.getRawBasicBlock().instructions.clone();
         instructions.forEach(instruction -> {
             if(instruction instanceof MemoryInst.Load){
                 var address = instruction.getOperandAt(0);
