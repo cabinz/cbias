@@ -34,7 +34,7 @@ public class compiler{
             driver.launch(config);
         }
         catch (Exception e){
-            System.out.println(e);
+            e.printStackTrace();
         }
     }
 }
