@@ -64,7 +64,7 @@ public class Constant extends User {
 
         @Override
         public String toString() {
-            return this.getType() + " " + this.val;
+            return this.getType() + " " + this.getName();
         }
     }
 
@@ -83,7 +83,7 @@ public class Constant extends User {
         private ConstFloat(float val) {
             super(FloatType.getType());
             this.val = val;
-            this.setName(String.valueOf(val));
+            this.setName("0x" + Long.toHexString(Double.doubleToLongBits((double) val)));
         }
 
         /**
@@ -98,7 +98,7 @@ public class Constant extends User {
 
         @Override
         public String toString() {
-            return this.getType() + " " + this.val;
+            return this.getType() + " " + this.getName();
         }
     }
 
