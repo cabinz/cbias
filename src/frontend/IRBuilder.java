@@ -302,6 +302,30 @@ public class IRBuilder {
         return zext;
     }
 
+
+    /**
+     * Insert a Fptosi instruction at current position of basic block.
+     * @param srcVal The Value to be converted.
+     * @param destType The destination IntegerType (i32/i1).
+     * @return The fptosi instruction inserted.
+     */
+    public CastInst.Fptosi buildFptosi(Value srcVal, IntegerType destType) {
+        CastInst.Fptosi fptosi = new CastInst.Fptosi(srcVal, destType, curBB);
+        getCurBB().insertAtEnd(fptosi);
+        return fptosi;
+    }
+
+    /**
+     * Insert a Sitofp instruction at current position of basic block.
+     * @param srcVal The Value to be converted.
+     * @return The sitofp instruction inserted.
+     */
+    public CastInst.Sitofp buildSitofp(Value srcVal) {
+        CastInst.Sitofp sitofp = new CastInst.Sitofp(srcVal, curBB);
+        getCurBB().insertAtEnd(sitofp);
+        return sitofp;
+    }
+
     /**
      * Insert a binary instruction at current position of basic block.
      * @param tag Instruction category.
