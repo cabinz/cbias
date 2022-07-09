@@ -441,8 +441,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
             scope.addDecl(varName, addrAllocated);
             // If it's a definition with initialization.
             if (ctx.initVal() != null) {
+                // Retrieve the Value for initialization.
                 visit(ctx.initVal());
-                builder.buildStore(retVal_, addrAllocated);
+                Value initVal = retVal_;
+                // Implicit type conversion.
+                if (initVal.getType().isInteger() && addrAllocated.getAllocatedType().isFloat()) {
+                    initVal = builder.buildSitofp(initVal);
+                }
+                else if(initVal.getType().isFloat() && addrAllocated.getAllocatedType().isInteger()) {
+                    initVal = builder.buildFptosi(initVal, (IntegerType) addrAllocated.getAllocatedType());
+                }
+                // Assignment by building a Store inst.
+                builder.buildStore(initVal, addrAllocated);
             }
         }
 
@@ -1288,7 +1298,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     /**
      * lVal : Identifier ('[' expr ']')*
      * ------------------------------------------
-     * stmt : lVal '=' expr ';'     # assignment
+     * stmt : lVal '=' expr ';'     # assignStmt
      * primaryExp : lVal            # primExpr2
      * ------------------------------------------
      * Notice that besides being a left value for
@@ -1311,7 +1321,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         /*
         There are two cases for lVal as a grammar symbol:
-        1.  If a lVal  can be reduce to a primaryExp,
+        1.  If a lVal can be reduced to a primaryExp,
             in this case it is a scalar value (IntegerType or FloatType)
             thus the value can be returned directly, which will then
             be handled by visitPrimExpr2().
@@ -1320,8 +1330,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             designating a memory block for assignment.
          */
         // Case 1, return directly.
-        // todo: float type can be returned directly too
-        if (val.getType().isInteger()) {
+        if (val.getType().isInteger() || val.getType().isFloat()) {
             retVal_ = val;
             return null;
         }
@@ -1348,7 +1357,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
                 retVal_ = val;
             }
-
             return null;
         }
         return null;
@@ -1484,11 +1492,21 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitAssignStmt(SysYParser.AssignStmtContext ctx) {
         // Retrieve left value (the address to store) by visiting child.
+        // Retrieve the value to be stored by visiting child.
         visit(ctx.lVal());
         Value addr = retVal_;
-        // Retrieve the value to be stored by visiting child.
         visit(ctx.expr());
         Value val = retVal_;
+
+        // Type matching check and implicit type conversions.
+        Type destType = ((PointerType) addr.getType()).getPointeeType();
+        if (destType.isFloat() && val.getType().isInteger()) {
+            val = builder.buildSitofp(val);
+        }
+        else if (destType.isInteger() && val.getType().isFloat()) {
+            val = builder.buildFptosi(val, (IntegerType) destType);
+        }
+
         // Build the Store instruction.
         builder.buildStore(val, addr);
         return null;
