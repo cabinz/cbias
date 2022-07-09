@@ -14,6 +14,10 @@ import ir.values.Instruction;
  *     <li>Type for arithmetic instructions is the type of operation result.</li>
  *     <li>Type for comparison instructions is boolean (i1).</li>
  * </ul>
+ * Technically, arithmetic/relational operations for integers and floating points are
+ * supposed to be defined as several separated java classes. But in the simple case of
+ * SysY, we use BinaryOpInst and UnaryOpInst to cover all these instructions for
+ * convenience, leaving the improvement for future works.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/InstrTypes.h#L189">
  *     LLVM IR BinaryOperator Source</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#binary-operations">
@@ -22,6 +26,8 @@ import ir.values.Instruction;
  *     LLVM LangRef: icmp, fcmp</a>
  */
 public class BinaryInst extends Instruction {
+
+    // todo: rename as "BinaryOpInst", comment fashion fix
 
     //<editor-fold desc="Constructors">
     /**
@@ -43,28 +49,39 @@ public class BinaryInst extends Instruction {
     public String toString() {
         // Build and return a string like "%1 = add i32 %2, %3"
         return
-            // Result name
-            this.getName() +
-            " = " +
-            // Operation code
-            switch (this.cat) {
+            // Result name: "%1 = "
+            this.getName() + " = "
+            // Operation code and type: "add i32 "
+            + switch (this.cat) {
+                // Integer arithmetics.
                 case ADD -> "add i32 ";
                 case SUB -> "sub i32 ";
                 case MUL -> "mul i32 ";
                 case DIV -> "sdiv i32 ";
+                // Floating point arithmetics.
+                case FADD -> "fadd float ";
+                case FSUB -> "fsub float ";
+                case FMUL -> "fmul float ";
+                case FDIV -> "fdiv float ";
+                // Integer comparisons.
                 case LT -> "icmp slt " + this.getOperandAt(0).getType() + " ";
                 case LE -> "icmp sle " + this.getOperandAt(0).getType() + " ";
                 case GE -> "icmp sge " + this.getOperandAt(0).getType() + " ";
                 case GT -> "icmp sgt " + this.getOperandAt(0).getType() + " ";
                 case EQ -> "icmp eq " + this.getOperandAt(0).getType() + " ";
                 case NE -> "icmp ne " + this.getOperandAt(0).getType() + " ";
-                default -> "";
-            } +
-            // Left operand
-            this.getOperandAt(0).getName() +
-            ", " +
-            // Right operand
-            getOperandAt(1).getName();
+                // Floating point comparisons.
+                case FLT -> "fcmp slt " + this.getOperandAt(0).getType() + " ";
+                case FLE -> "fcmp sle " + this.getOperandAt(0).getType() + " ";
+                case FGE -> "fcmp sge " + this.getOperandAt(0).getType() + " ";
+                case FGT -> "fcmp sgt " + this.getOperandAt(0).getType() + " ";
+                case FEQ -> "fcmp eq " + this.getOperandAt(0).getType() + " ";
+                case FNE -> "fcmp ne " + this.getOperandAt(0).getType() + " ";
+                // Error.
+                default -> throw new RuntimeException("Try to print with an unsupported InstCategory.");
+            }
+            // Two operands: "%2, %3"
+            + this.getOperandAt(0).getName() + ", " + getOperandAt(1).getName();
     }
 
 }

@@ -25,11 +25,21 @@ public class Instruction extends User {
      * of operations. Be careful to move them or add new ones.
      */
     public enum InstCategory {
-        // Computing Operations
-        ADD, SUB, MUL, DIV,     // Arithmetic Operations
-        LT, GT, EQ, NE, LE, GE, // Relational (Comparison) Operations
-        AND, OR,                // Logical Operations
-        FNEG,                   // Unary Operator Operations
+        /*
+         Arithmetic Operations: Integer and floating point.
+         */
+        ADD, SUB, MUL, DIV,
+        FADD, FSUB, FMUL, FDIV,
+        FNEG,
+
+        /*
+        Relational Operations: Integer and floating point .
+         */
+        LT, GT, EQ, NE, LE, GE,
+        FLT, FGT, FEQ, FNE, FLE, FGE,
+
+        // Logical Operations
+        AND, OR,
         // Terminators
         RET, BR,
         // Invocation
@@ -41,14 +51,14 @@ public class Instruction extends User {
         // Others
         GEP;
 
-        // todo: FNEG and float arithmetrics
+
         public boolean isArithmeticBinary() {
-            return this.ordinal() <= InstCategory.DIV.ordinal();
+            return this.ordinal() <= InstCategory.FNEG.ordinal();
         }
 
         public boolean isRelationalBinary() {
             return InstCategory.LT.ordinal() <= this.ordinal()
-                    && this.ordinal() <= InstCategory.GE.ordinal();
+                    && this.ordinal() <= InstCategory.FGE.ordinal();
         }
 
         public boolean isTerminator() {
