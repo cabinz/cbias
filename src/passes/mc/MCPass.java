@@ -1,4 +1,4 @@
-package passes;
+package passes.mc;
 
 import backend.ARMAssemble;
 

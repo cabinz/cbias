@@ -1,4 +1,4 @@
-package passes.mem2reg;
+package passes.ir.mem2reg;
 
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
@@ -13,7 +13,7 @@ class Function implements Iterable<BasicBlock> {
 
     ir.values.Function function;
 
-    Map<ir.values.BasicBlock, passes.mem2reg.BasicBlock> basicBlockMap = new HashMap<>();
+    Map<ir.values.BasicBlock, passes.ir.mem2reg.BasicBlock> basicBlockMap = new HashMap<>();
 
     public Function(ir.values.Function function){
         this.function = function;

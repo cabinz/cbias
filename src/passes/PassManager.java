@@ -2,7 +2,9 @@ package passes;
 
 import backend.ARMAssemble;
 import ir.Module;
-import passes.mem2reg.Mem2reg;
+import passes.ir.IRPass;
+import passes.mc.MCPass;
+import passes.ir.mem2reg.Mem2reg;
 
 import java.util.ArrayList;
 import java.util.Collection;

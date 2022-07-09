@@ -1,4 +1,4 @@
-package passes.mem2reg;
+package passes.ir.mem2reg;
 
 import ir.Module;
 import ir.Use;
@@ -7,7 +7,7 @@ import ir.values.Constant;
 import ir.values.Instruction;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
-import passes.IRPass;
+import passes.ir.IRPass;
 
 import java.util.*;
 

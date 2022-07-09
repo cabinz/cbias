@@ -1,4 +1,4 @@
-package passes.mem2reg;
+package passes.ir.mem2reg;
 
 import ir.Value;
 import ir.values.Instruction;
