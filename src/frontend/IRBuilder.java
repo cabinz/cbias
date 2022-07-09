@@ -352,6 +352,138 @@ public class IRBuilder {
     }
 
     /**
+     * Insert an Add instruction at current position of basic block.
+     * ADD/FADD will be automatically determined according to the types
+     * of operands given.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryInst buildAdd(Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types for buildAdd(): [lOp] "
+                    + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+        // Constructor the Add instruction (for integers and floats respectively)
+        BinaryInst instAdd = null;
+        Type type = lOp.getType();
+        if (type.isI32()) {
+            instAdd = new BinaryInst(IntegerType.getI32(), Instruction.InstCategory.ADD, lOp, rOp, curBB);
+        }
+        else if(type.isFloat()) {
+            instAdd = new BinaryInst(FloatType.getType(), Instruction.InstCategory.FADD, lOp, rOp, curBB);
+        }
+        else {
+            throw new RuntimeException("Unsupported type for buildAdd(): " + type);
+        }
+
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(instAdd);
+        return instAdd;
+    }
+
+    /**
+     * Insert a subtraction instruction at current position of basic block.
+     * SUB/FSUB will be automatically determined according to the types
+     * of operands given.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryInst buildSub(Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types for buildSub(): [lOp] "
+                    + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+        // Constructor the Sub instruction (for integers and floats respectively)
+        BinaryInst instSub = null;
+        Type type = lOp.getType();
+        if (type.isI32()) {
+            instSub = new BinaryInst(IntegerType.getI32(), Instruction.InstCategory.SUB, lOp, rOp, curBB);
+        }
+        else if(type.isFloat()) {
+            instSub = new BinaryInst(FloatType.getType(), Instruction.InstCategory.FSUB, lOp, rOp, curBB);
+        }
+        else {
+            throw new RuntimeException("Unsupported type for buildSub(): " + type);
+        }
+
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(instSub);
+        return instSub;
+    }
+
+    /**
+     * Insert a multiplication instruction at current position of basic block.
+     * MUL/FMUL will be automatically determined according to the types
+     * of operands given.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryInst buildMul(Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types for buildMul(): [lOp] "
+                    + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+        // Constructor the Mul instruction (for integers and floats respectively)
+        BinaryInst instMul = null;
+        Type type = lOp.getType();
+        if (type.isI32()) {
+            instMul = new BinaryInst(IntegerType.getI32(), Instruction.InstCategory.MUL, lOp, rOp, curBB);
+        }
+        else if(type.isFloat()) {
+            instMul = new BinaryInst(FloatType.getType(), Instruction.InstCategory.FMUL, lOp, rOp, curBB);
+        }
+        else {
+            throw new RuntimeException("Unsupported type for buildMul(): " + type);
+        }
+
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(instMul);
+        return instMul;
+    }
+
+    /**
+     * Insert a division instruction at current position of basic block.
+     * DIV/FDIV will be automatically determined according to the types
+     * of operands given.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryInst buildDiv(Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types for buildDiv(): [lOp] "
+                    + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+        // Constructor the Div instruction (for integers and floats respectively)
+        BinaryInst instDiv = null;
+        Type type = lOp.getType();
+        if (type.isI32()) {
+            instDiv = new BinaryInst(IntegerType.getI32(), Instruction.InstCategory.DIV, lOp, rOp, curBB);
+        }
+        else if(type.isFloat()) {
+            instDiv = new BinaryInst(FloatType.getType(), Instruction.InstCategory.FDIV, lOp, rOp, curBB);
+        }
+        else {
+            throw new RuntimeException("Unsupported type for buildDiv(): " + type);
+        }
+
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(instDiv);
+        return instDiv;
+    }
+
+    /**
      * Insert a unary instruction at current position of basic block.
      * @param tag Instruction category.
      * @param opd The single operand of the instruction.
