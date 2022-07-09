@@ -724,14 +724,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Get the return type. (funcType identifier)
         Type retType;
         String strRetType = ctx.funcType().getText();
-        if (strRetType.equals("int")) {
-            retType = IntegerType.getI32();
-        }
-        else if (strRetType.equals("float")) {
-            retType = Type.VoidType.getType(); // todo float
-        }
-        else {
-            retType = Type.VoidType.getType();
+        switch (strRetType) {
+            case "int" -> retType = IntegerType.getI32();
+            case "float" -> retType = FloatType.getType();
+            case "void" -> retType = Type.VoidType.getType();
+            default -> throw new RuntimeException("Unsupported function return type.");
         }
 
         // Get the argument list. (Visiting child)
@@ -795,10 +792,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (function.getType().getRetType().isVoidType()) {
                 builder.buildRet();
             }
-            if (function.getType().getRetType().isInteger()) {
+            else if (function.getType().getRetType().isInteger()) {
                 builder.buildRet(builder.buildConstant(0)); // Return 0 by default.
             }
-            // todo: return float
+            else if (function.getType().getRetType().isFloat()) {
+                builder.buildRet(builder.buildConstant(.0f)); // Return 0.0f by default.
+            }
         }
 
         /*
@@ -828,9 +827,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitScalarFuncFParam(SysYParser.ScalarFuncFParamContext ctx) {
-        // todo: float as function arguments
-        // Integer argument
-        retType_ = IntegerType.getI32();
+        String bType = ctx.bType().getText();
+        switch (bType) {
+            case "int" -> retType_ = IntegerType.getI32();
+            case "float" -> retType_ = FloatType.getType();
+            default -> throw new RuntimeException("Supported function argument type.");
+        }
+
         return null;
     }
 
@@ -844,11 +847,19 @@ public class Visitor extends SysYBaseVisitor<Void> {
             visit(exprContext);
             dimLens.add(retInt_);
         }
-        // todo: float type fParam
-        Type arrType = IntegerType.getI32();
+
+        // Build the ArrayType of the function argument.
+        Type arrType = null;
+        String bType = ctx.bType().getText();
+        switch (bType) {
+            case "int" -> arrType = IntegerType.getI32();
+            case "float" -> arrType = FloatType.getType();
+            default -> throw new RuntimeException("Supported function argument type.");
+        }
         for (int i = dimLens.size(); i > 0; i--) {
             arrType = ArrayType.getType(arrType, dimLens.get(i - 1));
         }
+
         retType_ = PointerType.getType(arrType);
         return null;
     }
