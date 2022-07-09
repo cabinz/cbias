@@ -98,7 +98,7 @@ public class CastInst {
         public String toString() {
             // e.g. "%6 = sitofp i32 %5 to float"
             Value opd = this.getOperandAt(0);
-            return this.getName() + " = fptosi "// "%6 = sitofp "
+            return this.getName() + " = sitofp "// "%6 = sitofp "
                     + opd // "i32 %5"
                     + " to " + this.getType(); // " to float"
         }
