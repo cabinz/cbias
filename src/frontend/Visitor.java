@@ -1861,13 +1861,17 @@ public class Visitor extends SysYBaseVisitor<Void> {
                         }});
                     }
                 }
-                // sitofp and fptosi
+                // sitofp, fptosi and ZExt
+                if (arg.getType().isI1()) {
+                    arg = builder.buildZExt(arg);
+                }
                 if (typeArg.isI32() && arg.getType().isFloat()) {
                     arg = builder.buildFptosi(arg, (IntegerType) typeArg);
                 }
                 else if (typeArg.isFloat() && arg.getType().isI32()) {
                     arg = builder.buildSitofp(arg);
                 }
+
                 // Add the argument Value retrieved by visiting to the container.
                 args.add(arg);
             }
