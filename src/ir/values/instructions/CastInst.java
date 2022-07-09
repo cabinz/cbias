@@ -71,7 +71,7 @@ public class CastInst {
             // e.g. "%4 = fptosi float %3 to i32"
             Value opd = this.getOperandAt(0);
             return this.getName() + " = fptosi "// "%4 = fptosi "
-                    + opd // "float %3"
+                    + opd.getType() + " " + opd.getName() // "float %3"
                     + " to " + this.getType(); // " to i32"
         }
     }
