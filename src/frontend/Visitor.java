@@ -229,10 +229,29 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Alloca instruction like variable.
          */
 
-        // Retrieve the initialized value by visiting child (scalarConstDef).
-        // Then update the symbol table.
+        // Retrieve the initialized value (as a Constant) by visiting child (scalarConstDef).
         visit(ctx.constInitVal());
-        scope.addDecl(varName, retVal_);
+        Value initVal = retVal_;
+
+        // Type matching check and implicit type conversion.
+        String bType = ctx.getParent().getChild(0).getText();
+        switch(bType) {
+            case "int" -> {
+                if (initVal.getType().isFloat()) {
+                    float numericVal = ((Constant.ConstFloat) initVal).getVal();
+                    initVal = builder.buildConstant((int) numericVal);
+                }
+            }
+            case "float" -> {
+                if (initVal.getType().isInteger()) {
+                    int numericVal = ((Constant.ConstInt) initVal).getVal();
+                    initVal = builder.buildConstant((float) numericVal);
+                }
+            }
+        }
+
+        // Update the symbol table.
+        scope.addDecl(varName, initVal);
 
         return null;
     }
@@ -247,9 +266,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
         if (scope.isGlobal()) {
             this.setGlbInit(ON);
         }
+
         super.visitScalarConstInitVal(ctx);
-        retVal_ = builder.buildConstant(retInt_);
-        // todo: float constant
+        switch (getConveyedType()) {
+            case INT -> retVal_ = builder.buildConstant(retInt_);
+            case FLT -> retVal_ = builder.buildConstant(retFloat_);
+        }
+
         this.setGlbInit(OFF);
         return null;
     }
