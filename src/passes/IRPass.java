@@ -2,6 +2,6 @@ package passes;
 
 import ir.Module;
 
-public interface Pass {
+public interface IRPass {
     void runOnModule(Module module);
 }

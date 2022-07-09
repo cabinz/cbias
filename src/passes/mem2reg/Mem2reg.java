@@ -7,16 +7,14 @@ import ir.values.Constant;
 import ir.values.Instruction;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
-import passes.Pass;
+import passes.IRPass;
 
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Mem2reg optimize
  */
-public class Mem2reg implements Pass {
+public class Mem2reg implements IRPass {
 
     @Override
     public void runOnModule(Module module) {

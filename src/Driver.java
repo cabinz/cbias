@@ -38,7 +38,7 @@ public class Driver{
         visitor.visit(ast);
 
         /* Intermediate code optimization */
-        (new PassManager()).runPasses(module);
+        PassManager.getInstance().runPasses(module);
         //System.out.println("Optimization has not been done.");
 
         /* Emit the IR text to an output file for testing. */

@@ -1,5 +1,6 @@
 package passes;
 
+import backend.ARMAssemble;
 import ir.Module;
 import passes.mem2reg.Mem2reg;
 
@@ -10,13 +11,20 @@ import java.util.Map;
 
 public class PassManager {
 
-    public Map<Class<?>, Pass> registeredPasses = new HashMap<>();
+    private final Map<Class<?>, IRPass> registeredIRPasses = new HashMap<>();
+    private final Map<Class<?>, MCPass> registeredMCPasses = new HashMap<>();
 
-    public PassManager(){
-        ArrayList<Pass> passes = new ArrayList<>();
-        passes.add(new Mem2reg());
-        registerPasses(passes);
+    private PassManager(){
+        // IR Passes
+        ArrayList<IRPass> IRPasses = new ArrayList<>();
+        IRPasses.add(new Mem2reg());
+        registerIRPasses(IRPasses);
+
+        // MC Passes
+
     }
+
+    // run
 
     /**
      * Running through passes to optimize a module.
@@ -27,18 +35,54 @@ public class PassManager {
         run(Mem2reg.class, module);
     }
 
+    /**
+     * Running through passes to optimize an ARMAssemble.
+     *
+     * @param module The module to be optimized.
+     */
+    public void runPasses(ARMAssemble module){
+
+    }
+
     private void run(Class<?> passClass, Module module){
-        if(registeredPasses.containsKey(passClass)){
-            registeredPasses.get(passClass).runOnModule(module);
+        if(registeredIRPasses.containsKey(passClass)){
+            registeredIRPasses.get(passClass).runOnModule(module);
         }
     }
 
-    public void registerPass(Pass pass){
-        registeredPasses.put(pass.getClass(), pass);
+    private void run(Class<?> passClass, ARMAssemble module){
+        if(registeredMCPasses.containsKey(passClass)){
+            registeredMCPasses.get(passClass).runOnModule(module);
+        }
     }
 
-    public void registerPasses(Collection<Pass> passes){
-        passes.forEach(this::registerPass);
+    // register pass
+
+    public static void registerPass(IRPass irPass){
+        getInstance().registeredIRPasses.put(irPass.getClass(), irPass);
+    }
+
+    public static void registerPass(MCPass mcPass){
+        getInstance().registeredMCPasses.put(mcPass.getClass(), mcPass);
+    }
+
+    public static void registerIRPasses(Collection<IRPass> IRPasses){
+        IRPasses.forEach(PassManager::registerPass);
+    }
+
+    public static void registerMCPasses(Collection<MCPass> IRPasses){
+        IRPasses.forEach(PassManager::registerPass);
+    }
+
+    // singleton
+
+    private static PassManager instance = null;
+
+    public static PassManager getInstance(){
+        if(instance==null){
+            instance = new PassManager();
+        }
+        return instance;
     }
 
 }
