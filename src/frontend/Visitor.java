@@ -88,6 +88,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
     /**
      * Represents data type returned from the lower layer of visiting method.
+     * Only for passing data in primitive types int and float (by retInt_ and retFloat_)
      */
     private DataType envConveyedType = null;
 
@@ -1169,7 +1170,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Local expression: Instructions will be generated.
          */
         else {
-            // todo: float case
             // Retrieve the 1st mulExp (as the left operand) by visiting child.
             visit(ctx.mulExp(0));
             Value lOp = retVal_;
@@ -1188,18 +1188,20 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     rOp = builder.buildLoad(((PointerType) rOp.getType()).getPointeeType(), rOp);
                 }
 
-                // Check integer types of two operands.
-                if (lOp.getType().isI1()) {
-                    lOp = builder.buildZExt(lOp);
+
+                // Auto type promotion.
+                if (lOp.getType().isInteger() && rOp.getType().isFloat()) {
+                    lOp = builder.buildSitofp(lOp);
                 }
-                if (rOp.getType().isI1()) {
-                    rOp = builder.buildZExt(lOp);
+                else if (lOp.getType().isFloat() && rOp.getType().isInteger()) {
+                    rOp = builder.buildSitofp(rOp);
                 }
+
                 // Generate an instruction to compute result of left and right operands
                 // as the new left operand for the next round.
                 switch (ctx.getChild(2 * i - 1).getText()) {
-                    case "+" -> lOp = builder.buildBinary(InstCategory.ADD, lOp, rOp);
-                    case "-" -> lOp = builder.buildBinary(InstCategory.SUB, lOp, rOp);
+                    case "+" -> lOp = builder.buildAdd(lOp, rOp);
+                    case "-" -> lOp = builder.buildSub(lOp, rOp);
                     default -> {}
                 }
             }
@@ -1216,7 +1218,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitMulExp(SysYParser.MulExpContext ctx) {
-        Value lOp;
         /*
         Global expression: Compute value of the expr w/o instruction generation.
          */
@@ -1241,7 +1242,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Local expression: Instructions will be generated.
          */
         else {
-            // todo: float case
+            Value lOp;
+
             // Retrieve the 1st unaryExp (as the left operand) by visiting child.
             visit(ctx.unaryExp(0));
             lOp = retVal_;
@@ -1259,15 +1261,23 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     rOp = builder.buildLoad(((PointerType) rOp.getType()).getPointeeType(), rOp);
                 }
 
+                // Auto type promotion.
+                if (lOp.getType().isI32() && rOp.getType().isFloat()) {
+                    lOp = builder.buildSitofp(lOp);
+                }
+                else if (lOp.getType().isFloat() && rOp.getType().isI32()) {
+                    rOp = builder.buildSitofp(rOp);
+                }
+
                 // Generate an instruction to compute result of left and right operands
                 // as the new left operand for the next round.
                 switch (ctx.getChild(2 * i - 1).getText()) {
-                    case "/" -> lOp = builder.buildBinary(InstCategory.DIV, lOp, rOp);
-                    case "*" -> lOp = builder.buildBinary(InstCategory.MUL, lOp, rOp);
-                    case "%" -> { // l % r => l - (l/r)*r
-                        BinaryInst div = builder.buildBinary(InstCategory.DIV, lOp, rOp); // l/r
-                        BinaryInst mul = builder.buildBinary(InstCategory.MUL, div, rOp); // (l/r)*r
-                        lOp = builder.buildBinary(InstCategory.SUB, lOp, mul);
+                    case "/" -> lOp = builder.buildDiv(lOp, rOp);
+                    case "*" -> lOp = builder.buildMul(lOp, rOp);
+                    case "%" -> { // l % r => l - (l/r)*r [FOR i32 ONLY]
+                        BinaryInst div = builder.buildDiv(lOp, rOp); // l/r
+                        BinaryInst mul = builder.buildMul(div, rOp); // (l/r)*r
+                        lOp = builder.buildSub(lOp, mul);
                     }
                 }
             }
