@@ -142,6 +142,20 @@ public class IRBuilder {
             return Constant.ConstArray.get(arrType, nestedInitList);
         }
         else {
+            Type elemType = arrType.getElemType();
+            for (int i = 0; i < initList.size(); i++) {
+                Value elem = initList.get(i);
+                if (elem.getType() != elemType) {
+                    if (elemType.isFloat()) {
+                        float numericVal = ((Constant.ConstFloat) elem).getVal();
+                        initList.set(i, buildConstant(numericVal));
+                    }
+                    else if (elemType.isInteger()) {
+                        int numericVal = ((Constant.ConstInt) elem).getVal();
+                        initList.set(i, buildConstant(numericVal));
+                    }
+                }
+            }
             return Constant.ConstArray.get(arrType, initList);
         }
 
