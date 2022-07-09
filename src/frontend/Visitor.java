@@ -694,15 +694,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Instruction tailInst = builder.getCurBB().getLastInst();
         // If no instruction in the bb, or the last instruction is not a terminator.
         if (tailInst == null || !tailInst.cat.isTerminator()) {
-            if (function.getType() instanceof FunctionType f) {
-                if (f.getRetType().isVoidType()) {
-                    builder.buildRet();
-                }
-                if (f.getRetType().isInteger()) {
-                    builder.buildRet(builder.buildConstant(0)); // Return 0 by default.
-                }
-                // todo: return float
+            if (function.getType().getRetType().isVoidType()) {
+                builder.buildRet();
             }
+            if (function.getType().getRetType().isInteger()) {
+                builder.buildRet(builder.buildConstant(0)); // Return 0 by default.
+            }
+            // todo: return float
         }
 
         /*

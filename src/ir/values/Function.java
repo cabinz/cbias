@@ -151,6 +151,15 @@ public class Function extends Value implements Iterable<BasicBlock>{
         return strBuilder.toString();
     }
 
+    /**
+     * Get the prototype of the function.
+     * @return The FunctionType of the function.
+     */
+    @Override
+    public FunctionType getType() {
+        return (FunctionType) super.getType();
+    }
+
     @Override
     public Iterator<BasicBlock> iterator() {
         return bbs.iterator();
