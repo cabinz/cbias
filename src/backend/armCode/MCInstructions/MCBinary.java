@@ -7,7 +7,7 @@ import backend.operand.Register;
 
 /**
  * This class represent the arithmetical instruction of ARM,
- * including ADD, SUB, MUL. The first operand must be a register. <br/>
+ * including ADD, SUB, RSB, MUL, SDIV. The first operand must be a register. <br/>
  * This class is an aggregation. This is why it starts with a capital.
  */
 public class MCBinary extends MCInstruction {
@@ -17,7 +17,8 @@ public class MCBinary extends MCInstruction {
     private Register destination;
 
     public String emit() {
-        return type.name() + emitCond() + ' ' + destination.emit() + ", " + operand1.emit() + ", " + operand2.emit();
+        return type.name() + emitCond() + ' ' + destination.emit()
+                + ", " + operand1.emit() + ", " + operand2.emit();
     }
 
     public MCBinary(TYPE type, Register destination, Register operand1, MCOperand operand2) {super(type);this.destination = destination;this.operand1 = operand1;this.operand2 = operand2;}

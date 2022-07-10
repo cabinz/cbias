@@ -17,23 +17,34 @@ public abstract class MCInstruction {
     public enum TYPE {
         ADD,
         SUB,
-        RSB,//逆向减法
+        RSB,
         MUL,
-        DIV,
+        SDIV,
         AND,
         ORR,
-        BIC,//位清零
-        FMA,//乘加
+        MLA,
+        MLS,
         LongMUL,
         MOV,
+        RET,
         BRANCH,
         STORE,
         LOAD,
         PUSH,
         POP,
         CMP,
-        GLOBAL,
-        PHI
+        VADD,
+        VSUB,
+        VMUL,
+        VMLA,
+        VMLS,
+        VDIV,
+        VCMP,
+        VCVT,
+        VMOV,
+        VMRS,
+        VLDR,
+        VSTR
     }
 
     /**

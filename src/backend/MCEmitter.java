@@ -41,6 +41,7 @@ public class MCEmitter {
 
         /* handle each function */
         for (MCFunction f : target) {
+            System.out.println(f.getName());
             if (f.isExternal()) continue;
             strBd.append("\t.global " + f.getName() + '\n');
             strBd.append(f.getName() + ":\n");
@@ -49,6 +50,7 @@ public class MCEmitter {
                 strBd.append("." + bb.getName() + ":\n");
                 /* handle each instruction */
                 for (MCInstruction mcInstruction : bb) {
+                    System.out.println("\tNOW:" + mcInstruction.emit());
                     strBd.append('\t' + mcInstruction.emit() + '\n');
                 }
             }
@@ -62,16 +64,26 @@ public class MCEmitter {
             strBd.append("\t.align 4\n");
             for (Label label : globalVars) {
                 strBd.append("\t.global " + label.emit() + '\n');
-                strBd.append(label.emit() + ":\t");
-                if (label.isArray()) {
+                strBd.append(label.emit() + ":\n");
+
+                int count = 0;
+                for (Integer tmp : label.getIntial()) {
+                    if (tmp == 0)
+                        count++;
+                    else {
+                        if (count != 0) {
+                            strBd.append("\t.zero\t" + count * 4 + '\n');
+                            count = 0;
+                        }
+                        strBd.append("\t.word\t" + tmp + '\n');
+                    }
                 }
-                else {
-                    strBd.append(".word\t" + label.getVal() + '\n');
-                }
+                if (count != 0)
+                    strBd.append("\t.zero\t" + count * 4 + '\n');
             }
+            strBd.append("\n\n");
         }
 
-        strBd.append("\n\n");
         strBd.append("\t.end");
 
         /* write to the file */

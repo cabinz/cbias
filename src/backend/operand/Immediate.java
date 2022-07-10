@@ -1,7 +1,7 @@
 package backend.operand;
 
 /**
- * This class represent an immediate value of ARM assembler.
+ * This class represent an immediate value of ARM assemble.
  */
 public class Immediate extends MCOperand {
 

@@ -16,7 +16,7 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     private static int count = 0;
 
     //<editor-fold desc="Fields">
-    private LinkedList<MCInstruction> instructionList;
+    private final LinkedList<MCInstruction> instructionList;
     private String label;
 
     private MCFunction belongFunc;
@@ -31,11 +31,13 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     public void prependInst(MCInstruction inst) {
         instructionList.addFirst(inst);
         inst.setBelongBB(this);
+        inst.setBelongFunc(belongFunc);
     }
 
     public void appendInst(MCInstruction inst) {
         instructionList.addLast(inst);
         inst.setBelongBB(this);
+        inst.setBelongFunc(belongFunc);
     }
 
     public void addPredecessor(MCBasicBlock BB) {predecessors.add(BB);}
@@ -69,13 +71,13 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     //<editor-fold desc="Constructor">
     public MCBasicBlock(MCFunction belongingFunction) {
         this.belongFunc = belongingFunction;
-        instructionList = new LinkedList<MCInstruction>();
+        instructionList = new LinkedList<>();
         label = "BLOCK_" + count;
         count++;
     }
     public MCBasicBlock(MCFunction belongingFunction, String label) {
         this.belongFunc = belongingFunction;
-        instructionList = new LinkedList<MCInstruction>();
+        instructionList = new LinkedList<>();
         this.label = label;
     }
     //</editor-fold>

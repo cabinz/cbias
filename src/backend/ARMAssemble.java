@@ -6,6 +6,7 @@ import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -62,14 +63,26 @@ public class ARMAssemble implements Iterable<MCFunction>{
      */
     public Label addGlobalVariable(GlobalVariable gv) {
         Label label;
+
+        ArrayList<Integer> initial = new ArrayList<>();
+        genInitial(gv.getInitVal(), initial);
+
         /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
-        if (gv.isArray()) // TODO:FIX
-            label = new Label(gv.getName().substring(1), ((Constant.ConstInt) gv.getInitVal()).getVal());
-        else
-            label = new Label(gv.getName().substring(1), ((Constant.ConstInt) gv.getInitVal()).getVal());
+        label = new Label(gv.getName().substring(1), initial);
+
         globalVars.add(label);
         glbVarMap.put(gv, label);
         return label;
+    }
+
+    private void genInitial(Constant constVals, ArrayList<Integer> initial) {
+        for (int i=0; i<constVals.getNumOperands(); i++){
+            Constant tmp = ((Constant) constVals.getOperandAt(i));
+            if (tmp.getType().isInteger())
+                initial.add(((Constant.ConstInt) tmp).getVal());
+            else
+                genInitial(constVals, initial);
+        }
     }
 
     /**

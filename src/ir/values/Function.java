@@ -30,6 +30,11 @@ public class Function extends Value implements Iterable<BasicBlock>{
         private int pos;
 
 
+        public int getPos() {
+            return pos;
+        }
+
+
         public FuncArg(Type type, int pos) {
             super(type);
             this.pos = pos;

@@ -4,7 +4,7 @@ import ir.Value;
 
 public class VirtualRegister extends Register{
 
-    private int name;
+    private final int name;
 
     /**
      * This field represents the IR value stored in.
