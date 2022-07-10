@@ -1874,6 +1874,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
                 // sitofp, fptosi and ZExt
                 if (arg.getType().isI1()) {
+                    // Technically, i1 Values are not allowed to be as parameters in function calls
+                    // according to SysY semantic constraints (cuz opr "!" occurs only in conditional
+                    // statement). But we still do the check for safety.
                     arg = builder.buildZExt(arg);
                 }
                 if (typeArg.isI32() && arg.getType().isFloat()) {
