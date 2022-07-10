@@ -135,6 +135,7 @@ public class MCBuilder {
         else if (IRinst.isSub()) {
             translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.SUB);
         }
+        // TODO: 乘法和除法的操作数必须是寄存器
         else if (IRinst.isMul()) {
             translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.MUL);
         }
