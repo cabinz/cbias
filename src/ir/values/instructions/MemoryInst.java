@@ -29,7 +29,6 @@ public class MemoryInst {
      */
     public static class Store extends Instruction {
 
-        //<editor-fold desc="Constructors">
         /**
          * @param val The Value to be stored (written) back to memory.
          * @param addr The address where the content to be written.
@@ -40,10 +39,8 @@ public class MemoryInst {
             this.addOperandAt(addr, 1);
             this.hasResult = false;
         }
-        //</editor-fold>
 
 
-        //<editor-fold desc="Methods">
         @Override
         public String toString() {
             Value val = this.getOperandAt(0);
@@ -53,7 +50,6 @@ public class MemoryInst {
                     + val.getType() + " " + val.getName() + ", " // i32 3,
                     + addr.getType() + " " + addr.getName(); // i32* %ptr
         }
-        //</editor-fold>
     }
 
     /**
@@ -70,7 +66,6 @@ public class MemoryInst {
      */
     public static class Load extends Instruction {
 
-        //<editor-fold desc="Constructors">
         /**
          * @param loadedType  The type of the memory block loaded in.
          * @param addr Value specifying the memory address from which to load. (loadedType*)
@@ -79,10 +74,8 @@ public class MemoryInst {
             super(loadedType, InstCategory.LOAD, bb);
             this.addOperandAt(addr, 0);
         }
-        //</editor-fold>
 
 
-        //<editor-fold desc="Methods">
         @Override
         public String toString() {
             Value op = this.getOperandAt(0);
@@ -91,7 +84,6 @@ public class MemoryInst {
                     + this.getType() + ", " // i32,
                     + op.getType() + " " + op.getName(); // , i32* %ptr
         }
-        //</editor-fold>
     }
 
     /**
@@ -106,20 +98,17 @@ public class MemoryInst {
      *     LLVM LangRef: Alloca Instrucstion</a>
      */
     public static class Alloca extends Instruction {
-        //<editor-fold desc="Fields">
         /**
          * The type of memory space allocated.
          */
         private final Type allocatedType;
 //        private boolean isInit = false;
-        //</editor-fold>
 
         public Type getAllocatedType() {
             return allocatedType;
         }
 
 
-        //<editor-fold desc="Constructors">
 
         /**
          * @param allocatedType The type of memory space allocated.
@@ -128,14 +117,11 @@ public class MemoryInst {
             super(PointerType.getType(allocatedType), InstCategory.ALLOCA, bb);
             this.allocatedType = allocatedType;
         }
-        //</editor-fold>
 
-        //<editor-fold desc="Methods">
         @Override
         public String toString() {
             return this.getName() + " = alloca " + this.allocatedType;
         }
-        //</editor-fold>
     }
 
 }

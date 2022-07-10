@@ -17,7 +17,6 @@ import java.util.LinkedList;
 
 public class Value {
 
-    //<editor-fold desc="Fields">
     private final Type type;
 
     /**
@@ -37,17 +36,11 @@ public class Value {
      * The "use list" keeping track of Values using it.
      */
     private LinkedList<Use> uses = new LinkedList<>();
-    //</editor-fold>
 
 
-    //<editor-fold desc="Constructors">
     public Value(Type type) {
         this.type = type;
     }
-    //</editor-fold>
-
-
-    //<editor-fold desc="Methods">
 
     //<editor-fold desc="Getters">
     public Type getType() {
@@ -85,5 +78,4 @@ public class Value {
     public boolean removeUse(Use u) {
         return this.uses.removeIf(x -> x.equals(u));
     }
-    //</editor-fold>
 }

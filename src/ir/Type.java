@@ -72,7 +72,6 @@ public class Type {
     //</editor-fold>
 
 
-    //<editor-fold desc="Methods">
     public boolean isVoidType() {
         return (this instanceof VoidType);
     }
@@ -108,6 +107,5 @@ public class Type {
     public boolean isArrayType() {
         return (this instanceof ArrayType);
     }
-    //</editor-fold>
 
 }

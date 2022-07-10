@@ -13,17 +13,13 @@ import ir.values.GlobalVariable;
  */
 
 public class Module{
-    //<editor-fold desc="Fields">
     public final ArrayList<Function> functions = new ArrayList<>();
 
     public final ArrayList<Function> externFunctions = new ArrayList<>();
 
     public final LinkedList<GlobalVariable> globalVariables = new LinkedList<>();
-    //</editor-fold>
 
-    //<editor-fold desc="Methods">
     public void addGlbVar(GlobalVariable glbVar) {
         globalVariables.add(glbVar);
     }
-    //</editor-fold>
 }

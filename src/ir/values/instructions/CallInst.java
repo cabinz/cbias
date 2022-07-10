@@ -20,7 +20,6 @@ import java.util.ArrayList;
  */
 public class CallInst extends Instruction {
 
-    //<editor-fold desc="Constructors">
     /**
      * @param func Function Value carrying information about return type and FORMAL arguments.
      * @param args The ACTUAL arguments to be referenced by the Call.
@@ -39,9 +38,7 @@ public class CallInst extends Instruction {
             this.addOperandAt(args.get(i), i+1);
         }
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Methods">
     @Override
     public String toString() {
         // e.g. %res = call i32 @func(i32 %arg) ; with return value
@@ -70,5 +67,4 @@ public class CallInst extends Instruction {
 
         return strBuilder.toString();
     }
-    //</editor-fold>
 }

@@ -20,11 +20,8 @@ import java.util.LinkedList;
  */
 public class BasicBlock extends Value implements Iterable<Instruction>{
 
-    //<editor-fold desc="Fields">
     public final LinkedList<Instruction> instructions = new LinkedList<>();
-    //</editor-fold>
 
-    //<editor-fold desc="Constructors">
     public BasicBlock(String name) {
         super(Type.LabelType.getType());
 
@@ -58,5 +55,4 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     public Iterator<Instruction> iterator() {
         return instructions.iterator();
     }
-    //</editor-fold>
 }

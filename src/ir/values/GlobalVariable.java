@@ -34,7 +34,6 @@ public class GlobalVariable extends User {
     private Constant initVal;
     //</editor-fold>
 
-    //<editor-fold desc="Constructors">
 
     /**
      * Construct a GlbVar w/o initialization.
@@ -68,7 +67,6 @@ public class GlobalVariable extends User {
         this.setName("@" + name);
         this.initVal = init;
     }
-    //</editor-fold>
 
     public Constant getInitVal() {
         return initVal;

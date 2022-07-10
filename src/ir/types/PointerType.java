@@ -16,7 +16,6 @@ import java.security.SecureRandom;
  */
 public class PointerType extends Type {
 
-    //<editor-fold desc="Fields">
     /**
      * Type of the pointed-to memory space.
      * (i.e. Type of the element one step up on the pointing chain.)
@@ -36,10 +35,8 @@ public class PointerType extends Type {
         return rootType;
     }
 
-    //</editor-fold>
 
 
-    //<editor-fold desc="Constructors">
     private PointerType(Type pointeeType) {
         this.pointeeType = pointeeType;
 
@@ -50,10 +47,8 @@ public class PointerType extends Type {
             this.rootType = pointeeType;
         }
     }
-    //</editor-fold>
 
 
-    //<editor-fold desc="Methods">
     /**
      * Just a wrapper of the private constructor of PointerType,
      * for the sake of interface consistency of retrieving type
@@ -70,7 +65,5 @@ public class PointerType extends Type {
         // e.g. "i32*" and "i1*"
         return pointeeType.toString() + "*";
      }
-    //</editor-fold>
-
 
 }
