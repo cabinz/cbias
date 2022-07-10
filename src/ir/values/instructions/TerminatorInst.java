@@ -1,5 +1,6 @@
 package ir.values.instructions;
 
+import ir.Type;
 import ir.Value;
 import ir.types.LabelType;
 import ir.types.VoidType;
@@ -9,7 +10,11 @@ import ir.values.Instruction;
 /**
  * A Terminator instruction is used to terminate a Basic Block.
  */
-public class TerminatorInst {
+public abstract class TerminatorInst extends Instruction {
+
+    public TerminatorInst(Type type, InstCategory tag, BasicBlock bb) {
+        super(type, tag, bb);
+    }
 
     /**
      * Return Terminator corresponding to return statement.
@@ -23,7 +28,7 @@ public class TerminatorInst {
      * @see <a href="https://llvm.org/docs/LangRef.html#ret-instruction">
      *     LLVM LangRef: Return Instruction</a>
      */
-    public static class Ret extends Instruction {
+    public static class Ret extends TerminatorInst {
 
         /**
          * Construct a Ret terminator returning void.
@@ -73,7 +78,7 @@ public class TerminatorInst {
      * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L3032">
      *     LLVM Source: BrachInst</a>
      */
-    public static class Br extends Instruction {
+    public static class Br extends TerminatorInst {
 
         /**
          * Constructor for a conditional branching instruction.

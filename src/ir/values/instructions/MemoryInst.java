@@ -13,7 +13,11 @@ import ir.values.Instruction;
  * In the latest version of LLVM IR, these instructions inherit from Instruction (Store)
  * or Instruction.UnaryInstruction (Load, Alloca, ZExt).
  */
-public class MemoryInst {
+public abstract class MemoryInst extends Instruction {
+
+    public MemoryInst(Type type, InstCategory tag, BasicBlock bb) {
+        super(type, tag, bb);
+    }
 
     /**
      * An instruction for writing to memory.
@@ -27,7 +31,7 @@ public class MemoryInst {
      * @see <a href="https://llvm.org/docs/LangRef.html#store-instruction">
      *     LLVM LangRef: Store Instruction</a>
      */
-    public static class Store extends Instruction {
+    public static class Store extends MemoryInst {
 
         /**
          * @param val The Value to be stored (written) back to memory.
@@ -64,7 +68,7 @@ public class MemoryInst {
      * @see <a href="https://llvm.org/docs/LangRef.html#load-instruction">
      *     LLVM LangRef: Load Instruction</a>
      */
-    public static class Load extends Instruction {
+    public static class Load extends MemoryInst {
 
         /**
          * @param loadedType  The type of the memory block loaded in.
@@ -97,7 +101,7 @@ public class MemoryInst {
      * @see <a href="https://llvm.org/docs/LangRef.html#alloca-instruction">
      *     LLVM LangRef: Alloca Instrucstion</a>
      */
-    public static class Alloca extends Instruction {
+    public static class Alloca extends MemoryInst {
         /**
          * The type of memory space allocated.
          */

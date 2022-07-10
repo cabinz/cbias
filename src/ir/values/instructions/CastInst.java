@@ -13,7 +13,11 @@ import ir.values.Instruction;
  * <br>
  * Type for a CastInst is the destination Type of the casting.
  */
-public class CastInst {
+public abstract class CastInst extends Instruction {
+
+    public CastInst(Type type, InstCategory tag, BasicBlock bb) {
+        super(type, tag, bb);
+    }
 
     /**
      * Represents Zero Extension of integer type.
@@ -26,7 +30,7 @@ public class CastInst {
      * @see <a href="https://llvm.org/docs/LangRef.html#zext-to-instruction">
      *     LLVM LangRef: ZExt Instruction</a>
      */
-    public static class ZExt extends Instruction {
+    public static class ZExt extends CastInst {
 
         /**
          * Construct a ZExt instruction.
@@ -53,7 +57,7 @@ public class CastInst {
      * @see <a href="https://llvm.org/docs/LangRef.html#fptosi-to-instruction">
      *     LLVM LangRef: ‘fptosi .. to’ Instruction</a>
      */
-    public static class Fptosi extends Instruction {
+    public static class Fptosi extends CastInst {
 
         /**
          * Construct a fptosi instruction.
@@ -82,7 +86,7 @@ public class CastInst {
      * @see <a href="https://llvm.org/docs/LangRef.html#sitofp-to-instruction">
      *     LLVM LangRef: ‘sitofp .. to’ Instruction</a>
      */
-    public static class Sitofp extends Instruction {
+    public static class Sitofp extends CastInst {
 
         /**
          * Construct a sitofp instruction.
