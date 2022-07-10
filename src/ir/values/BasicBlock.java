@@ -1,9 +1,8 @@
 package ir.values;
 
 import ir.Value;
-import ir.Type;
+import ir.types.LabelType;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -23,7 +22,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     public final LinkedList<Instruction> instructions = new LinkedList<>();
 
     public BasicBlock(String name) {
-        super(Type.LabelType.getType());
+        super(LabelType.getType());
 
         this.setName(name);
     }

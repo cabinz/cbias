@@ -138,7 +138,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Return types.
         Type i32Ty = IntegerType.getI32();
         Type floatTy = FloatType.getType();
-        Type voidTy = Type.VoidType.getType();
+        Type voidTy = VoidType.getType();
         Type ptrI32Ty = PointerType.getType(i32Ty);
         Type ptrFloatTy = PointerType.getType(floatTy);
         // Argument type lists.
@@ -741,7 +741,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         switch (strRetType) {
             case "int" -> retType = IntegerType.getI32();
             case "float" -> retType = FloatType.getType();
-            case "void" -> retType = Type.VoidType.getType();
+            case "void" -> retType = VoidType.getType();
             default -> throw new RuntimeException("Unsupported function return type.");
         }
 

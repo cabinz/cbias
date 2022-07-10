@@ -2,8 +2,8 @@ package ir.values.instructions;
 
 import ir.Type;
 import ir.Value;
-import ir.types.IntegerType;
 import ir.types.PointerType;
+import ir.types.VoidType;
 import ir.values.BasicBlock;
 import ir.values.Instruction;
 
@@ -34,7 +34,7 @@ public class MemoryInst {
          * @param addr The address where the content to be written.
          */
         public Store(Value val, Value addr, BasicBlock bb) {
-            super(Type.VoidType.getType(), InstCategory.STORE, bb);
+            super(VoidType.getType(), InstCategory.STORE, bb);
             this.addOperandAt(val, 0);
             this.addOperandAt(addr, 1);
             this.hasResult = false;

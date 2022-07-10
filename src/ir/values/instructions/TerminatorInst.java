@@ -1,13 +1,10 @@
 package ir.values.instructions;
 
 import ir.Value;
-import ir.Type;
-import ir.types.FunctionType;
+import ir.types.LabelType;
+import ir.types.VoidType;
 import ir.values.BasicBlock;
-import ir.values.Function;
 import ir.values.Instruction;
-
-import java.util.ArrayList;
 
 /**
  * A Terminator instruction is used to terminate a Basic Block.
@@ -32,7 +29,7 @@ public class TerminatorInst {
          * Construct a Ret terminator returning void.
          */
         public Ret(BasicBlock bb) {
-            super(Type.VoidType.getType(), InstCategory.RET, bb);
+            super(VoidType.getType(), InstCategory.RET, bb);
             this.hasResult = false;
         }
 
@@ -85,7 +82,7 @@ public class TerminatorInst {
          * @param falseBlk The basic block to jump to when condition is false.
          */
         public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk, BasicBlock bb) {
-            super(Type.LabelType.getType(), InstCategory.BR, bb);
+            super(LabelType.getType(), InstCategory.BR, bb);
             this.hasResult = false;
             this.addOperandAt(cond, 0);
             this.addOperandAt(trueBlk, 1);
@@ -97,7 +94,7 @@ public class TerminatorInst {
          * @param blk The basic block to jump to.
          */
         public Br(BasicBlock blk, BasicBlock bb) {
-            super(Type.LabelType.getType(), InstCategory.BR, bb);
+            super(LabelType.getType(), InstCategory.BR, bb);
             this.hasResult = false;
             this.addOperandAt(blk, 0);
         }

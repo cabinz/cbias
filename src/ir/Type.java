@@ -26,52 +26,6 @@ import ir.types.*;
  */
 public class Type {
 
-    //<editor-fold desc="Innerclass">
-    /**
-     * Nested Class: The void type does not represent any value and has no size.
-     * e.g. Functions returning void has VoidType,
-     * Instructions yielding no result has VoidType.
-     * @see <a href="https://llvm.org/docs/LangRef.html#void-type">
-     *     LLVM LangRef: Void Type</a>
-     */
-    public static class VoidType extends Type {
-        private static VoidType type = new VoidType();
-
-        private VoidType() {}
-
-        public static VoidType getType() {
-            return type;
-        }
-
-        @Override
-        public String toString() {
-            return "void";
-        }
-    }
-
-    /**
-     * The label type represents code labels.
-     * Basically it's a type dedicated to BasicBlock.
-     * @see <a href="https://llvm.org/docs/LangRef.html#label-type">
-     *     LLVM LangRef: Label Type</a>
-     */
-    public static class LabelType extends Type {
-        public static LabelType type = new LabelType();
-
-        private LabelType() {}
-
-        public static LabelType getType() {
-            return type;
-        }
-
-        @Override
-        public String toString() {
-            return "label";
-        }
-    }
-    //</editor-fold>
-
-
     public boolean isVoidType() {
         return (this instanceof VoidType);
     }
