@@ -15,7 +15,7 @@ import java.util.LinkedList;
  *     LLVM IR Source: Value</a>
  */
 
-public class Value {
+public abstract class Value {
 
     private final Type type;
 

@@ -14,7 +14,7 @@ import java.util.LinkedList;
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/User.h">
  *     LLVM IR Reference</a>
  */
-public class User extends Value {
+public abstract class User extends Value {
 
     /**
      * Keep track of all the Values used.

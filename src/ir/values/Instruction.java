@@ -14,7 +14,7 @@ import ir.Type;
  * @see <a href="https://llvm.org/docs/LangRef.html#instruction-reference">
  *     LLVM LangRef: Instruction</a>
  */
-public class Instruction extends User {
+public abstract class Instruction extends User {
 
     /**
      * Each instruction instance has a field "cat" containing a InstCategory instance

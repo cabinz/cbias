@@ -24,7 +24,7 @@ import ir.types.*;
  * @see <a href="https://llvm.org/docs/LangRef.html#type-system">
  *     LLVM LangRef: Type System</a>
  */
-public class Type {
+public abstract class Type {
 
     public boolean isVoidType() {
         return (this instanceof VoidType);

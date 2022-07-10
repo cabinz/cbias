@@ -26,8 +26,6 @@ import ir.values.Instruction;
  */
 public class BinaryOpInst extends Instruction {
 
-    // todo: rename as "BinaryOpInst", comment fashion fix
-
     //<editor-fold desc="Constructors">
     /**
      * User (Builder) needs to guarantee parameters passed correct.
