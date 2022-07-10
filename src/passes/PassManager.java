@@ -16,16 +16,6 @@ public class PassManager {
     private final Map<Class<?>, IRPass> registeredIRPasses = new HashMap<>();
     private final Map<Class<?>, MCPass> registeredMCPasses = new HashMap<>();
 
-    private PassManager(){
-        // IR Passes
-        ArrayList<IRPass> IRPasses = new ArrayList<>();
-        IRPasses.add(new Mem2reg());
-        registerIRPasses(IRPasses);
-
-        // MC Passes
-
-    }
-
     // run
 
     /**
@@ -83,6 +73,12 @@ public class PassManager {
     public static PassManager getInstance(){
         if(instance==null){
             instance = new PassManager();
+            // IR Passes
+            ArrayList<IRPass> IRPasses = new ArrayList<>();
+            IRPasses.add(new Mem2reg());
+            registerIRPasses(IRPasses);
+
+            // MC Passes
         }
         return instance;
     }
