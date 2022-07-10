@@ -1083,7 +1083,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 retVal_ = builder.buildComparison("!=", retVal_, Constant.ConstInt.get(0));
             }
             else if (retVal_.getType().isFloat()) { // float -> i1
-                retVal_ = builder.buildFptosi(retVal_, IntegerType.getI1());
+                retVal_ = builder.buildComparison("!=", retVal_, Constant.ConstFloat.get(.0f));
             }
 
             /*
