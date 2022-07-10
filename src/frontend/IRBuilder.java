@@ -5,6 +5,9 @@ import ir.Type;
 import ir.Value;
 import ir.types.*;
 import ir.values.*;
+import ir.values.constants.ConstArray;
+import ir.values.constants.ConstFloat;
+import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
 
 import java.util.ArrayList;
@@ -92,8 +95,8 @@ public class IRBuilder {
      * @param i The numeric value of the integer.
      * @return The ConstInt Value with given numeric value.
      */
-    public Constant.ConstInt buildConstant(int i) {
-        return Constant.ConstInt.get(i);
+    public ConstInt buildConstant(int i) {
+        return ConstInt.get(i);
     }
 
     /**
@@ -101,8 +104,8 @@ public class IRBuilder {
      * @param f The numeric value of the float.
      * @return The ConstInt Value with given numeric value.
      */
-    public Constant.ConstFloat buildConstant(float f) {
-        return Constant.ConstFloat.get(f);
+    public ConstFloat buildConstant(float f) {
+        return ConstFloat.get(f);
     }
 
     /**
@@ -111,7 +114,7 @@ public class IRBuilder {
      * @param initList An linear (no-nested) array of (integer/float) Constants for initialization the array.
      * @return The ConstArray.
      */
-    public Constant.ConstArray buildConstArr(ArrayType arrType, ArrayList<Constant> initList) {
+    public ConstArray buildConstArr(ArrayType arrType, ArrayList<Constant> initList) {
         /*
         Retrieve number of total elements in the array to be generated.
          */
@@ -139,7 +142,7 @@ public class IRBuilder {
                 j += step;
             }
 
-            return Constant.ConstArray.get(arrType, nestedInitList);
+            return ConstArray.get(arrType, nestedInitList);
         }
         else {
             Type elemType = arrType.getElemType();
@@ -147,16 +150,16 @@ public class IRBuilder {
                 Value elem = initList.get(i);
                 if (elem.getType() != elemType) {
                     if (elemType.isFloatType()) {
-                        float numericVal = ((Constant.ConstFloat) elem).getVal();
+                        float numericVal = ((ConstFloat) elem).getVal();
                         initList.set(i, buildConstant(numericVal));
                     }
                     else if (elemType.isIntegerType()) {
-                        int numericVal = ((Constant.ConstInt) elem).getVal();
+                        int numericVal = ((ConstInt) elem).getVal();
                         initList.set(i, buildConstant(numericVal));
                     }
                 }
             }
-            return Constant.ConstArray.get(arrType, initList);
+            return ConstArray.get(arrType, initList);
         }
 
     }

@@ -9,6 +9,7 @@ import ir.Value;
 import ir.types.ArrayType;
 import ir.types.PointerType;
 import ir.values.*;
+import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
 
 import java.util.HashMap;
@@ -188,12 +189,12 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
         }
-        else if (value instanceof Constant.ConstInt) {
+        else if (value instanceof ConstInt) {
             // 顺序问题，是否寻找之前剩下的立即数？
-            MCOperand temp = createConstInt(((Constant.ConstInt) value).getVal());
+            MCOperand temp = createConstInt(((ConstInt) value).getVal());
             if (temp instanceof Register) return temp;
             if (forceAllocReg){
-                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((Constant.ConstInt) value).getVal());
+                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((ConstInt) value).getVal());
                 valueMap.put(value, vr);
                 curMCBB.appendInst(new MCMove(vr, temp));
                 return vr;
@@ -387,8 +388,8 @@ public class MCBuilder {
      */
     private void translateBr(TerminatorInst.Br IRinst) {
         if (IRinst.isCondJmp()) {
-            if (IRinst.getOperandAt(0) instanceof Constant.ConstInt) {
-                int cond = ((Constant.ConstInt) IRinst.getOperandAt(0)).getVal();
+            if (IRinst.getOperandAt(0) instanceof ConstInt) {
+                int cond = ((ConstInt) IRinst.getOperandAt(0)).getVal();
                 if (cond == 0)
                     curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(2))));
                 else
@@ -420,7 +421,7 @@ public class MCBuilder {
         MCOperand operand1;
         MCOperand operand2;
         MCInstruction.ConditionField armCond = mapToArmCond(icmp);
-        if (value1 instanceof Constant.ConstInt && !(value2 instanceof Constant.ConstInt)){
+        if (value1 instanceof ConstInt && !(value2 instanceof ConstInt)){
             operand1 = findContainer(value2);
             operand2 = findContainer(value1);
             armCond = reverseCond(armCond);

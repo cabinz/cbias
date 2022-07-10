@@ -6,6 +6,9 @@ import ir.types.*;
 import ir.Type;
 import ir.values.*;
 import ir.values.Instruction.InstCategory;
+import ir.values.constants.ConstArray;
+import ir.values.constants.ConstFloat;
+import ir.values.constants.ConstInt;
 import ir.values.instructions.BinaryOpInst;
 import ir.values.instructions.GetElemPtrInst;
 import ir.values.instructions.MemoryInst;
@@ -265,13 +268,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
         switch(bType) {
             case "int" -> {
                 if (initVal.getType().isFloatType()) {
-                    float numericVal = ((Constant.ConstFloat) initVal).getVal();
+                    float numericVal = ((ConstFloat) initVal).getVal();
                     initVal = builder.buildConstant((int) numericVal);
                 }
             }
             case "float" -> {
                 if (initVal.getType().isIntegerType()) {
-                    int numericVal = ((Constant.ConstInt) initVal).getVal();
+                    int numericVal = ((ConstInt) initVal).getVal();
                     initVal = builder.buildConstant((float) numericVal);
                 }
             }
@@ -313,7 +316,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayList<Integer> dimLens = new ArrayList<>();
         for (SysYParser.ConstExpContext constExpContext : ctx.constExp()) {
             visit(constExpContext);
-            int dimLen = ((Constant.ConstInt) retVal_).getVal();
+            int dimLen = ((ConstInt) retVal_).getVal();
             dimLens.add(dimLen);
         }
 
@@ -350,9 +353,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // convert them into Constants and build a ConstArray.
                 ArrayList<Constant> initList = new ArrayList<>();
                 for (Value val : retValList_) {
-                    initList.add((Constant.ConstInt) val);
+                    initList.add((ConstInt) val);
                 }
-                Constant.ConstArray initArr = builder.buildConstArr(arrType, initList);
+                ConstArray initArr = builder.buildConstArr(arrType, initList);
                 // Build the ConstArray a global variable.
                 GlobalVariable arr = builder.buildGlbVar(ctx.Identifier().getText(), initArr);
                 arr.setConstant();
@@ -483,13 +486,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 switch (bType) {
                     case "int" -> {
                         if (initVal.getType().isFloatType()) {
-                            float numericVal = ((Constant.ConstFloat) initVal).getVal();
+                            float numericVal = ((ConstFloat) initVal).getVal();
                             initVal = builder.buildConstant((int) numericVal);
                         }
                     }
                     case "float" -> {
                         if (initVal.getType().isIntegerType()) {
-                            int numericVal = ((Constant.ConstInt) initVal).getVal();
+                            int numericVal = ((ConstInt) initVal).getVal();
                             initVal = builder.buildConstant((float) numericVal);
                         }
                     }
@@ -657,7 +660,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     initList.add((Constant) val);
                 }
                 // Build the const array, set it to be a global variable and put it into the symbol table.
-                Constant.ConstArray initArr = builder.buildConstArr(arrType, initList);
+                ConstArray initArr = builder.buildConstArr(arrType, initList);
                 GlobalVariable arr = builder.buildGlbVar(ctx.Identifier().getText(), initArr);
                 scope.addDecl(ctx.Identifier().getText(), arr);
             }
@@ -1080,10 +1083,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
              */
             if(retVal_.getType().isI32()) { // i32 -> i1
                 // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
-                retVal_ = builder.buildComparison("!=", retVal_, Constant.ConstInt.get(0));
+                retVal_ = builder.buildComparison("!=", retVal_, ConstInt.get(0));
             }
             else if (retVal_.getType().isFloatType()) { // float -> i1
-                retVal_ = builder.buildComparison("!=", retVal_, Constant.ConstFloat.get(.0f));
+                retVal_ = builder.buildComparison("!=", retVal_, ConstFloat.get(.0f));
             }
 
             /*
@@ -1750,11 +1753,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
         if (this.inGlbInit()) {
             visit(ctx.lVal());
             if (retVal_.getType().isIntegerType()) {
-                retInt_ = ((Constant.ConstInt) retVal_).getVal();
+                retInt_ = ((ConstInt) retVal_).getVal();
                 setConveyedType(DataType.INT);
             }
             else {
-                retFloat_ = ((Constant.ConstFloat) retVal_).getVal();
+                retFloat_ = ((ConstFloat) retVal_).getVal();
                 setConveyedType(DataType.FLT);
             }
         }

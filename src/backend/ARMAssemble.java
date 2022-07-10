@@ -5,6 +5,7 @@ import backend.operand.Label;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;
+import ir.values.constants.ConstInt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,7 +80,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
         for (int i=0; i<constVals.getNumOperands(); i++){
             Constant tmp = ((Constant) constVals.getOperandAt(i));
             if (tmp.getType().isIntegerType())
-                initial.add(((Constant.ConstInt) tmp).getVal());
+                initial.add(((ConstInt) tmp).getVal());
             else
                 genInitial(constVals, initial);
         }

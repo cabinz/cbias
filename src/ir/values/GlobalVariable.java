@@ -3,6 +3,7 @@ package ir.values;
 import ir.Type;
 import ir.User;
 import ir.types.PointerType;
+import ir.values.constants.ConstInt;
 
 /**
  * A GlobalVariable refers to a block of memory that can be determined at compilation time.
@@ -46,7 +47,7 @@ public class GlobalVariable extends User {
         super(PointerType.getType(type));
         this.setName("@" + name);
         if(type.isIntegerType()) {
-            this.initVal = Constant.ConstInt.get(0);
+            this.initVal = ConstInt.get(0);
         }
         else if(type.isArrayType()) {
             this.initVal = null;

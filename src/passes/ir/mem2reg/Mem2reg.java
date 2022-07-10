@@ -5,6 +5,7 @@ import ir.Use;
 import ir.Value;
 import ir.values.Constant;
 import ir.values.Instruction;
+import ir.values.constants.ConstInt;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
 import passes.ir.IRPass;
@@ -102,7 +103,7 @@ public class Mem2reg implements IRPass {
             basicBlock.npdVar.forEach(npdVar -> {
                 Constant constant;
                 if(npdVar.getAllocatedType().isIntegerType()){
-                    constant = Constant.ConstInt.get(0);
+                    constant = ConstInt.get(0);
                 }else{
                     throw new RuntimeException("Float constant is not implemented yet.");
                 }
