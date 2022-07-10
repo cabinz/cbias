@@ -3,6 +3,7 @@ package ir.values;
 import ir.Type;
 import ir.User;
 import ir.types.PointerType;
+import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 
 /**
@@ -49,10 +50,12 @@ public class GlobalVariable extends User {
         if(type.isIntegerType()) {
             this.initVal = ConstInt.get(0);
         }
-        else if(type.isArrayType()) {
+        else if (type.isFloatType()) {
+            this.initVal = ConstFloat.get(.0f);
+        }
+        else if (type.isArrayType()) {
             this.initVal = null;
         }
-        // todo: float constant
     }
 
     /**
@@ -117,7 +120,6 @@ public class GlobalVariable extends User {
             strBuilder.append(initVal);
         }
 
-        // todo: float type
         return strBuilder.toString();
     }
 }
