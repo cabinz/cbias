@@ -130,17 +130,16 @@ public class MCBuilder {
             translateRet((TerminatorInst.Ret) IRinst);
         }
         else if (IRinst.isAdd()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.ADD);
+            translateAddSub((BinaryInst) IRinst, MCInstruction.TYPE.ADD);
         }
         else if (IRinst.isSub()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.SUB);
+            translateAddSub((BinaryInst) IRinst, MCInstruction.TYPE.SUB);
         }
-        // TODO: 乘法和除法的操作数必须是寄存器
         else if (IRinst.isMul()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.MUL);
+            translateMul((BinaryInst) IRinst);
         }
         else if (IRinst.isDiv()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.SDIV);
+            translateSDiv((BinaryInst) IRinst);
         }
         else if (IRinst.isAlloca()) {
             translateAlloca((MemoryInst.Alloca) IRinst);
@@ -454,9 +453,7 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      * @param type Operation type, ADD/SUB/MUL/SDIV or more?
      */
-    private void translateBinary(BinaryInst IRinst, MCInstruction.TYPE type) {
-        // TODO: 2的整数倍乘法，常量除法
-        // TODO: ADD&SUB的operand2可以为为立即数，MUL和SDIV不行
+    private void translateAddSub(BinaryInst IRinst, MCInstruction.TYPE type) {
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
         if (operand1.isImmediate()) {
@@ -474,6 +471,24 @@ public class MCBuilder {
         else {
             curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst),(Register) operand1, operand2));
         }
+    }
+
+    private void translateMul(BinaryInst IRinst) {
+        // TODO: 使用lsl替换常数乘法
+        Register operand1 = (Register) findContainer(IRinst.getOperandAt(0), true);
+        Register operand2 = (Register) findContainer(IRinst.getOperandAt(1), true);
+        Register dst = (Register) findContainer(IRinst);
+
+        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, operand1, operand2));
+    }
+
+    private void translateSDiv(BinaryInst IRinst) {
+        // TODO: 常量除数转乘法
+        Register operand1 = (Register) findContainer(IRinst.getOperandAt(0), true);
+        Register operand2 = (Register) findContainer(IRinst.getOperandAt(1), true);
+        Register dst = (Register) findContainer(IRinst);
+
+        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, operand1, operand2));
     }
 
     /**
