@@ -49,7 +49,7 @@ public class Instruction extends User {
         // Casting operations
         ZEXT, FPTOSI, SITOFP,
         // Others
-        GEP;
+        GEP, PHI;
 
 
         public boolean isArithmeticBinary() {
