@@ -45,7 +45,7 @@ public class GlobalVariable extends User {
     public GlobalVariable(String name, Type type) {
         super(PointerType.getType(type));
         this.setName("@" + name);
-        if(type.isInteger()) {
+        if(type.isIntegerType()) {
             this.initVal = Constant.ConstInt.get(0);
         }
         else if(type.isArrayType()) {

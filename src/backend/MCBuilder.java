@@ -130,17 +130,17 @@ public class MCBuilder {
             translateRet((TerminatorInst.Ret) IRinst);
         }
         else if (IRinst.isAdd()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.ADD);
+            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
         }
         else if (IRinst.isSub()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.SUB);
+            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
         }
         // TODO: 乘法和除法的操作数必须是寄存器
         else if (IRinst.isMul()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.MUL);
+            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.MUL);
         }
         else if (IRinst.isDiv()) {
-            translateBinary((BinaryInst) IRinst, MCInstruction.TYPE.SDIV);
+            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.SDIV);
         }
         else if (IRinst.isAlloca()) {
             translateAlloca((MemoryInst.Alloca) IRinst);
@@ -274,7 +274,7 @@ public class MCBuilder {
      * @param IRinst icmp instruction
      * @return the corresponding ARM condition field
      */
-    private MCInstruction.ConditionField mapToArmCond(BinaryInst IRinst) {
+    private MCInstruction.ConditionField mapToArmCond(BinaryOpInst IRinst) {
         return switch (IRinst.cat) {
             case EQ -> MCInstruction.ConditionField.EQ;
             case NE -> MCInstruction.ConditionField.NE;
@@ -350,7 +350,7 @@ public class MCBuilder {
     private void translateAlloca(MemoryInst.Alloca IRinst) {
         int offset = 0;
         Type allocated = IRinst.getAllocatedType();
-        if (allocated.isInteger() || allocated.isPointerType()) {
+        if (allocated.isIntegerType() || allocated.isPointerType()) {
             offset = 4;
         }
         else if (allocated.isArrayType()) {
@@ -395,7 +395,7 @@ public class MCBuilder {
                     curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(1))));
             }
             else {
-                MCInstruction.ConditionField cond = translateIcmp((BinaryInst) IRinst.getOperandAt(0));
+                MCInstruction.ConditionField cond = translateIcmp((BinaryOpInst) IRinst.getOperandAt(0));
                 curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(1)), cond));
             }
         }
@@ -409,13 +409,13 @@ public class MCBuilder {
      * @param icmp IR instruction to be translated
      * @return the corresponding ARM condition field of icmp
      */
-    private MCInstruction.ConditionField translateIcmp(BinaryInst icmp, boolean saveResult) {
+    private MCInstruction.ConditionField translateIcmp(BinaryOpInst icmp, boolean saveResult) {
         Value value1 = icmp.getOperandAt(0);
         Value value2 = icmp.getOperandAt(1);
         if (value1 instanceof Instruction && ((Instruction) value1).isIcmp())
-            translateIcmp((BinaryInst) value1, true);
+            translateIcmp((BinaryOpInst) value1, true);
         if (value2 instanceof Instruction && ((Instruction) value2).isIcmp())
-            translateIcmp((BinaryInst) value2, true);
+            translateIcmp((BinaryOpInst) value2, true);
 
         MCOperand operand1;
         MCOperand operand2;
@@ -441,10 +441,10 @@ public class MCBuilder {
     }
 
     /**
-     * Syntactic sugar of {@link #translateIcmp(BinaryInst, boolean)} <br/>
+     * Syntactic sugar of {@link #translateIcmp(BinaryOpInst, boolean)} <br/>
      * Default do NOT save the result to a register.
      */
-    private MCInstruction.ConditionField translateIcmp(BinaryInst icmp) {
+    private MCInstruction.ConditionField translateIcmp(BinaryOpInst icmp) {
         return translateIcmp(icmp, false);
     }
 
@@ -454,7 +454,7 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      * @param type Operation type, ADD/SUB/MUL/SDIV or more?
      */
-    private void translateBinary(BinaryInst IRinst, MCInstruction.TYPE type) {
+    private void translateBinary(BinaryOpInst IRinst, MCInstruction.TYPE type) {
         // TODO: 2的整数倍乘法，常量除法
         // TODO: ADD&SUB的operand2可以为为立即数，MUL和SDIV不行
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));

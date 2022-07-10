@@ -2,7 +2,6 @@ package ir.values.instructions;
 
 import ir.Type;
 import ir.Value;
-import ir.types.IntegerType;
 import ir.values.BasicBlock;
 import ir.values.Instruction;
 
@@ -25,7 +24,7 @@ import ir.values.Instruction;
  * @see <a href="https://llvm.org/docs/LangRef.html#icmp-instruction">
  *     LLVM LangRef: icmp, fcmp</a>
  */
-public class BinaryInst extends Instruction {
+public class BinaryOpInst extends Instruction {
 
     // todo: rename as "BinaryOpInst", comment fashion fix
 
@@ -37,7 +36,7 @@ public class BinaryInst extends Instruction {
      * @param lOp Left operand.
      * @param rOp Right operand.
      */
-    public BinaryInst (Type type, InstCategory tag, Value lOp, Value rOp, BasicBlock bb) {
+    public BinaryOpInst(Type type, InstCategory tag, Value lOp, Value rOp, BasicBlock bb) {
         super(type, tag, bb);
         // Add left and right operands.
         this.addOperandAt(lOp, 0);

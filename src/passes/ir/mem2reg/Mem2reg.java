@@ -101,7 +101,7 @@ public class Mem2reg implements IRPass {
              */
             basicBlock.npdVar.forEach(npdVar -> {
                 Constant constant;
-                if(npdVar.getAllocatedType().isInteger()){
+                if(npdVar.getAllocatedType().isIntegerType()){
                     constant = Constant.ConstInt.get(0);
                 }else{
                     throw new RuntimeException("Float constant is not implemented yet.");

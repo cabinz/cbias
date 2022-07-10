@@ -6,7 +6,7 @@ import ir.types.*;
 import ir.Type;
 import ir.values.*;
 import ir.values.Instruction.InstCategory;
-import ir.values.instructions.BinaryInst;
+import ir.values.instructions.BinaryOpInst;
 import ir.values.instructions.GetElemPtrInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
@@ -264,13 +264,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
         String bType = ctx.getParent().getChild(1).getText();
         switch(bType) {
             case "int" -> {
-                if (initVal.getType().isFloat()) {
+                if (initVal.getType().isFloatType()) {
                     float numericVal = ((Constant.ConstFloat) initVal).getVal();
                     initVal = builder.buildConstant((int) numericVal);
                 }
             }
             case "float" -> {
-                if (initVal.getType().isInteger()) {
+                if (initVal.getType().isIntegerType()) {
                     int numericVal = ((Constant.ConstInt) initVal).getVal();
                     initVal = builder.buildConstant((float) numericVal);
                 }
@@ -482,13 +482,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Type matching check and conversion.
                 switch (bType) {
                     case "int" -> {
-                        if (initVal.getType().isFloat()) {
+                        if (initVal.getType().isFloatType()) {
                             float numericVal = ((Constant.ConstFloat) initVal).getVal();
                             initVal = builder.buildConstant((int) numericVal);
                         }
                     }
                     case "float" -> {
-                        if (initVal.getType().isInteger()) {
+                        if (initVal.getType().isIntegerType()) {
                             int numericVal = ((Constant.ConstInt) initVal).getVal();
                             initVal = builder.buildConstant((float) numericVal);
                         }
@@ -528,10 +528,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 visit(ctx.initVal());
                 Value initVal = retVal_;
                 // Implicit type conversion.
-                if (initVal.getType().isInteger() && addrAllocated.getAllocatedType().isFloat()) {
+                if (initVal.getType().isIntegerType() && addrAllocated.getAllocatedType().isFloatType()) {
                     initVal = builder.buildSitofp(initVal);
                 }
-                else if(initVal.getType().isFloat() && addrAllocated.getAllocatedType().isInteger()) {
+                else if(initVal.getType().isFloatType() && addrAllocated.getAllocatedType().isIntegerType()) {
                     initVal = builder.buildFptosi(initVal, (IntegerType) addrAllocated.getAllocatedType());
                 }
                 // Assignment by building a Store inst.
@@ -704,10 +704,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
                     // Type matching check and conversion.
                     Value initVal = retValList_.get(i);
-                    if (initVal.getType().isInteger() && arrType.getElemType().isFloat()) {
+                    if (initVal.getType().isIntegerType() && arrType.getElemType().isFloatType()) {
                         initVal = builder.buildSitofp(initVal);
                     }
-                    else if (initVal.getType().isFloat() && arrType.getElemType().isInteger()) {
+                    else if (initVal.getType().isFloatType() && arrType.getElemType().isIntegerType()) {
                         initVal = builder.buildFptosi(initVal, (IntegerType) arrType.getElemType());
                     }
 
@@ -803,10 +803,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (function.getType().getRetType().isVoidType()) {
                 builder.buildRet();
             }
-            else if (function.getType().getRetType().isInteger()) {
+            else if (function.getType().getRetType().isIntegerType()) {
                 builder.buildRet(builder.buildConstant(0)); // Return 0 by default.
             }
-            else if (function.getType().getRetType().isFloat()) {
+            else if (function.getType().getRetType().isFloatType()) {
                 builder.buildRet(builder.buildConstant(.0f)); // Return 0.0f by default.
             }
         }
@@ -901,10 +901,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Return type matching check and conversion.
             Value retVal = retVal_;
             Type retType = builder.getCurFunc().getType().getRetType(); // The return type defined in the prototype.
-            if (retVal.getType().isInteger() && retType.isFloat()) {
+            if (retVal.getType().isIntegerType() && retType.isFloatType()) {
                 retVal = builder.buildSitofp(retVal);
             }
-            else if (retVal.getType().isFloat() && retType.isInteger()) {
+            else if (retVal.getType().isFloatType() && retType.isIntegerType()) {
                 retVal = builder.buildFptosi(retVal, (IntegerType) retType);
             }
 
@@ -1082,7 +1082,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
                 retVal_ = builder.buildComparison("!=", retVal_, Constant.ConstInt.get(0));
             }
-            else if (retVal_.getType().isFloat()) { // float -> i1
+            else if (retVal_.getType().isFloatType()) { // float -> i1
                 retVal_ = builder.buildComparison("!=", retVal_, Constant.ConstFloat.get(.0f));
             }
 
@@ -1130,10 +1130,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
             /*
             Implicit type conversions.
              */
-            if (lOp.getType().isFloat() && !rOp.getType().isFloat()) {
+            if (lOp.getType().isFloatType() && !rOp.getType().isFloatType()) {
                 rOp = builder.buildSitofp(rOp);
             }
-            else if (!lOp.getType().isFloat() && rOp.getType().isFloat()) {
+            else if (!lOp.getType().isFloatType() && rOp.getType().isFloatType()) {
                 lOp = builder.buildSitofp(lOp);
             }
             else {
@@ -1180,10 +1180,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
             /*
             Implicit type conversions.
              */
-            if (lOp.getType().isFloat() && !rOp.getType().isFloat()) {
+            if (lOp.getType().isFloatType() && !rOp.getType().isFloatType()) {
                 rOp = builder.buildSitofp(rOp);
             }
-            else if (!lOp.getType().isFloat() && rOp.getType().isFloat()) {
+            else if (!lOp.getType().isFloatType() && rOp.getType().isFloatType()) {
                 lOp = builder.buildSitofp(lOp);
             }
             else {
@@ -1294,7 +1294,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the expression by visiting child.
             visit(ctx.unaryExp());
             // Integer.
-            if (retVal_.getType().isInteger()) {
+            if (retVal_.getType().isIntegerType()) {
                 // Conduct zero extension on i1.
                 if (retVal_.getType().isI1()) {
                     retVal_ = builder.buildZExt(retVal_);
@@ -1433,10 +1433,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
 
                 // Auto type promotion.
-                if (lOp.getType().isInteger() && rOp.getType().isFloat()) {
+                if (lOp.getType().isIntegerType() && rOp.getType().isFloatType()) {
                     lOp = builder.buildSitofp(lOp);
                 }
-                else if (lOp.getType().isFloat() && rOp.getType().isInteger()) {
+                else if (lOp.getType().isFloatType() && rOp.getType().isIntegerType()) {
                     rOp = builder.buildSitofp(rOp);
                 }
 
@@ -1571,10 +1571,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
 
                 // Auto type promotion.
-                if (lOp.getType().isI32() && rOp.getType().isFloat()) {
+                if (lOp.getType().isI32() && rOp.getType().isFloatType()) {
                     lOp = builder.buildSitofp(lOp);
                 }
-                else if (lOp.getType().isFloat() && rOp.getType().isI32()) {
+                else if (lOp.getType().isFloatType() && rOp.getType().isI32()) {
                     rOp = builder.buildSitofp(rOp);
                 }
 
@@ -1584,8 +1584,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     case "/" -> lOp = builder.buildDiv(lOp, rOp);
                     case "*" -> lOp = builder.buildMul(lOp, rOp);
                     case "%" -> { // l % r => l - (l/r)*r [FOR i32 ONLY]
-                        BinaryInst div = builder.buildDiv(lOp, rOp); // l/r
-                        BinaryInst mul = builder.buildMul(div, rOp); // (l/r)*r
+                        BinaryOpInst div = builder.buildDiv(lOp, rOp); // l/r
+                        BinaryOpInst mul = builder.buildMul(div, rOp); // (l/r)*r
                         lOp = builder.buildSub(lOp, mul);
                     }
                 }
@@ -1631,7 +1631,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             designating a memory block for assignment.
          */
         // Case 1, return directly.
-        if (val.getType().isInteger() || val.getType().isFloat()) {
+        if (val.getType().isIntegerType() || val.getType().isFloatType()) {
             retVal_ = val;
             return null;
         }
@@ -1749,7 +1749,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         if (this.inGlbInit()) {
             visit(ctx.lVal());
-            if (retVal_.getType().isInteger()) {
+            if (retVal_.getType().isIntegerType()) {
                 retInt_ = ((Constant.ConstInt) retVal_).getVal();
                 setConveyedType(DataType.INT);
             }
@@ -1808,10 +1808,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         // Type matching check and implicit type conversions.
         Type destType = ((PointerType) addr.getType()).getPointeeType();
-        if (destType.isFloat() && val.getType().isInteger()) {
+        if (destType.isFloatType() && val.getType().isIntegerType()) {
             val = builder.buildSitofp(val);
         }
-        else if (destType.isInteger() && val.getType().isFloat()) {
+        else if (destType.isIntegerType() && val.getType().isFloatType()) {
             val = builder.buildFptosi(val, (IntegerType) destType);
         }
 
@@ -1879,10 +1879,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     // statement). But we still do the check for safety.
                     arg = builder.buildZExt(arg);
                 }
-                if (typeArg.isI32() && arg.getType().isFloat()) {
+                if (typeArg.isI32() && arg.getType().isFloatType()) {
                     arg = builder.buildFptosi(arg, (IntegerType) typeArg);
                 }
-                else if (typeArg.isFloat() && arg.getType().isI32()) {
+                else if (typeArg.isFloatType() && arg.getType().isI32()) {
                     arg = builder.buildSitofp(arg);
                 }
 

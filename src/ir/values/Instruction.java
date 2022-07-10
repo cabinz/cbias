@@ -2,7 +2,6 @@ package ir.values;
 
 import ir.User;
 import ir.Type;
-import ir.values.instructions.BinaryInst;
 
 /**
  * Instruction class is the base class for all the IR instructions.

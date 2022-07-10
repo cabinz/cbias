@@ -84,19 +84,19 @@ public class Type {
         return (this instanceof FunctionType);
     }
 
-    public boolean isInteger() {
+    public boolean isIntegerType() {
         return (this instanceof IntegerType);
     }
 
     public boolean isI1() {
-        return this.isInteger() && ((IntegerType) this).getBitWidth() == 1;
+        return this.isIntegerType() && ((IntegerType) this).getBitWidth() == 1;
     }
 
     public boolean isI32() {
-        return this.isInteger() && ((IntegerType) this).getBitWidth() == 32;
+        return this.isIntegerType() && ((IntegerType) this).getBitWidth() == 32;
     }
 
-    public boolean isFloat() {
+    public boolean isFloatType() {
         return (this instanceof FloatType);
     }
 

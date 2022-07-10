@@ -78,7 +78,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
     private void genInitial(Constant constVals, ArrayList<Integer> initial) {
         for (int i=0; i<constVals.getNumOperands(); i++){
             Constant tmp = ((Constant) constVals.getOperandAt(i));
-            if (tmp.getType().isInteger())
+            if (tmp.getType().isIntegerType())
                 initial.add(((Constant.ConstInt) tmp).getVal());
             else
                 genInitial(constVals, initial);
