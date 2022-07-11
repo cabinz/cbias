@@ -5,6 +5,7 @@ import ir.Use;
 import ir.Value;
 import ir.values.Constant;
 import ir.values.Instruction;
+import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
@@ -105,7 +106,7 @@ public class Mem2reg implements IRPass {
                 if(npdVar.getAllocatedType().isIntegerType()){
                     constant = ConstInt.get(0);
                 }else{
-                    throw new RuntimeException("Float constant is not implemented yet.");
+                    constant = ConstFloat.get(0f);
                 }
                 basicBlock.latestDefineMap.put(npdVar,constant);
             });
