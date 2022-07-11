@@ -4,11 +4,11 @@ import ir.Value;
 import ir.values.Instruction;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
+import passes.ir.IBBRelationship;
 
 import java.util.*;
-import java.util.function.Consumer;
 
-class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction> {
+class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction>, IBBRelationship<BasicBlock> {
 
     List<BasicBlock> previousBasicBlocks = new ArrayList<>();
     List<BasicBlock> followingBasicBlocks = new ArrayList<>();
