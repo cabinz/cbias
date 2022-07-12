@@ -3,7 +3,6 @@ package passes;
 import backend.ARMAssemble;
 import ir.Module;
 import passes.ir.IRPass;
-import passes.ir.gv_localize.GVLocalize;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
 
@@ -25,7 +24,6 @@ public class PassManager {
      * @param module The module to be optimized.
      */
     public void runPasses(Module module){
-        run(GVLocalize.class, module);
         run(Mem2reg.class, module);
     }
 
@@ -78,7 +76,6 @@ public class PassManager {
             // IR Passes
             ArrayList<IRPass> IRPasses = new ArrayList<>();
             IRPasses.add(new Mem2reg());
-            IRPasses.add(new GVLocalize());
             registerIRPasses(IRPasses);
 
             // MC Passes
