@@ -56,4 +56,9 @@ public class Use {
         this.v = v;
         this.v.addUse(this);
     }
+
+    public User getUser(){
+        return u;
+    }
+
 }
