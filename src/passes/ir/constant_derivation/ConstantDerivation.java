@@ -44,7 +44,11 @@ public class ConstantDerivation implements IRPass {
                 var constant = globalVariable.getInitVal();
                 globalVariable.getUses().forEach(loadUse -> {
                     var loadInst = (MemoryInst.Load) loadUse.getUser();
-                    loadInst.getUses().forEach(use -> use.setValue(constant));
+                    @SuppressWarnings("unchecked")
+                    var uses = (List<Use>) loadInst.getUses().clone();
+                    uses.forEach(use -> {
+                        use.setValue(constant);
+                    });
                     loadInst.removeSelf();
                 });
                 module.globalVariables.remove(globalVariable);
