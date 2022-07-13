@@ -1,6 +1,7 @@
 package ir.values.instructions;
 
 import ir.Type;
+import ir.Use;
 import ir.Value;
 import ir.values.BasicBlock;
 import ir.values.Instruction;
@@ -10,14 +11,16 @@ import java.util.Map;
 
 public class PhiInst extends Instruction {
 
-    Map<BasicBlock, Value> phiMapping = new HashMap<>();
-
     public PhiInst(Type type, BasicBlock basicBlock){
         super(type, InstCategory.PHI, basicBlock);
     }
 
     public void setPhiMapping(Map<BasicBlock, Value> phiMapping){
-        this.phiMapping = phiMapping;
+        var id = 0;
+        for (BasicBlock basicBlock : phiMapping.keySet()) {
+            this.addOperandAt(phiMapping.get(basicBlock),id++);
+            this.addOperandAt(basicBlock,id++);
+        }
     }
 
     @Override
@@ -28,12 +31,12 @@ public class PhiInst extends Instruction {
         builder.append("phi ");
         builder.append(this.getType().toString());
 
-        final Boolean[] isFirstBranch = {true}; // Only in this cay can we change the value inside lambda.
-        phiMapping.forEach((basicBlock, value) -> {
-            builder.append(isFirstBranch[0] ?' ':',');
-            builder.append(String.format("[%s,%s]",value.getName(),"%"+basicBlock.getName()));
-            isFirstBranch[0] = false;
-        });
+        boolean isFirstBranch = true;
+        for(int i=0;i<operands.size();i+=2){
+            builder.append(isFirstBranch ?' ':',');
+            builder.append(String.format("[%s,%s]",getOperandAt(i).getName(),"%"+getOperandAt(i+1).getName()));
+            isFirstBranch = false;
+        }
 
         return builder.toString();
     }
