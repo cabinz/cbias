@@ -250,7 +250,7 @@ public class GraphColoring implements MCPass {
             AddWorkList(u);
         }
         else if (isPrecolored(v) || adjSet.contains(new Pair<>(u, v))) {
-            coalescedMoves.add(m);
+            constrainedMoves.add(m);
             AddWorkList(u);
             AddWorkList(v);
         }
@@ -265,11 +265,18 @@ public class GraphColoring implements MCPass {
     }
 
     private void Freeze() {
-
+        var u = freezeWorklist.iterator().next();
+        freezeWorklist.remove(u);
+        simplifyWorklist.add(u);
+        FreezeMoves(u);
     }
 
     private void SelectSpill() {
-
+        // TODO: BETTER WAY
+        var m = spillWorklist.iterator().next();
+        spillWorklist.remove(m);
+        simplifyWorklist.add(m);
+        FreezeMoves(m);
     }
 
     private void AssignColors() {
@@ -451,6 +458,20 @@ public class GraphColoring implements MCPass {
             freezeWorklist.remove(u);
             spillWorklist.add(u);
         }
+    }
+
+    private void FreezeMoves(Register u) {
+         NodeMoves(u).forEach(move -> {
+             // TODO: copy(x, y) is x=y or y=x?
+             var v = GetAlias(((Register) move.getSrc())) == GetAlias(u) ?GetAlias(move.getDst()) :GetAlias(((Register) move.getSrc()));
+
+             activeMoves.remove(move);
+             frozenMove.add(move);
+             if (NodeMoves(v).isEmpty() && degree.get(v) < K) {
+                 freezeWorklist.remove(v);
+                 simplifyWorklist.add(v);
+             }
+         });
     }
 
     private boolean isPrecolored(Register r) {
