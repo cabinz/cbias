@@ -16,6 +16,7 @@ public class MCbranch extends MCInstruction {
     private MCFunction targetFunc;
     private MCBasicBlock targetBB;
 
+    public boolean isBranch() {return !withLink;}
 
     public String emit() {
         if (withLink)
@@ -42,6 +43,12 @@ public class MCbranch extends MCInstruction {
     public HashSet<Register> getDef() {
         return getUse();
     }
+
+    public MCFunction getTargetFunc() {return targetFunc;}
+    public void setTargetFunc(MCFunction targetFunc) {this.targetFunc = targetFunc;}
+
+    public MCBasicBlock getTargetBB() {return targetBB;}
+    public void setTargetBB(MCBasicBlock targetBB) {this.targetBB = targetBB;}
 
     public MCbranch(MCFunction target) {
         super(TYPE.BRANCH);

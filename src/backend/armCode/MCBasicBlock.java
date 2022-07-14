@@ -44,6 +44,10 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
 
     public MCBasicBlock findMCBB(BasicBlock IRBB) {return belongFunc.findMCBB(IRBB);}
 
+    public MCInstruction getFirstInst() {return instructionList.getFirst();}
+
+    public MCInstruction getLastInst() {return instructionList.getLast();}
+
     public Iterator<MCInstruction> iterator() {return instructionList.iterator();}
     //</editor-fold>
 
@@ -72,12 +76,14 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     public MCBasicBlock(MCFunction belongingFunction) {
         this.belongFunc = belongingFunction;
         instructionList = new LinkedList<>();
+        predecessors = new ArrayList<>();
         label = "BLOCK_" + count;
         count++;
     }
     public MCBasicBlock(MCFunction belongingFunction, String label) {
         this.belongFunc = belongingFunction;
         instructionList = new LinkedList<>();
+        predecessors = new ArrayList<>();
         this.label = label;
     }
     //</editor-fold>
