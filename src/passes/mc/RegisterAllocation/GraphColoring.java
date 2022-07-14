@@ -12,6 +12,8 @@ import passes.mc.MCPass;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -68,10 +70,15 @@ public class GraphColoring implements MCPass {
     HashMap<Register, Integer> degree;
     //</editor-fold>
 
+    private Stack<Register> selectStack;
+    private HashSet<Register> coalescedNodes;
+    private HashSet<Register> spilledNodes;
+
     /**
      * a mapping from a node to the list of moves it is associated with
      */
     private HashMap<Register, HashSet<MCMove>> moveList;
+    private HashSet<MCMove> activeMoves;
 
     //<editor-fold desc="Tools">
     private MCFunction curFunc;
@@ -120,7 +127,12 @@ public class GraphColoring implements MCPass {
                 .mapToObj(RealRegister::get)
                 .collect(Collectors.toMap(x -> x, x -> INF)));
 
+        selectStack = new Stack<>();
+        coalescedNodes = new HashSet<>();
+        spilledNodes = new HashSet<>();
+
         moveList = new HashMap<>();
+        activeMoves = new HashSet<>();
     }
 
     /**
@@ -163,12 +175,28 @@ public class GraphColoring implements MCPass {
         }
     }
 
+    /**
+     * Fill the worklist
+     */
     private void MakeWorklist() {
-
+        curFunc.getVirtualRegisters().forEach(n -> {
+            if (degree.getOrDefault(n, 0) >= K)
+                spillWorklist.add(n);
+            else if (MoveRelated(n))
+                freezeWorklist.add(n);
+            else
+                simplifyWorklist.add(n);
+        });
     }
 
+    /**
+     * Simplify the RIG by removing the simplifyWorklist and push into selectStack
+     */
     private void Simplify() {
-
+        Register n = simplifyWorklist.iterator().next();
+        simplifyWorklist.remove(n);
+        selectStack.push(n);
+        Adjacent(n).forEach(this::DecrementDegree);
     }
 
     private void Coalesce() {
@@ -193,6 +221,11 @@ public class GraphColoring implements MCPass {
     //</editor-fold>
 
     //<editor-fold desc="Tool method">
+    /**
+     * Add an edge in the RIG
+     * @param u node 1
+     * @param v node 2
+     */
     private void AddEdge(Register u, Register v) {
         if (!adjSet.contains(new Pair<>(u, v)) && !u.equals(v)) {
             /* Build edge */
@@ -216,6 +249,69 @@ public class GraphColoring implements MCPass {
                 degree.compute(v, (key, value) -> value==null ?0 :value+1);
             }
         }
+    }
+
+    /**
+     * Decrement the degree of one node
+     * @param m the node to be operated
+     */
+    private void DecrementDegree(Register m) {
+        Integer d = degree.get(m);
+        degree.put(m, d-1);
+
+        /* If go out from spillNode */
+        if (d == K) {
+            EnableMoves(m);
+            Adjacent(m).forEach(this::EnableMoves);
+            spilledNodes.remove(m);
+
+            if (MoveRelated(m))
+                freezeWorklist.add(m);
+            else
+                simplifyWorklist.add(m);
+        }
+    }
+
+    /**
+     * Enable the move to be coalesced
+     * @param n the node to be operated
+     */
+    private void EnableMoves(Register n) {
+        NodeMoves(n).forEach(m -> {
+            if (activeMoves.contains(m)) {
+                activeMoves.remove(m);
+                worklistMoves.add(m);
+            }
+        });
+    }
+
+    /**
+     * Determine whether the node is move-related
+     */
+    private boolean MoveRelated(Register n) {
+        return !NodeMoves(n).isEmpty();
+    }
+
+    /**
+     * All the MOVE instruction related with n
+     * @param n the node to find
+     * @return the set of MOVE
+     */
+    private Set<MCMove> NodeMoves(Register n) {
+        return moveList.getOrDefault(n, new HashSet<>()).stream()
+                .filter(move -> activeMoves.contains(move) || worklistMoves.contains(move))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Find all the node adjacent to n
+     * @param n the node to find
+     * @return the set of neighbor
+     */
+    private Set<Register> Adjacent(Register n) {
+        return adjList.getOrDefault(n, new HashSet<>()).stream()
+                .filter(node -> !selectStack.contains(node) && !coalescedNodes.contains(node))
+                .collect(Collectors.toSet());
     }
 
     private boolean isPrecolored(Register r) {
