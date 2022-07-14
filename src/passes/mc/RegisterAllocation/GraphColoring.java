@@ -9,10 +9,7 @@ import backend.operand.RealRegister;
 import backend.operand.Register;
 import passes.mc.MCPass;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -75,6 +72,15 @@ public class GraphColoring implements MCPass {
      * Stack containing temporaries removed from the graph
      */
     private Stack<Register> selectStack;
+    /**
+     * As its name
+     */
+    private HashSet<Register> coloredNodes;
+    /**
+     * The color chosen by algorithm for a node. <br/>
+     * For the precolored nodes, this is initialized to the given color.
+     */
+    private HashMap<Register, Integer> color;
     /**
      * The registers that have been coalesced;
      * when <i>u</i> &#8592<i>v</i> is coalesced, <i>v</i> is added to this set
@@ -153,6 +159,11 @@ public class GraphColoring implements MCPass {
                 .collect(Collectors.toMap(x -> x, x -> INF)));
 
         selectStack = new Stack<>();
+        coloredNodes = IntStream.range(0, 15)
+                .mapToObj(RealRegister::get).collect(Collectors.toCollection(HashSet::new));
+        color = new HashMap<>(IntStream.range(0, 15)
+                .mapToObj(RealRegister::get)
+                .collect(Collectors.toMap(x -> x, RealRegister::getIndex)));
         coalescedNodes = new HashSet<>();
         alias = new HashMap<>();
         spilledNodes = new HashSet<>();
@@ -284,7 +295,29 @@ public class GraphColoring implements MCPass {
     }
 
     private void AssignColors() {
+        while (!selectStack.isEmpty()) {
+            /* Initialize */
+            var n = selectStack.pop();
+            HashSet<Integer> okColor = IntStream.range(0, 12).boxed()// TODO: 考虑使用r14 lr, r15 pc?
+                    .collect(Collectors.toCollection(HashSet::new));
 
+            /* Remove unavailable color */
+            adjList.get(n).forEach(w -> {
+                if (isPrecolored(GetAlias(w)) || coloredNodes.contains(w))
+                    okColor.remove(color.get(GetAlias(w)));
+            });
+
+            /* Assign */
+            if (okColor.isEmpty())
+                spilledNodes.add(n);
+            else {
+                coloredNodes.add(n);
+                color.put(n, okColor.iterator().next());
+            }
+        }
+
+        /* Deal coalesced nodes */
+        coalescedNodes.forEach(n -> color.put(n, color.get(GetAlias(n))));
     }
 
     private void RewriteProgram() {
