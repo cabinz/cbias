@@ -42,11 +42,6 @@ public class MCBuilder {
     private MCBasicBlock curMCBB;
 
     /**
-     * This is used to name the virtual register.
-     */
-    private int VirtualRegCounter = 0;
-
-    /**
      * This class records the map between values and virtual registers.
      */
     private final HashMap<Value, VirtualRegister> valueMap;
@@ -103,7 +98,6 @@ public class MCBuilder {
                 continue;
             }
 
-            VirtualRegCounter = 0;
             curIRFunc = IRfunc;
             curFunc = target.createFunction(IRfunc);
 
@@ -178,12 +172,12 @@ public class MCBuilder {
             return valueMap.get(value);
         }
         else if (value instanceof Instruction) {
-            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             return vr;
         }
         else if (value instanceof GlobalVariable) {
-            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
@@ -193,7 +187,7 @@ public class MCBuilder {
             MCOperand temp = createConstInt(((ConstInt) value).getVal());
             if (temp instanceof Register) return temp;
             if (forceAllocReg){
-                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((ConstInt) value).getVal());
+                VirtualRegister vr = curFunc.createVirReg(((ConstInt) value).getVal());
                 valueMap.put(value, vr);
                 curMCBB.appendInst(new MCMove(vr, temp));
                 return vr;
@@ -202,7 +196,7 @@ public class MCBuilder {
                 return temp;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
-            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             int pos = ((Function.FuncArg) value).getPos();
             MCBasicBlock entry = curFunc.getEntryBlock();
@@ -210,7 +204,7 @@ public class MCBuilder {
                 entry.prependInst(new MCMove(vr, RealRegister.get(pos)));
             }
             else {
-                VirtualRegister tmp = new VirtualRegister(VirtualRegCounter++, (pos-4)*4);
+                VirtualRegister tmp = curFunc.createVirReg((pos-4)*4);
                 entry.prependInst(new MCload(vr, RealRegister.get(13), tmp));
                 entry.prependInst(new MCMove(tmp, createConstInt((pos-4)*4)));
             }
@@ -263,7 +257,7 @@ public class MCBuilder {
         if (canEncodeImm(value))
             return new Immediate(value);
         else{
-            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            VirtualRegister vr = curFunc.createVirReg(value);
             curMCBB.appendInst(new MCMove(vr, new Immediate(value), true));
             return vr;
         }

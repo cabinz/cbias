@@ -1,7 +1,10 @@
 package backend.armCode;
 
+import backend.operand.VirtualRegister;
+import ir.Value;
 import ir.values.BasicBlock;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -13,6 +16,11 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
 
     //<editor-fold desc="Fields">
     private final LinkedList<MCBasicBlock> BasicBlockList;
+    /**
+     * This is used to name the virtual register.
+     */
+    private int VirtualRegCounter = 0;
+    private final ArrayList<VirtualRegister> VirtualRegisters;
     private final String name;
 
     private int stackSize;
@@ -56,6 +64,18 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
         return BasicBlockList.getFirst();
     }
 
+    public VirtualRegister createVirReg(Value value){
+        var vr = new VirtualRegister(VirtualRegCounter++, value);
+        VirtualRegisters.add(vr);
+        return vr;
+    }
+
+    public VirtualRegister createVirReg(int value){
+        var vr = new VirtualRegister(VirtualRegCounter++, value);
+        VirtualRegisters.add(vr);
+        return vr;
+    }
+
     /**
      * Used when declare a local variable
      * @param n the size of the variable
@@ -86,6 +106,7 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
         this.name = name;
         stackSize = 0;
         BasicBlockList = new LinkedList<>();
+        VirtualRegisters = new ArrayList<>();
         BBmap = new HashMap<>();
         this.isExternal = isExternal;
 //        argList = new LinkedList<MCOperand>();
