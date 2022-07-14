@@ -17,21 +17,17 @@ import java.util.ArrayList;
  *     LLVM LangRef: Function Type</a>
  */
 public class FunctionType extends Type {
-    //<editor-fold desc="Fields">
+
     private Type retType; // void / int / float
     private ArrayList<Type> argTypes;
-    //</editor-fold>
 
 
-    //<editor-fold desc="Constructors">
     private FunctionType(Type retType, ArrayList<Type> argTypes) {
         this.retType = retType;
         this.argTypes = argTypes;
     }
-    //</editor-fold>
 
 
-    //<editor-fold desc="Methods">
 
     /**
      * Just a wrapper of the private constructor of FunctionType,
@@ -52,5 +48,4 @@ public class FunctionType extends Type {
     public ArrayList<Type> getArgTypes() {
         return argTypes;
     }
-    //</editor-fold>
 }

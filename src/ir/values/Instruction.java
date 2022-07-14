@@ -2,7 +2,6 @@ package ir.values;
 
 import ir.User;
 import ir.Type;
-import ir.values.instructions.BinaryInst;
 
 /**
  * Instruction class is the base class for all the IR instructions.
@@ -15,7 +14,7 @@ import ir.values.instructions.BinaryInst;
  * @see <a href="https://llvm.org/docs/LangRef.html#instruction-reference">
  *     LLVM LangRef: Instruction</a>
  */
-public class Instruction extends User {
+public abstract class Instruction extends User {
 
     /**
      * Each instruction instance has a field "cat" containing a InstCategory instance
@@ -25,26 +24,40 @@ public class Instruction extends User {
      * of operations. Be careful to move them or add new ones.
      */
     public enum InstCategory {
-        // Operations
-        ADD, SUB, MUL, DIV,     // Arithmetic Operations
-        LT, GT, EQ, NE, LE, GE, // Relational (Comparison) Operations
-        AND, OR,                // Logical Operations
+        /*
+         Arithmetic Operations: Integer and floating point.
+         */
+        ADD, SUB, MUL, DIV,
+        FADD, FSUB, FMUL, FDIV,
+        FNEG,
+
+        /*
+        Relational Operations: Integer and floating point .
+         */
+        LT, GT, EQ, NE, LE, GE,
+        FLT, FGT, FEQ, FNE, FLE, FGE,
+
+        // Logical Operations
+        AND, OR,
         // Terminators
         RET, BR,
         // Invocation
         CALL,
         // Memory operations
-        ZEXT, ALLOCA, LOAD, STORE,
+        ALLOCA, LOAD, STORE,
+        // Casting operations
+        ZEXT, FPTOSI, SITOFP,
         // Others
-        GEP;
+        GEP, PHI;
+
 
         public boolean isArithmeticBinary() {
-            return this.ordinal() <= InstCategory.DIV.ordinal();
+            return this.ordinal() <= InstCategory.FNEG.ordinal();
         }
 
         public boolean isRelationalBinary() {
             return InstCategory.LT.ordinal() <= this.ordinal()
-                    && this.ordinal() <= InstCategory.GE.ordinal();
+                    && this.ordinal() <= InstCategory.FGE.ordinal();
         }
 
         public boolean isTerminator() {
@@ -54,7 +67,6 @@ public class Instruction extends User {
     }
 
 
-    //<editor-fold desc="Fields">
     /**
      * An InstCategory instance indicating an instruction type.
      */
@@ -81,19 +93,19 @@ public class Instruction extends User {
      * Reference of the basic block where the instruction lands.
      */
     private BasicBlock bb;
-    //</editor-fold>
+
+    public BasicBlock getBB() {
+        return this.bb;
+    }
 
 
-    //<editor-fold desc="Constructors">
     public Instruction(Type type, InstCategory tag, BasicBlock bb){
         super(type);
         this.cat = tag;
         this.bb = bb;
     }
-    //</editor-fold>
 
 
-    //<editor-fold desc="Is?">
     public boolean isAdd   () {return this.cat == InstCategory.ADD;}
     public boolean isSub   () {return this.cat == InstCategory.SUB;}
     public boolean isMul   () {return this.cat == InstCategory.MUL;}
@@ -108,18 +120,29 @@ public class Instruction extends User {
     public boolean isStore () {return this.cat == InstCategory.STORE;}
     public boolean isIcmp  () {return this.cat.isRelationalBinary();}
     public boolean isGEP   () {return this.cat == InstCategory.GEP;}
-    //</editor-fold>
-
-
-    //<editor-fold desc="Methods">
 
     /**
-     * Get the Basic Block where the instruction lands.
-     * @return Reference of the BB.
+     * Remove the instruction from the BasicBlock holding it.
      */
-    public BasicBlock getBB() {
-        return this.bb;
+    public void removeSelf() {
+        this.getBB().instructions.remove(this);
     }
-    //</editor-fold>
 
+    /**
+     * Insert a new one at the front of the instruction.
+     * @param inst The instruction to be inserted.
+     */
+    public void insertBefore(Instruction inst) {
+        var instList = this.getBB().instructions;
+        instList.add(instList.indexOf(this), inst);
+    }
+
+    /**
+     * Insert a new instruction as the next one of the current.
+     * @param inst The instruction to be inserted.
+     */
+    public void insertAfter(Instruction inst) {
+        var instList = this.getBB().instructions;
+        instList.add(instList.indexOf(this) + 1, inst);
+    }
 }

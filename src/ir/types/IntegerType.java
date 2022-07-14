@@ -9,7 +9,6 @@ import ir.Type;
  */
 public class IntegerType extends Type {
 
-    //<editor-fold desc="Fields">
     /**
      * Field to represent the bit width of the integer type (1 or 32).
      */
@@ -24,17 +23,13 @@ public class IntegerType extends Type {
      * Singleton for i32. Can be retrieved only by getI1().
      */
     private static final IntegerType i1 = new IntegerType(1);
-    //</editor-fold>
 
 
-    //<editor-fold desc="Constructors">
     private IntegerType(int bitWidth) {
         this.bitWidth = bitWidth;
     }
-    //</editor-fold>
 
 
-    //<editor-fold desc="Methods">
     /**
      * @return The bit width of the integer type (1 or 32).
      */
@@ -69,5 +64,4 @@ public class IntegerType extends Type {
                 return "error";
         }
     }
-    //</editor-fold>
 }

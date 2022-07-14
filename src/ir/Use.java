@@ -6,7 +6,6 @@ package ir;
  *     LLVM IR Reference</a>
  */
 public class Use {
-    //<editor-fold desc="Fields">
     /**
      * Reference to value being used.
      */
@@ -21,10 +20,7 @@ public class Use {
      * The position number of the value as an operand of the user.
      */
     private int pos;
-    //</editor-fold>
 
-
-    //<editor-fold desc="Constructors">
 
     /**
      * Construct a new Use edge.
@@ -45,10 +41,8 @@ public class Use {
         v.addUse(this);
         u.operands.add(this);
     }
-    //</editor-fold>
 
 
-    //<editor-fold desc="Methods">
     public int getOperandPos() {
         return pos;
     }
@@ -58,7 +52,8 @@ public class Use {
     }
 
     public void setValue(Value v) {
+        this.v.removeUse(this);
         this.v = v;
+        this.v.addUse(this);
     }
-    //</editor-fold>
 }

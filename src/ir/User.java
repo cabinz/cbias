@@ -14,27 +14,21 @@ import java.util.LinkedList;
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/User.h">
  *     LLVM IR Reference</a>
  */
-public class User extends Value {
+public abstract class User extends Value {
 
-    //<editor-fold desc="Fields">
     /**
      * Keep track of all the Values used.
      * <br>
      * To safely add operands to it, use addOperandAt().
      */
     public LinkedList<Use> operands = new LinkedList<Use>();
-    //</editor-fold>
 
 
-    //<editor-fold desc="Constructors">
     public User(Type type) {
         super(type);
     }
-    //</editor-fold>
 
 
-
-    //<editor-fold desc="Methods">
     /**
      * Retrieve the number of Value it use.
      * @return Number of operands of the user.
@@ -89,14 +83,11 @@ public class User extends Value {
             // If there is, replace with the new Value.
             if (use.getOperandPos() == pos) {
                 // Got the target use.
-                use.getValue().removeUse(use); // Remove the original use.v (from the value using it).
                 use.setValue(val); // Cover the use.v at specified position (pos) with given v.
-                val.addUse(use); // Add the new use to the value using it (the given v).
                 return;
             }
         }
         // If not, throw an exception.
         throw new RuntimeException("Try to reassign a non-existent operand.");
     }
-    //</editor-fold>
 }

@@ -1,9 +1,8 @@
 package ir.values;
 
 import ir.Value;
-import ir.Type;
+import ir.types.LabelType;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -20,15 +19,10 @@ import java.util.LinkedList;
  */
 public class BasicBlock extends Value implements Iterable<Instruction>{
 
-    //<editor-fold desc="Fields">
-    private final ArrayList<BasicBlock> predecessors = new ArrayList<>();
-    private final ArrayList<BasicBlock> successors = new ArrayList<>();
     public final LinkedList<Instruction> instructions = new LinkedList<>();
-    //</editor-fold>
 
-    //<editor-fold desc="Constructors">
     public BasicBlock(String name) {
-        super(Type.LabelType.getType());
+        super(LabelType.getType());
 
         this.setName(name);
     }
@@ -60,13 +54,4 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     public Iterator<Instruction> iterator() {
         return instructions.iterator();
     }
-
-    public void addPredecessor(BasicBlock pre) {
-        this.predecessors.add(pre);
-    }
-
-    public void addSuccessor(BasicBlock suc) {
-        this.successors.add(suc);
-    }
-    //</editor-fold>
 }

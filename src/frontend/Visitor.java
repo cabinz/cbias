@@ -2,20 +2,19 @@ package frontend;
 
 import ir.Module;
 import ir.Value;
-import ir.types.ArrayType;
-import ir.types.FunctionType;
-import ir.types.IntegerType;
+import ir.types.*;
 import ir.Type;
-import ir.types.PointerType;
 import ir.values.*;
 import ir.values.Instruction.InstCategory;
-import ir.values.instructions.BinaryInst;
+import ir.values.constants.ConstArray;
+import ir.values.constants.ConstFloat;
+import ir.values.constants.ConstInt;
+import ir.values.instructions.BinaryOpInst;
 import ir.values.instructions.GetElemPtrInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Stack;
 
 /**
@@ -24,7 +23,6 @@ import java.util.Stack;
  * in-memory IR constructs one by one during the traversal :D
  */
 public class Visitor extends SysYBaseVisitor<Void> {
-    //<editor-fold desc="Fields">
 
     private final IRBuilder builder;
     private final Scope scope = new Scope();
@@ -37,7 +35,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
      * Stack for back-patching break and continue statements.
      */
     Stack<ArrayList<TerminatorInst.Br>> bpStk = new Stack<>();
-    //</editor-fold>
 
     //<editor-fold desc="Environment variables indicating the building status">
     private final boolean ON = true;
@@ -86,6 +83,26 @@ public class Visitor extends SysYBaseVisitor<Void> {
         return envBuildFCall;
     }
 
+    /**
+     * The enum is for indicating which data type returned from the lower layer
+     * for visiting method. (INT -> read retInt_, FLT -> read retFlt_)
+     */
+    private enum DataType {FLT, INT};
+
+    /**
+     * Represents data type returned from the lower layer of visiting method.
+     * Only for passing data in primitive types int and float (by retInt_ and retFloat_)
+     */
+    private DataType envConveyedType = null;
+
+    private DataType getConveyedType() {
+        return envConveyedType;
+    }
+
+    private void setConveyedType(DataType dataType) {
+        envConveyedType = dataType;
+    }
+
     //</editor-fold>
 
     //<editor-fold desc="Variables storing returned data from the lower layers of visiting.">
@@ -94,6 +111,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private Type retType_;
     private ArrayList<Type> retTypeList_;
     private int retInt_;
+    private float retFloat_;
     //</editor-fold>
 
     //</editor-fold>
@@ -119,48 +137,87 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private void initRuntimeFunctions() {
         // Return types.
         Type i32Ty = IntegerType.getI32();
-        Type voidTy = Type.VoidType.getType();
+        Type floatTy = FloatType.getType();
+        Type voidTy = VoidType.getType();
         Type ptrI32Ty = PointerType.getType(i32Ty);
+        Type ptrFloatTy = PointerType.getType(floatTy);
         // Argument type lists.
         ArrayList<Type> emptyArgTypeList = new ArrayList<>();
         ArrayList<Type> intArgTypeList = new ArrayList<>() {{add(i32Ty);}};
+        ArrayList<Type> floatArgTypeList = new ArrayList<>() {{add(floatTy);}};
 
-
-        // getint()
+        // i32 getint()
         scope.addDecl("getint",
                 builder.buildFunction("getint", FunctionType.getType(
                         i32Ty , emptyArgTypeList
                 ), true)
         );
-        // putint(i32)
+        // void putint(i32)
         scope.addDecl("putint",
                 builder.buildFunction("putint", FunctionType.getType(
                         voidTy, intArgTypeList
                 ), true)
-        );// getch()
+        );
+        // i32 getfloat()
+        scope.addDecl("getfloat",
+                builder.buildFunction("getfloat", FunctionType.getType(
+                        floatTy , emptyArgTypeList
+                ), true)
+        );
+        // void putfloat(float)
+        scope.addDecl("putfloat",
+                builder.buildFunction("putfloat", FunctionType.getType(
+                        voidTy, floatArgTypeList
+                ), true)
+        );
+        // i32 getch()
         scope.addDecl("getch",
                 builder.buildFunction("getch", FunctionType.getType(
                         i32Ty, emptyArgTypeList
                 ), true)
         );
-        // putch(i32)
+        // void putch(i32)
         scope.addDecl("putch",
                 builder.buildFunction("putch", FunctionType.getType(
                         voidTy, intArgTypeList
                 ), true)
         );
-        // getarray()
-        ArrayList<Type> iptrArgTypeList = new ArrayList<>() {{add(ptrI32Ty);}};
+        // i32 getarray(i32*)
         scope.addDecl("getarray",
                 builder.buildFunction("getarray", FunctionType.getType(
-                        i32Ty, iptrArgTypeList
+                        i32Ty, new ArrayList<>() {{add(ptrI32Ty);}}
                 ), true)
         );
-        // putarray(i32, i32*)
-        ArrayList<Type> putarrayArgTypeList = new ArrayList<>() {{add(i32Ty); add(ptrI32Ty);}};
+        // void putarray(i32, i32*)
         scope.addDecl("putarray",
                 builder.buildFunction("putarray", FunctionType.getType(
-                        voidTy, putarrayArgTypeList
+                        voidTy, new ArrayList<>() {{add(i32Ty); add(ptrI32Ty);}}
+                ), true)
+        );
+
+        // i32 getfarray(float*)
+        scope.addDecl("getfarray",
+                builder.buildFunction("getfarray", FunctionType.getType(
+                        i32Ty, new ArrayList<>() {{add(ptrFloatTy);}}
+                ), true)
+        );
+        // void putfarray(i32, float*)
+        scope.addDecl("putfarray",
+                builder.buildFunction("putfarray", FunctionType.getType(
+                        voidTy, new ArrayList<>() {{add(i32Ty); add(ptrFloatTy);}}
+                ), true)
+        );
+
+        // void starttime()
+        scope.addDecl("starttime",
+                builder.buildFunction("starttime", FunctionType.getType(
+                        voidTy, emptyArgTypeList
+                ), true)
+        );
+        // void stoptime()
+        scope.addDecl("stoptime",
+                builder.buildFunction("stoptime", FunctionType.getType(
+                        voidTy, emptyArgTypeList
                 ), true)
         );
     }
@@ -202,10 +259,29 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Alloca instruction like variable.
          */
 
-        // Retrieve the initialized value by visiting child (scalarConstDef).
-        // Then update the symbol table.
+        // Retrieve the initialized value (as a Constant) by visiting child (scalarConstDef).
         visit(ctx.constInitVal());
-        scope.addDecl(varName, retVal_);
+        Value initVal = retVal_;
+
+        // Type matching check and implicit type conversion.
+        String bType = ctx.getParent().getChild(1).getText();
+        switch(bType) {
+            case "int" -> {
+                if (initVal.getType().isFloatType()) {
+                    float numericVal = ((ConstFloat) initVal).getVal();
+                    initVal = builder.buildConstant((int) numericVal);
+                }
+            }
+            case "float" -> {
+                if (initVal.getType().isIntegerType()) {
+                    int numericVal = ((ConstInt) initVal).getVal();
+                    initVal = builder.buildConstant((float) numericVal);
+                }
+            }
+        }
+
+        // Update the symbol table.
+        scope.addDecl(varName, initVal);
 
         return null;
     }
@@ -220,9 +296,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
         if (scope.isGlobal()) {
             this.setGlbInit(ON);
         }
+
         super.visitScalarConstInitVal(ctx);
-        retVal_ = builder.buildConstant(retInt_);
-        // todo: float constant
+        switch (getConveyedType()) {
+            case INT -> retVal_ = builder.buildConstant(retInt_);
+            case FLT -> retVal_ = builder.buildConstant(retFloat_);
+        }
+
         this.setGlbInit(OFF);
         return null;
     }
@@ -236,18 +316,24 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayList<Integer> dimLens = new ArrayList<>();
         for (SysYParser.ConstExpContext constExpContext : ctx.constExp()) {
             visit(constExpContext);
-            int dimLen = ((Constant.ConstInt) retVal_).getVal();
+            int dimLen = ((ConstInt) retVal_).getVal();
             dimLens.add(dimLen);
         }
 
-        // todo: float type array
         // The type of the basic element in the array.
-        Type arrType = IntegerType.getI32();
+        Type tmpType = null;
+        // Retrieve the basic element type.
+        String bType = ctx.getParent().getChild(1).getText();
+        switch (bType) {
+            case "int" -> tmpType = IntegerType.getI32();
+            case "float" -> tmpType = FloatType.getType();
+        }
         // Build the final type of the array
         // by looping through the dimLens from the inside out.
         for (int i = dimLens.size(); i > 0; i--) {
-            arrType = ArrayType.getType(arrType, dimLens.get(i - 1));
+            tmpType = ArrayType.getType(tmpType, dimLens.get(i - 1));
         }
+        ArrayType arrType = (ArrayType) tmpType;
 
         /*
         Global array.
@@ -267,9 +353,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // convert them into Constants and build a ConstArray.
                 ArrayList<Constant> initList = new ArrayList<>();
                 for (Value val : retValList_) {
-                    initList.add((Constant.ConstInt) val);
+                    initList.add((ConstInt) val);
                 }
-                Constant.ConstArray initArr = builder.buildConstArr(arrType, initList);
+                ConstArray initArr = builder.buildConstArr(arrType, initList);
                 // Build the ConstArray a global variable.
                 GlobalVariable arr = builder.buildGlbVar(ctx.Identifier().getText(), initArr);
                 arr.setConstant();
@@ -377,35 +463,82 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitScalarVarDef(SysYParser.ScalarVarDefContext ctx) {
+        // The text of the grammar symbol bType ("int" / "float")
+        String bType = ctx.getParent().getChild(0).getText();
+
         // Retrieve the name of the variable defined and check for duplication.
         String varName = ctx.Identifier().getText();
         if (scope.duplicateDecl(varName)) {
             throw new RuntimeException("Duplicate definition of variable name: " + varName);
         }
 
-        // A global variable.
+        /*
+        A global variable.
+         */
         if (scope.isGlobal()) {
             GlobalVariable glbVar;
+
+            // With initialization.
             if (ctx.initVal() != null) {
                 visit(ctx.initVal());
-                // todo: float init
-                glbVar = builder.buildGlbVar(varName, (Constant) retVal_);
+                Value initVal = retVal_;
+                // Type matching check and conversion.
+                switch (bType) {
+                    case "int" -> {
+                        if (initVal.getType().isFloatType()) {
+                            float numericVal = ((ConstFloat) initVal).getVal();
+                            initVal = builder.buildConstant((int) numericVal);
+                        }
+                    }
+                    case "float" -> {
+                        if (initVal.getType().isIntegerType()) {
+                            int numericVal = ((ConstInt) initVal).getVal();
+                            initVal = builder.buildConstant((float) numericVal);
+                        }
+                    }
+                }
+                // Build the glb var.
+                glbVar = builder.buildGlbVar(varName, (Constant) initVal);
             }
+
+            // W/o initialization.
             else {
-                glbVar = builder.buildGlbVar(varName, IntegerType.getI32());
-                // todo: float (type info needs to be retrieved from sibling bType.
+                switch (bType) {
+                    case "int" -> glbVar = builder.buildGlbVar(varName, IntegerType.getI32());
+                    case "float" -> glbVar = builder.buildGlbVar(varName, FloatType.getType());
+                    default -> throw new RuntimeException("Unsupported type."); // Impossible case.
+                }
             }
+
+            // Update the symbol table.
             scope.addDecl(varName, glbVar);
         }
-        // A local variable.
+
+        /*
+        A local variable.
+         */
         else {
-            // todo: float (branching by type)
-            MemoryInst.Alloca addrAllocated = builder.buildAlloca(IntegerType.getI32());
+            MemoryInst.Alloca addrAllocated;
+            switch (bType) {
+                case "int" -> addrAllocated = builder.buildAlloca(IntegerType.getI32());
+                case "float" -> addrAllocated = builder.buildAlloca(FloatType.getType());
+                default -> throw new RuntimeException("Unsupported type."); // Impossible case.
+            }
             scope.addDecl(varName, addrAllocated);
             // If it's a definition with initialization.
             if (ctx.initVal() != null) {
+                // Retrieve the Value for initialization.
                 visit(ctx.initVal());
-                builder.buildStore(retVal_, addrAllocated);
+                Value initVal = retVal_;
+                // Implicit type conversion.
+                if (initVal.getType().isIntegerType() && addrAllocated.getAllocatedType().isFloatType()) {
+                    initVal = builder.buildSitofp(initVal);
+                }
+                else if(initVal.getType().isFloatType() && addrAllocated.getAllocatedType().isIntegerType()) {
+                    initVal = builder.buildFptosi(initVal, (IntegerType) addrAllocated.getAllocatedType());
+                }
+                // Assignment by building a Store inst.
+                builder.buildStore(initVal, addrAllocated);
             }
         }
 
@@ -425,9 +558,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
         }
         super.visitScalarInitVal(ctx);
         // Turn off global var switch.
-        if (inGlbInit()) {
-            retVal_ = builder.buildConstant(retInt_);
-            // todo: float constant
+        if (this.inGlbInit()) {
+            switch (getConveyedType()) {
+                case INT -> retVal_ = builder.buildConstant(retInt_);
+                case FLT -> retVal_ = builder.buildConstant(retFloat_);
+            }
             this.setGlbInit(OFF);
         }
 
@@ -493,12 +628,19 @@ public class Visitor extends SysYBaseVisitor<Void> {
             int dimLen = retInt_;
             dimLens.add(dimLen);
         }
-        // Build the arrType bottom-up (reversely).
-        // todo: float arr type
-        Type arrType = IntegerType.getI32();
-        for (int i = dimLens.size(); i > 0; i--) {
-            arrType = ArrayType.getType(arrType, dimLens.get(i - 1));
+
+        Type tmpType = null;
+        // Retrieve the basic element type.
+        String bType = ctx.getParent().getChild(0).getText();
+        switch (bType) {
+            case "int" -> tmpType = IntegerType.getI32();
+            case "float" -> tmpType = FloatType.getType();
         }
+        // Build the arrType bottom-up (reversely).
+        for (int i = dimLens.size(); i > 0; i--) {
+            tmpType = ArrayType.getType(tmpType, dimLens.get(i - 1));
+        }
+        ArrayType arrType = (ArrayType) tmpType;
 
         /*
         Global array.
@@ -513,13 +655,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 visit(ctx.initVal());
                 this.setGlbInit(OFF);
                 // Convert the Values returned into Constants.
-                // todo: It can also be a float initList
                 ArrayList<Constant> initList = new ArrayList<>();
                 for (Value val : retValList_) {
-                    initList.add((Constant.ConstInt) val);
+                    initList.add((Constant) val);
                 }
                 // Build the const array, set it to be a global variable and put it into the symbol table.
-                Constant.ConstArray initArr = builder.buildConstArr(arrType, initList);
+                ConstArray initArr = builder.buildConstArr(arrType, initList);
                 GlobalVariable arr = builder.buildGlbVar(ctx.Identifier().getText(), initArr);
                 scope.addDecl(ctx.Identifier().getText(), arr);
             }
@@ -563,7 +704,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
                             add(builder.buildConstant(finalI));
                         }});
                     }
-                    builder.buildStore(retValList_.get(i), gep);
+
+                    // Type matching check and conversion.
+                    Value initVal = retValList_.get(i);
+                    if (initVal.getType().isIntegerType() && arrType.getElemType().isFloatType()) {
+                        initVal = builder.buildSitofp(initVal);
+                    }
+                    else if (initVal.getType().isFloatType() && arrType.getElemType().isIntegerType()) {
+                        initVal = builder.buildFptosi(initVal, (IntegerType) arrType.getElemType());
+                    }
+
+                    // Assign the initial value with a Store.
+                    builder.buildStore(initVal, gep);
                 }
             }
         }
@@ -586,14 +738,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Get the return type. (funcType identifier)
         Type retType;
         String strRetType = ctx.funcType().getText();
-        if (strRetType.equals("int")) {
-            retType = IntegerType.getI32();
-        }
-        else if (strRetType.equals("float")) {
-            retType = Type.VoidType.getType(); // todo float
-        }
-        else {
-            retType = Type.VoidType.getType();
+        switch (strRetType) {
+            case "int" -> retType = IntegerType.getI32();
+            case "float" -> retType = FloatType.getType();
+            case "void" -> retType = VoidType.getType();
+            default -> throw new RuntimeException("Unsupported function return type.");
         }
 
         // Get the argument list. (Visiting child)
@@ -654,14 +803,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Instruction tailInst = builder.getCurBB().getLastInst();
         // If no instruction in the bb, or the last instruction is not a terminator.
         if (tailInst == null || !tailInst.cat.isTerminator()) {
-            if (function.getType() instanceof FunctionType f) {
-                if (f.getRetType().isVoidType()) {
-                    builder.buildRet();
-                }
-                if (f.getRetType().isInteger()) {
-                    builder.buildRet(builder.buildConstant(0)); // Return 0 by default.
-                }
-                // todo: return float
+            if (function.getType().getRetType().isVoidType()) {
+                builder.buildRet();
+            }
+            else if (function.getType().getRetType().isIntegerType()) {
+                builder.buildRet(builder.buildConstant(0)); // Return 0 by default.
+            }
+            else if (function.getType().getRetType().isFloatType()) {
+                builder.buildRet(builder.buildConstant(.0f)); // Return 0.0f by default.
             }
         }
 
@@ -692,9 +841,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitScalarFuncFParam(SysYParser.ScalarFuncFParamContext ctx) {
-        // todo: float as function arguments
-        // Integer argument
-        retType_ = IntegerType.getI32();
+        String bType = ctx.bType().getText();
+        switch (bType) {
+            case "int" -> retType_ = IntegerType.getI32();
+            case "float" -> retType_ = FloatType.getType();
+            default -> throw new RuntimeException("Supported function argument type.");
+        }
+
         return null;
     }
 
@@ -708,11 +861,19 @@ public class Visitor extends SysYBaseVisitor<Void> {
             visit(exprContext);
             dimLens.add(retInt_);
         }
-        // todo: float type fParam
-        Type arrType = IntegerType.getI32();
+
+        // Build the ArrayType of the function argument.
+        Type arrType = null;
+        String bType = ctx.bType().getText();
+        switch (bType) {
+            case "int" -> arrType = IntegerType.getI32();
+            case "float" -> arrType = FloatType.getType();
+            default -> throw new RuntimeException("Supported function argument type.");
+        }
         for (int i = dimLens.size(); i > 0; i--) {
             arrType = ArrayType.getType(arrType, dimLens.get(i - 1));
         }
+
         retType_ = PointerType.getType(arrType);
         return null;
     }
@@ -739,7 +900,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // visit child to retrieve it.
         if (ctx.expr() != null) {
             visit(ctx.expr());
-            builder.buildRet(retVal_);
+
+            // Return type matching check and conversion.
+            Value retVal = retVal_;
+            Type retType = builder.getCurFunc().getType().getRetType(); // The return type defined in the prototype.
+            if (retVal.getType().isIntegerType() && retType.isFloatType()) {
+                retVal = builder.buildSitofp(retVal);
+            }
+            else if (retVal.getType().isFloatType() && retType.isIntegerType()) {
+                retVal = builder.buildFptosi(retVal, (IntegerType) retType);
+            }
+
+            builder.buildRet(retVal);
         }
         // If not, return void.
         else {
@@ -905,12 +1077,21 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitLAndExp(SysYParser.LAndExpContext ctx) {
         for(int i = 0; i < ctx.eqExp().size(); i++) {
             visit(ctx.eqExp(i));
-            // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
-            // todo: gives a float
-            if(!retVal_.getType().isI1()) {
-                retVal_ = builder.buildBinary(InstCategory.NE, retVal_, Constant.ConstInt.get(0));
+
+            /*
+            Type conversions of the condition.
+             */
+            if(retVal_.getType().isI32()) { // i32 -> i1
+                // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
+                retVal_ = builder.buildComparison("!=", retVal_, ConstInt.get(0));
+            }
+            else if (retVal_.getType().isFloatType()) { // float -> i1
+                retVal_ = builder.buildComparison("!=", retVal_, ConstFloat.get(.0f));
             }
 
+            /*
+            Build the branching.
+             */
             // For the first N-1 eqExp blocks.
             if(i < ctx.eqExp().size() - 1) {
                 // Build following blocks for short-circuit evaluation.
@@ -948,20 +1129,32 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the next relExp as the right operand by visiting child.
             visit(ctx.relExp(i));
             Value rOp = retVal_;
-            // Extend if one Opd is i32 and another is i1.
-            if(lOp.getType().isI32() && rOp.getType().isI1()) {
-                rOp = builder.buildZExt(rOp);
+
+            /*
+            Implicit type conversions.
+             */
+            if (lOp.getType().isFloatType() && !rOp.getType().isFloatType()) {
+                rOp = builder.buildSitofp(rOp);
             }
-            if(rOp.getType().isI32() && lOp.getType().isI1()) {
-                lOp = builder.buildZExt(lOp);
+            else if (!lOp.getType().isFloatType() && rOp.getType().isFloatType()) {
+                lOp = builder.buildSitofp(lOp);
             }
-            // Build a comparison instruction, which yields a result
-            // to be the left operand for the next round.
-            switch (ctx.getChild(2 * i - 1).getText()) {
-                case "==" -> lOp = builder.buildBinary(InstCategory.EQ, lOp, rOp);
-                case "!=" -> lOp = builder.buildBinary(InstCategory.NE, lOp, rOp);
-                default -> {}
+            else {
+                // Extend if one Opd is i32 and another is i1.
+                if(lOp.getType().isI32() && rOp.getType().isI1()) {
+                    rOp = builder.buildZExt(rOp);
+                }
+                if(rOp.getType().isI32() && lOp.getType().isI1()) {
+                    lOp = builder.buildZExt(lOp);
+                }
             }
+
+            /*
+            Build a comparison instruction, which yields a result
+            to be the left operand for the next round.
+             */
+            String opr = ctx.getChild(2 * i - 1).getText(); // The comparison operator.
+            lOp = builder.buildComparison(opr, lOp, rOp);
         }
         // The final result is stored in the last left operand.
         retVal_ = lOp;
@@ -986,22 +1179,32 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the next addExp as the right operand by visiting child.
             visit(ctx.addExp(i));
             Value rOp = retVal_;
-            // Same as visitEqExp above: Extend if one Opd is i32 and another is i1.
-            if(lOp.getType().isI32() && rOp.getType().isI1()) {
-                rOp = builder.buildZExt(rOp);
+
+            /*
+            Implicit type conversions.
+             */
+            if (lOp.getType().isFloatType() && !rOp.getType().isFloatType()) {
+                rOp = builder.buildSitofp(rOp);
             }
-            if(rOp.getType().isI32() && lOp.getType().isI1()) {
-                lOp = builder.buildZExt(lOp);
+            else if (!lOp.getType().isFloatType() && rOp.getType().isFloatType()) {
+                lOp = builder.buildSitofp(lOp);
             }
-            // Build a comparison instruction, which yields a result
-            // to be the left operand for the next round.
-            switch (ctx.getChild(2 * i - 1).getText()) {
-                case "<=" -> lOp = builder.buildBinary(InstCategory.LE, lOp, rOp);
-                case ">=" -> lOp = builder.buildBinary(InstCategory.GE, lOp, rOp);
-                case "<" -> lOp = builder.buildBinary(InstCategory.LT, lOp, rOp);
-                case ">" -> lOp = builder.buildBinary(InstCategory.GT, lOp, rOp);
-                default -> {}
+            else {
+                // Same as visitEqExp above: Extend if one Opd is i32 and another is i1.
+                if (lOp.getType().isI32() && rOp.getType().isI1()) {
+                    rOp = builder.buildZExt(rOp);
+                }
+                if (rOp.getType().isI32() && lOp.getType().isI1()) {
+                    lOp = builder.buildZExt(lOp);
+                }
             }
+
+            /*
+            Build a comparison instruction, which yields a result
+            to be the left operand for the next round.
+             */
+            String opr = ctx.getChild(2 * i - 1).getText(); // The comparison operator.
+            lOp = builder.buildComparison(opr, lOp, rOp);
         }
         // The final result is stored in the last left operand.
         retVal_ = lOp;
@@ -1018,22 +1221,38 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitIntConst(SysYParser.IntConstContext ctx) {
-        int val;
+        int ret;
 
         // DecIntConst: Integer in decimal format, parse directly.
         if (ctx.DecIntConst() != null) {
-            val = Integer.parseInt(ctx.DecIntConst().getText(), 10);
+            ret = Integer.parseInt(ctx.DecIntConst().getText(), 10);
         }
         // OctIntConst: Integer in octal format, parse directly in radix of 8.
         else if (ctx.OctIntConst() != null) {
-            val = Integer.parseInt(ctx.OctIntConst().getText(), 8);
+            ret = Integer.parseInt(ctx.OctIntConst().getText(), 8);
         }
         // HexIntConst: Integer in hexadecimal format, drop the first two characters '0x'
         else {
-            val = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
+            ret = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
         }
 
-        retInt_ = val;
+        setConveyedType(DataType.INT);
+        retInt_ = ret;
+
+        return null;
+    }
+
+    /**
+     * floatConst
+     *     : DecFloatConst
+     *     | HexFloatConst
+     */
+    @Override
+    public Void visitFloatConst(SysYParser.FloatConstContext ctx) {
+        float ret = Float.parseFloat(ctx.getChild(0).getText());
+
+        setConveyedType(DataType.FLT);
+        retFloat_ = ret;
 
         return null;
     }
@@ -1049,12 +1268,27 @@ public class Visitor extends SysYBaseVisitor<Void> {
         if (this.inGlbInit()) {
             // Retrieve the value of unaryExp() by visiting child.
             visit(ctx.unaryExp());
-            switch (ctx.unaryOp().getText()) {
-                case "-" -> retInt_ = -retInt_;
-                case "!" -> retInt_ = (retInt_ == 0) ? 0 : 1;
-                case "+" -> {}
+            switch (getConveyedType()) {
+                // Integer constant folding.
+                case INT -> {
+                    switch (ctx.unaryOp().getText()) {
+                        case "-" -> retInt_ = -retInt_;
+                        case "!" -> retInt_ = (retInt_ == 0) ? 0 : 1;
+                        case "+" -> {}
+                    }
+                }
+
+                // Float constant folding.
+                case FLT -> {
+                    switch (ctx.unaryOp().getText()) {
+                        case "-" -> retFloat_ = -retFloat_;
+                        case "!" -> retFloat_ = (retFloat_ == .0f) ? 0 : 1;
+                        case "+" -> {}
+                    }
+                }
+
+                default -> {}
             }
-            // todo: float
         }
         /*
         Local expression: Instructions will be generated.
@@ -1063,21 +1297,25 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Retrieve the expression by visiting child.
             visit(ctx.unaryExp());
             // Integer.
-            if (retVal_.getType().isInteger()) {
+            if (retVal_.getType().isIntegerType()) {
                 // Conduct zero extension on i1.
                 if (retVal_.getType().isI1()) {
                     retVal_ = builder.buildZExt(retVal_);
                 }
                 // Unary operators.
                 switch (ctx.unaryOp().getText()) {
-                    case "-" -> retVal_ = builder.buildBinary(InstCategory.SUB, builder.buildConstant(0), retVal_);
-                    case "!" -> retVal_ = builder.buildBinary(InstCategory.EQ, builder.buildConstant(0), retVal_);
+                    case "-" -> retVal_ = builder.buildSub(builder.buildConstant(0), retVal_);
+                    case "!" -> retVal_ = builder.buildComparison("==", builder.buildConstant(0), retVal_);
                     case "+" -> {}
                 }
             }
             // Float.
             else {
-                // todo: if it's a float.
+                switch (ctx.unaryOp().getText()) {
+                    case "-" -> retVal_ = builder.buildUnary(InstCategory.FNEG, retVal_);
+                    case "!" -> retVal_ = builder.buildComparison("==", builder.buildConstant(.0f), retVal_);
+                    case "+" -> {}
+                }
             }
         }
         return null;
@@ -1092,26 +1330,92 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Global expression: Compute value of the expr w/o instruction generation.
          */
         if (this.inGlbInit()) {
-            // Retrieve the value of the 1st mulExp.
-            // res stores the temporary result during the computation.
+            int rOpInt = 0;
+            float rOpFloat = 0;
+
+            // Retrieve the value of the 1st unaryExp.
             visit(ctx.mulExp(0));
-            int res = retInt_;
-            // Retrieve each of the rest mulExp and compute.
-            for (int i = 1; i < ctx.mulExp().size(); i++) {
-                visit(ctx.mulExp(i));
-                switch (ctx.getChild(i * 2 - 1).getText()) {
-                    case "+" -> res += retInt_;
-                    case "-" -> res -= retInt_;
+            // A variable capturing the datatype of the left operand.
+            var curType = this.getConveyedType();
+
+            switch (curType) {
+                // When the 1st operand is an integer,
+                // there might be implicit type promotion during the computation.
+                case INT -> {
+                    rOpInt = retInt_;
+                    for (int i = 1; i < ctx.mulExp().size(); i++) {
+                        visit(ctx.mulExp(i));
+
+                        // Auto type promotion.
+                        if (this.getConveyedType() == DataType.FLT) {
+                            if (curType == DataType.INT) {
+                                rOpFloat = rOpInt;
+                                curType = DataType.FLT;
+                            }
+                            // Arithmetics.
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "+" -> rOpFloat += retFloat_;
+                                case "-" -> rOpFloat -= retFloat_;
+                                default -> throw new RuntimeException("Unsupported operation in visitMulExp().");
+                            }
+                        }
+                        // Otherwise (conveyedType == INT)
+                        else {
+                            if (curType == DataType.INT) {
+                                switch (ctx.getChild(i * 2 - 1).getText()) {
+                                    case "+" -> rOpInt += retInt_;
+                                    case "-" -> rOpInt -= retInt_;
+                                }
+                            }
+                            else {
+                                switch (ctx.getChild(i * 2 - 1).getText()) {
+                                    case "+" -> rOpFloat += retInt_;
+                                    case "-" -> rOpFloat -= retInt_;
+                                    default -> throw new RuntimeException("Unsupported operation in visitMulExp().");
+                                }
+                            }
+                        }
+                    }
                 }
+
+                // When the 1st operand is a float, no auto type promotion.
+                case FLT -> {
+                    rOpFloat = retFloat_;
+                    for (int i = 1; i < ctx.mulExp().size(); i++) {
+                        visit(ctx.mulExp(i));
+
+                        if (this.getConveyedType() == DataType.INT) {
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "+" -> rOpFloat += retInt_;
+                                case "-" -> rOpFloat -= retInt_;
+                            }
+                        } else {
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "+" -> rOpFloat += retFloat_;
+                                case "-" -> rOpFloat -= retFloat_;
+                            }
+                        }
+                    }
+                }
+
+                // Error.
+                default ->
+                        throw new RuntimeException("Unsupported Datatype in visitMulExp().");
             }
-            retInt_ = res;
-            // todo: float case
+
+            // Set the conveyedType and store the return value.
+            this.setConveyedType(curType);
+            switch (curType) {
+                case INT -> retInt_ = rOpInt;
+                case FLT -> retFloat_ = rOpFloat;
+            }
         }
+
+
         /*
         Local expression: Instructions will be generated.
          */
         else {
-            // todo: float case
             // Retrieve the 1st mulExp (as the left operand) by visiting child.
             visit(ctx.mulExp(0));
             Value lOp = retVal_;
@@ -1130,18 +1434,20 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     rOp = builder.buildLoad(((PointerType) rOp.getType()).getPointeeType(), rOp);
                 }
 
-                // Check integer types of two operands.
-                if (lOp.getType().isI1()) {
-                    lOp = builder.buildZExt(lOp);
+
+                // Auto type promotion.
+                if (lOp.getType().isIntegerType() && rOp.getType().isFloatType()) {
+                    lOp = builder.buildSitofp(lOp);
                 }
-                if (rOp.getType().isI1()) {
-                    rOp = builder.buildZExt(lOp);
+                else if (lOp.getType().isFloatType() && rOp.getType().isIntegerType()) {
+                    rOp = builder.buildSitofp(rOp);
                 }
+
                 // Generate an instruction to compute result of left and right operands
                 // as the new left operand for the next round.
                 switch (ctx.getChild(2 * i - 1).getText()) {
-                    case "+" -> lOp = builder.buildBinary(InstCategory.ADD, lOp, rOp);
-                    case "-" -> lOp = builder.buildBinary(InstCategory.SUB, lOp, rOp);
+                    case "+" -> lOp = builder.buildAdd(lOp, rOp);
+                    case "-" -> lOp = builder.buildSub(lOp, rOp);
                     default -> {}
                 }
             }
@@ -1158,32 +1464,98 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitMulExp(SysYParser.MulExpContext ctx) {
-        Value lOp;
         /*
         Global expression: Compute value of the expr w/o instruction generation.
          */
         if (this.inGlbInit()) {
+            int rOpInt = 0;
+            float rOpFloat = 0;
+
             // Retrieve the value of the 1st unaryExp.
-            // res stores the temporary result during the computation.
             visit(ctx.unaryExp(0));
-            int res = retInt_;
-            // Retrieve each of the rest unaryExp and compute.
-            for (int i = 1; i < ctx.unaryExp().size(); i++) {
-                visit(ctx.unaryExp(i));
-                switch (ctx.getChild(i * 2 - 1).getText()) {
-                    case "*" -> res *= retInt_;
-                    case "/" -> res /= retInt_;
-                    case "%" -> res %= retInt_;
+            // A variable capturing the datatype of the left operand.
+            var curType = this.getConveyedType();
+
+            switch (curType) {
+                // When the 1st operand is an integer,
+                // there might be implicit type promotion during the computation.
+                case INT -> {
+                    rOpInt = retInt_;
+                    for (int i = 1; i < ctx.unaryExp().size(); i++) {
+                        visit(ctx.unaryExp(i));
+
+                        // Auto type promotion.
+                        if (this.getConveyedType() == DataType.FLT) {
+                            if (curType == DataType.INT) {
+                                rOpFloat = rOpInt;
+                                curType = DataType.FLT;
+                            }
+                            // Arithmetics.
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "*" -> rOpFloat *= retFloat_;
+                                case "/" -> rOpFloat /= retFloat_;
+                                default -> throw new RuntimeException("Unsupported operation in visitMulExp().");
+                            }
+                        }
+                        // Otherwise (conveyedType == INT)
+                        else {
+                            if (curType == DataType.INT) {
+                                switch (ctx.getChild(i * 2 - 1).getText()) {
+                                    case "*" -> rOpInt *= retInt_;
+                                    case "/" -> rOpInt /= retInt_;
+                                    case "%" -> rOpInt %= retInt_;
+                                }
+                            }
+                            else {
+                                switch (ctx.getChild(i * 2 - 1).getText()) {
+                                    case "*" -> rOpFloat *= retInt_;
+                                    case "/" -> rOpFloat /= retInt_;
+                                    default -> throw new RuntimeException("Unsupported operation in visitMulExp().");
+                                }
+                            }
+                        }
+                    }
                 }
+
+                // When the 1st operand is a float, no auto type promotion.
+                case FLT -> {
+                    rOpFloat = retFloat_;
+                    for (int i = 1; i < ctx.unaryExp().size(); i++) {
+                        visit(ctx.unaryExp(i));
+
+                        if (this.getConveyedType() == DataType.INT) {
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "*" -> rOpFloat *= retInt_;
+                                case "/" -> rOpFloat /= retInt_;
+                            }
+                        } else {
+                            switch (ctx.getChild(i * 2 - 1).getText()) {
+                                case "*" -> rOpFloat *= retFloat_;
+                                case "/" -> rOpFloat /= retFloat_;
+                            }
+                        }
+                    }
+                }
+
+                // Error.
+                default ->
+                    throw new RuntimeException("Unsupported Datatype in visitMulExp().");
             }
-            retInt_ = res;
-            // todo: float case
+
+            // Set the conveyedType and store the return value.
+            this.setConveyedType(curType);
+            switch (curType) {
+                case INT -> retInt_ = rOpInt;
+                case FLT -> retFloat_ = rOpFloat;
+            }
         }
+
         /*
         Local expression: Instructions will be generated.
          */
         else {
-            // todo: float case
+            Value lOp;
+
             // Retrieve the 1st unaryExp (as the left operand) by visiting child.
             visit(ctx.unaryExp(0));
             lOp = retVal_;
@@ -1201,15 +1573,23 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     rOp = builder.buildLoad(((PointerType) rOp.getType()).getPointeeType(), rOp);
                 }
 
+                // Auto type promotion.
+                if (lOp.getType().isI32() && rOp.getType().isFloatType()) {
+                    lOp = builder.buildSitofp(lOp);
+                }
+                else if (lOp.getType().isFloatType() && rOp.getType().isI32()) {
+                    rOp = builder.buildSitofp(rOp);
+                }
+
                 // Generate an instruction to compute result of left and right operands
                 // as the new left operand for the next round.
                 switch (ctx.getChild(2 * i - 1).getText()) {
-                    case "/" -> lOp = builder.buildBinary(InstCategory.DIV, lOp, rOp);
-                    case "*" -> lOp = builder.buildBinary(InstCategory.MUL, lOp, rOp);
-                    case "%" -> { // l % r => l - (l/r)*r
-                        BinaryInst div = builder.buildBinary(InstCategory.DIV, lOp, rOp); // l/r
-                        BinaryInst mul = builder.buildBinary(InstCategory.MUL, div, rOp); // (l/r)*r
-                        lOp = builder.buildBinary(InstCategory.SUB, lOp, mul);
+                    case "/" -> lOp = builder.buildDiv(lOp, rOp);
+                    case "*" -> lOp = builder.buildMul(lOp, rOp);
+                    case "%" -> { // l % r => l - (l/r)*r [FOR i32 ONLY]
+                        BinaryOpInst div = builder.buildDiv(lOp, rOp); // l/r
+                        BinaryOpInst mul = builder.buildMul(div, rOp); // (l/r)*r
+                        lOp = builder.buildSub(lOp, mul);
                     }
                 }
             }
@@ -1222,7 +1602,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     /**
      * lVal : Identifier ('[' expr ']')*
      * ------------------------------------------
-     * stmt : lVal '=' expr ';'     # assignment
+     * stmt : lVal '=' expr ';'     # assignStmt
      * primaryExp : lVal            # primExpr2
      * ------------------------------------------
      * Notice that besides being a left value for
@@ -1245,7 +1625,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         /*
         There are two cases for lVal as a grammar symbol:
-        1.  If a lVal  can be reduce to a primaryExp,
+        1.  If a lVal can be reduced to a primaryExp,
             in this case it is a scalar value (IntegerType or FloatType)
             thus the value can be returned directly, which will then
             be handled by visitPrimExpr2().
@@ -1254,8 +1634,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             designating a memory block for assignment.
          */
         // Case 1, return directly.
-        // todo: float type can be returned directly too
-        if (val.getType().isInteger()) {
+        if (val.getType().isIntegerType() || val.getType().isFloatType()) {
             retVal_ = val;
             return null;
         }
@@ -1282,7 +1661,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
                 retVal_ = val;
             }
-
             return null;
         }
         return null;
@@ -1374,7 +1752,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         if (this.inGlbInit()) {
             visit(ctx.lVal());
-            retInt_ = ((Constant.ConstInt) retVal_).getVal();
+            if (retVal_.getType().isIntegerType()) {
+                retInt_ = ((ConstInt) retVal_).getVal();
+                setConveyedType(DataType.INT);
+            }
+            else {
+                retFloat_ = ((ConstFloat) retVal_).getVal();
+                setConveyedType(DataType.FLT);
+            }
         }
         /*
         Local expression: Instructions will be generated.
@@ -1403,9 +1788,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitNumber(SysYParser.NumberContext ctx) {
         super.visitNumber(ctx);
         if (!this.inGlbInit()) {
-            retVal_ = builder.buildConstant(retInt_);
+            switch (getConveyedType()) {
+                case INT -> retVal_ = builder.buildConstant(retInt_);
+                case FLT -> retVal_ = builder.buildConstant(retFloat_);
+            }
+
         }
-        // todo: float glb init
         return null;
     }
 
@@ -1415,11 +1803,21 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitAssignStmt(SysYParser.AssignStmtContext ctx) {
         // Retrieve left value (the address to store) by visiting child.
+        // Retrieve the value to be stored by visiting child.
         visit(ctx.lVal());
         Value addr = retVal_;
-        // Retrieve the value to be stored by visiting child.
         visit(ctx.expr());
         Value val = retVal_;
+
+        // Type matching check and implicit type conversions.
+        Type destType = ((PointerType) addr.getType()).getPointeeType();
+        if (destType.isFloatType() && val.getType().isIntegerType()) {
+            val = builder.buildSitofp(val);
+        }
+        else if (destType.isIntegerType() && val.getType().isFloatType()) {
+            val = builder.buildFptosi(val, (IntegerType) destType);
+        }
+
         // Build the Store instruction.
         builder.buildStore(val, addr);
         return null;
@@ -1437,13 +1835,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // The identifier needs to be previously defined as a function
         // and in the symbol table.
         String name = ctx.Identifier().getText();
-        Value func = scope.getValByName(name);
-        if (func == null) {
+        Value val = scope.getValByName(name);
+        if (val == null) {
             throw new RuntimeException("Undefined name: " + name + ".");
         }
-        if (!func.getType().isFunctionType()) {
+        if (!val.getType().isFunctionType()) {
             throw new RuntimeException(name + " is not a function and cannot be invoked.");
         }
+        Function func = (Function) val;
 
         // If the function has argument(s) passed, retrieve them by visiting child(ren).
         ArrayList<Value> args = new ArrayList<>();
@@ -1476,13 +1875,27 @@ public class Visitor extends SysYBaseVisitor<Void> {
                         }});
                     }
                 }
+                // sitofp, fptosi and ZExt
+                if (arg.getType().isI1()) {
+                    // Technically, i1 Values are not allowed to be as parameters in function calls
+                    // according to SysY semantic constraints (cuz opr "!" occurs only in conditional
+                    // statement). But we still do the check for safety.
+                    arg = builder.buildZExt(arg);
+                }
+                if (typeArg.isI32() && arg.getType().isFloatType()) {
+                    arg = builder.buildFptosi(arg, (IntegerType) typeArg);
+                }
+                else if (typeArg.isFloatType() && arg.getType().isI32()) {
+                    arg = builder.buildSitofp(arg);
+                }
+
                 // Add the argument Value retrieved by visiting to the container.
                 args.add(arg);
             }
         }
 
         // Build a Call instruction.
-        retVal_ = builder.buildCall((Function)func, args);
+        retVal_ = builder.buildCall(func, args);
 
         setBuildFCall(OFF);
         return null;

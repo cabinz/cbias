@@ -27,34 +27,28 @@ public class Function extends Value implements Iterable<BasicBlock>{
      */
     public class FuncArg extends Value {
 
-        //<editor-fold desc="Fields">
         private int pos;
-        //</editor-fold>
 
 
         public int getPos() {
             return pos;
         }
 
-        //<editor-fold desc="Constructors">
+
         public FuncArg(Type type, int pos) {
             super(type);
             this.pos = pos;
         }
-        //</editor-fold>
 
 
-        //<editor-fold desc="Methods">
         @Override
         public String toString() {
             // e.g. "i32 %arg"
             return this.getType() + " " + this.getName();
         }
-        //</editor-fold>
     }
 
 
-    //<editor-fold desc="Fields">
     /**
      * List of formal arguments.
      */
@@ -72,10 +66,8 @@ public class Function extends Value implements Iterable<BasicBlock>{
      * the SysY runtime lib.
      */
     private boolean isExternal = false;
-    //</editor-fold>
 
 
-    //<editor-fold desc="Constructors">
     /**
      * Constructor for function declared in compile unit.
      * If the function is in runtime lib to be linked in, the isExternal flag should be
@@ -93,10 +85,8 @@ public class Function extends Value implements Iterable<BasicBlock>{
             args.add(new FuncArg(ar.get(i), i));
         }
     }
-    //</editor-fold>
 
 
-    //<editor-fold desc="Methods">
 
     public ArrayList<FuncArg> getArgs() {
         return args;
@@ -155,11 +145,19 @@ public class Function extends Value implements Iterable<BasicBlock>{
         return strBuilder.toString();
     }
 
+    /**
+     * Get the prototype of the function.
+     * @return The FunctionType of the function.
+     */
+    @Override
+    public FunctionType getType() {
+        return (FunctionType) super.getType();
+    }
+
     @Override
     public Iterator<BasicBlock> iterator() {
         return bbs.iterator();
     }
-    //</editor-fold>
 
 
 }

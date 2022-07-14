@@ -1,9 +1,6 @@
 package ir;
 
-import ir.types.ArrayType;
-import ir.types.FunctionType;
-import ir.types.IntegerType;
-import ir.types.PointerType;
+import ir.types.*;
 
 /**
  * Each Value instance has a type field containing type information related to it as an IR component.
@@ -27,55 +24,8 @@ import ir.types.PointerType;
  * @see <a href="https://llvm.org/docs/LangRef.html#type-system">
  *     LLVM LangRef: Type System</a>
  */
-public class Type {
+public abstract class Type {
 
-    //<editor-fold desc="Innerclass">
-    /**
-     * Nested Class: The void type does not represent any value and has no size.
-     * e.g. Functions returning void has VoidType,
-     * Instructions yielding no result has VoidType.
-     * @see <a href="https://llvm.org/docs/LangRef.html#void-type">
-     *     LLVM LangRef: Void Type</a>
-     */
-    public static class VoidType extends Type {
-        private static VoidType type = new VoidType();
-
-        private VoidType() {}
-
-        public static VoidType getType() {
-            return type;
-        }
-
-        @Override
-        public String toString() {
-            return "void";
-        }
-    }
-
-    /**
-     * The label type represents code labels.
-     * Basically it's a type dedicated to BasicBlock.
-     * @see <a href="https://llvm.org/docs/LangRef.html#label-type">
-     *     LLVM LangRef: Label Type</a>
-     */
-    public static class LabelType extends Type {
-        public static LabelType type = new LabelType();
-
-        private LabelType() {}
-
-        public static LabelType getType() {
-            return type;
-        }
-
-        @Override
-        public String toString() {
-            return "label";
-        }
-    }
-    //</editor-fold>
-
-
-    //<editor-fold desc="Methods">
     public boolean isVoidType() {
         return (this instanceof VoidType);
     }
@@ -88,24 +38,28 @@ public class Type {
         return (this instanceof FunctionType);
     }
 
-    public boolean isInteger() {
+    public boolean isIntegerType() {
         return (this instanceof IntegerType);
     }
 
     public boolean isI1() {
-        return this.isInteger() && ((IntegerType) this).getBitWidth() == 1;
+        return this.isIntegerType() && ((IntegerType) this).getBitWidth() == 1;
     }
 
     public boolean isI32() {
-        return this.isInteger() && ((IntegerType) this).getBitWidth() == 32;
+        return this.isIntegerType() && ((IntegerType) this).getBitWidth() == 32;
+    }
+
+    public boolean isFloatType() {
+        return (this instanceof FloatType);
     }
 
     public boolean isPointerType() {
         return (this instanceof PointerType);
     }
+
     public boolean isArrayType() {
         return (this instanceof ArrayType);
     }
-    //</editor-fold>
 
 }

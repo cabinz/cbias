@@ -9,6 +9,7 @@ import ir.Value;
 import ir.types.ArrayType;
 import ir.types.PointerType;
 import ir.values.*;
+import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
 
 import java.util.HashMap;
@@ -130,16 +131,16 @@ public class MCBuilder {
             translateRet((TerminatorInst.Ret) IRinst);
         }
         else if (IRinst.isAdd()) {
-            translateAddSub((BinaryInst) IRinst, MCInstruction.TYPE.ADD);
+            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
         }
         else if (IRinst.isSub()) {
-            translateAddSub((BinaryInst) IRinst, MCInstruction.TYPE.SUB);
+            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
         }
         else if (IRinst.isMul()) {
-            translateMul((BinaryInst) IRinst);
+            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.MUL);
         }
         else if (IRinst.isDiv()) {
-            translateSDiv((BinaryInst) IRinst);
+            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.SDIV);
         }
         else if (IRinst.isAlloca()) {
             translateAlloca((MemoryInst.Alloca) IRinst);
@@ -187,12 +188,12 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
         }
-        else if (value instanceof Constant.ConstInt) {
+        else if (value instanceof ConstInt) {
             // 顺序问题，是否寻找之前剩下的立即数？
-            MCOperand temp = createConstInt(((Constant.ConstInt) value).getVal());
+            MCOperand temp = createConstInt(((ConstInt) value).getVal());
             if (temp instanceof Register) return temp;
             if (forceAllocReg){
-                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((Constant.ConstInt) value).getVal());
+                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((ConstInt) value).getVal());
                 valueMap.put(value, vr);
                 curMCBB.appendInst(new MCMove(vr, temp));
                 return vr;
@@ -273,7 +274,7 @@ public class MCBuilder {
      * @param IRinst icmp instruction
      * @return the corresponding ARM condition field
      */
-    private MCInstruction.ConditionField mapToArmCond(BinaryInst IRinst) {
+    private MCInstruction.ConditionField mapToArmCond(BinaryOpInst IRinst) {
         return switch (IRinst.cat) {
             case EQ -> MCInstruction.ConditionField.EQ;
             case NE -> MCInstruction.ConditionField.NE;
@@ -349,7 +350,7 @@ public class MCBuilder {
     private void translateAlloca(MemoryInst.Alloca IRinst) {
         int offset = 0;
         Type allocated = IRinst.getAllocatedType();
-        if (allocated.isInteger() || allocated.isPointerType()) {
+        if (allocated.isIntegerType() || allocated.isPointerType()) {
             offset = 4;
         }
         else if (allocated.isArrayType()) {
@@ -386,15 +387,15 @@ public class MCBuilder {
      */
     private void translateBr(TerminatorInst.Br IRinst) {
         if (IRinst.isCondJmp()) {
-            if (IRinst.getOperandAt(0) instanceof Constant.ConstInt) {
-                int cond = ((Constant.ConstInt) IRinst.getOperandAt(0)).getVal();
+            if (IRinst.getOperandAt(0) instanceof ConstInt) {
+                int cond = ((ConstInt) IRinst.getOperandAt(0)).getVal();
                 if (cond == 0)
                     curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(2))));
                 else
                     curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(1))));
             }
             else {
-                MCInstruction.ConditionField cond = translateIcmp((BinaryInst) IRinst.getOperandAt(0));
+                MCInstruction.ConditionField cond = translateIcmp((BinaryOpInst) IRinst.getOperandAt(0));
                 curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(1)), cond));
             }
         }
@@ -408,18 +409,18 @@ public class MCBuilder {
      * @param icmp IR instruction to be translated
      * @return the corresponding ARM condition field of icmp
      */
-    private MCInstruction.ConditionField translateIcmp(BinaryInst icmp, boolean saveResult) {
+    private MCInstruction.ConditionField translateIcmp(BinaryOpInst icmp, boolean saveResult) {
         Value value1 = icmp.getOperandAt(0);
         Value value2 = icmp.getOperandAt(1);
         if (value1 instanceof Instruction && ((Instruction) value1).isIcmp())
-            translateIcmp((BinaryInst) value1, true);
+            translateIcmp((BinaryOpInst) value1, true);
         if (value2 instanceof Instruction && ((Instruction) value2).isIcmp())
-            translateIcmp((BinaryInst) value2, true);
+            translateIcmp((BinaryOpInst) value2, true);
 
         MCOperand operand1;
         MCOperand operand2;
         MCInstruction.ConditionField armCond = mapToArmCond(icmp);
-        if (value1 instanceof Constant.ConstInt && !(value2 instanceof Constant.ConstInt)){
+        if (value1 instanceof ConstInt && !(value2 instanceof ConstInt)){
             operand1 = findContainer(value2);
             operand2 = findContainer(value1);
             armCond = reverseCond(armCond);
@@ -440,10 +441,10 @@ public class MCBuilder {
     }
 
     /**
-     * Syntactic sugar of {@link #translateIcmp(BinaryInst, boolean)} <br/>
+     * Syntactic sugar of {@link #translateIcmp(BinaryOpInst, boolean)} <br/>
      * Default do NOT save the result to a register.
      */
-    private MCInstruction.ConditionField translateIcmp(BinaryInst icmp) {
+    private MCInstruction.ConditionField translateIcmp(BinaryOpInst icmp) {
         return translateIcmp(icmp, false);
     }
 
@@ -453,6 +454,9 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      * @param type Operation type, ADD/SUB/MUL/SDIV or more?
      */
+    private void translateBinary(BinaryOpInst IRinst, MCInstruction.TYPE type) {
+        // TODO: 2的整数倍乘法，常量除法
+        // TODO: ADD&SUB的operand2可以为为立即数，MUL和SDIV不行
     private void translateAddSub(BinaryInst IRinst, MCInstruction.TYPE type) {
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));

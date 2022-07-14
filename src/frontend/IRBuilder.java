@@ -3,10 +3,11 @@ package frontend;
 import ir.Module;
 import ir.Type;
 import ir.Value;
-import ir.types.FunctionType;
-import ir.types.IntegerType;
-import ir.types.PointerType;
+import ir.types.*;
 import ir.values.*;
+import ir.values.constants.ConstArray;
+import ir.values.constants.ConstFloat;
+import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
 
 import java.util.ArrayList;
@@ -94,18 +95,73 @@ public class IRBuilder {
      * @param i The numeric value of the integer.
      * @return The ConstInt Value with given numeric value.
      */
-    public Constant.ConstInt buildConstant(int i) {
-        return Constant.ConstInt.get(i);
+    public ConstInt buildConstant(int i) {
+        return ConstInt.get(i);
+    }
+
+    /**
+     * Retrieve a Constant.ConstFloat Value.
+     * @param f The numeric value of the float.
+     * @return The ConstInt Value with given numeric value.
+     */
+    public ConstFloat buildConstant(float f) {
+        return ConstFloat.get(f);
     }
 
     /**
      * Retrieve a Constant.ConstArray Value.
      * @param arrType The ArrayType carrying necessary info.
-     * @param arr An array of (integer/float) Constants for initialization the array.
+     * @param initList An linear (no-nested) array of (integer/float) Constants for initialization the array.
      * @return The ConstArray.
      */
-    public Constant.ConstArray buildConstArr(Type arrType, ArrayList<Constant> arr) {
-        return new Constant.ConstArray(arrType, arr);
+    public ConstArray buildConstArr(ArrayType arrType, ArrayList<Constant> initList) {
+        /*
+        Retrieve number of total elements in the array to be generated.
+         */
+        int numTotElem = 1;
+        Type type = arrType;
+        while (type.isArrayType()) {
+            numTotElem *= ((ArrayType) type).getLen();
+            type = ((ArrayType) type).getElemType();
+        }
+
+        if (arrType.getElemType().isArrayType()) {
+            /*
+            Build the nested initList from the given linear initList.
+             */
+            ArrayList<Constant> nestedInitList = new ArrayList<>();
+            int j = 0;
+            int step = numTotElem / arrType.getLen();
+            while(j < initList.size()) {
+                nestedInitList.add(
+                        buildConstArr(
+                                (ArrayType) arrType.getElemType(),
+                                new ArrayList<>(initList.subList(j, j + step))
+                        )
+                );
+                j += step;
+            }
+
+            return ConstArray.get(arrType, nestedInitList);
+        }
+        else {
+            Type elemType = arrType.getElemType();
+            for (int i = 0; i < initList.size(); i++) {
+                Value elem = initList.get(i);
+                if (elem.getType() != elemType) {
+                    if (elemType.isFloatType()) {
+                        float numericVal = ((ConstFloat) elem).getVal();
+                        initList.set(i, buildConstant(numericVal));
+                    }
+                    else if (elemType.isIntegerType()) {
+                        int numericVal = ((ConstInt) elem).getVal();
+                        initList.set(i, buildConstant(numericVal));
+                    }
+                }
+            }
+            return ConstArray.get(arrType, initList);
+        }
+
     }
 
     /**
@@ -150,6 +206,11 @@ public class IRBuilder {
      * @return The terminator object inserted.
      */
     public TerminatorInst.Ret buildRet() {
+        // Security checks.
+        if (!getCurFunc().getType().getRetType().isVoidType()) {
+            throw new RuntimeException("Try to return void with Ret inst in a non-void function.");
+        }
+        // Construct, insert, and return.
         TerminatorInst.Ret ret = new TerminatorInst.Ret(curBB);
         getCurBB().insertAtEnd(ret);
         return ret;
@@ -162,6 +223,12 @@ public class IRBuilder {
      * @return The terminator object inserted.
      */
     public TerminatorInst.Ret buildRet(Value retVal) {
+        // Security checks.
+        if (retVal.getType() != getCurFunc().getType().getRetType()) {
+            throw new RuntimeException(
+                    "The type of retVal doesn't match with the return type defined in the function prototype.");
+        }
+        // Construct, insert, and return.
         TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal, curBB);
         getCurBB().insertAtEnd(ret);
         return ret;
@@ -178,11 +245,6 @@ public class IRBuilder {
         // Create and insert a block.
         TerminatorInst.Br condBr = new TerminatorInst.Br(cond, trueBlk, falseBlk, curBB);
         getCurBB().insertAtEnd(condBr);
-        // Build the directed connections among blocks.
-        getCurBB().addSuccessor(trueBlk);
-        getCurBB().addSuccessor(falseBlk);
-        trueBlk.addPredecessor(getCurBB());
-        falseBlk.addPredecessor(getCurBB());
 
         return condBr;
     }
@@ -199,13 +261,9 @@ public class IRBuilder {
         if (getCurBB().getLastInst() != null && getCurBB().getLastInst().isBr()) {
             throw new RuntimeException("Cannot insert a Br after another Br.");
         }
-
         // Create and insert a block.
         TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk, curBB);
         getCurBB().insertAtEnd(uncondBr);
-        // Build the directed connections among blocks.
-        getCurBB().addSuccessor(blk);
-        blk.addPredecessor(getCurBB());
 
         return uncondBr;
     }
@@ -265,35 +323,244 @@ public class IRBuilder {
      * @param srcVal The Value to be extended.
      * @return The ZExt instruction inserted.
      */
-    public MemoryInst.ZExt buildZExt(Value srcVal) {
-        MemoryInst.ZExt zext = new MemoryInst.ZExt(srcVal, curBB);
+    public CastInst.ZExt buildZExt(Value srcVal) {
+        // Security checks.
+        if (!srcVal.getType().isI1()) {
+            throw new RuntimeException("A non-i1 src Value is given.");
+        }
+        // Construct, insert, and return.
+        CastInst.ZExt zext = new CastInst.ZExt(srcVal, curBB);
         getCurBB().insertAtEnd(zext);
         return zext;
     }
 
+
     /**
-     * Insert a binary instruction at current position of basic block.
-     * @param tag Instruction category.
+     * Insert a Fptosi instruction at current position of basic block.
+     * @param srcVal The Value to be converted.
+     * @param destType The destination IntegerType (i32/i1).
+     * @return The fptosi instruction inserted.
+     */
+    public CastInst.Fptosi buildFptosi(Value srcVal, IntegerType destType) {
+        // Security checks.
+        if (!srcVal.getType().isFloatType()) {
+            throw new RuntimeException("A non-floatingPoint src Value is given.");
+        }
+        // Construct, insert, and return.
+        CastInst.Fptosi fptosi = new CastInst.Fptosi(srcVal, destType, curBB);
+        getCurBB().insertAtEnd(fptosi);
+        return fptosi;
+    }
+
+    /**
+     * Insert a Sitofp instruction at current position of basic block.
+     * @param srcVal The Value to be converted.
+     * @return The sitofp instruction inserted.
+     */
+    public CastInst.Sitofp buildSitofp(Value srcVal) {
+        // Security checks.
+        if (!srcVal.getType().isIntegerType()) {
+            throw new RuntimeException("A non-integer src Value is given.");
+        }
+        // Construct, insert, and return.
+        CastInst.Sitofp sitofp = new CastInst.Sitofp(srcVal, curBB);
+        getCurBB().insertAtEnd(sitofp);
+        return sitofp;
+    }
+
+
+    /**
+     * Insert an Add instruction at current position of basic block.
+     * ADD/FADD will be automatically determined according to the types
+     * of operands given.
      * @param lOp Left operand.
      * @param rOp Right operand.
      * @return The binary instruction inserted.
      */
-    public BinaryInst buildBinary(Instruction.InstCategory tag, Value lOp, Value rOp) {
-        // Analyze the type of the result returned by the binary operation.
-        Type resType = null;
-        if (tag.isRelationalBinary()) {
-            resType = IntegerType.getI1();
+    public BinaryOpInst buildAdd(Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
         }
-        else if (tag.isArithmeticBinary()) {
-            resType = IntegerType.getI32();
+
+        // Constructor the Add instruction (for integers and floats respectively)
+        BinaryOpInst instAdd = null;
+        Type type = lOp.getType();
+        if (type.isI32()) {
+            instAdd = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.ADD, lOp, rOp, curBB);
+        }
+        else if(type.isFloatType()) {
+            instAdd = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FADD, lOp, rOp, curBB);
         }
         else {
-            // todo: float arithmetic binary operations
+            throw new RuntimeException("Unsupported type: " + type);
+        }
+
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(instAdd);
+        return instAdd;
+    }
+
+    /**
+     * Insert a subtraction instruction at current position of basic block.
+     * SUB/FSUB will be automatically determined according to the types
+     * of operands given.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryOpInst buildSub(Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+        // Constructor the Sub instruction (for integers and floats respectively)
+        BinaryOpInst instSub = null;
+        Type type = lOp.getType();
+        if (type.isI32()) {
+            instSub = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.SUB, lOp, rOp, curBB);
+        }
+        else if(type.isFloatType()) {
+            instSub = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FSUB, lOp, rOp, curBB);
+        }
+        else {
+            throw new RuntimeException("Unsupported type: " + type);
+        }
+
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(instSub);
+        return instSub;
+    }
+
+    /**
+     * Insert a multiplication instruction at current position of basic block.
+     * MUL/FMUL will be automatically determined according to the types
+     * of operands given.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryOpInst buildMul(Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+        // Constructor the Mul instruction (for integers and floats respectively)
+        BinaryOpInst instMul = null;
+        Type type = lOp.getType();
+        if (type.isI32()) {
+            instMul = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.MUL, lOp, rOp, curBB);
+        }
+        else if(type.isFloatType()) {
+            instMul = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FMUL, lOp, rOp, curBB);
+        }
+        else {
+            throw new RuntimeException("Unsupported type: " + type);
+        }
+
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(instMul);
+        return instMul;
+    }
+
+    /**
+     * Insert a division instruction at current position of basic block.
+     * DIV/FDIV will be automatically determined according to the types
+     * of operands given.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryOpInst buildDiv(Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+        // Constructor the Div instruction (for integers and floats respectively)
+        BinaryOpInst instDiv = null;
+        Type type = lOp.getType();
+        if (type.isI32()) {
+            instDiv = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.DIV, lOp, rOp, curBB);
+        }
+        else if(type.isFloatType()) {
+            instDiv = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FDIV, lOp, rOp, curBB);
+        }
+        else {
+            throw new RuntimeException("Unsupported type: " + type);
+        }
+
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(instDiv);
+        return instDiv;
+    }
+
+    /**
+     * Insert a comparison (relational) instruction at current position of basic block.
+     * ICMP/FCMP will be automatically determined according to the types
+     * @param opr The string of the operator.
+     * @param lOp Left operand.
+     * @param rOp Right operand.
+     * @return The binary instruction inserted.
+     */
+    public BinaryOpInst buildComparison(String opr, Value lOp, Value rOp) {
+        // Security checks.
+        if (lOp.getType() != rOp.getType()) {
+            throw new RuntimeException("Unmatched types: [lOp] " + lOp.getType() + ", [rOp] " + rOp.getType());
+        }
+
+
+        BinaryOpInst inst = null;
+        if (lOp.getType().isIntegerType()) {
+            switch (opr) {
+                case "<=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.LE, lOp, rOp, curBB);
+                case ">=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.GE, lOp, rOp, curBB);
+                case "<" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.LT, lOp, rOp, curBB);
+                case ">" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.GT, lOp, rOp, curBB);
+                case "==" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.EQ, lOp, rOp, curBB);
+                case "!=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.NE, lOp, rOp, curBB);
+                default -> {}
+            }
+        }
+        // Floating point comparison.
+        else {
+            switch (opr) {
+                case "<=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FLE, lOp, rOp, curBB);
+                case ">=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FGE, lOp, rOp, curBB);
+                case "<" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FLT, lOp, rOp, curBB);
+                case ">" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FGT, lOp, rOp, curBB);
+                case "==" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FEQ, lOp, rOp, curBB);
+                case "!=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FNE, lOp, rOp, curBB);
+                default -> {}
+            }
+        }
+
+        if (inst == null) {
+            throw new RuntimeException("Operand '" + opr + "' cannot be recognized.");
+        }
+        // Insert and return the inst.
+        getCurBB().insertAtEnd(inst);
+        return inst;
+    }
+
+    /**
+     * Insert a unary instruction at current position of basic block.
+     * @param tag Instruction category.
+     * @param opd The single operand of the instruction.
+     * @return The unary instruction inserted.
+     */
+    public UnaryOpInst buildUnary(Instruction.InstCategory tag, Value opd) {
+        // Analyze the type of the result returned by the binary operation.
+        Type resType = null;
+        switch (tag) {
+            case FNEG -> resType = FloatType.getType();
         }
         // Build the binary instruction.
-        BinaryInst binInst = new BinaryInst(resType, tag, lOp, rOp, curBB);
-        getCurBB().insertAtEnd(binInst);
-        return binInst;
+        UnaryOpInst unaryInst = new UnaryOpInst(resType, tag, opd, curBB);
+        getCurBB().insertAtEnd(unaryInst);
+        return unaryInst;
     }
 
     /**

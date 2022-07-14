@@ -3,6 +3,8 @@ package ir.values;
 import ir.Type;
 import ir.User;
 import ir.types.PointerType;
+import ir.values.constants.ConstFloat;
+import ir.values.constants.ConstInt;
 
 /**
  * A GlobalVariable refers to a block of memory that can be determined at compilation time.
@@ -34,7 +36,6 @@ public class GlobalVariable extends User {
     private Constant initVal;
     //</editor-fold>
 
-    //<editor-fold desc="Constructors">
 
     /**
      * Construct a GlbVar w/o initialization.
@@ -46,13 +47,15 @@ public class GlobalVariable extends User {
     public GlobalVariable(String name, Type type) {
         super(PointerType.getType(type));
         this.setName("@" + name);
-        if(type.isInteger()) {
-            this.initVal = Constant.ConstInt.get(0);
+        if(type.isIntegerType()) {
+            this.initVal = ConstInt.get(0);
         }
-        else if(type.isArrayType()) {
+        else if (type.isFloatType()) {
+            this.initVal = ConstFloat.get(.0f);
+        }
+        else if (type.isArrayType()) {
             this.initVal = null;
         }
-        // todo: float constant
     }
 
     /**
@@ -68,7 +71,6 @@ public class GlobalVariable extends User {
         this.setName("@" + name);
         this.initVal = init;
     }
-    //</editor-fold>
 
     public Constant getInitVal() {
         return initVal;
@@ -118,7 +120,6 @@ public class GlobalVariable extends User {
             strBuilder.append(initVal);
         }
 
-        // todo: float type
         return strBuilder.toString();
     }
 }
