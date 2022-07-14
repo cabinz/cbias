@@ -5,13 +5,15 @@ import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.MCMove;
-import backend.operand.MCOperand;
+import backend.operand.RealRegister;
 import backend.operand.Register;
 import backend.operand.VirtualRegister;
 import passes.mc.MCPass;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 /**
@@ -29,11 +31,11 @@ public class GraphColoring implements MCPass {
      */
     private int K = 13;
 
-    //<editor-fold desc="Key set">
+    //<editor-fold desc="Key worklist set">
     /**
      * The set of low-degree non-move-related nodes
      */
-    private HashSet<MCOperand> simplifyWorklist;
+    private HashSet<Register> simplifyWorklist;
     /**
      * The set of move instructions that might be coalescing
      */
@@ -41,11 +43,29 @@ public class GraphColoring implements MCPass {
     /**
      * The set of low-degree move-related nodes
      */
-    private HashSet<MCOperand> freezeWorklist;
+    private HashSet<Register> freezeWorklist;
     /**
      * The set of high-degree nodes
      */
-    private HashSet<MCOperand> spillWorklist;
+    private HashSet<Register> spillWorklist;
+    //</editor-fold>
+
+    //<editor-fold desc="Register Interfere Graph">
+    /**
+     * Adjacency list representation of the graph. <br/>
+     * For each non-precolored temporary <i>u</i>, adjList[ <i>u</i> ] is
+     * the set of nodes that interfere with <i>u</i>
+     */
+    private HashMap<Register, HashSet<Register>> adjList;
+    /**
+     * The set of interference edge ( <i>u</i>, <i>v</i> ) in the graph. <br/>
+     * If ( <i>u</i>, <i>v</i> ) ∈ adjSet, then ( <i>v</i>, <i>u</i> ) ∈ adjSet
+     */
+    private HashSet<Pair<Register, Register>> adjSet;
+    /**
+     * an array containing the current degree of each node
+     */
+    HashMap<Register, Integer> degree;
     //</editor-fold>
 
     /**
@@ -56,6 +76,7 @@ public class GraphColoring implements MCPass {
     //<editor-fold desc="Tools">
     private MCFunction curFunc;
     private HashMap<MCBasicBlock, LiveInfo> liveInfo;
+    private final int INF = 0x3F3F3F3F;
     //</editor-fold>
 
     @Override
@@ -83,15 +104,28 @@ public class GraphColoring implements MCPass {
         }
     }
 
+    //<editor-fold desc="Main procedure function">
+    /**
+     * Initialize the context
+     */
     private void Initialize() {
         simplifyWorklist = new HashSet<>();
         worklistMoves = new HashSet<>();
         freezeWorklist = new HashSet<>();
         spillWorklist = new HashSet<>();
 
+        adjList = new HashMap<>();
+        adjSet = new HashSet<>();
+        degree = new HashMap<>(IntStream.range(0, 15)
+                .mapToObj(RealRegister::get)
+                .collect(Collectors.toMap(x -> x, x -> INF)));
+
         moveList = new HashMap<>();
     }
 
+    /**
+     * Build the RIG & moveList
+     */
     private void Build() {
         for (var block : curFunc) {
             var live = new HashSet<>(liveInfo.get(block).out);
@@ -115,14 +149,14 @@ public class GraphColoring implements MCPass {
                     /* Add to be coalescing */
                     worklistMoves.add(move);
                 }
-                /* live = union(def, live) */
+                /* live = live ∪ def */
                 live.addAll(defs);
 
                 /* Build the RIG */
                 /* Add an edge from def to each node in live */
-                defs.forEach(d -> live.forEach(l -> addEdge(l, d)));
+                defs.forEach(d -> live.forEach(l -> AddEdge(l, d)));
 
-                /* live = union(uses, live\defs) */
+                /* live = uses ∪ live\defs) */
                 live.removeAll(defs);
                 live.addAll(uses);
             }
@@ -156,4 +190,36 @@ public class GraphColoring implements MCPass {
     private void RewriteProgram() {
 
     }
+    //</editor-fold>
+
+    //<editor-fold desc="Tool method">
+    private void AddEdge(Register u, Register v) {
+        if (!adjSet.contains(new Pair<>(u, v)) && !u.equals(v)) {
+            /* Build edge */
+            adjSet.add(new Pair<>(u, v));
+            adjSet.add(new Pair<>(v, u));
+
+            /* Add v to the adjList(u) */
+            if (!isPrecolored(u)) {
+                adjList.putIfAbsent(u, new HashSet<>());
+                adjList.get(u).add(v);
+
+                /* Adjust degree */
+                degree.compute(u, (key, value) -> value==null ?0 :value+1);
+            }
+            /* Add u to the adjList(v) */
+            if (!isPrecolored(v)) {
+                adjList.putIfAbsent(v, new HashSet<>());
+                adjList.get(v).add(u);
+
+                /* Adjust degree */
+                degree.compute(v, (key, value) -> value==null ?0 :value+1);
+            }
+        }
+    }
+
+    private boolean isPrecolored(Register r) {
+        return r instanceof RealRegister;
+    }
+    //</editor-fold>
 }
