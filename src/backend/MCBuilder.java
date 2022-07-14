@@ -131,16 +131,16 @@ public class MCBuilder {
             translateRet((TerminatorInst.Ret) IRinst);
         }
         else if (IRinst.isAdd()) {
-            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
+            translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
         }
         else if (IRinst.isSub()) {
-            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
+            translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
         }
         else if (IRinst.isMul()) {
-            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.MUL);
+            translateMul((BinaryOpInst) IRinst);
         }
         else if (IRinst.isDiv()) {
-            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.SDIV);
+            translateSDiv((BinaryOpInst) IRinst);
         }
         else if (IRinst.isAlloca()) {
             translateAlloca((MemoryInst.Alloca) IRinst);
@@ -189,7 +189,7 @@ public class MCBuilder {
             return vr;
         }
         else if (value instanceof ConstInt) {
-            // 顺序问题，是否寻找之前剩下的立即数？
+            // TODO: 顺序问题，是否寻找之前剩下的立即数
             MCOperand temp = createConstInt(((ConstInt) value).getVal());
             if (temp instanceof Register) return temp;
             if (forceAllocReg){
@@ -313,6 +313,8 @@ public class MCBuilder {
      * @param IRinst IR call instruction
      */
     private void translateCall(CallInst IRinst) {
+        // TODO: 浮点参数传递使用s0-s3
+        // 另外，前4个浮点和整型使用寄存器传递
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
         for (int i=oprNum-1; i>=1; i--) {
@@ -320,7 +322,7 @@ public class MCBuilder {
                 curMCBB.appendInst(new MCMove(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
             }
             else {
-                // 可能要换成push？
+                // TODO: 可能要换成push
                 curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), true), RealRegister.get(13), createConstInt(-4), true));
             }
         }
@@ -452,12 +454,9 @@ public class MCBuilder {
      * Translate IR binary expression instruction into ARM instruction. <br/>
      * NOTE: The first operand must be a REGISTER!!
      * @param IRinst IR instruction to be translated
-     * @param type Operation type, ADD/SUB/MUL/SDIV or more?
+     * @param type Operation type, ADD/SUB
      */
-    private void translateBinary(BinaryOpInst IRinst, MCInstruction.TYPE type) {
-        // TODO: 2的整数倍乘法，常量除法
-        // TODO: ADD&SUB的operand2可以为为立即数，MUL和SDIV不行
-    private void translateAddSub(BinaryInst IRinst, MCInstruction.TYPE type) {
+    private void translateAddSub(BinaryOpInst IRinst, MCInstruction.TYPE type) {
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
         if (operand1.isImmediate()) {
@@ -477,7 +476,7 @@ public class MCBuilder {
         }
     }
 
-    private void translateMul(BinaryInst IRinst) {
+    private void translateMul(BinaryOpInst IRinst) {
         // TODO: 使用lsl替换常数乘法
         Register operand1 = (Register) findContainer(IRinst.getOperandAt(0), true);
         Register operand2 = (Register) findContainer(IRinst.getOperandAt(1), true);
@@ -486,7 +485,7 @@ public class MCBuilder {
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, operand1, operand2));
     }
 
-    private void translateSDiv(BinaryInst IRinst) {
+    private void translateSDiv(BinaryOpInst IRinst) {
         // TODO: 常量除数转乘法
         Register operand1 = (Register) findContainer(IRinst.getOperandAt(0), true);
         Register operand2 = (Register) findContainer(IRinst.getOperandAt(1), true);
