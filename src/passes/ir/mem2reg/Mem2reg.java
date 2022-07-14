@@ -138,7 +138,7 @@ public class Mem2reg implements IRPass {
                     //'uses' is changed during the following 'forEach', so we must clone one
                     @SuppressWarnings("unchecked")
                     var uses = (LinkedList<Use>) instruction.getUses().clone();
-                    uses.forEach(use -> use.setValue(register));
+                    uses.forEach(use -> use.setUsee(register));
                 }
             }
             // Record 'store' instruction

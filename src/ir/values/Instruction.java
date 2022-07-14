@@ -1,5 +1,6 @@
 package ir.values;
 
+import ir.Use;
 import ir.User;
 import ir.Type;
 
@@ -123,10 +124,19 @@ public abstract class Instruction extends User {
 
     /**
      * Remove the instruction from the BasicBlock holding it.
+     * All related Use links will also be removed.
      */
     public void removeSelf() {
-        this.getBB().instructions.remove(this);
+        // Update the use states:
+        // - Remove all the Use links for the User using it.
+        // - Remove all the Use links corresponding to its operands.
+        this.getUses().forEach(Use::removeSelf);
+        this.operands.forEach(Use::removeSelf);
+
+        // Remove the inst from the BB.
+        this.getBB().removeInst(this);
     }
+
 
     /**
      * Insert a new one at the front of the instruction.
