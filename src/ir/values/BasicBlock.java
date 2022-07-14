@@ -28,6 +28,30 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     }
 
     /**
+     * Returns true if the BasicBlock contains no Instruction.
+     * @return true if the BasicBlock contains no Instruction.
+     */
+    public boolean isEmpty() {
+        return instructions.isEmpty();
+    }
+
+    /**
+     * Removes a specified instruction from the Basicblock.
+     * All the related Use links will be simultaneously wiped out.
+     * @param inst The Instruction to be removed.
+     * @return true if successfully remove an inst contained in the BB.
+     */
+    public boolean removeInst(Instruction inst) {
+        if (!this.instructions.contains(inst)) {
+            inst.removeSelf();
+            return true;
+        }
+        else {
+            throw new RuntimeException("Try to remove an Instruction that doesn't reside on the BasicBlock.");
+        }
+    }
+
+    /**
      * Retrieve the last instruction in the basic block.
      * @return The last instruction. Null if it's an empty block.
      */
@@ -51,6 +75,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         this.instructions.addFirst(inst);
     }
 
+    @Override
     public Iterator<Instruction> iterator() {
         return instructions.iterator();
     }

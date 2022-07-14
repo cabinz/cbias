@@ -92,4 +92,22 @@ public abstract class User extends Value {
         // If not, throw an exception.
         throw new RuntimeException("Try to reassign a non-existent operand.");
     }
+
+    /**
+     * Remove an operand at the specified position
+     * If there's no existing operand matched, an Exception will be thrown.
+     * @param pos Given operand position.
+     */
+    public void removeOperandAt(int pos) {
+        for (Use use : operands) {
+            // If there is, remove it.
+            if (use.getOperandPos() == pos) {
+                // Got the target use.
+                this.operands.remove(use);
+                return;
+            }
+        }
+        // If not, throw an exception.
+        throw new RuntimeException("Try to remove a non-existent operand.");
+    }
 }
