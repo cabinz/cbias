@@ -159,6 +159,10 @@ public class GraphColoring implements MCPass {
 
         moveList = new HashMap<>();
         activeMoves = new HashSet<>();
+
+        coalescedMoves = new HashSet<>();
+        constrainedMoves = new HashSet<>();
+        frozenMove = new HashSet<>();
     }
 
     /**
@@ -331,7 +335,7 @@ public class GraphColoring implements MCPass {
         if (d == K) {
             EnableMoves(m);
             Adjacent(m).forEach(this::EnableMoves);
-            spilledNodes.remove(m);
+            spillWorklist.remove(m);
 
             if (MoveRelated(m))
                 freezeWorklist.add(m);
@@ -386,7 +390,7 @@ public class GraphColoring implements MCPass {
      * Make one node to be simplified
      */
     private void AddWorkList(Register u) {
-        if (!isPrecolored(u) && !MoveRelated(u) && degree.get(u)<K) {
+        if (!isPrecolored(u) && !MoveRelated(u) && degree.getOrDefault(u, 0)<K) {
             freezeWorklist.remove(u);
             simplifyWorklist.add(u);
         }
@@ -396,10 +400,9 @@ public class GraphColoring implements MCPass {
      * Get alias of a node.
      */
     private Register GetAlias(Register n) {
-        if (coalescedNodes.contains(n))
-            return GetAlias(alias.get(n));
-        else
-            return n;
+        while (coalescedNodes.contains(n))
+            n = alias.get(n);
+        return n;
     }
 
     /**
@@ -454,7 +457,7 @@ public class GraphColoring implements MCPass {
             DecrementDegree(t);
         });
 
-        if (degree.get(u) >= K && freezeWorklist.contains(u)) {
+        if (degree.getOrDefault(u, 0) >= K && freezeWorklist.contains(u)) {
             freezeWorklist.remove(u);
             spillWorklist.add(u);
         }
@@ -462,9 +465,10 @@ public class GraphColoring implements MCPass {
 
     private void FreezeMoves(Register u) {
          NodeMoves(u).forEach(move -> {
-             // TODO: copy(x, y) is x=y or y=x?
+             // TODO: copy(x, y) is x=y?
              var v = GetAlias(((Register) move.getSrc())) == GetAlias(u) ?GetAlias(move.getDst()) :GetAlias(((Register) move.getSrc()));
 
+             // TODO: if？
              activeMoves.remove(move);
              frozenMove.add(move);
              if (NodeMoves(v).isEmpty() && degree.get(v) < K) {
