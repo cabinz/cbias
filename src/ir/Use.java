@@ -35,7 +35,7 @@ public class Use {
      */
     private int pos;
 
-    public int getPos() {
+    public int getOperandPos() {
         return pos;
     }
 
@@ -57,8 +57,12 @@ public class Use {
         this.pos = position;
     }
 
-
-    public int getOperandPos() {
-        return pos;
+    /**
+     * Remove the Use link from its user and usee.
+     * Notice that the Use itself will not be destructed.
+     */
+    public void removeSelf() {
+        this.getUsee().removeUse(this);
+        this.getUser().removeOperandAt(this.getOperandPos());
     }
 }
