@@ -25,8 +25,8 @@ public class Use {
     /**
      * Construct a new Use edge.
      * <br>
-     * The constructor automatically inserts the user reference to usee's uses field,
-     * and the usee reference to user's operands field.
+     * The constructor DOES NOT automatically insert the Use link constructed to neither usee's [uses]
+     * field nor the user's [operands] field, which are left for the caller to manually handle.
      * <br>
      * The insertions of references DO NOT check the replicates in the list containers,
      * correctness should be guaranteed by programmer.
@@ -38,8 +38,6 @@ public class Use {
         this.v = value;
         this.u = user;
         this.pos = position;
-        v.addUse(this);
-        u.operands.add(this);
     }
 
 

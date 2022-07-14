@@ -67,7 +67,9 @@ public abstract class User extends Value {
             }
         }
         // If not, add the given Value as a new use.
-        new Use(val, this, pos);
+        var use = new Use(val, this, pos);
+        this.operands.add(use);
+        val.addUse(use);
     }
 
     /**
