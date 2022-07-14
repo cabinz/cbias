@@ -7,13 +7,13 @@ import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.MCMove;
 import backend.operand.RealRegister;
 import backend.operand.Register;
-import backend.operand.VirtualRegister;
 import passes.mc.MCPass;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,13 +55,13 @@ public class GraphColoring implements MCPass {
     //<editor-fold desc="Register Interfere Graph">
     /**
      * Adjacency list representation of the graph. <br/>
-     * For each non-precolored temporary <i>u</i>, adjList[ <i>u</i> ] is
+     * For each non-precolored temporary <i>u</i>, adjList[<i>u</i> ] is
      * the set of nodes that interfere with <i>u</i>
      */
     private HashMap<Register, HashSet<Register>> adjList;
     /**
-     * The set of interference edge ( <i>u</i>, <i>v</i> ) in the graph. <br/>
-     * If ( <i>u</i>, <i>v</i> ) ∈ adjSet, then ( <i>v</i>, <i>u</i> ) ∈ adjSet
+     * The set of interference edge (<i>u</i>, <i>v</i> ) in the graph. <br/>
+     * If (<i>u</i>, <i>v</i> ) ∈ adjSet, then (<i>v</i>, <i>u</i> ) ∈ adjSet
      */
     private HashSet<Pair<Register, Register>> adjSet;
     /**
@@ -70,15 +70,40 @@ public class GraphColoring implements MCPass {
     HashMap<Register, Integer> degree;
     //</editor-fold>
 
+    //<editor-fold desc="Coloring Info">
+    /**
+     * Stack containing temporaries removed from the graph
+     */
     private Stack<Register> selectStack;
+    /**
+     * The registers that have been coalesced;
+     * when <i>u</i> &#8592<i>v</i> is coalesced, <i>v</i> is added to this set
+     * and <i>u</i> put back on some worklist (or vice versa)
+     */
     private HashSet<Register> coalescedNodes;
+    /**
+     * When a move (<i>u</i>, <i>v</i> ) has been coalesced,
+     * and <i>v</i> put in coalescedNodes, then alias(<i>v</i> ) = <i>u</i>
+     */
+    private HashMap<Register, Register> alias;
+    /**
+     * The nodes marked for spilling during this round; initially empty;
+     */
     private HashSet<Register> spilledNodes;
 
     /**
      * a mapping from a node to the list of moves it is associated with
      */
     private HashMap<Register, HashSet<MCMove>> moveList;
+    /**
+     * Moves not yet ready for coalescing
+     */
     private HashSet<MCMove> activeMoves;
+
+    private HashSet<MCMove> coalescedMoves;
+    private HashSet<MCMove> constrainedMoves;
+    private HashSet<MCMove> frozenMove;
+    //</editor-fold>
 
     //<editor-fold desc="Tools">
     private MCFunction curFunc;
@@ -129,6 +154,7 @@ public class GraphColoring implements MCPass {
 
         selectStack = new Stack<>();
         coalescedNodes = new HashSet<>();
+        alias = new HashMap<>();
         spilledNodes = new HashSet<>();
 
         moveList = new HashMap<>();
@@ -199,8 +225,43 @@ public class GraphColoring implements MCPass {
         Adjacent(n).forEach(this::DecrementDegree);
     }
 
+    /**
+     * Coalesce copy instruction
+     */
     private void Coalesce() {
+        MCMove m = worklistMoves.iterator().next();
+        worklistMoves.remove(m);
 
+        Register x = GetAlias(m.getDst());
+        Register y = GetAlias(((Register) m.getSrc()));
+
+        Register u, v;
+        if (isPrecolored(y)) {
+            u = y;
+            v = x;
+        }
+        else {
+            u = x;
+            v = y;
+        }
+
+        if (u == v) {
+            coalescedMoves.add(m);
+            AddWorkList(u);
+        }
+        else if (isPrecolored(v) || adjSet.contains(new Pair<>(u, v))) {
+            coalescedMoves.add(m);
+            AddWorkList(u);
+            AddWorkList(v);
+        }
+        else if ((isPrecolored(u) && OK(Adjacent(v), u)) || (!isPrecolored(u) && Conservative(Adjacent(u), Adjacent(v)))) {
+            coalescedMoves.add(m);
+            Combine(u, v);
+            AddWorkList(u);
+        }
+        else {
+            activeMoves.add(m);
+        }
     }
 
     private void Freeze() {
@@ -312,6 +373,84 @@ public class GraphColoring implements MCPass {
         return adjList.getOrDefault(n, new HashSet<>()).stream()
                 .filter(node -> !selectStack.contains(node) && !coalescedNodes.contains(node))
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Make one node to be simplified
+     */
+    private void AddWorkList(Register u) {
+        if (!isPrecolored(u) && !MoveRelated(u) && degree.get(u)<K) {
+            freezeWorklist.remove(u);
+            simplifyWorklist.add(u);
+        }
+    }
+
+    /**
+     * Get alias of a node.
+     */
+    private Register GetAlias(Register n) {
+        if (coalescedNodes.contains(n))
+            return GetAlias(alias.get(n));
+        else
+            return n;
+    }
+
+    /**
+     * Test the Adjacent is OK for coalescing <br/>
+     * George’s Algorithm
+     */
+    private boolean OK(Set<Register> ts, Register r) {
+        return ts.stream().allMatch(t -> OK(t, r));
+    }
+
+    /**
+     * Test two node is OK for coalescing <br/>
+     * George’s Algorithm
+     */
+    private boolean OK(Register t, Register r) {
+        return degree.get(t) < K || isPrecolored(t) || adjSet.contains(new Pair<>(t, r));
+    }
+
+    /**
+     * Test the coalescing using conservative way <br/>
+     * Briggs's Algorithm
+     */
+    private boolean Conservative(Set<Register> nodes, Set<Register> v) {
+        nodes.addAll(v);
+        AtomicInteger k = new AtomicInteger();
+        nodes.forEach(n -> {
+            if (degree.get(n) >= K) k.getAndIncrement();
+        });
+        return k.get() < K;
+    }
+
+    /**
+     * Combine <i>v</i>  to <i>u</i> <br/>
+     * <i>u</i> &#8592<i>v</i>
+     * @param u the node combine to
+     * @param v the node to be combined
+     */
+    private void Combine(Register u,Register v) {
+        if (freezeWorklist.contains(v))
+            freezeWorklist.remove(v);
+        else
+            spillWorklist.remove(v);
+
+        /* Combine this two */
+        coalescedNodes.add(v);
+        alias.put(v, u);
+        moveList.get(u).addAll(moveList.get(v));
+
+        /* Adjust RIG */
+        Adjacent(v).forEach(t -> {
+            AddEdge(t, u);
+            DecrementDegree(t);
+        });
+
+        if (degree.get(u) >= K && freezeWorklist.contains(u)) {
+            freezeWorklist.remove(u);
+            spillWorklist.add(u);
+        }
     }
 
     private boolean isPrecolored(Register r) {

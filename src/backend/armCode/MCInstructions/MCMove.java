@@ -55,6 +55,12 @@ public class MCMove extends MCInstruction {
             return "MOV" + emitCond() + ' ' + dst.emit() + ", " + src.emit();
     }
 
+    public Register getDst() {return dst;}
+    public void setDst(Register dst) {this.dst = dst;}
+
+    public MCOperand getSrc() {return src;}
+    public void setSrc(MCOperand src) {this.src = src;}
+
     public MCMove(Register dst, MCOperand src) {super(TYPE.MOV); this.dst = dst; this.src = src;}
     public MCMove(Register dst, MCOperand src, boolean exceededLimit) {super(TYPE.MOV); this.dst = dst; this.src = src; this.exceededLimit=exceededLimit;}
     public MCMove(Register dst, MCOperand src, ConditionField cond) {super(TYPE.MOV, null, cond); this.dst = dst; this.src = src;}
