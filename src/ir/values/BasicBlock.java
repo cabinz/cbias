@@ -1,5 +1,6 @@
 package ir.values;
 
+import ir.Use;
 import ir.Value;
 import ir.types.LabelType;
 
@@ -42,8 +43,14 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * @return true if successfully remove an inst contained in the BB.
      */
     public boolean removeInst(Instruction inst) {
-        if (!this.instructions.contains(inst)) {
-            inst.removeSelf();
+        if (this.instructions.contains(inst)) {
+            // Update the use states:
+            // - Remove all the Use links for the User using it.
+            // - Remove all the Use links corresponding to its operands.
+            inst.getUses().forEach(Use::removeSelf);
+            inst.operands.forEach(Use::removeSelf);
+            // Remove the inst from the bb.
+            instructions.remove(inst);
             return true;
         }
         else {
