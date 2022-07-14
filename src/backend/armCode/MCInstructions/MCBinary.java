@@ -1,9 +1,10 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCBasicBlock;
 import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
 import backend.operand.Register;
+
+import java.util.HashSet;
 
 /**
  * This class represent the arithmetical instruction of ARM,
@@ -15,6 +16,22 @@ public class MCBinary extends MCInstruction {
     private Register operand1;
     private MCOperand operand2;
     private Register destination;
+
+    @Override
+    public HashSet<Register> getUse() {
+        var set = new HashSet<Register>();
+        set.add(operand1);
+        if (operand2.isVirtualReg() || operand2.isVirtualReg())
+            set.add(((Register) operand2));
+        return set;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        var set = new HashSet<Register>();
+        set.add(destination);
+        return set;
+    }
 
     public String emit() {
         return type.name() + emitCond() + ' ' + destination.emit()

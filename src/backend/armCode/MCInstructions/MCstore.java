@@ -4,6 +4,8 @@ import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashSet;
+
 /**
  * The STR instruction of ARM. <br/>
  * Now just has the pre‐indexed addressing and write option.
@@ -23,6 +25,21 @@ public class MCstore extends MCInstruction {
      * Whether write to the sp
      */
     private boolean write;
+
+    @Override
+    public HashSet<Register> getUse() {
+        var set = new HashSet<Register>();
+        set.add(src);
+        set.add(addr);
+        if (offset.isVirtualReg() || offset.isVirtualReg())
+            set.add(((Register) offset));
+        return set;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return new HashSet<>();
+    }
 
     public String emit(){
         return "STR " + src.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");

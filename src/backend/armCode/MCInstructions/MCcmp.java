@@ -4,6 +4,8 @@ import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashSet;
+
 public class MCcmp extends MCInstruction {
 
     private Register operand1;
@@ -14,6 +16,20 @@ public class MCcmp extends MCInstruction {
 
     public MCOperand getOperand2() {return operand2;}
     public void setOperand2(MCOperand operand2) {this.operand2 = operand2;}
+
+    @Override
+    public HashSet<Register> getUse() {
+        var set = new HashSet<Register>();
+        set.add(operand1);
+        if (operand2.isVirtualReg() || operand2.isVirtualReg())
+            set.add(((Register) operand2));
+        return set;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return new HashSet<>();
+    }
 
     @Override
     public String emit() {

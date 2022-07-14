@@ -1,9 +1,10 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCInstruction;
-import backend.operand.Immediate;
 import backend.operand.MCOperand;
 import backend.operand.Register;
+
+import java.util.HashSet;
 
 public class MCload extends MCInstruction {
 
@@ -20,6 +21,22 @@ public class MCload extends MCInstruction {
      * Whether write to the sp
      */
     private boolean write;
+
+    @Override
+    public HashSet<Register> getUse() {
+        var set = new HashSet<Register>();
+        set.add(addr);
+        if (offset.isVirtualReg() || offset.isVirtualReg())
+            set.add(((Register) offset));
+        return set;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        var set = new HashSet<Register>();
+        set.add(dst);
+        return set;
+    }
 
     public String emit(){
         return "LDR " + dst.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");

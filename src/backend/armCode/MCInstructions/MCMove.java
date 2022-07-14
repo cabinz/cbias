@@ -6,6 +6,8 @@ import backend.operand.Immediate;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashSet;
+
 /**
  * This class represent the move operation of ARM. <br/>
  * It's an aggregation too, containing MOV, MOVW, MOVT, MNV.
@@ -16,6 +18,21 @@ public class MCMove extends MCInstruction {
     private MCOperand src;
 
     private boolean exceededLimit = false;
+
+    @Override
+    public HashSet<Register> getUse() {
+        var set = new HashSet<Register>();
+        if (src.isVirtualReg() || src.isVirtualReg())
+            set.add(((Register) src));
+        return set;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        var set = new HashSet<Register>();
+        set.add(dst);
+        return set;
+    }
 
     public String emit(){
         if (src.isGlobalVar())

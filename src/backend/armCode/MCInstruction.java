@@ -5,6 +5,8 @@ import backend.operand.Immediate;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashSet;
+
 /**
  * This class represents all instructions of ARM in memory. <br/>
  * All instructions' constructor is about the text info, which will be emitted.
@@ -83,6 +85,9 @@ public abstract class MCInstruction {
     protected MCFunction belongFunc;
     //</editor-fold>
 
+    abstract public HashSet<Register> getUse();
+
+    abstract public HashSet<Register> getDef();
 
 
     //<editor-fold desc="Emits">

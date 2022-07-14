@@ -4,9 +4,20 @@ import backend.armCode.MCInstruction;
 import backend.operand.Register;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class MCpop extends MCInstruction{
     private ArrayList<Register> operands;
+
+    @Override
+    public HashSet<Register> getUse() {
+        return new HashSet<>();
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return new HashSet<>(operands);
+    }
 
     @Override
     public String emit() {

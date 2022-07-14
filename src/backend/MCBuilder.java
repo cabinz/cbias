@@ -293,7 +293,6 @@ public class MCBuilder {
             case LE -> MCInstruction.ConditionField.GT;
             case GT -> MCInstruction.ConditionField.LE;
             case LT -> MCInstruction.ConditionField.GE;
-            default -> null;
         };
     }
     //</editor-fold>

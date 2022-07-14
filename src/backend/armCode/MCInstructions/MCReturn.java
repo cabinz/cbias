@@ -3,11 +3,28 @@ package backend.armCode.MCInstructions;
 import backend.MCBuilder;
 import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
+import backend.operand.Register;
+
+import java.util.HashSet;
 
 /**
  * In fact, this is not an ARM instruction. It's a MIR.
  */
 public class MCReturn extends MCInstruction {
+
+
+    /**
+     * Return instruction have NO use & def! <br/>
+     * This method should NEVER be called!
+     */
+    @Override
+    public HashSet<Register> getUse() {return new HashSet<>();}
+    /**
+     * Return instruction have NO use & def! <br/>
+     * This method should NEVER be called!
+     */
+    @Override
+    public HashSet<Register> getDef() {return new HashSet<>();}
 
     @Override
     public String emit() {
