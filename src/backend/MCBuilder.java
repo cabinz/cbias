@@ -333,7 +333,7 @@ public class MCBuilder {
     private void translateRet(TerminatorInst.Ret IRinst) {
         if (IRinst.getNumOperands() != 0)
             curMCBB.appendInst(new MCMove(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
-        curMCBB.appendInst(new MCReturn(findContainer(IRinst.getOperandAt(0))));
+        curMCBB.appendInst(new MCReturn());
     }
 
     /**
@@ -363,9 +363,9 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      */
     private void translateStore(MemoryInst.Store IRinst) {
-        MCOperand src = findContainer(IRinst.getOperandAt(0), true);
-        MCOperand addr = findContainer(IRinst.getOperandAt(1));
-        curMCBB.appendInst(new MCstore((Register) src, addr));
+        Register src = ((Register) findContainer(IRinst.getOperandAt(0), true));
+        Register addr = ((Register) findContainer(IRinst.getOperandAt(1)));
+        curMCBB.appendInst(new MCstore(src, addr));
     }
 
     /**
@@ -373,7 +373,7 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      */
     private void translateLoad(MemoryInst.Load IRinst) {
-        curMCBB.appendInst(new MCload((Register) findContainer(IRinst), findContainer(IRinst.getOperandAt(0))));
+        curMCBB.appendInst(new MCload((Register) findContainer(IRinst), ((Register) findContainer(IRinst.getOperandAt(0)))));
     }
 
     /**

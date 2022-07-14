@@ -58,7 +58,7 @@ public class MCReturn extends MCInstruction {
         return assemble.toString();
     }
 
-    public MCReturn(MCOperand returnValue) {
+    public MCReturn() {
         super(TYPE.RET);
     }
 }

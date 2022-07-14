@@ -9,7 +9,7 @@ import java.util.HashSet;
 public class MCload extends MCInstruction {
 
     private Register dst;
-    private MCOperand addr;
+    private Register addr;
     /**
      * Addressing offset. <br/>
      * In ARM, this can be <br/>
@@ -48,13 +48,13 @@ public class MCload extends MCInstruction {
     public MCOperand getOffset() {return offset;}
 
     public void setDst(Register dst) {this.dst = dst;}
-    public void setAddr(MCOperand addr) {this.addr = addr;}
+    public void setAddr(Register addr) {this.addr = addr;}
     public void setOffset(MCOperand offset) {this.offset = offset;}
     //</editor-fold>
 
     //<editor-fold desc="Constructor">
-    public MCload(Register dst, MCOperand addr) {super(TYPE.MOV); this.dst = dst; this.addr = addr;}
-    public MCload(Register dst, MCOperand addr, MCOperand offset) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset; this.write=false;}
-    public MCload(Register dst, MCOperand addr, MCOperand offset, boolean write) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset; this.write=write;}
+    public MCload(Register dst, Register addr) {super(TYPE.MOV); this.dst = dst; this.addr = addr;}
+    public MCload(Register dst, Register addr, MCOperand offset) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset; this.write=false;}
+    public MCload(Register dst, Register addr, MCOperand offset, boolean write) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset; this.write=write;}
     //</editor-fold>
 }
