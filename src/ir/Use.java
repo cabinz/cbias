@@ -9,18 +9,35 @@ public class Use {
     /**
      * Reference to value being used.
      */
-    private Value v;
+    private Value usee;
+
+    public Value getUsee() {
+        return usee;
+    }
+
+    public void setUsee(Value usee) {
+        this.usee.removeUse(this);
+        this.usee = usee;
+        this.usee.addUse(this);
+    }
 
     /**
      * Reference to the user value.
      */
-    private User u;
+    private User user;
+
+    public User getUser() {
+        return user;
+    }
 
     /**
      * The position number of the value as an operand of the user.
      */
     private int pos;
 
+    public int getPos() {
+        return pos;
+    }
 
     /**
      * Construct a new Use edge.
@@ -35,23 +52,13 @@ public class Use {
      * @param position The position of the used value as an operand.
      */
     public Use(Value value, User user, int position) {
-        this.v = value;
-        this.u = user;
+        this.usee = value;
+        this.user = user;
         this.pos = position;
     }
 
 
     public int getOperandPos() {
         return pos;
-    }
-
-    public Value getValue() {
-        return v;
-    }
-
-    public void setValue(Value v) {
-        this.v.removeUse(this);
-        this.v = v;
-        this.v.addUse(this);
     }
 }

@@ -55,8 +55,8 @@ class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction> {
         rawBasicBlock.forEach(instruction -> {
             if(!instruction.isLoad() && !instruction.isStore()){
                 instruction.operands.forEach(use -> {
-                    if(use.getValue() instanceof MemoryInst.Alloca){
-                        allocaInstSet.remove((MemoryInst.Alloca) use.getValue());
+                    if(use.getUsee() instanceof MemoryInst.Alloca){
+                        allocaInstSet.remove((MemoryInst.Alloca) use.getUsee());
                     }
                 });
             }

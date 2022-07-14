@@ -45,7 +45,7 @@ public abstract class User extends Value {
     public Value getOperandAt(int pos) {
         for (Use use : operands) {
             if (use.getOperandPos() == pos) {
-                return use.getValue();
+                return use.getUsee();
             }
         }
         return null;
@@ -85,7 +85,7 @@ public abstract class User extends Value {
             // If there is, replace with the new Value.
             if (use.getOperandPos() == pos) {
                 // Got the target use.
-                use.setValue(val); // Cover the use.v at specified position (pos) with given v.
+                use.setUsee(val); // Cover the use.v at specified position (pos) with given v.
                 return;
             }
         }
