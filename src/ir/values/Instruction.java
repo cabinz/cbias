@@ -127,13 +127,6 @@ public abstract class Instruction extends User {
      * All related Use links will also be removed.
      */
     public void removeSelf() {
-        // Update the use states:
-        // - Remove all the Use links for the User using it.
-        // - Remove all the Use links corresponding to its operands.
-        this.getUses().forEach(Use::removeSelf);
-        this.operands.forEach(Use::removeSelf);
-
-        // Remove the inst from the BB.
         this.getBB().removeInst(this);
     }
 
