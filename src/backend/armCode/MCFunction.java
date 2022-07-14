@@ -96,6 +96,7 @@ public class MCFunction  implements Iterable<MCBasicBlock> {
     public int getStackSize() {return stackSize;}
 
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
+    public ArrayList<VirtualRegister> getVirtualRegisters() {return VirtualRegisters;}
 
     public boolean isExternal() {return isExternal;}
     //</editor-fold>
