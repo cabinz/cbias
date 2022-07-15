@@ -10,6 +10,7 @@ import ir.values.instructions.*;
 import passes.ir.IRPass;
 
 import java.util.ArrayDeque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
@@ -234,12 +235,31 @@ public class ConstantDerivation implements IRPass {
                 // Br, Load, Store, etc.
                 if (instruction instanceof TerminatorInst.Br br) {
                     if (br.isCondJmp()) {
-                        // Require i1 constant
+                        var cond = (ConstInt) br.getOperandAt(0);
+                        var bTrue = br.getOperandAt(1);
+                        var bFalse = br.getOperandAt(2);
+                        br.removeOperandAt(0);
+                        br.removeOperandAt(1);
+                        br.removeOperandAt(2);
+                        if(cond.getVal()==1){
+                            br.setOperandAt(bTrue,0);
+                        }else{
+                            br.setOperandAt(bFalse,0);
+                        }
                     }
                 }
             } else {
-                // Derive constant value
-                // Replace usage
+                Constant constant = calculateInstValue(instruction);
+                @SuppressWarnings("unchecked")
+                var uses = (List<Use>) instruction.getUses().clone();
+                uses.forEach(use -> {
+                    use.setUsee(constant);
+                    if(use.getUser() instanceof Instruction user){
+                        if(canDeriveInst(user)){
+                            queue.add(user);
+                        }
+                    }
+                });
             }
         }
     }
