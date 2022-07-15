@@ -37,9 +37,9 @@ public class MCReturn extends MCInstruction {
         int stackSize = belongFunc.getStackSize();
         if (stackSize > 0) {
             if (MCBuilder.canEncodeImm(stackSize))
-                assemble.append("SUB sp, sp, #").append(stackSize).append("\n\t");
+                assemble.append("ADD sp, sp, #").append(stackSize).append("\n\t");
             else if (MCBuilder.canEncodeImm(-stackSize))
-                assemble.append("ADD sp, sp, #").append(-stackSize).append("\n\t");
+                assemble.append("SUB sp, sp, #").append(-stackSize).append("\n\t");
             else {
                 int high16 = stackSize >>> 16;
                 int low16 = stackSize & 0xFFFF;
@@ -53,10 +53,10 @@ public class MCReturn extends MCInstruction {
         /* context switch */
         // TODO: Restore the physical register after register allocation
         if (belongFunc.useLR) {
-            assemble.append("pop pc");
+            assemble.append("POP pc");
         }
         else
-            assemble.append("bx lr");
+            assemble.append("BX lr");
 
         return assemble.toString();
     }
