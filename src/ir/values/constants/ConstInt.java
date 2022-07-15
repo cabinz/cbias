@@ -42,6 +42,13 @@ public class ConstInt extends Constant {
      * @return Corresponding ConstInt instance created.
      */
     public static ConstInt getI1(int val) {
+        /*
+        Security check.
+         */
+        if (val != 0 && val != 1) {
+            throw new RuntimeException("Try to get a i1 ConstInt with non binary value.");
+        }
+
         return new ConstInt(IntegerType.getI1(), val);
     }
     //</editor-fold>
