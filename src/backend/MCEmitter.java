@@ -42,7 +42,6 @@ public class MCEmitter {
 
         /* handle each function */
         for (MCFunction f : target) {
-            System.out.println(f.getName());
             if (f.isExternal()) continue;
             strBd.append("\t.global " + f.getName() + '\n');
             strBd.append(f.getName() + ":\n");
@@ -53,7 +52,6 @@ public class MCEmitter {
                 strBd.append("." + bb.getName() + ":\n");
                 /* handle each instruction */
                 for (MCInstruction mcInstruction : bb) {
-                    System.out.println("\tNOW:" + mcInstruction.emit());
                     strBd.append('\t' + mcInstruction.emit() + '\n');
                 }
             }

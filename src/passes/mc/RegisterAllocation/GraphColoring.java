@@ -336,8 +336,8 @@ public class GraphColoring implements MCPass {
         while (!selectStack.isEmpty()) {
             /* Initialize */
             var n = selectStack.pop();
-            HashSet<Integer> okColor = IntStream.range(0, 12).boxed()// TODO: 考虑使用r14 lr, r15 pc?
-                    .collect(Collectors.toCollection(HashSet::new));
+            var okColor = IntStream.range(0, 13).boxed()// TODO: 考虑使用r14 lr?
+                    .collect(Collectors.toList());
 
             /* Remove unavailable color */
             if (adjList.containsKey(n))
@@ -351,7 +351,7 @@ public class GraphColoring implements MCPass {
                 spilledNodes.add(n);
             else {
                 coloredNodes.add(n);
-                color.put(n, okColor.iterator().next());
+                color.put(n, okColor.get(0));
             }
         }
 

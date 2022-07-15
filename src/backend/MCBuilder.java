@@ -167,7 +167,6 @@ public class MCBuilder {
      * @return the corresponding operand
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
-        // TODO: move VirtualRegCounter to MCFunction? & add method newVTR()?
         if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
@@ -302,6 +301,7 @@ public class MCBuilder {
     //<editor-fold desc="Translate functions">
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
+     * r0-r3 are caller-saved registers, while r4-r12 are callee-saved registers. <br/>
      * Function stack (from high to low): parameter, context, local variables, spilled nodes <br/>
      * @param IRinst IR call instruction
      */

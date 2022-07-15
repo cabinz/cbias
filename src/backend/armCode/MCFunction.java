@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * This class represents a function of ARM in memory.
  */
-public class MCFunction  implements Iterable<MCBasicBlock> {
+public class MCFunction implements Iterable<MCBasicBlock> {
 
     //<editor-fold desc="Fields">
     private final LinkedList<MCBasicBlock> BasicBlockList;
