@@ -2,12 +2,10 @@ package backend.armCode.MCInstructions;
 
 import backend.MCBuilder;
 import backend.armCode.MCInstruction;
-import backend.operand.MCOperand;
 import backend.operand.RealRegister;
 import backend.operand.Register;
 
 import java.util.HashSet;
-import java.util.stream.Collectors;
 
 /**
  * In fact, this is not an ARM instruction. It's a MIR.
@@ -16,13 +14,17 @@ public class MCReturn extends MCInstruction {
 
 
     /**
-     * Return instruction have NO use & def! <br/>
-     * This method should NEVER be called!
+     * The only use is LR
      */
     @Override
-    public HashSet<Register> getUse() {return new HashSet<>();}
+    public HashSet<Register> getUse() {
+        var ret = new HashSet<Register>();
+        ret.add(RealRegister.get(14));
+        return ret;
+    }
+
     /**
-     * Return instruction have NO use & def! <br/>
+     * Return instruction have NO  def! <br/>
      * This method should NEVER be called!
      */
     @Override
