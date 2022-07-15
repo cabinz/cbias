@@ -301,8 +301,7 @@ public class MCBuilder {
     //<editor-fold desc="Translate functions">
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
-     * Function Stack: parameter, context(registers & lr), local variables<br/>
-     * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; high &emsp;&emsp;&emsp; -->> &emsp;&emsp;&emsp; low <br/>
+     * Function stack (from high to low): parameter, context, local variables, spilled nodes <br/>
      * @param IRinst IR call instruction
      */
     private void translateCall(CallInst IRinst) {

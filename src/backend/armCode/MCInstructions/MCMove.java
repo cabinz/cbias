@@ -19,10 +19,12 @@ public class MCMove extends MCInstruction {
 
     private boolean exceededLimit = false;
 
+    public boolean isCopy() {return src.isVirtualReg() || src.isRealReg();}
+
     @Override
     public HashSet<Register> getUse() {
         var set = new HashSet<Register>();
-        if (src.isVirtualReg() || src.isVirtualReg())
+        if (src.isVirtualReg() || src.isRealReg())
             set.add(((Register) src));
         return set;
     }

@@ -24,7 +24,6 @@ public class LivenessAnalysis {
 
             /* Build use & def set */
             for (MCInstruction inst : block) {
-                // TODO: needsColor?
                 inst.getUse().stream()
                         .filter(use -> !info.def.contains(use))
                         .forEach(info.use::add);

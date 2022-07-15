@@ -31,7 +31,7 @@ public class MCstore extends MCInstruction {
         var set = new HashSet<Register>();
         set.add(src);
         set.add(addr);
-        if (offset.isVirtualReg() || offset.isVirtualReg())
+        if (offset != null && offset.isVirtualReg())
             set.add(((Register) offset));
         return set;
     }
@@ -47,7 +47,7 @@ public class MCstore extends MCInstruction {
 
     //<editor-fold desc="Getter & Setter">
     public Register getSrc() {return src;}
-    public MCOperand getAddr() {return addr;}
+    public Register getAddr() {return addr;}
     public MCOperand getOffset() {return offset;}
 
     public void setSrc(Register src) {this.src = src;}

@@ -188,7 +188,7 @@ public class GraphColoring implements MCPass {
                 var defs = inst.getDef();
 
                 /* Copy will be coalescing */
-                if (inst instanceof MCMove move && move.getShift() == null && move.getCond() == null) {
+                if (inst instanceof MCMove move && move.getShift() == null && move.getCond() == null && move.isCopy()) {
                     /* Delete the variable in live */
                     live.removeAll(uses);
 
@@ -196,8 +196,8 @@ public class GraphColoring implements MCPass {
                     uses.forEach(use -> moveList.putIfAbsent(use, new HashSet<>()));
                     uses.forEach(use -> moveList.get(use).add(move));
 
-                    defs.forEach(use -> moveList.putIfAbsent(use, new HashSet<>()));
-                    defs.forEach(use -> moveList.get(use).add(move));
+                    defs.forEach(def -> moveList.putIfAbsent(def, new HashSet<>()));
+                    defs.forEach(def -> moveList.get(def).add(move));
 
                     /* Add to be coalescing */
                     worklistMoves.add(move);
@@ -302,10 +302,11 @@ public class GraphColoring implements MCPass {
                     .collect(Collectors.toCollection(HashSet::new));
 
             /* Remove unavailable color */
-            adjList.get(n).forEach(w -> {
-                if (isPrecolored(GetAlias(w)) || coloredNodes.contains(w))
-                    okColor.remove(color.get(GetAlias(w)));
-            });
+            if (adjList.containsKey(n))
+                adjList.get(n).forEach(w -> {
+                    if (isPrecolored(GetAlias(w)) || coloredNodes.contains(w))
+                        okColor.remove(color.get(GetAlias(w)));
+                });
 
             /* Assign */
             if (okColor.isEmpty())

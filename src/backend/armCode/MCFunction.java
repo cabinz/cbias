@@ -4,10 +4,7 @@ import backend.operand.VirtualRegister;
 import ir.Value;
 import ir.values.BasicBlock;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 /**
  * This class represents a function of ARM in memory.

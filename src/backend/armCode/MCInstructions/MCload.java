@@ -26,7 +26,7 @@ public class MCload extends MCInstruction {
     public HashSet<Register> getUse() {
         var set = new HashSet<Register>();
         set.add(addr);
-        if (offset.isVirtualReg() || offset.isVirtualReg())
+        if (offset != null && offset.isVirtualReg())
             set.add(((Register) offset));
         return set;
     }
@@ -44,7 +44,7 @@ public class MCload extends MCInstruction {
 
     //<editor-fold desc="Getter & Setter">
     public Register getDst() {return dst;}
-    public MCOperand getAddr() {return addr;}
+    public Register getAddr() {return addr;}
     public MCOperand getOffset() {return offset;}
 
     public void setDst(Register dst) {this.dst = dst;}
