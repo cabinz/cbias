@@ -62,7 +62,8 @@ public class MCReturn extends MCInstruction {
             assemble.append((new MCpop(restore)).emit());
         }
         else {
-            assemble.append((new MCpop(belongFunc.getContext())).emit()).append("\n\t");
+            if (!belongFunc.getContext().isEmpty())
+                assemble.append((new MCpop(belongFunc.getContext())).emit()).append("\n\t");
             assemble.append("BX lr");
         }
 

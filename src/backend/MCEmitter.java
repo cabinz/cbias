@@ -46,7 +46,8 @@ public class MCEmitter {
             strBd.append("\t.global " + f.getName() + '\n');
             strBd.append(f.getName() + ":\n");
             /* Callee-save */
-            strBd.append("\t" + (new MCpush(f.getContext())).emit() + "\n");
+            if (!f.getContext().isEmpty())
+                strBd.append("\t" + (new MCpush(f.getContext())).emit() + "\n");
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
                 strBd.append("." + bb.getName() + ":\n");
