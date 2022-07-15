@@ -8,7 +8,7 @@ public class Pair<A, B> {
     /**
      * Key of this <code>Pair</code>.
      */
-    private final A a;
+    private A a;
 
     /**
      * Gets the key for this pair.
@@ -19,13 +19,21 @@ public class Pair<A, B> {
     /**
      * Value of this this <code>Pair</code>.
      */
-    private final B b;
+    private B b;
 
     /**
      * Gets the value for this pair.
      * @return value for this pair
      */
     public B getB() { return b; }
+
+    public void setA(A a) {
+        this.a = a;
+    }
+
+    public void setB(B b) {
+        this.b = b;
+    }
 
     /**
      * Creates a new pair
