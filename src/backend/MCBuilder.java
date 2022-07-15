@@ -91,13 +91,11 @@ public class MCBuilder {
      * </ul>
      */
     private void mapFunction(Module IRModule, ARMAssemble target) {
-        for (Function IRfunc : IRModule.functions) {
-            //System.out.println(IRfunc.getName());
-            if (IRfunc.isExternal()) {
-                target.useExternalFunction(IRfunc);
-                continue;
-            }
+        for (Function IRfunc : IRModule.externFunctions) {
+            target.useExternalFunction(IRfunc);
+        }
 
+        for (Function IRfunc : IRModule.functions) {
             curIRFunc = IRfunc;
             curFunc = target.createFunction(IRfunc);
 
@@ -109,7 +107,6 @@ public class MCBuilder {
             for (BasicBlock IRBB : IRfunc){
                 curMCBB = curFunc.findMCBB(IRBB);
                 for (Instruction IRinst : IRBB) {
-                    //System.out.println("\tNOW: " + IRinst.toString());
                     translate(IRinst);
                 }
             }
