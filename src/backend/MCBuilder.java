@@ -195,7 +195,7 @@ public class MCBuilder {
                 return temp;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
-            // TODO: 栈帧有问题需要调整
+            // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             int pos = ((Function.FuncArg) value).getPos();
@@ -204,9 +204,10 @@ public class MCBuilder {
                 entry.prependInst(new MCMove(vr, RealRegister.get(pos)));
             }
             else {
-                VirtualRegister tmp = curFunc.createVirReg((pos-4)*4);
-                entry.prependInst(new MCload(vr, RealRegister.get(13), tmp));
-                entry.prependInst(new MCMove(tmp, createConstInt((pos-4)*4)));
+                /* Considering that parameter should not be too many .... use Immediate directly here */
+                var load = new MCload(vr, RealRegister.get(13), new Immediate((pos-4)*4));
+                entry.prependInst(load);
+                curFunc.addParamCal(load);
             }
             return vr;
         }

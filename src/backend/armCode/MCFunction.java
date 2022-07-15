@@ -1,5 +1,7 @@
 package backend.armCode;
 
+import backend.armCode.MCInstructions.MCload;
+import backend.operand.Immediate;
 import backend.operand.RealRegister;
 import backend.operand.VirtualRegister;
 import ir.Value;
@@ -22,7 +24,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     private final String name;
 
     /**
-     * Total stackSize, including context, local variables & spilled nodes. <br/>
+     * Total stackSize, including local variables & spilled nodes. <br/>
      * stackSize = sum(localVariable) + spilledNode*4; <br/>
      * Function stack (from high to low): parameter, context, local variables, spilled nodes
      */
@@ -42,6 +44,12 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * spilled virtual registers.
      */
     private int spilledNode;
+    /**
+     * This set holds all the load related to the
+     * function's parameter address, <br/>
+     * which need to be adjusted after {@link passes.mc.RegisterAllocation.GraphColoring}.
+     */
+    private HashSet<MCload> paramCal;
 
     public boolean useLR;
     private final boolean isExternal;
@@ -50,7 +58,6 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * Represent the map between IR basic block and machine basic block
      */
     private final HashMap<BasicBlock, MCBasicBlock> BBmap;
-//    private LinkedList<MCOperand> argList;
     //</editor-fold>
 
 
@@ -82,12 +89,20 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         return BasicBlockList.getFirst();
     }
 
+    /**
+     * Create a virtual register for some instruction
+     * in the function
+     */
     public VirtualRegister createVirReg(Value value){
         var vr = new VirtualRegister(VirtualRegCounter++, value);
         VirtualRegisters.add(vr);
         return vr;
     }
 
+    /**
+     * Create a virtual register for some instruction
+     * in the function
+     */
     public VirtualRegister createVirReg(int value){
         var vr = new VirtualRegister(VirtualRegCounter++, value);
         VirtualRegisters.add(vr);
@@ -96,6 +111,10 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     public void addLocalVariable(int i) {localVariable.add(i);}
 
+    /**
+     * Add a register to context, meaning it was used in the function
+     * @param index the index of the {@link RealRegister}
+     */
     public void addContext(int index) {
         /* r0-r3 are caller-saved registers */
         /* r4-r12, lr are callee-saved */
@@ -105,6 +124,23 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     public void addSpilledNode() {spilledNode++;}
 
+    /**
+     * Add a parameter load instruction into function
+     */
+    public void addParamCal(MCload move) {paramCal.add(move);}
+
+    /**
+     * Fix the bug of parameter address calculation causing by {@link passes.mc.RegisterAllocation.GraphColoring}. <br/>
+     * This method should not be here, but ... I have no idea where to place it.
+     */
+    public void fixParamAddress() {
+        paramCal.forEach(load -> load.setOffset(new Immediate(((Immediate) load.getOffset()).getIntValue() + context.size())));
+    }
+
+    /**
+     * Get total stackSize, including local variables & spilled nodes. <br/>
+     * stackSize = sum(localVariable) + spilledNode*4
+     */
     public int getStackSize() {
         stackSize = localVariable.stream().mapToInt(v ->v).sum() + spilledNode*4;
         return stackSize;
@@ -139,6 +175,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         context = new HashSet<>();
         localVariable = new ArrayList<>();
         spilledNode = 0;
+        paramCal = new HashSet<>();
         BasicBlockList = new LinkedList<>();
         VirtualRegisters = new ArrayList<>();
         BBmap = new HashMap<>();
