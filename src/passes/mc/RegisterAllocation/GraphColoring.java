@@ -188,14 +188,14 @@ public class GraphColoring implements MCPass {
 
         adjList = new HashMap<>();
         adjSet = new HashSet<>();
-        degree = new HashMap<>(IntStream.range(0, 15)
+        degree = new HashMap<>(IntStream.range(0, 16)
                 .mapToObj(RealRegister::get)
                 .collect(Collectors.toMap(x -> x, x -> INF)));
 
         selectStack = new Stack<>();
-        coloredNodes = IntStream.range(0, 15)
+        coloredNodes = IntStream.range(0, 16)
                 .mapToObj(RealRegister::get).collect(Collectors.toCollection(HashSet::new));
-        color = new HashMap<>(IntStream.range(0, 15)
+        color = new HashMap<>(IntStream.range(0, 16)
                 .mapToObj(RealRegister::get)
                 .collect(Collectors.toMap(x -> x, RealRegister::getIndex)));
         coalescedNodes = new HashSet<>();
