@@ -26,7 +26,7 @@ public class PassManager {
      */
     public void runPasses(Module module){
         run(Mem2reg.class, module);
-        run(ConstantDerivation.class, module);
+        //run(ConstantDerivation.class, module);
     }
 
     /**

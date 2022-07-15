@@ -48,7 +48,7 @@ public class GlobalVariable extends User {
         super(PointerType.getType(type));
         this.setName("@" + name);
         if(type.isIntegerType()) {
-            this.initVal = ConstInt.get(0);
+            this.initVal = ConstInt.getI32(0);
         }
         else if (type.isFloatType()) {
             this.initVal = ConstFloat.get(.0f);

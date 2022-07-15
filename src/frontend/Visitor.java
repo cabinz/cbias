@@ -1083,7 +1083,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
              */
             if(retVal_.getType().isI32()) { // i32 -> i1
                 // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
-                retVal_ = builder.buildComparison("!=", retVal_, ConstInt.get(0));
+                retVal_ = builder.buildComparison("!=", retVal_, ConstInt.getI32(0));
             }
             else if (retVal_.getType().isFloatType()) { // float -> i1
                 retVal_ = builder.buildComparison("!=", retVal_, ConstFloat.get(.0f));

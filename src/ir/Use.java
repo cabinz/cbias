@@ -66,8 +66,4 @@ public class Use {
         this.getUser().removeOperandAt(this.getOperandPos());
     }
 
-    public User getUser(){
-        return u;
-    }
-
 }

@@ -96,7 +96,7 @@ public class IRBuilder {
      * @return The ConstInt Value with given numeric value.
      */
     public ConstInt buildConstant(int i) {
-        return ConstInt.get(i);
+        return ConstInt.getI32(i);
     }
 
     /**

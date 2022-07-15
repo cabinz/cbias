@@ -31,8 +31,8 @@ public class ConstInt extends Constant {
      * @param val Mathematical value of the integer (i32).
      * @return Corresponding ConstInt instance created.
      */
-    public static ConstInt get(int val) {
-        return new ConstInt(IntegerType.getI32(), val);
+    public static ir.values.constants.ConstInt getI32(int val) {
+        return new ir.values.constants.ConstInt(IntegerType.getI32(), val);
     }
 
     /**
