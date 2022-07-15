@@ -308,13 +308,14 @@ public class IRBuilder {
     }
 
     /**
-     * Insert a Alloca instruction at the FRONT of current basic block.
+     * Insert a Alloca instruction at the FRONT of ENTRY basic block of the current Function.
      * @param allocatedType The type of memory space allocated.
      * @return The Alloca instruction inserted.
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
-        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType, curBB);
-        getCurFunc().getEntryBB().insertAtFront(inst);
+        var entryBlk = getCurFunc().getEntryBB();
+        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType, entryBlk);
+        entryBlk.insertAtFront(inst);
         return inst;
     }
 
