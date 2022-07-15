@@ -33,15 +33,24 @@ public class MCbranch extends MCInstruction {
             set.add(RealRegister.get(1));
             set.add(RealRegister.get(2));
             set.add(RealRegister.get(3));
-            /* add lr */
-            set.add(RealRegister.get(14));
+            /* lr <- pc */
+            set.add(RealRegister.get(15));
         }
         return set;
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return getUse();
+        var set = new HashSet<Register>();
+        if (withLink) {
+            set.add(RealRegister.get(0));
+            set.add(RealRegister.get(1));
+            set.add(RealRegister.get(2));
+            set.add(RealRegister.get(3));
+            /* lr <- pc */
+            set.add(RealRegister.get(14));
+        }
+        return set;
     }
 
     @Override
