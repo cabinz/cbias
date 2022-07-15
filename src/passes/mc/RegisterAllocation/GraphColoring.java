@@ -32,6 +32,7 @@ public class GraphColoring implements MCPass {
      */
     private int K = 13;
 
+    //<editor-fold desc="Data Structure">
     //<editor-fold desc="Key worklist set">
     /**
      * The set of low-degree non-move-related nodes
@@ -83,6 +84,9 @@ public class GraphColoring implements MCPass {
      * For the precolored nodes, this is initialized to the given color.
      */
     private HashMap<Register, Integer> color;
+    //</editor-fold>
+
+    //<editor-fold desc="Node Info">
     /**
      * The registers that have been coalesced;
      * when <i>u</i> &#8592<i>v</i> is coalesced, <i>v</i> is added to this set
@@ -98,7 +102,9 @@ public class GraphColoring implements MCPass {
      * The nodes marked for spilling during this round; initially empty;
      */
     private HashSet<Register> spilledNodes;
+    //</editor-fold>
 
+    //<editor-fold desc="Move Info">
     /**
      * a mapping from a node to the list of moves it is associated with
      */
@@ -107,9 +113,17 @@ public class GraphColoring implements MCPass {
      * Moves not yet ready for coalescing
      */
     private HashSet<MCMove> activeMoves;
-
+    /**
+     * Moves that have been coalesced
+     */
     private HashSet<MCMove> coalescedMoves;
+    /**
+     * Moves whose source and target interfere
+     */
     private HashSet<MCMove> constrainedMoves;
+    /**
+     * Moves that will no longer be considered for coalescing
+     */
     private HashSet<MCMove> frozenMove;
     //</editor-fold>
 
@@ -118,6 +132,7 @@ public class GraphColoring implements MCPass {
     private HashMap<MCBasicBlock, LiveInfo> liveInfo;
     private final int INF = 0x3F3F3F3F;
     private HashMap<Register, Pair<HashSet<MCload>, Integer>> spilledLoad;
+    //</editor-fold>
     //</editor-fold>
 
     @Override
@@ -545,7 +560,6 @@ public class GraphColoring implements MCPass {
              // TODO: copy(x, y) is x=y?
              var v = GetAlias(((Register) move.getSrc())) == GetAlias(u) ?GetAlias(move.getDst()) :GetAlias(((Register) move.getSrc()));
 
-             // TODO: if？
              activeMoves.remove(move);
              frozenMove.add(move);
              if (NodeMoves(v).isEmpty() && degree.get(v) < K) {
