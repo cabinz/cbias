@@ -20,6 +20,9 @@ public class MCpush extends MCInstruction {
     }
 
     @Override
+    public void replaceRegister(Register old, Register tmp) {}
+
+    @Override
     public String emit() {
         String ret = "PUSH {";
         for (Register r : operands){

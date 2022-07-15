@@ -27,6 +27,9 @@ public class MCReturn extends MCInstruction {
     public HashSet<Register> getDef() {return new HashSet<>();}
 
     @Override
+    public void replaceRegister(Register old, Register tmp) {}
+
+    @Override
     public String emit() {
         StringBuilder assemble = new StringBuilder();
 

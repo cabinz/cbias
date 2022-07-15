@@ -38,6 +38,13 @@ public class MCload extends MCInstruction {
         return set;
     }
 
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+        if (dst == old) dst = tmp;
+        if (addr == old) addr = tmp;
+        if (offset == old) offset = tmp;
+    }
+
     public String emit(){
         return "LDR " + dst.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");
     }

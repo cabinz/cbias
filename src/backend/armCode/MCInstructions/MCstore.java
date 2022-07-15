@@ -41,6 +41,13 @@ public class MCstore extends MCInstruction {
         return new HashSet<>();
     }
 
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+        if (src == old) src = tmp;
+        if (addr == old) addr = tmp;
+        if (offset == old) offset = tmp;
+    }
+
     public String emit(){
         return "STR " + src.emit() + ", [" + addr.emit() + (offset==null ?"" :", "+offset.emit()) + "]" + (write?"!":"");
     }

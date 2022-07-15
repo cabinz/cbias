@@ -20,6 +20,9 @@ public class MCpop extends MCInstruction{
     }
 
     @Override
+    public void replaceRegister(Register old, Register tmp) {}
+
+    @Override
     public String emit() {
         String ret = "POP {";
         for (Register r : operands){

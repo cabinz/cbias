@@ -44,6 +44,9 @@ public class MCbranch extends MCInstruction {
         return getUse();
     }
 
+    @Override
+    public void replaceRegister(Register old, Register tmp) {}
+
     public MCFunction getTargetFunc() {return targetFunc;}
     public void setTargetFunc(MCFunction targetFunc) {this.targetFunc = targetFunc;}
 
