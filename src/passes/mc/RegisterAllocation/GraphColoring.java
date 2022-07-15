@@ -4,9 +4,11 @@ import backend.ARMAssemble;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
-import backend.armCode.MCInstructions.MCMove;
+import backend.armCode.MCInstructions.*;
+import backend.operand.Immediate;
 import backend.operand.RealRegister;
 import backend.operand.Register;
+import backend.operand.VirtualRegister;
 import passes.mc.MCPass;
 
 import java.util.*;
@@ -115,6 +117,7 @@ public class GraphColoring implements MCPass {
     private MCFunction curFunc;
     private HashMap<MCBasicBlock, LiveInfo> liveInfo;
     private final int INF = 0x3F3F3F3F;
+    private HashMap<Register, Pair<HashSet<MCload>, Integer>> spilledLoad;
     //</editor-fold>
 
     @Override
@@ -174,6 +177,8 @@ public class GraphColoring implements MCPass {
         coalescedMoves = new HashSet<>();
         constrainedMoves = new HashSet<>();
         frozenMove = new HashSet<>();
+
+        spilledLoad = new HashMap<>();
     }
 
     /**
@@ -322,7 +327,27 @@ public class GraphColoring implements MCPass {
     }
 
     private void RewriteProgram() {
+        for (var v : spilledNodes) {
+            /* Create a temporary v_tmp for the first use */
+            VirtualRegister tmp = curFunc.createVirReg(null);
+            curFunc.addSpilledNode();
+            spilledLoad.putIfAbsent(tmp, new Pair<>(new HashSet<>(), 0));
 
+            for (var block : curFunc) {
+                for (var inst : block) {
+                    if (inst.getDef().contains(v)) {
+                        inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(-4), true));
+                        spilledLoad.values().forEach(p -> p.setB(p.getB()+1));
+                    }
+                    if (inst.getUse().contains(v)) {
+                        MCload load = new MCload(tmp, RealRegister.get(13), new Immediate(0));
+                        inst.insertBefore(load);
+                        spilledLoad.get(tmp).getA().add(load);
+                        inst.replaceRegister(v, tmp);
+                    }
+                }
+            }
+        }
     }
     //</editor-fold>
 
