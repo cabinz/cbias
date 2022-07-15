@@ -1,13 +1,14 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCInstruction;
+import backend.operand.RealRegister;
 import backend.operand.Register;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
 public class MCpop extends MCInstruction{
-    private ArrayList<Register> operands;
+    private HashSet<RealRegister> operands;
 
     @Override
     public HashSet<Register> getUse() {
@@ -28,14 +29,14 @@ public class MCpop extends MCInstruction{
         for (Register r : operands){
             ret += r.emit() + ", ";
         }
-        return ret.substring(0,ret.length()-2) + "}";
+        return ret.substring(0,ret.length() - (operands.size()==0 ?0 :2)) + "}";
     }
 
-    public ArrayList<Register> getOperands() {return operands;}
+    public HashSet<RealRegister> getOperands() {return operands;}
 
-    public MCpop(Register op1) {super(TYPE.POP);operands = new ArrayList<>();operands.add(op1);}
-    public MCpop(Register op1, Register op2) {super(TYPE.POP);operands = new ArrayList<>();operands.add(op1);operands.add(op2);}
-    public MCpop(Register op1, Register op2, Register op3) {super(TYPE.POP);operands = new ArrayList<>();operands.add(op1);operands.add(op2);operands.add(op3);}
-    public MCpop(Register op1, Register op2, Register op3, Register op4) {super(TYPE.POP);operands = new ArrayList<>();operands.add(op1);operands.add(op2);operands.add(op3);operands.add(op4);}
-    public MCpop(ArrayList<Register> operands) {super(TYPE.POP); this.operands = operands;}
+    public MCpop(RealRegister op1) {super(TYPE.POP);operands = new HashSet<>();operands.add(op1);}
+    public MCpop(RealRegister op1, RealRegister op2) {super(TYPE.POP);operands = new HashSet<>();operands.add(op1);operands.add(op2);}
+    public MCpop(RealRegister op1, RealRegister op2, RealRegister op3) {super(TYPE.POP);operands = new HashSet<>();operands.add(op1);operands.add(op2);operands.add(op3);}
+    public MCpop(RealRegister op1, RealRegister op2, RealRegister op3, RealRegister op4) {super(TYPE.POP);operands = new HashSet<>();operands.add(op1);operands.add(op2);operands.add(op3);operands.add(op4);}
+    public MCpop(HashSet<RealRegister> operands) {super(TYPE.POP); this.operands = operands;}
 }
