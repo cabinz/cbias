@@ -32,6 +32,12 @@ public class MCcmp extends MCInstruction {
     }
 
     @Override
+    public void replaceRegister(Register old, Register tmp) {
+        if (operand1 == old) operand1 = tmp;
+        if (operand2 == old) operand2 = tmp;
+    }
+
+    @Override
     public String emit() {
         return "CMP " + operand1.emit() + ", " + operand2.emit();
     }

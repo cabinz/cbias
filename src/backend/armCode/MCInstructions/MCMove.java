@@ -36,6 +36,12 @@ public class MCMove extends MCInstruction {
         return set;
     }
 
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+        if (dst == old) dst = tmp;
+        if (src == old) src = tmp;
+    }
+
     public String emit(){
         if (src.isGlobalVar())
             return "MOVW" + emitCond() + ' ' + dst.emit() + ", :lower16:" + src.emit() + "\n\tMOVT" + emitCond() + ' ' + dst.emit() + ", :upper16:" + src.emit();

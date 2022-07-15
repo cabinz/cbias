@@ -33,6 +33,12 @@ public class MCBinary extends MCInstruction {
         return set;
     }
 
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+        if (operand1 == old) operand1 = tmp;
+        if (operand2 == old) operand2 = tmp;
+    }
+
     public String emit() {
         return type.name() + emitCond() + ' ' + destination.emit()
                 + ", " + operand1.emit() + ", " + operand2.emit();
