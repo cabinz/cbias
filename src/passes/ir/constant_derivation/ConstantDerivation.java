@@ -26,27 +26,27 @@ public class ConstantDerivation implements IRPass {
         optimize(module);
     }
 
-    static void optimize(Module module){
+    static void optimize(Module module) {
         deriveConstantGV(module);
         module.functions.forEach(ConstantDerivation::deriveConstantInstruction);
     }
 
     /// Derive global constant.
 
-    static boolean isGlobalConstant(GlobalVariable variable){
-        for(Use use: variable.getUses()){
-            if(!(use.getUser() instanceof MemoryInst.Load)){
+    static boolean isGlobalConstant(GlobalVariable variable) {
+        for (Use use : variable.getUses()) {
+            if (!(use.getUser() instanceof MemoryInst.Load)) {
                 return false;
             }
         }
         return true;
     }
 
-    static void deriveConstantGV(Module module){
+    static void deriveConstantGV(Module module) {
         @SuppressWarnings("unchecked")
         var globalVariableList = (List<GlobalVariable>) module.globalVariables.clone();
         globalVariableList.forEach(globalVariable -> {
-            if(isGlobalConstant(globalVariable)){
+            if (isGlobalConstant(globalVariable)) {
                 var constant = globalVariable.getInitVal();
                 globalVariable.getUses().forEach(loadUse -> {
                     var loadInst = (MemoryInst.Load) loadUse.getUser();
@@ -62,71 +62,73 @@ public class ConstantDerivation implements IRPass {
 
     /**
      * Judge weather the value is a constant.
+     *
      * @param value The value to be judged.
      * @return True if value is instance of: <br>
-     *  - BasicBlock <br>
-     *  - Constant <br>
-     *  - Function <br>
+     * - BasicBlock <br>
+     * - Constant <br>
+     * - Function <br>
      */
-    static boolean isConstant(Value value){
-        if(value instanceof BasicBlock) return true;
-        if(value instanceof Constant) return true;
-        if(value instanceof Function) return true;
+    static boolean isConstant(Value value) {
+        if (value instanceof BasicBlock) return true;
+        if (value instanceof Constant) return true;
+        if (value instanceof Function) return true;
         return false;
     }
 
     /**
      * Judge weather an instruction can be derived.
+     *
      * @param instruction The instruction to be judged.
      */
-    static boolean canDeriveInst(Instruction instruction){
+    static boolean canDeriveInst(Instruction instruction) {
         for (Use use : instruction.operands) {
-            if(!isConstant(use.getUsee())) return false;
+            if (!isConstant(use.getUsee())) return false;
         }
-        if(instruction instanceof PhiInst){
+        if (instruction instanceof PhiInst) {
             return instruction.operands.size() <= 2; //One branch has 2 operands
-        }else if(instruction instanceof CallInst){
+        } else if (instruction instanceof CallInst) {
             return false;
-        }else{
+        } else {
             return true;
         }
     }
 
-    static Constant calculateInstValue(Instruction instruction){
+    static Constant calculateInstValue(Instruction instruction) {
         switch (instruction.cat) {
             case ADD, SUB, MUL, DIV -> {
                 var c1 = (ConstInt) instruction.getOperandAt(0);
                 var c2 = (ConstInt) instruction.getOperandAt(1);
-                switch (instruction.cat){
+                switch (instruction.cat) {
                     case ADD -> {
-                        return ConstInt.getI32(c1.getVal()+c2.getVal());
+                        return ConstInt.getI32(c1.getVal() + c2.getVal());
                     }
                     case SUB -> {
-                        return ConstInt.getI32(c1.getVal()- c2.getVal());
+                        return ConstInt.getI32(c1.getVal() - c2.getVal());
                     }
                     case MUL -> {
-                        return ConstInt.getI32(c1.getVal()* c2.getVal());
+                        return ConstInt.getI32(c1.getVal() * c2.getVal());
                     }
                     case DIV -> {
-                        return ConstInt.getI32(c1.getVal()/ c2.getVal());
+                        return ConstInt.getI32(c1.getVal() / c2.getVal());
                     }
                 }
             }
             case FADD, FSUB, FMUL, FDIV -> {
                 var c1 = (ConstFloat) instruction.getOperandAt(0);
                 var c2 = (ConstFloat) instruction.getOperandAt(1);
-                switch (instruction.cat){
+                switch (instruction.cat) {
                     case FADD -> {
-                        return ConstFloat.get(c1.getVal()+c2.getVal());
+                        return ConstFloat.get(c1.getVal() + c2.getVal());
                     }
                     case FSUB -> {
-                        return ConstFloat.get(c1.getVal()- c2.getVal());
+                        return ConstFloat.get(c1.getVal() - c2.getVal());
                     }
                     case FMUL -> {
-                        return ConstFloat.get(c1.getVal()* c2.getVal());
+                        return ConstFloat.get(c1.getVal() * c2.getVal());
                     }
                     case FDIV -> {
-                        return ConstFloat.get(c1.getVal()/ c2.getVal());
+                        return ConstFloat.get(c1.getVal() / c2.getVal());
                     }
                 }
             }
@@ -135,37 +137,107 @@ public class ConstantDerivation implements IRPass {
                 return ConstFloat.get(-c1.getVal());
             }
             case LT, GT, EQ, NE, LE, GE -> {
-
+                var c1 = (ConstInt) instruction.getOperandAt(0);
+                var c2 = (ConstInt) instruction.getOperandAt(1);
+                switch (instruction.cat) {
+                    case LT -> {
+                        return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
+                    }
+                    case GT -> {
+                        return ConstInt.getI1(c1.getVal() > c2.getVal() ? 1 : 0);
+                    }
+                    case EQ -> {
+                        return ConstInt.getI1(c1.getVal() == c2.getVal() ? 1 : 0);
+                    }
+                    case NE -> {
+                        return ConstInt.getI1(c1.getVal() != c2.getVal() ? 1 : 0);
+                    }
+                    case LE -> {
+                        return ConstInt.getI1(c1.getVal() <= c2.getVal() ? 1 : 0);
+                    }
+                    case GE -> {
+                        return ConstInt.getI1(c1.getVal() >= c2.getVal() ? 1 : 0);
+                    }
+                }
             }
             case FLT, FGT, FEQ, FNE, FLE, FGE -> {
-
+                var c1 = (ConstFloat) instruction.getOperandAt(0);
+                var c2 = (ConstFloat) instruction.getOperandAt(1);
+                switch (instruction.cat) {
+                    case FLT -> {
+                        return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
+                    }
+                    case FGT -> {
+                        return ConstInt.getI1(c1.getVal() > c2.getVal() ? 1 : 0);
+                    }
+                    case FEQ -> {
+                        return ConstInt.getI1(c1.getVal() == c2.getVal() ? 1 : 0);
+                    }
+                    case FNE -> {
+                        return ConstInt.getI1(c1.getVal() != c2.getVal() ? 1 : 0);
+                    }
+                    case FLE -> {
+                        return ConstInt.getI1(c1.getVal() <= c2.getVal() ? 1 : 0);
+                    }
+                    case FGE -> {
+                        return ConstInt.getI1(c1.getVal() >= c2.getVal() ? 1 : 0);
+                    }
+                }
+            }
+            case AND, OR -> {
+                var c1 = (ConstInt) instruction.getOperandAt(0);
+                var c2 = (ConstInt) instruction.getOperandAt(0);
+                switch (instruction.cat){
+                    case AND -> {
+                        return ConstInt.getI1(c1.getVal()&c2.getVal());
+                    }
+                    case OR -> {
+                        return ConstInt.getI1(c1.getVal()|c2.getVal());
+                    }
+                }
+            }
+            case ZEXT, FPTOSI, SITOFP -> {
+                switch (instruction.cat){
+                    case ZEXT -> {
+                        var c1 = (ConstInt) instruction.getOperandAt(0);
+                        return ConstInt.getI32(c1.getVal());
+                    }
+                    case FPTOSI -> {
+                        var c1 = (ConstFloat) instruction.getOperandAt(0);
+                        return ConstInt.getI32((int)c1.getVal());
+                    }
+                    case SITOFP -> {
+                        var c1 = (ConstInt) instruction.getOperandAt(0);
+                        return ConstFloat.get((float) c1.getVal());
+                    }
+                }
             }
             case PHI -> {
                 return (Constant) instruction.getOperandAt(0);
             }
         }
-        return ConstInt.getI32(0); //Temp code, avoid CE
+        throw new RuntimeException("Unable to derive instruction of type "+instruction.cat);
     }
 
-    static void deriveConstantInstruction(Function function){
+    static void deriveConstantInstruction(Function function) {
         Queue<Instruction> queue = new ArrayDeque<>();
         for (BasicBlock basicBlock : function) {
             for (Instruction instruction : basicBlock) {
-                if(canDeriveInst(instruction)){
+                if (canDeriveInst(instruction)) {
                     queue.add(instruction);
                 }
             }
         }
-        while(!queue.isEmpty()){
+        while (!queue.isEmpty()) {
             Instruction instruction = queue.remove();
-            if(instruction.getType().isVoidType()){
+            if (instruction.getType().isVoidType()) {
                 // Br, Load, Store, etc.
-                if(instruction instanceof TerminatorInst.Br br){
-                    if(br.isCondJmp()){
+                if (instruction instanceof TerminatorInst.Br br) {
+                    if (br.isCondJmp()) {
                         // Require i1 constant
                     }
                 }
-            }else{
+            } else {
                 // Derive constant value
                 // Replace usage
             }
