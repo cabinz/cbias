@@ -26,13 +26,23 @@ public class ConstInt extends Constant {
     }
 
     /**
-     * Retrieve an IR Constant instance of given integer.
+     * Retrieve an i32 Constant instance of given integer.
      *
-     * @param val Mathematical value of the integer.
+     * @param val Mathematical value of the integer (i32).
      * @return Corresponding ConstInt instance created.
      */
-    public static ir.values.constants.ConstInt get(int val) {
-        return new ir.values.constants.ConstInt(IntegerType.getI32(), val);
+    public static ConstInt get(int val) {
+        return new ConstInt(IntegerType.getI32(), val);
+    }
+
+    /**
+     * Retrieve an i1 Constant instance of given boolean.
+     *
+     * @param val Mathematical value of the integer (i1).
+     * @return Corresponding ConstInt instance created.
+     */
+    public static ConstInt getI1(int val) {
+        return new ConstInt(IntegerType.getI1(), val);
     }
     //</editor-fold>
 
