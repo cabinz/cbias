@@ -25,10 +25,11 @@ public class MCpop extends MCInstruction{
 
     @Override
     public String emit() {
-        String ret = "POP {";
-        for (Register r : operands){
-            ret += r.emit() + ", ";
-        }
+        StringBuilder ret = new StringBuilder("POP {");
+        for (int i=0; i<16; i++)
+            if (operands.contains(RealRegister.get(i))){
+                ret.append(RealRegister.get(i).emit()).append(", ");
+            }
         return ret.substring(0,ret.length() - (operands.size()==0 ?0 :2)) + "}";
     }
 

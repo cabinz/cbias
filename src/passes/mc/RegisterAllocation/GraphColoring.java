@@ -132,6 +132,7 @@ public class GraphColoring implements MCPass {
     private HashMap<MCBasicBlock, LiveInfo> liveInfo;
     private final int INF = 0x3F3F3F3F;
     private HashMap<Register, Pair<HashSet<MCload>, Integer>> spilledLoad;
+    private HashSet<Integer> usedColor;
     //</editor-fold>
     //</editor-fold>
 
@@ -174,7 +175,7 @@ public class GraphColoring implements MCPass {
             coalescedMoves.forEach(MCInstruction::removeSelf);
 
             /* Fix function stack */
-            color.values().forEach(func::addContext);
+            usedColor.forEach(func::addContext);
         }
     }
 
@@ -212,6 +213,7 @@ public class GraphColoring implements MCPass {
         frozenMove = new HashSet<>();
 
         spilledLoad = new HashMap<>();
+        usedColor = new HashSet<>();
     }
 
     /**
@@ -352,6 +354,7 @@ public class GraphColoring implements MCPass {
             else {
                 coloredNodes.add(n);
                 color.put(n, okColor.get(0));
+                usedColor.add(okColor.get(0));
             }
         }
 

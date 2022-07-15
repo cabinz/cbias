@@ -96,7 +96,12 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     public void addLocalVariable(int i) {localVariable.add(i);}
 
-    public void addContext(int index) {context.add(RealRegister.get(index));}
+    public void addContext(int index) {
+        /* r0-r3 are caller-saved registers */
+        /* r4-r12, lr are callee-saved */
+        if (index > 3 && index != 13 && index != 15)
+            context.add(RealRegister.get(index));
+    }
 
     public void addSpilledNode() {spilledNode++;}
 
