@@ -44,6 +44,15 @@ public class MCBinary extends MCInstruction {
                 + ", " + operand1.emit() + ", " + operand2.emit();
     }
 
+    public Register getOperand1() {return operand1;}
+    public void setOperand1(Register operand1) {this.operand1 = operand1;}
+
+    public MCOperand getOperand2() {return operand2;}
+    public void setOperand2(MCOperand operand2) {this.operand2 = operand2;}
+
+    public Register getDestination() {return destination;}
+    public void setDestination(Register destination) {this.destination = destination;}
+
     public MCBinary(TYPE type, Register destination, Register operand1, MCOperand operand2) {super(type);this.destination = destination;this.operand1 = operand1;this.operand2 = operand2;}
     public MCBinary(TYPE type, Register destination, Register operand1, MCOperand operand2, Shift shift, ConditionField cond) {super(type, shift, cond);this.operand1 = operand1;this.operand2 = operand2;this.destination = destination;}
 }
