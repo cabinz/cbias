@@ -60,7 +60,7 @@ public class MCBuilder {
      * Translate LLVM IR to ARM assemble target. <br/>
      * <ul>
      *     <li>Map IR global variable into target global variable list</li>
-     *     <li>Map IR function into target function list and Map IR BasicBlock into target function BasicBlock<</li>
+     *     <li>Map IR function into target function list and Map IR BasicBlock into target function BasicBlock</li>
      *     <li>Calculate loop info of function ( TO BE FINISHED )(为什么不放在pass)</li>
      *     <li>Find predecessors of a MCBasicBlock AND Calculate loop info of BasicBlock( TO BE FINISHED )(为什么不放在pass)( TO BE FINISHED )</li>
      *     <li>BFS travel the BasicBlock and then translate into ARM instruction()</li>

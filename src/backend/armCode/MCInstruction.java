@@ -98,6 +98,8 @@ public abstract class MCInstruction {
         belongBasicBlock.insertAt(belongBasicBlock.getIndex(this)+1, inst);
     }
 
+    public void removeSelf() {belongBasicBlock.removeInst(this);}
+
     /**
      * If use the user as IR, this abstract method is completely unnecessary.
      */

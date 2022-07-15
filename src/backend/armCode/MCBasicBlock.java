@@ -46,6 +46,10 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
         inst.setBelongFunc(belongFunc);
     }
 
+    public void removeInst(MCInstruction inst) {instructionList.remove(inst);}
+
+    public void removeAt(int index) {instructionList.remove(index);}
+
     public int getIndex(MCInstruction inst) {return instructionList.indexOf(inst);}
 
     public void addPredecessor(MCBasicBlock BB) {predecessors.add(BB);}

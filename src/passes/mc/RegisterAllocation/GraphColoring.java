@@ -155,6 +155,9 @@ public class GraphColoring implements MCPass {
             /* Replace registers */
             func.forEach(block -> block.forEach(this::assignRealRegister));
 
+            /* Remove the coalesced moves */
+            coalescedMoves.forEach(MCInstruction::removeSelf);
+
             /* Fix function stack */
             color.values().forEach(func::addContext);
         }
