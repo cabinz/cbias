@@ -23,7 +23,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     /**
      * Total stackSize, including context, local variables & spilled nodes. <br/>
-     * stackSize = context *4 + sum(localVariable) + spilledNode*4;
+     * stackSize = sum(localVariable) + spilledNode*4; <br/>
      * Function stack (from high to low): parameter, context, local variables, spilled nodes
      */
     private int stackSize;
@@ -106,7 +106,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public void addSpilledNode() {spilledNode++;}
 
     public int getStackSize() {
-        stackSize = context.size()*4 + localVariable.stream().mapToInt(v ->v).sum() + spilledNode*4;
+        stackSize = localVariable.stream().mapToInt(v ->v).sum() + spilledNode*4;
         return stackSize;
     }
 

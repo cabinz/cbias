@@ -3,9 +3,11 @@ package backend.armCode.MCInstructions;
 import backend.MCBuilder;
 import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
+import backend.operand.RealRegister;
 import backend.operand.Register;
 
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 /**
  * In fact, this is not an ARM instruction. It's a MIR.
@@ -51,12 +53,16 @@ public class MCReturn extends MCInstruction {
         }
 
         /* context switch */
-        // TODO: Restore the physical register after register allocation
         if (belongFunc.useLR) {
-            assemble.append("POP pc");
+            var restore = new HashSet<>(belongFunc.getContext());
+            restore.remove(RealRegister.get(14));
+            restore.add(RealRegister.get(15));
+            assemble.append((new MCpop(restore)).emit());
         }
-        else
+        else {
+            assemble.append((new MCpop(belongFunc.getContext())).emit()).append("\n\t");
             assemble.append("BX lr");
+        }
 
         return assemble.toString();
     }
