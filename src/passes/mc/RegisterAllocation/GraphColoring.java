@@ -125,6 +125,8 @@ public class GraphColoring implements MCPass {
         /* main produce of the Graph Coloring */
         for (MCFunction func : armAssemble){
             curFunc = func;
+
+            /* Graph Coloring */
             while (true) {
                 Initialize();
                 liveInfo = LivenessAnalysis.run(func);
@@ -142,6 +144,19 @@ public class GraphColoring implements MCPass {
                 else
                     RewriteProgram();
             }
+
+            /* Correct the offset of spilled loads */
+            spilledLoad.forEach((tmp, loads) -> {
+                loads.getA().forEach(inst -> {
+                    inst.setOffset(new Immediate(loads.getB()));
+                });
+            });
+
+            /* Replace registers */
+            func.forEach(block -> block.forEach(this::assignRealRegister));
+
+            /* Fix function stack */
+            color.values().forEach(func::addContext);
         }
     }
 
@@ -539,6 +554,54 @@ public class GraphColoring implements MCPass {
 
     private boolean isPrecolored(Register r) {
         return r instanceof RealRegister;
+    }
+
+    /**
+     * Replace the register in the MCInstruction. <br/>
+     * This is ugly, but I have no way.
+     */
+    private void assignRealRegister(MCInstruction inst) {
+        if (inst instanceof MCBinary bi) {
+            var op1 = bi.getOperand1();
+            var op2 = bi.getOperand2();
+            var dst = bi.getDestination();
+            bi.replaceRegister(op1, RealRegister.get(color.get(op1)));
+            if (op2 instanceof VirtualRegister op22)
+                bi.replaceRegister(op22, RealRegister.get(color.get(op22)));
+            bi.replaceRegister(dst, RealRegister.get(color.get(dst)));
+        }
+        else if (inst instanceof MCcmp cmp) {
+            var op1 = cmp.getOperand1();
+            var op2 = cmp.getOperand2();
+            cmp.replaceRegister(op1, RealRegister.get(color.get(op1)));
+            if (op2 instanceof VirtualRegister op22)
+                cmp.replaceRegister(op22, RealRegister.get(color.get(op22)));
+        }
+        else if (inst instanceof MCload load) {
+            var dst = load.getDst();
+            var addr = load.getAddr();
+            var offset = load.getOffset();
+            load.replaceRegister(dst, RealRegister.get(color.get(dst)));
+            load.replaceRegister(addr, RealRegister.get(color.get(addr)));
+            if (offset instanceof VirtualRegister offsett)
+                load.replaceRegister(offsett, RealRegister.get(color.get(offsett)));
+        }
+        else if (inst instanceof MCstore store) {
+            var src = store.getSrc();
+            var addr = store.getAddr();
+            var offset = store.getOffset();
+            store.replaceRegister(src, RealRegister.get(color.get(src)));
+            store.replaceRegister(addr, RealRegister.get(color.get(addr)));
+            if (offset instanceof VirtualRegister offsett)
+                store.replaceRegister(offsett, RealRegister.get(color.get(offsett)));
+        }
+        else if (inst instanceof MCMove move) {
+            var dst = move.getDst();
+            var src = move.getSrc();
+            move.replaceRegister(dst, RealRegister.get(color.get(dst)));
+            if (src instanceof VirtualRegister srcc)
+                move.replaceRegister(srcc, RealRegister.get(color.get(srcc)));
+        }
     }
     //</editor-fold>
 }
