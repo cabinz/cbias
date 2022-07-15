@@ -196,6 +196,7 @@ public class MCBuilder {
                 return temp;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
+            // TODO: 栈帧有问题需要调整
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             int pos = ((Function.FuncArg) value).getPos();
@@ -353,7 +354,7 @@ public class MCBuilder {
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(offset)));
         curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(13)));
 
-        curFunc.addStackSize(offset);
+        curFunc.addLocalVariable(offset);
     }
 
     /**

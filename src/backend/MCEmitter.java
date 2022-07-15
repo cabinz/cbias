@@ -3,6 +3,7 @@ package backend;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
+import backend.armCode.MCInstructions.MCpush;
 import backend.operand.Label;
 
 import java.io.FileWriter;
@@ -45,6 +46,8 @@ public class MCEmitter {
             if (f.isExternal()) continue;
             strBd.append("\t.global " + f.getName() + '\n');
             strBd.append(f.getName() + ":\n");
+            /* Callee-save */
+            strBd.append("\t" + (new MCpush(f.getContext())).emit() + "\n");
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
                 strBd.append("." + bb.getName() + ":\n");
