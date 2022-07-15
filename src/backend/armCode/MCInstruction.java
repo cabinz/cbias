@@ -85,9 +85,24 @@ public abstract class MCInstruction {
     protected MCFunction belongFunc;
     //</editor-fold>
 
+    //<editor-fold desc="Functional">
     abstract public HashSet<Register> getUse();
 
     abstract public HashSet<Register> getDef();
+
+    public void insertBefore(MCInstruction inst) {
+        belongBasicBlock.insertAt(belongBasicBlock.getIndex(this), inst);
+    }
+
+    public void insertAfter(MCInstruction inst) {
+        belongBasicBlock.insertAt(belongBasicBlock.getIndex(this)+1, inst);
+    }
+
+    /**
+     * If use the user as IR, this abstract method is completely unnecessary.
+     */
+    public abstract void replaceRegister(Register old, Register tmp);
+    //</editor-fold>
 
 
     //<editor-fold desc="Emits">
