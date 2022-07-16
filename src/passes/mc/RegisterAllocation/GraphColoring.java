@@ -155,7 +155,7 @@ public class GraphColoring implements MCPass {
                     else if (!spillWorklist.isEmpty()) SelectSpill();
                 } while (!(simplifyWorklist.isEmpty() && worklistMoves.isEmpty() && freezeWorklist.isEmpty() && spillWorklist.isEmpty()));
                 AssignColors();
-                if (spillWorklist.isEmpty())
+                if (spilledNodes.isEmpty())
                     break;
                 else
                     RewriteProgram();
@@ -575,50 +575,65 @@ public class GraphColoring implements MCPass {
 
     /**
      * Replace the register in the MCInstruction. <br/>
-     * This is ugly, but I have no way.
+     * This is ugly, but I have no way, with the bad definition of ARM assemble. <br/>
+     * It should be like IR using the user to hold operands, using constructor <br/>
+     * to restrict the operand.
      */
     private void assignRealRegister(MCInstruction inst) {
         if (inst instanceof MCBinary bi) {
             var op1 = bi.getOperand1();
             var op2 = bi.getOperand2();
             var dst = bi.getDestination();
-            bi.replaceRegister(op1, RealRegister.get(color.get(op1)));
+            var shift = bi.getShift()==null ?null :bi.getShift().getOperand();
+            replace(bi, op1);
             if (op2 instanceof VirtualRegister op22)
-                bi.replaceRegister(op22, RealRegister.get(color.get(op22)));
-            bi.replaceRegister(dst, RealRegister.get(color.get(dst)));
+                replace(bi, op22);
+            if (shift instanceof VirtualRegister shiftt)
+                replace(bi, shiftt);
+            replace(bi, dst);
         }
         else if (inst instanceof MCcmp cmp) {
             var op1 = cmp.getOperand1();
             var op2 = cmp.getOperand2();
-            cmp.replaceRegister(op1, RealRegister.get(color.get(op1)));
+            var shift = cmp.getShift()==null ?null :cmp.getShift().getOperand();
+            replace(cmp, op1);
             if (op2 instanceof VirtualRegister op22)
-                cmp.replaceRegister(op22, RealRegister.get(color.get(op22)));
+                replace(cmp, op22);
+            if (shift instanceof VirtualRegister shiftt)
+                replace(cmp, shiftt);
         }
         else if (inst instanceof MCload load) {
             var dst = load.getDst();
             var addr = load.getAddr();
             var offset = load.getOffset();
-            load.replaceRegister(dst, RealRegister.get(color.get(dst)));
-            load.replaceRegister(addr, RealRegister.get(color.get(addr)));
+            replace(load, dst);
+            replace(load, addr);
             if (offset instanceof VirtualRegister offsett)
-                load.replaceRegister(offsett, RealRegister.get(color.get(offsett)));
+                replace(load, offsett);
         }
         else if (inst instanceof MCstore store) {
             var src = store.getSrc();
             var addr = store.getAddr();
             var offset = store.getOffset();
-            store.replaceRegister(src, RealRegister.get(color.get(src)));
-            store.replaceRegister(addr, RealRegister.get(color.get(addr)));
+            replace(store, src);
+            replace(store, addr);
             if (offset instanceof VirtualRegister offsett)
-                store.replaceRegister(offsett, RealRegister.get(color.get(offsett)));
+                replace(store, offsett);
         }
         else if (inst instanceof MCMove move) {
             var dst = move.getDst();
             var src = move.getSrc();
-            move.replaceRegister(dst, RealRegister.get(color.get(dst)));
+            var shift = move.getShift()==null ?null :move.getShift().getOperand();
+            replace(move, dst);
             if (src instanceof VirtualRegister srcc)
-                move.replaceRegister(srcc, RealRegister.get(color.get(srcc)));
+                replace(move, srcc);
+            if (shift instanceof VirtualRegister shiftt)
+                replace(move, shiftt);
         }
+    }
+
+    private void replace(MCInstruction inst, Register old) {
+        inst.replaceRegister(old, RealRegister.get(color.get(old)));
     }
     //</editor-fold>
 }
