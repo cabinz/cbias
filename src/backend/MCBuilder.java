@@ -446,8 +446,8 @@ public class MCBuilder {
         curMCBB.appendInst(new MCcmp((Register) operand1, operand2));
 
         if (saveResult) {
-            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(1), armCond));
-            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), reverseCond(armCond)));
+            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(1), null, armCond));
+            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), null, reverseCond(armCond)));
         }
 
         return armCond;
@@ -488,12 +488,65 @@ public class MCBuilder {
     }
 
     private void translateMul(BinaryOpInst IRinst) {
-        // TODO: 使用lsl替换常数乘法
-        Register operand1 = (Register) findContainer(IRinst.getOperandAt(0), true);
-        Register operand2 = (Register) findContainer(IRinst.getOperandAt(1), true);
+        Value operand1 = IRinst.getOperandAt(0);
+        Value operand2 = IRinst.getOperandAt(1);
+        boolean op1IsConst = operand1 instanceof ConstInt;
+        boolean op2IsConst = operand2 instanceof ConstInt;
         Register dst = (Register) findContainer(IRinst);
 
-        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, operand1, operand2));
+        if (!op1IsConst && !op2IsConst) {
+            Register mul1 = (Register) findContainer(operand1, true);
+            Register mul2 = (Register) findContainer(operand1, true);
+
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, mul1, mul2));
+        }
+        else if (op1IsConst && op2IsConst) {
+            int result = ((ConstInt) operand1).getVal() * ((ConstInt) operand2).getVal();
+            if (canEncodeImm(result)){
+                curMCBB.appendInst(new MCMove(dst, new Immediate(result)));
+            }
+            else {
+                curMCBB.appendInst(new MCMove(dst, new Immediate(result), true));
+            }
+        }
+        else {
+            Value v = operand1;
+            Value c = operand2;
+            if (operand1 instanceof Constant) {
+                v = operand2;
+                c = operand1;
+            }
+            Register mul = (Register) findContainer(v);
+
+            int intVal = ((ConstInt) c).getVal();
+            int abs = intVal>0 ?intVal :-intVal;
+
+            /* Optimization: 2^n = LSL n, 2^n-1 = RSB LSL n, 2^n+1 = ADD LSL n */
+            if (isPowerOfTwo(abs)) {
+                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs));
+                curMCBB.appendInst(new MCMove(dst, mul, shift, null));
+                if (intVal < 0) {
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
+                }
+            }
+            else if (isPowerOfTwo(abs + 1)) {
+                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs));
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, mul, mul, shift, null));
+                if (intVal < 0) {
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
+                }
+            }
+            else if (isPowerOfTwo(abs - 1)) {
+                MCInstruction.TYPE type = intVal<0 ?MCInstruction.TYPE.SUB : MCInstruction.TYPE.RSB;
+                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs+1));
+                curMCBB.appendInst(new MCBinary(type, dst, mul, mul, shift, null));
+            }
+            else {
+                Register mul1 = (Register) findContainer(operand1, true);
+                Register mul2 = (Register) findContainer(operand1, true);
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, mul1, mul2));
+            }
+        }
     }
 
     private void translateSDiv(BinaryOpInst IRinst) {

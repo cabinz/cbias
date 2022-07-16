@@ -74,5 +74,5 @@ public class MCMove extends MCInstruction {
 
     public MCMove(Register dst, MCOperand src) {super(TYPE.MOV); this.dst = dst; this.src = src;}
     public MCMove(Register dst, MCOperand src, boolean exceededLimit) {super(TYPE.MOV); this.dst = dst; this.src = src; this.exceededLimit=exceededLimit;}
-    public MCMove(Register dst, MCOperand src, ConditionField cond) {super(TYPE.MOV, null, cond); this.dst = dst; this.src = src;}
+    public MCMove(Register dst, MCOperand src, Shift shift, ConditionField cond) {super(TYPE.MOV, shift, cond); this.dst = dst; this.src = src;}
 }
