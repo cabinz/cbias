@@ -28,7 +28,6 @@ public abstract class MCInstruction {
         ORR,
         MLA,
         MLS,
-        LongMUL,
         MOV,
         RET,
         BRANCH,
