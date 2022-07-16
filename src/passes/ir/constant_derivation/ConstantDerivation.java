@@ -233,9 +233,7 @@ public class ConstantDerivation implements IRPass {
             if (expression.getType().isVoidType()) {
                 // Br, Load, Store, etc.
                 if (expression instanceof TerminatorInst.Br br) {
-                    if (br.isCondJmp()) {
-                        optimizeBr(br);
-                    }
+                    optimizeBr(br);
                 }
             } else {
                 Constant constant = calculateExpressionValue(expression);
@@ -254,8 +252,15 @@ public class ConstantDerivation implements IRPass {
         }
     }
 
+    /**
+     * Optimize a Br instruction. <br>
+     *
+     * @param br The instruction to be optimized.
+     */
     private static void optimizeBr(TerminatorInst.Br br) {
-        var cond = (ConstInt) br.getOperandAt(0);
+        if(!br.isCondJmp()) return;
+        var cond_ = br.getOperandAt(0);
+        if(!(cond_ instanceof ConstInt cond)) return;
         var bTrue = (BasicBlock) br.getOperandAt(1);
         var bFalse = (BasicBlock) br.getOperandAt(2);
         br.removeOperandAt(0);
@@ -270,6 +275,12 @@ public class ConstantDerivation implements IRPass {
         }
     }
 
+    // This function should not be here, but I don't know where to put it.
+    /**
+     * Remove one entry of a block.
+     * @param basicBlock Basic block one of whose entry is removed.
+     * @param entry The entry to be removed.
+     */
     static void removeEntry(BasicBlock basicBlock, BasicBlock entry){
         for (Instruction instruction : basicBlock.instructions) {
             if(instruction instanceof PhiInst phiInst){
