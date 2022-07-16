@@ -88,7 +88,7 @@ public class ConstantDerivation implements IRPass {
         }
         if (instruction instanceof PhiInst) {
             return instruction.operands.size() <= 2; //One branch has 2 operands
-        } else if (instruction instanceof CallInst) {
+        } else if (instruction instanceof CallInst || instruction instanceof MemoryInst) {
             return false;
         } else {
             return true;
@@ -235,17 +235,7 @@ public class ConstantDerivation implements IRPass {
                 // Br, Load, Store, etc.
                 if (instruction instanceof TerminatorInst.Br br) {
                     if (br.isCondJmp()) {
-                        var cond = (ConstInt) br.getOperandAt(0);
-                        var bTrue = br.getOperandAt(1);
-                        var bFalse = br.getOperandAt(2);
-                        br.removeOperandAt(0);
-                        br.removeOperandAt(1);
-                        br.removeOperandAt(2);
-                        if(cond.getVal()==1){
-                            br.setOperandAt(bTrue,0);
-                        }else{
-                            br.setOperandAt(bFalse,0);
-                        }
+                        optimizeBr(br);
                     }
                 }
             } else {
@@ -260,8 +250,36 @@ public class ConstantDerivation implements IRPass {
                         }
                     }
                 });
+                instruction.removeSelf();
             }
         }
+    }
+
+    private static void optimizeBr(TerminatorInst.Br br) {
+        var cond = (ConstInt) br.getOperandAt(0);
+        var bTrue = (BasicBlock) br.getOperandAt(1);
+        var bFalse = (BasicBlock) br.getOperandAt(2);
+        br.removeOperandAt(0);
+        br.removeOperandAt(1);
+        br.removeOperandAt(2);
+        if(cond.getVal()==1){
+            br.addOperandAt(bTrue,0);
+            removeEntry(bFalse,br.getBB());
+        }else{
+            br.addOperandAt(bFalse,0);
+            removeEntry(bTrue,br.getBB());
+        }
+    }
+
+    static void removeEntry(BasicBlock basicBlock, BasicBlock entry){
+        for (Instruction instruction : basicBlock.instructions) {
+            if(instruction instanceof PhiInst phiInst){
+                phiInst.removeMapping(entry);
+            }else{
+                break;
+            }
+        }
+        //Todo: remove this block from the function if it is useless
     }
 
 }
