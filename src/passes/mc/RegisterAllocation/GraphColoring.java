@@ -361,22 +361,27 @@ public class GraphColoring implements MCPass {
 
     private void RewriteProgram() {
         for (var v : spilledNodes) {
-            /* Create a temporary v_tmp for the first use */
-            VirtualRegister tmp = curFunc.createVirReg(null);
             curFunc.addSpilledNode();
-            spilledLoad.putIfAbsent(tmp, new Pair<>(new HashSet<>(), 0));
+            spilledLoad.putIfAbsent(v, new Pair<>(new HashSet<>(), 0));
 
             for (var block : curFunc) {
-                for (var inst : block) {
+                var list = block.getInstructionList();
+                for (int i=0; i<list.size(); i++) {
+                    var inst = list.get(i);
                     if (inst.getDef().contains(v)) {
                         inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(-4), true));
                         spilledLoad.values().forEach(p -> p.setB(p.getB()+1));
+                        i++;
                     }
                     if (inst.getUse().contains(v)) {
+                        // TODO: 更好的方法？
+                        /* Create a temporary v_tmp for the use */
+                        VirtualRegister tmp = curFunc.createVirReg(null);
                         MCload load = new MCload(tmp, RealRegister.get(13), new Immediate(0));
                         inst.insertBefore(load);
-                        spilledLoad.get(tmp).getA().add(load);
+                        spilledLoad.get(v).getA().add(load);
                         inst.replaceRegister(v, tmp);
+                        i++;
                     }
                 }
             }
