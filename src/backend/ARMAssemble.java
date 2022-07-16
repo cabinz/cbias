@@ -2,6 +2,7 @@ package backend;
 
 import backend.armCode.MCFunction;
 import backend.operand.Label;
+import ir.types.ArrayType;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;
@@ -66,7 +67,13 @@ public class ARMAssemble implements Iterable<MCFunction>{
         Label label;
 
         ArrayList<Integer> initial = new ArrayList<>();
-        genInitial(gv.getInitVal(), initial);
+        /* When global variable is not initialized, the getInitVal() will return null */
+        if (gv.getInitVal() == null) {
+            int size = ((ArrayType) gv.getConstType()).getSize();
+            while ((size--) != 0) initial.add(0);
+        }
+        else
+            genInitial(gv.getInitVal(), initial);
 
         /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
         label = new Label(gv.getName().substring(1), initial);

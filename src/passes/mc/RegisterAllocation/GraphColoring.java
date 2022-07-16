@@ -562,7 +562,6 @@ public class GraphColoring implements MCPass {
 
     private void FreezeMoves(Register u) {
          NodeMoves(u).forEach(move -> {
-             // TODO: copy(x, y) is x=y?
              var v = GetAlias(((Register) move.getSrc())) == GetAlias(u) ?GetAlias(move.getDst()) :GetAlias(((Register) move.getSrc()));
 
              activeMoves.remove(move);
