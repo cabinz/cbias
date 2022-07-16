@@ -18,6 +18,10 @@ public class PhiInst extends Instruction {
     int nextMappingId = 0;
     Map<BasicBlock, Integer> operandMapping = new HashMap<>();
 
+    public boolean hasEntry(){
+        return getNumOperands()!=0;
+    }
+
     public void addMapping(BasicBlock basicBlock, Value value){
         this.addOperandAt(value,nextMappingId);
         this.addOperandAt(basicBlock,nextMappingId+1);
