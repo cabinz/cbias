@@ -29,6 +29,9 @@ public class GlobalVariable extends User {
     /**
      * Represent the initial value specified in the statement.
      * <br>
+     * Only for uninitialized global arrays, initVal will be null
+     * (emitting "zeroinitializer" correspondingly in LLVM IR)
+     * <br>
      * The actual value of a non-constant glb var can be change
      * by other instructions, after which the initVal makes no
      * sense to this Value no more.
