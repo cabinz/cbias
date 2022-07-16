@@ -20,7 +20,25 @@ import java.util.LinkedList;
  */
 public class BasicBlock extends Value implements Iterable<Instruction>{
 
+    /**
+     * All the Instructions in the BB.
+     */
     public final LinkedList<Instruction> instructions = new LinkedList<>();
+
+    /**
+     * Reference of the Function where the BasicBlock lands.
+     * Null if the BB has never been inserted to any Function.
+     */
+    private Function func = null;
+
+    public Function getFunc() {
+        return func;
+    }
+
+    public void setFunc(Function func) {
+        this.func = func;
+    }
+
 
     public BasicBlock(String name) {
         super(LabelType.getType());
@@ -37,7 +55,14 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     }
 
     /**
-     * Removes a specified instruction from the Basicblock.
+     * Remove the BB from the Function holding it.
+     */
+    public void removeSelf() {
+        this.getFunc().removeBB(this);
+    }
+
+    /**
+     * Removes a specified instruction from the BasicBlock.
      * All the related Use links will be simultaneously wiped out.
      * @param inst The Instruction to be removed.
      * @return true if successfully remove an inst contained in the BB.
