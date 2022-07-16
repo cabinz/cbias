@@ -4,6 +4,8 @@ import ir.Type;
 import ir.types.IntegerType;
 import ir.values.Constant;
 
+import java.util.Objects;
+
 /**
  * Class ConstInt instantiates the IR of i32 integer constant in source.
  */
@@ -52,6 +54,19 @@ public class ConstInt extends Constant {
         return new ConstInt(IntegerType.getI1(), val);
     }
     //</editor-fold>
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ConstInt constInt)) return false;
+        return val == constInt.val;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(val);
+    }
 
     @Override
     public String toString() {
