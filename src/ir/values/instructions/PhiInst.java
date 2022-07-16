@@ -15,12 +15,27 @@ public class PhiInst extends Instruction {
         super(type, InstCategory.PHI, basicBlock);
     }
 
-    public void setPhiMapping(Map<BasicBlock, Value> phiMapping){
-        var id = 0;
-        for (BasicBlock basicBlock : phiMapping.keySet()) {
-            this.addOperandAt(phiMapping.get(basicBlock),id++);
-            this.addOperandAt(basicBlock,id++);
+    int nextMappingId = 0;
+    Map<BasicBlock, Integer> operandMapping = new HashMap<>();
+
+    public void addMapping(BasicBlock basicBlock, Value value){
+        this.addOperandAt(value,nextMappingId);
+        this.addOperandAt(basicBlock,nextMappingId+1);
+        operandMapping.put(basicBlock, nextMappingId);
+        nextMappingId += 2;
+    }
+
+    public void removeMapping(BasicBlock basicBlock){
+        if(!operandMapping.containsKey(basicBlock)){
+            throw new RuntimeException("Trying to remove a mapping that does not exists");
         }
+        int id = operandMapping.get(basicBlock);
+        this.removeOperandAt(id);
+        this.removeOperandAt(id+1);
+    }
+
+    public void setPhiMapping(Map<BasicBlock, Value> phiMapping){
+        phiMapping.forEach(this::addMapping);
     }
 
     @Override
