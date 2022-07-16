@@ -244,9 +244,30 @@ public class MCBuilder {
         return false;
     }
 
+    /**
+     * Determine whether a number is the integer power of two.
+     */
+    private boolean isPowerOfTwo(int n) {
+        return (n & (n-1)) == 0;
+    }
 
     /**
-     * Create a container for a constant INT.
+     * Calculate the result of log_2 n
+     * @param n the integer power of 2
+     * @return the result
+     */
+    private int log2(int n) {
+        int ret = 0;
+        while (n != 0){
+            n = n >>> 1;
+            ret++;
+        }
+        return ret-1;
+    }
+
+
+    /**
+     * Create a container for a constant INT, may be immediate or register.
      * @param value the INT value to be translated into an immediate
      * @return the created container, maybe register or immediate.
      * @see backend.MCBuilder#canEncodeImm(int)
@@ -487,6 +508,7 @@ public class MCBuilder {
 
     /**
      * Translate IR GEP. Calculate the address of an element. <br/>
+     * Each index's base address is the last address resolution.
      */
     private void translateGEP(GetElemPtrInst IRinst) {
         // 不能确定的elementType是否是一层指针
@@ -498,8 +520,8 @@ public class MCBuilder {
         if (elemetType.isArrayType())
             lengths = ((ArrayType) elemetType).getDimSize();
 
-        /* Prepare, dst = addr + totalOffset */
-        Register addr = (Register) findContainer(IRinst.getOperandAt(0));
+        /* Prepare, dst = baseAddr + totalOffset */
+        Register baseAddr = (Register) findContainer(IRinst.getOperandAt(0));
         int totalOffset = 0;
         Register dst = (Register) findContainer(IRinst);
 
@@ -511,20 +533,41 @@ public class MCBuilder {
                 for (int j=i-1; j<lengths.size(); j++)
                     scale *= lengths.get(j);
 
+            /* If index is an immediate, calculate address until next variable or the last operand */
             if (index.isImmediate()) {
                 int offset = scale * ((Immediate) index).getIntValue();
                 totalOffset += offset;
                 if (i == operandNum) {
                     if (totalOffset == 0)
-                        curMCBB.appendInst(new MCMove(dst, addr));
+                        curMCBB.appendInst(new MCMove(dst, baseAddr));
                     else
-                        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, addr, createConstInt(totalOffset)));
-                    addr = dst;
+                        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, baseAddr, createConstInt(totalOffset)));
                 }
             }
+            /* If index is a variable */
             else {
-                // TODO: 寻址优化
-                System.out.println("出现操作立即数范围的寻址地址，报错");
+                /* If the index before is immediate, calculate here */
+                if (totalOffset != 0) {
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, baseAddr, createConstInt(totalOffset)));
+                    totalOffset = 0;
+                    baseAddr = dst;
+                }
+
+                /* Handle the variable calculation */
+                /* If the scale is the integer power of two, use the {@link MCInstruction#shift} */
+                if (isPowerOfTwo(scale)) {
+                    /* Considering the size of array, 5 bits immediate is enough */
+                    var shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(scale));
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, baseAddr, index, shift, null));
+                }
+                else {
+                    /* Create register for scale */
+                    VirtualRegister vr = curFunc.createVirReg(scale);
+                    curMCBB.appendInst(new MCMove(vr, new Immediate(scale), canEncodeImm(scale)));
+                    curMCBB.appendInst(new MCFma(MCInstruction.TYPE.MLA, dst, ((Register) index), vr, baseAddr));
+                }
+
+                baseAddr = dst;
             }
         }
     }
