@@ -1,6 +1,5 @@
 package ir.values;
 
-import ir.Use;
 import ir.User;
 import ir.Type;
 
@@ -93,17 +92,19 @@ public abstract class Instruction extends User {
     /**
      * Reference of the basic block where the instruction lands.
      */
-    private BasicBlock bb;
+    private BasicBlock bb = null;
 
     public BasicBlock getBB() {
         return this.bb;
     }
 
+    public void setBB(BasicBlock bb) {
+        this.bb = bb;
+    }
 
-    public Instruction(Type type, InstCategory tag, BasicBlock bb){
+    public Instruction(Type type, InstCategory tag) {
         super(type);
         this.cat = tag;
-        this.bb = bb;
     }
 
 

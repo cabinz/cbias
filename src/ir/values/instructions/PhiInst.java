@@ -1,18 +1,16 @@
 package ir.values.instructions;
 
 import ir.Type;
-import ir.Use;
 import ir.Value;
 import ir.values.BasicBlock;
 import ir.values.Instruction;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class PhiInst extends Instruction {
 
-    public PhiInst(Type type, BasicBlock basicBlock){
-        super(type, InstCategory.PHI, basicBlock);
+    public PhiInst(Type type){
+        super(type, InstCategory.PHI);
     }
 
     public void setPhiMapping(Map<BasicBlock, Value> phiMapping){
