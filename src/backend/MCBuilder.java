@@ -24,9 +24,7 @@ public class MCBuilder {
     //<editor-fold desc="Singleton Pattern">
     static private final MCBuilder builder = new MCBuilder();
 
-    private MCBuilder() {
-        valueMap = new HashMap<>();
-    }
+    private MCBuilder() {}
 
     static public MCBuilder get() {return builder;}
     //</editor-fold>
@@ -44,7 +42,7 @@ public class MCBuilder {
     /**
      * This class records the map between values and virtual registers.
      */
-    private final HashMap<Value, VirtualRegister> valueMap;
+    private HashMap<Value, VirtualRegister> valueMap;
     //</editor-fold>
 
 
@@ -97,6 +95,7 @@ public class MCBuilder {
 
         for (Function IRfunc : IRModule.functions) {
             curIRFunc = IRfunc;
+            valueMap = new HashMap<>();
             curFunc = target.createFunction(IRfunc);
 
             /* This loop is to create the MC basic block in the same order of IR */
