@@ -26,6 +26,8 @@ public class MCMove extends MCInstruction {
         var set = new HashSet<Register>();
         if (src.isVirtualReg() || src.isRealReg())
             set.add(((Register) src));
+        if (shift != null && shift.getOperand().isVirtualReg())
+            set.add(((Register) shift.getOperand()));
         return set;
     }
 
@@ -40,6 +42,7 @@ public class MCMove extends MCInstruction {
     public void replaceRegister(Register old, Register tmp) {
         if (dst == old) dst = tmp;
         if (src == old) src = tmp;
+        if (shift != null && shift.getOperand() == old) shift.setRegister(tmp);
     }
 
     public String emit(){

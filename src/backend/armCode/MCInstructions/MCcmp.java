@@ -23,6 +23,8 @@ public class MCcmp extends MCInstruction {
         set.add(operand1);
         if (operand2.isVirtualReg() || operand2.isVirtualReg())
             set.add(((Register) operand2));
+        if (shift != null && shift.getOperand().isVirtualReg())
+            set.add(((Register) shift.getOperand()));
         return set;
     }
 
@@ -35,6 +37,7 @@ public class MCcmp extends MCInstruction {
     public void replaceRegister(Register old, Register tmp) {
         if (operand1 == old) operand1 = tmp;
         if (operand2 == old) operand2 = tmp;
+        if (shift != null && shift.getOperand() == old) shift.setRegister(tmp);
     }
 
     @Override
