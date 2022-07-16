@@ -106,10 +106,30 @@ public class Function extends Value implements Iterable<BasicBlock>{
 
     /**
      * Add a new basic block into the function.
+     * If the BB has already belonged to another Function, an exception will be thrown.
      * @param bb The block to be added.
      */
     public void addBB(BasicBlock bb) {
+        if (bb.getFunc() != null) {
+            throw new RuntimeException("Try to add a BB that has already belonged to another Function.");
+        }
+        bb.setFunc(this);
         bbs.add(bb);
+    }
+
+    /**
+     * Removes a specified BasicBlock from the Function.
+     * If the given bb doesn't exit in the Function, an exception will be thrown.
+     * @param bb The BB to be removed.
+     */
+    public void removeBB(BasicBlock bb) {
+        if (this.bbs.contains(bb)) {
+            bbs.remove(bb);
+            bb.setFunc(null);
+        }
+        else {
+            throw new RuntimeException("Try to remove a BB that doesn't reside on the Function.");
+        }
     }
 
     @Override

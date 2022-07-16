@@ -113,7 +113,7 @@ public class Mem2reg implements IRPass {
             });
         }else{
             basicBlock.npdVar.forEach( npdVar -> {
-                var phiInst = new PhiInst(npdVar.getAllocatedType(), basicBlock.getRawBasicBlock());
+                var phiInst = new PhiInst(npdVar.getAllocatedType());
                 basicBlock.getRawBasicBlock().insertAtFront(phiInst);
                 basicBlock.importPhiMap.put(npdVar,phiInst);
                 basicBlock.latestDefineMap.put(npdVar,phiInst);

@@ -4,7 +4,6 @@ import ir.Type;
 import ir.Value;
 import ir.types.FloatType;
 import ir.types.IntegerType;
-import ir.values.BasicBlock;
 import ir.values.Instruction;
 
 /**
@@ -15,8 +14,8 @@ import ir.values.Instruction;
  */
 public abstract class CastInst extends Instruction {
 
-    public CastInst(Type type, InstCategory tag, BasicBlock bb) {
-        super(type, tag, bb);
+    public CastInst(Type type, InstCategory tag) {
+        super(type, tag);
     }
 
     /**
@@ -35,10 +34,9 @@ public abstract class CastInst extends Instruction {
         /**
          * Construct a ZExt instruction.
          * @param opd The operand Value in i1 to be extended.
-         * @param bb  The parent BasicBlock to hold the ZExt.
          */
-        public ZExt(Value opd, BasicBlock bb) {
-            super(IntegerType.getI32(), InstCategory.ZEXT, bb);
+        public ZExt(Value opd) {
+            super(IntegerType.getI32(), InstCategory.ZEXT);
             this.addOperandAt(opd, 0);
         }
 
@@ -61,12 +59,11 @@ public abstract class CastInst extends Instruction {
 
         /**
          * Construct a fptosi instruction.
-         * @param opd The operand Value to be casted.
+         * @param opd      The operand Value to be casted.
          * @param destType The target IntegerType (maybe i32 or i1)
-         * @param bb The parent BasicBlock holding the inst to be created.
          */
-        public Fptosi(Value opd, IntegerType destType, BasicBlock bb) {
-            super(destType, InstCategory.FPTOSI, bb);
+        public Fptosi(Value opd, IntegerType destType) {
+            super(destType, InstCategory.FPTOSI);
             this.addOperandAt(opd, 0);
         }
 
@@ -91,10 +88,9 @@ public abstract class CastInst extends Instruction {
         /**
          * Construct a sitofp instruction.
          * @param opd The operand Value to be casted.
-         * @param bb The parent BasicBlock holding the inst to be created.
          */
-        public Sitofp(Value opd, BasicBlock bb) {
-            super(FloatType.getType(), InstCategory.SITOFP, bb);
+        public Sitofp(Value opd) {
+            super(FloatType.getType(), InstCategory.SITOFP);
             this.addOperandAt(opd, 0);
         }
 

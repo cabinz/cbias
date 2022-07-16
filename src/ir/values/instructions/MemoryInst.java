@@ -15,8 +15,8 @@ import ir.values.Instruction;
  */
 public abstract class MemoryInst extends Instruction {
 
-    public MemoryInst(Type type, InstCategory tag, BasicBlock bb) {
-        super(type, tag, bb);
+    public MemoryInst(Type type, InstCategory tag) {
+        super(type, tag);
     }
 
     /**
@@ -38,7 +38,7 @@ public abstract class MemoryInst extends Instruction {
          * @param addr The address where the content to be written.
          */
         public Store(Value val, Value addr, BasicBlock bb) {
-            super(VoidType.getType(), InstCategory.STORE, bb);
+            super(VoidType.getType(), InstCategory.STORE);
             this.addOperandAt(val, 0);
             this.addOperandAt(addr, 1);
             this.hasResult = false;
@@ -75,7 +75,7 @@ public abstract class MemoryInst extends Instruction {
          * @param addr Value specifying the memory address from which to load. (loadedType*)
          */
         public Load(Type loadedType, Value addr, BasicBlock bb) {
-            super(loadedType, InstCategory.LOAD, bb);
+            super(loadedType, InstCategory.LOAD);
             this.addOperandAt(addr, 0);
         }
 
@@ -118,7 +118,7 @@ public abstract class MemoryInst extends Instruction {
          * @param allocatedType The type of memory space allocated.
          */
         public Alloca(Type allocatedType, BasicBlock bb) {
-            super(PointerType.getType(allocatedType), InstCategory.ALLOCA, bb);
+            super(PointerType.getType(allocatedType), InstCategory.ALLOCA);
             this.allocatedType = allocatedType;
         }
 

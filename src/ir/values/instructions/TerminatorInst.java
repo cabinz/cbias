@@ -2,7 +2,6 @@ package ir.values.instructions;
 
 import ir.Type;
 import ir.Value;
-import ir.types.LabelType;
 import ir.types.VoidType;
 import ir.values.BasicBlock;
 import ir.values.Instruction;
@@ -12,8 +11,8 @@ import ir.values.Instruction;
  */
 public abstract class TerminatorInst extends Instruction {
 
-    public TerminatorInst(Type type, InstCategory tag, BasicBlock bb) {
-        super(type, tag, bb);
+    public TerminatorInst(Type type, InstCategory tag) {
+        super(type, tag);
     }
 
     /**
@@ -33,8 +32,8 @@ public abstract class TerminatorInst extends Instruction {
         /**
          * Construct a Ret terminator returning void.
          */
-        public Ret(BasicBlock bb) {
-            super(VoidType.getType(), InstCategory.RET, bb);
+        public Ret() {
+            super(VoidType.getType(), InstCategory.RET);
             this.hasResult = false;
         }
 
@@ -43,7 +42,7 @@ public abstract class TerminatorInst extends Instruction {
          * @param val The return value.
          */
         public Ret(Value val, BasicBlock bb) {
-            this(bb);
+            this();
             this.addOperandAt(val, 0);
         }
 
@@ -86,8 +85,8 @@ public abstract class TerminatorInst extends Instruction {
          * @param trueBlk The basic block to jump to when condition is true.
          * @param falseBlk The basic block to jump to when condition is false.
          */
-        public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk, BasicBlock bb) {
-            super(VoidType.getType(), InstCategory.BR, bb);
+        public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk) {
+            super(VoidType.getType(), InstCategory.BR);
             this.hasResult = false;
             this.addOperandAt(cond, 0);
             this.addOperandAt(trueBlk, 1);
@@ -98,8 +97,8 @@ public abstract class TerminatorInst extends Instruction {
          * Constructor for an unconditional branching instruction.
          * @param blk The basic block to jump to.
          */
-        public Br(BasicBlock blk, BasicBlock bb) {
-            super(VoidType.getType(), InstCategory.BR, bb);
+        public Br(BasicBlock blk) {
+            super(VoidType.getType(), InstCategory.BR);
             this.hasResult = false;
             this.addOperandAt(blk, 0);
         }

@@ -2,7 +2,6 @@ package ir.values.instructions;
 
 import ir.Value;
 import ir.types.FunctionType;
-import ir.values.BasicBlock;
 import ir.values.Function;
 import ir.values.Instruction;
 
@@ -24,9 +23,9 @@ public class CallInst extends Instruction {
      * @param func Function Value carrying information about return type and FORMAL arguments.
      * @param args The ACTUAL arguments to be referenced by the Call.
      */
-    public CallInst(Function func, ArrayList<Value> args, BasicBlock bb) {
+    public CallInst(Function func, ArrayList<Value> args) {
         // Operands of Call is the Function invoked and all argument Values passed
-        super(((FunctionType)func.getType()).getRetType(), InstCategory.CALL, bb);
+        super(((FunctionType)func.getType()).getRetType(), InstCategory.CALL);
 
         // Call instruction will yield a result if the function has non-void return type.
         this.hasResult = !this.getType().isVoidType();
