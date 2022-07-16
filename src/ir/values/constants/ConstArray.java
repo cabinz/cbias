@@ -7,8 +7,12 @@ import java.util.ArrayList;
 
 /**
  * Class for (integer/float) constant array in initialization.
- * <br>
  * All the Constants in the array will be the operands of it.
+ * <br>
+ * Though interfaces of ConstArray is also designed in Factory Method fashion,
+ * and it's indeed reasonable to build a factory method for creating constant array
+ * on demand, there is NO guarantee that every value of ConstArray has only one
+ * instance existing (unlike ConstInt and ConstFloat).
  */
 public class ConstArray extends Constant {
 
@@ -29,13 +33,15 @@ public class ConstArray extends Constant {
 
     /**
      * Retrieve a constant array with a list of initial values (Constants).
+     * A Factory Method fashion interface, but work with a normal class constructor without
+     * factory method pooling.
      *
      * @param arrType  The ArrayType.
      * @param initList ArrayList of Constants in a same Type.
      *                 The length of it needs to match with the arrType.
      * @return The ConstArray instance required.
      */
-    public static ir.values.constants.ConstArray get(ArrayType arrType, ArrayList<Constant> initList) {
+    public static ConstArray get(ArrayType arrType, ArrayList<Constant> initList) {
         /*
         Security Checks.
          */
@@ -58,7 +64,7 @@ public class ConstArray extends Constant {
         /*
         Retrieve the instance and return it.
          */
-        return new ir.values.constants.ConstArray(arrType, initList);
+        return new ConstArray(arrType, initList);
     }
     //</editor-fold>
 
