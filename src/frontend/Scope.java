@@ -19,24 +19,19 @@ import java.util.HashMap;
  */
 public class Scope {
 
-    //<editor-fold desc="Fields">
     /**
      * A list as a stack containing all symbol tables.
      * The top element is the symbol table of the current scope.
      */
     private final ArrayList<HashMap<String, Value>> tables = new ArrayList<>();
 
-//    public boolean preEnter = false;
-    //</editor-fold>
 
-    //<editor-fold desc="Constructors">
     public Scope() {
         // Push the first symbol table (the top/global scope) for the module as initialization.
         tables.add(new HashMap<>());
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Methods">
+
     /**
      * Peek the top of the symbol table stack, which is the current scope (during parse
      * tree traversal / visiting)
@@ -118,7 +113,5 @@ public class Scope {
     public boolean duplicateDecl(String name) {
         return curTab().get(name) != null;
     }
-    //</editor-fold>
-
 
 }
