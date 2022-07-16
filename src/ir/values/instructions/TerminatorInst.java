@@ -87,7 +87,7 @@ public abstract class TerminatorInst extends Instruction {
          * @param falseBlk The basic block to jump to when condition is false.
          */
         public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk, BasicBlock bb) {
-            super(LabelType.getType(), InstCategory.BR, bb);
+            super(VoidType.getType(), InstCategory.BR, bb);
             this.hasResult = false;
             this.addOperandAt(cond, 0);
             this.addOperandAt(trueBlk, 1);
@@ -99,7 +99,7 @@ public abstract class TerminatorInst extends Instruction {
          * @param blk The basic block to jump to.
          */
         public Br(BasicBlock blk, BasicBlock bb) {
-            super(LabelType.getType(), InstCategory.BR, bb);
+            super(VoidType.getType(), InstCategory.BR, bb);
             this.hasResult = false;
             this.addOperandAt(blk, 0);
         }
