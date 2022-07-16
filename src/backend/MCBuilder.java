@@ -345,7 +345,7 @@ public class MCBuilder {
         /* Save result */
         curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
 
-        curFunc.useLR = true;
+        curFunc.setUseLR();
     }
 
     private void translateRet(TerminatorInst.Ret IRinst) {

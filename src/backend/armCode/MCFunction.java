@@ -164,6 +164,10 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
     public ArrayList<VirtualRegister> getVirtualRegisters() {return VirtualRegisters;}
 
+    public void setUseLR() {
+        context.add(RealRegister.get(14));
+        useLR = true;
+    }
     public boolean isExternal() {return isExternal;}
     //</editor-fold>
 
