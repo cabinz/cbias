@@ -4,10 +4,12 @@ import ir.Type;
 import ir.Use;
 import ir.Value;
 import ir.values.BasicBlock;
+import ir.values.Constant;
 import ir.values.Instruction;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class PhiInst extends Instruction {
 
@@ -40,6 +42,19 @@ public class PhiInst extends Instruction {
 
     public void setPhiMapping(Map<BasicBlock, Value> phiMapping){
         phiMapping.forEach(this::addMapping);
+    }
+
+    public boolean isConstant(){
+        Value stdValue = null;
+        for (Integer id : operandMapping.values()) {
+            var value = getOperandAt(id);
+            if(stdValue==null){
+                stdValue = value;
+            }else{
+                if(!Objects.equals(stdValue,value)) return false;
+            }
+        }
+        return true;
     }
 
     @Override

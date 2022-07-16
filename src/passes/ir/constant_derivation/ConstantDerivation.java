@@ -85,9 +85,8 @@ public class ConstantDerivation implements IRPass {
         for (Use use : expression.operands) {
             if (!isConstant(use.getUsee())) return false;
         }
-        if (expression instanceof PhiInst) {
-            //Todo maybe it can be derived
-            return expression.operands.size() <= 2; //One branch has 2 operands
+        if (expression instanceof PhiInst phiInst) {
+            return phiInst.isConstant();
         } else if (expression instanceof CallInst || expression instanceof MemoryInst) {
             return false;
         } else {
@@ -276,7 +275,7 @@ public class ConstantDerivation implements IRPass {
             if(instruction instanceof PhiInst phiInst){
                 phiInst.removeMapping(entry);
             }else{
-                break;
+                break; // PHI must be in the front of a bb
             }
         }
         //Todo: remove this block from the function if it is useless
