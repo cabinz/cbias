@@ -35,7 +35,9 @@ public class MCEmitter {
     public void emitTo(ARMAssemble target, String outputPath) throws IOException {
         /* header */
         StringBuilder strBd = new StringBuilder();
-        strBd.append("\t.arch " + target.getArchitecture() + '\n');
+        strBd.append("\t.cpu "  + target.cpu + '\n');
+        strBd.append("\t.arch " + target.architecture + '\n');
+        strBd.append("\t.fpu "  + target.fpu + '\n');
         strBd.append("\n");
         strBd.append("\t.text\n");
         strBd.append("\n");

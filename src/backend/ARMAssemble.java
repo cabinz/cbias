@@ -19,7 +19,9 @@ import java.util.LinkedList;
 public class ARMAssemble implements Iterable<MCFunction>{
 
     //<editor-fold desc="Fields">
-    private final String architecture = "armv7";
+    public final String cpu = "cortex-a7";
+    public final String architecture = "armv7-a";
+    public final String fpu = "vfpv4";
     private final LinkedList<MCFunction> functionList;
     private final LinkedList<Label> globalVars;
 
@@ -103,8 +105,6 @@ public class ARMAssemble implements Iterable<MCFunction>{
     public Iterator<MCFunction> iterator(){return functionList.iterator();}
 
     //<editor-fold desc="Getter & Setter">
-    public String getArchitecture() {return architecture;}
-
     public LinkedList<MCFunction> getFunctionList() {return functionList;}
 
     public LinkedList<Label> getGlobalVars() {return globalVars;}
