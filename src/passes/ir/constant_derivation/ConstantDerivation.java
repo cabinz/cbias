@@ -10,7 +10,6 @@ import ir.values.instructions.*;
 import passes.ir.IRPass;
 
 import java.util.ArrayDeque;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
@@ -29,7 +28,7 @@ public class ConstantDerivation implements IRPass {
 
     static void optimize(Module module) {
         deriveConstantGV(module);
-        module.functions.forEach(ConstantDerivation::deriveConstantInstruction);
+        module.functions.forEach(ConstantDerivation::deriveConstantExpression);
     }
 
     /// Derive global constant.
@@ -78,29 +77,30 @@ public class ConstantDerivation implements IRPass {
     }
 
     /**
-     * Judge weather an instruction can be derived.
+     * Judge weather an expression can be derived.
      *
-     * @param instruction The instruction to be judged.
+     * @param expression The expression to be judged.
      */
-    static boolean canDeriveInst(Instruction instruction) {
-        for (Use use : instruction.operands) {
+    static boolean canDeriveExpression(Instruction expression) {
+        for (Use use : expression.operands) {
             if (!isConstant(use.getUsee())) return false;
         }
-        if (instruction instanceof PhiInst) {
-            return instruction.operands.size() <= 2; //One branch has 2 operands
-        } else if (instruction instanceof CallInst || instruction instanceof MemoryInst) {
+        if (expression instanceof PhiInst) {
+            //Todo maybe it can be derived
+            return expression.operands.size() <= 2; //One branch has 2 operands
+        } else if (expression instanceof CallInst || expression instanceof MemoryInst) {
             return false;
         } else {
             return true;
         }
     }
 
-    static Constant calculateInstValue(Instruction instruction) {
-        switch (instruction.cat) {
+    static Constant calculateExpressionValue(Instruction expression) {
+        switch (expression.cat) {
             case ADD, SUB, MUL, DIV -> {
-                var c1 = (ConstInt) instruction.getOperandAt(0);
-                var c2 = (ConstInt) instruction.getOperandAt(1);
-                switch (instruction.cat) {
+                var c1 = (ConstInt) expression.getOperandAt(0);
+                var c2 = (ConstInt) expression.getOperandAt(1);
+                switch (expression.cat) {
                     case ADD -> {
                         return ConstInt.getI32(c1.getVal() + c2.getVal());
                     }
@@ -116,9 +116,9 @@ public class ConstantDerivation implements IRPass {
                 }
             }
             case FADD, FSUB, FMUL, FDIV -> {
-                var c1 = (ConstFloat) instruction.getOperandAt(0);
-                var c2 = (ConstFloat) instruction.getOperandAt(1);
-                switch (instruction.cat) {
+                var c1 = (ConstFloat) expression.getOperandAt(0);
+                var c2 = (ConstFloat) expression.getOperandAt(1);
+                switch (expression.cat) {
                     case FADD -> {
                         return ConstFloat.get(c1.getVal() + c2.getVal());
                     }
@@ -134,13 +134,13 @@ public class ConstantDerivation implements IRPass {
                 }
             }
             case FNEG -> {
-                var c1 = (ConstFloat) instruction.getOperandAt(0);
+                var c1 = (ConstFloat) expression.getOperandAt(0);
                 return ConstFloat.get(-c1.getVal());
             }
             case LT, GT, EQ, NE, LE, GE -> {
-                var c1 = (ConstInt) instruction.getOperandAt(0);
-                var c2 = (ConstInt) instruction.getOperandAt(1);
-                switch (instruction.cat) {
+                var c1 = (ConstInt) expression.getOperandAt(0);
+                var c2 = (ConstInt) expression.getOperandAt(1);
+                switch (expression.cat) {
                     case LT -> {
                         return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
                     }
@@ -162,9 +162,9 @@ public class ConstantDerivation implements IRPass {
                 }
             }
             case FLT, FGT, FEQ, FNE, FLE, FGE -> {
-                var c1 = (ConstFloat) instruction.getOperandAt(0);
-                var c2 = (ConstFloat) instruction.getOperandAt(1);
-                switch (instruction.cat) {
+                var c1 = (ConstFloat) expression.getOperandAt(0);
+                var c2 = (ConstFloat) expression.getOperandAt(1);
+                switch (expression.cat) {
                     case FLT -> {
                         return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
                     }
@@ -186,9 +186,9 @@ public class ConstantDerivation implements IRPass {
                 }
             }
             case AND, OR -> {
-                var c1 = (ConstInt) instruction.getOperandAt(0);
-                var c2 = (ConstInt) instruction.getOperandAt(0);
-                switch (instruction.cat){
+                var c1 = (ConstInt) expression.getOperandAt(0);
+                var c2 = (ConstInt) expression.getOperandAt(0);
+                switch (expression.cat){
                     case AND -> {
                         return ConstInt.getI1(c1.getVal()&c2.getVal());
                     }
@@ -198,59 +198,59 @@ public class ConstantDerivation implements IRPass {
                 }
             }
             case ZEXT, FPTOSI, SITOFP -> {
-                switch (instruction.cat){
+                switch (expression.cat){
                     case ZEXT -> {
-                        var c1 = (ConstInt) instruction.getOperandAt(0);
+                        var c1 = (ConstInt) expression.getOperandAt(0);
                         return ConstInt.getI32(c1.getVal());
                     }
                     case FPTOSI -> {
-                        var c1 = (ConstFloat) instruction.getOperandAt(0);
+                        var c1 = (ConstFloat) expression.getOperandAt(0);
                         return ConstInt.getI32((int)c1.getVal());
                     }
                     case SITOFP -> {
-                        var c1 = (ConstInt) instruction.getOperandAt(0);
+                        var c1 = (ConstInt) expression.getOperandAt(0);
                         return ConstFloat.get((float) c1.getVal());
                     }
                 }
             }
             case PHI -> {
-                return (Constant) instruction.getOperandAt(0);
+                return (Constant) expression.getOperandAt(0);
             }
         }
-        throw new RuntimeException("Unable to derive instruction of type "+instruction.cat);
+        throw new RuntimeException("Unable to derive expression of type "+expression.cat);
     }
 
-    static void deriveConstantInstruction(Function function) {
+    static void deriveConstantExpression(Function function) {
         Queue<Instruction> queue = new ArrayDeque<>();
         for (BasicBlock basicBlock : function) {
             for (Instruction instruction : basicBlock) {
-                if (canDeriveInst(instruction)) {
+                if (canDeriveExpression(instruction)) {
                     queue.add(instruction);
                 }
             }
         }
         while (!queue.isEmpty()) {
-            Instruction instruction = queue.remove();
-            if (instruction.getType().isVoidType()) {
+            Instruction expression = queue.remove();
+            if (expression.getType().isVoidType()) {
                 // Br, Load, Store, etc.
-                if (instruction instanceof TerminatorInst.Br br) {
+                if (expression instanceof TerminatorInst.Br br) {
                     if (br.isCondJmp()) {
                         optimizeBr(br);
                     }
                 }
             } else {
-                Constant constant = calculateInstValue(instruction);
+                Constant constant = calculateExpressionValue(expression);
                 @SuppressWarnings("unchecked")
-                var uses = (List<Use>) instruction.getUses().clone();
+                var uses = (List<Use>) expression.getUses().clone();
                 uses.forEach(use -> {
                     use.setUsee(constant);
                     if(use.getUser() instanceof Instruction user){
-                        if(canDeriveInst(user)){
+                        if(canDeriveExpression(user)){
                             queue.add(user);
                         }
                     }
                 });
-                instruction.removeSelf();
+                expression.removeSelf();
             }
         }
     }
