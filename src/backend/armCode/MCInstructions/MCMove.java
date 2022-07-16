@@ -63,7 +63,7 @@ public class MCMove extends MCInstruction {
             }
         }
         else
-            return "MOV" + emitCond() + ' ' + dst.emit() + ", " + src.emit();
+            return "MOV" + emitCond() + ' ' + dst.emit() + ", " + src.emit() + emitShift();
     }
 
     public Register getDst() {return dst;}

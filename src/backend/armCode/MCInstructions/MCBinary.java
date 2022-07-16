@@ -45,7 +45,7 @@ public class MCBinary extends MCInstruction {
 
     public String emit() {
         return type.name() + emitCond() + ' ' + destination.emit()
-                + ", " + operand1.emit() + ", " + operand2.emit();
+                + ", " + operand1.emit() + ", " + operand2.emit() + emitShift();
     }
 
     public Register getOperand1() {return operand1;}

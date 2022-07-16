@@ -42,7 +42,7 @@ public class MCcmp extends MCInstruction {
 
     @Override
     public String emit() {
-        return "CMP " + operand1.emit() + ", " + operand2.emit();
+        return "CMP " + operand1.emit() + ", " + operand2.emit() + emitShift();
     }
 
     public MCcmp(Register operand1, MCOperand operand2) {super(TYPE.CMP);this.operand1 = operand1;this.operand2 = operand2;}

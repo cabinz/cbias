@@ -120,7 +120,7 @@ public abstract class MCInstruction {
         if (shift == null)
             return "";
         else
-            return shift.emit();
+            return ", " + shift.emit();
     }
     //</editor-fold>
 
@@ -176,7 +176,7 @@ public abstract class MCInstruction {
         //</editor-fold>
 
         public String emit() {
-            return ", " + type.name() + " " + getOperand().emit();
+            return type.name() + " " + getOperand().emit();
         }
 
 
