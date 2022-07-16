@@ -66,9 +66,8 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * All the related Use links will be simultaneously wiped out.
      * If the given Inst doesn't exit in the BB, an exception will be thrown.
      * @param inst The Instruction to be removed.
-     * @return true if successfully remove an inst contained in the BB.
      */
-    public boolean removeInst(Instruction inst) {
+    public void removeInst(Instruction inst) {
         if (this.instructions.contains(inst)) {
             // Update the use states:
             // - Remove all the Use links for the User using it.
@@ -81,7 +80,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
             tmpOpds.forEach(Use::removeSelf);
             // Remove the inst from the bb.
             instructions.remove(inst);
-            return true;
+            inst.setBB(null);
         }
         else {
             throw new RuntimeException("Try to remove an Instruction that doesn't reside on the BasicBlock.");

@@ -121,11 +121,11 @@ public class Function extends Value implements Iterable<BasicBlock>{
      * Removes a specified BasicBlock from the Function.
      * If the given bb doesn't exit in the Function, an exception will be thrown.
      * @param bb The BB to be removed.
-     * @return The BB removed.
      */
-    public boolean removeBB(BasicBlock bb) {
+    public void removeBB(BasicBlock bb) {
         if (this.bbs.contains(bb)) {
-            return bbs.remove(bb);
+            bbs.remove(bb);
+            bb.setFunc(null);
         }
         else {
             throw new RuntimeException("Try to remove a BB that doesn't reside on the Function.");

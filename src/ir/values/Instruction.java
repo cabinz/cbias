@@ -139,6 +139,7 @@ public abstract class Instruction extends User {
     public void insertBefore(Instruction inst) {
         var instList = this.getBB().instructions;
         instList.add(instList.indexOf(this), inst);
+        inst.setBB(this.getBB());
     }
 
     /**
@@ -148,5 +149,6 @@ public abstract class Instruction extends User {
     public void insertAfter(Instruction inst) {
         var instList = this.getBB().instructions;
         instList.add(instList.indexOf(this) + 1, inst);
+        inst.setBB(this.getBB());
     }
 }
