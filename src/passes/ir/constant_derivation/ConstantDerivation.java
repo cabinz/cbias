@@ -8,6 +8,7 @@ import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
 import passes.ir.IRPass;
+import passes.ir.RelationAnalysis;
 
 import java.util.ArrayDeque;
 import java.util.List;
@@ -48,11 +49,13 @@ public class ConstantDerivation implements IRPass {
         globalVariableList.forEach(globalVariable -> {
             if (isGlobalConstant(globalVariable)) {
                 var constant = globalVariable.getInitVal();
-                globalVariable.getUses().forEach(loadUse -> {
+                @SuppressWarnings("unchecked")
+                var gvUses = (List<Use>) globalVariable.getUses().clone();
+                gvUses.forEach(loadUse -> {
                     var loadInst = (MemoryInst.Load) loadUse.getUser();
                     @SuppressWarnings("unchecked")
-                    var uses = (List<Use>) loadInst.getUses().clone();
-                    uses.forEach(use -> use.setUsee(constant));
+                    var loadUses = (List<Use>) loadInst.getUses().clone();
+                    loadUses.forEach(use -> use.setUsee(constant));
                     loadInst.removeSelf();
                 });
                 module.globalVariables.remove(globalVariable);
@@ -213,7 +216,7 @@ public class ConstantDerivation implements IRPass {
                 }
             }
             case PHI -> {
-                return (Constant) expression.getOperandAt(0);
+                return ((PhiInst) expression).deriveConstant();
             }
         }
         throw new RuntimeException("Unable to derive expression of type "+expression.cat);
@@ -230,10 +233,14 @@ public class ConstantDerivation implements IRPass {
         }
         while (!queue.isEmpty()) {
             Instruction expression = queue.remove();
+
+            // Such PHI should be deleted instead of derive
+            if(expression instanceof PhiInst phiInst && !phiInst.hasEntry()) continue;
+
             if (expression.getType().isVoidType()) {
                 // Br, Load, Store, etc.
                 if (expression instanceof TerminatorInst.Br br) {
-                    optimizeBr(br);
+                    optimizeBr(br,queue);
                 }
             } else {
                 Constant constant = calculateExpressionValue(expression);
@@ -257,7 +264,7 @@ public class ConstantDerivation implements IRPass {
      *
      * @param br The instruction to be optimized.
      */
-    private static void optimizeBr(TerminatorInst.Br br) {
+    private static void optimizeBr(TerminatorInst.Br br, Queue<Instruction> deriveQueue) {
         if(!br.isCondJmp()) return;
         var cond_ = br.getOperandAt(0);
         if(!(cond_ instanceof ConstInt cond)) return;
@@ -268,10 +275,10 @@ public class ConstantDerivation implements IRPass {
         br.removeOperandAt(2);
         if(cond.getVal()==1){
             br.addOperandAt(bTrue,0);
-            removeEntry(bFalse,br.getBB());
+            removeEntry(bFalse,br.getBB(),deriveQueue);
         }else{
             br.addOperandAt(bFalse,0);
-            removeEntry(bTrue,br.getBB());
+            removeEntry(bTrue,br.getBB(),deriveQueue);
         }
     }
 
@@ -281,15 +288,33 @@ public class ConstantDerivation implements IRPass {
      * @param basicBlock Basic block one of whose entry is removed.
      * @param entry The entry to be removed.
      */
-    static void removeEntry(BasicBlock basicBlock, BasicBlock entry){
+    static void removeEntry(BasicBlock basicBlock, BasicBlock entry, Queue<Instruction> deriveQueue){
         for (Instruction instruction : basicBlock.instructions) {
             if(instruction instanceof PhiInst phiInst){
                 phiInst.removeMapping(entry);
+                if(phiInst.isConstant()){
+                    deriveQueue.add(phiInst);
+                }
             }else{
                 break; // PHI must be in the front of a bb
             }
         }
-        //Todo: remove this block from the function if it is useless
+        if(!isBlockIsolated(basicBlock)) return;
+        basicBlock.removeSelf(); // Firstly remove self, otherwise isBlockIsolated may get a wrong result
+        var followingBBs = RelationAnalysis.getFollowingBB(basicBlock);
+        for (BasicBlock followingBlock : followingBBs) {
+            removeEntry(followingBlock,basicBlock,deriveQueue);
+        }
+    }
+
+    // This function shouldn't be here, too
+    static boolean isBlockIsolated(BasicBlock basicBlock){
+        for (BasicBlock otherBlock : basicBlock.getFunc()) {
+            for (BasicBlock followingBlock : RelationAnalysis.getFollowingBB(otherBlock)) {
+                if(basicBlock==followingBlock) return false;
+            }
+        }
+        return true;
     }
 
 }
