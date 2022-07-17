@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * <br>
  * Technically, each prototype should correspond to a unique instance (singleton) of
  * FunctionType. But for convenience, FunctionType is implemented in ordinary class
- * fashion without singleton / factory method strategies.
+ * fashion without singleton strategies.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h#L102">
  *     LLVM IR Source: FunctionType</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#function-type">
