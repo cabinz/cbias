@@ -20,7 +20,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
 
     //<editor-fold desc="Fields">
     public final String cpu = "cortex-a7";
-    public final String architecture = "armv7-a";
+    public final String architecture = "armv7ve";
     public final String fpu = "vfpv4";
     private final LinkedList<MCFunction> functionList;
     private final LinkedList<Label> globalVars;

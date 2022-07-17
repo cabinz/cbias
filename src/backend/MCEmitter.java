@@ -49,7 +49,7 @@ public class MCEmitter {
             strBd.append(f.emit() + ":\n");
             /* Callee-save */
             if (!f.getContext().isEmpty())
-                strBd.append("\t" + (new MCpush(f.getContext())).emit() + "\n");
+                f.getEntryBlock().prependInst(new MCpush(f.getContext()));
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
                 strBd.append(bb.emit() + ":\n");
@@ -88,7 +88,7 @@ public class MCEmitter {
             strBd.append("\n\n");
         }
 
-        strBd.append("\t.end");
+        strBd.append("\t.end\n");
 
         /* write to the file */
         FileWriter fw = new FileWriter(outputPath);
