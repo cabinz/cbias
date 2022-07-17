@@ -63,6 +63,9 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     public Iterator<MCInstruction> iterator() {return instructionList.iterator();}
     //</editor-fold>
 
+    public String emit() {
+        return "." + label;
+    }
 
     //<editor-fold desc="Getter & Setter">
     public LinkedList<MCInstruction> getInstructionList() {return instructionList;}

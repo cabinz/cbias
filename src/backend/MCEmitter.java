@@ -45,14 +45,14 @@ public class MCEmitter {
         /* handle each function */
         for (MCFunction f : target) {
             if (f.isExternal()) continue;
-            strBd.append("\t.global " + f.getName() + '\n');
-            strBd.append(f.getName() + ":\n");
+            strBd.append("\t.global " + f.emit() + '\n');
+            strBd.append(f.emit() + ":\n");
             /* Callee-save */
             if (!f.getContext().isEmpty())
                 strBd.append("\t" + (new MCpush(f.getContext())).emit() + "\n");
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
-                strBd.append("." + bb.getName() + ":\n");
+                strBd.append(bb.emit() + ":\n");
                 /* handle each instruction */
                 for (MCInstruction mcInstruction : bb) {
                     strBd.append('\t' + mcInstruction.emit() + '\n');

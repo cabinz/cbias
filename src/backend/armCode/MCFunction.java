@@ -154,6 +154,10 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     //</editor-fold>
 
+    public String emit() {
+        return name;
+    }
+
     //<editor-fold desc="Getter & Setter">
     public String getName() {return name;}
 

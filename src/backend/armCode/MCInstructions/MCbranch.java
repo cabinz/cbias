@@ -64,21 +64,21 @@ public class MCbranch extends MCInstruction {
 
     public MCbranch(MCFunction target) {
         super(TYPE.BRANCH);
-        this.target = target.getName();
+        this.target = target.emit();
         withLink = true;
         targetFunc = target;
     }
 
     public MCbranch(MCBasicBlock target) {
         super(TYPE.BRANCH);
-        this.target = target.getName();
+        this.target = target.emit();
         withLink = false;
         targetBB = target;
     }
 
     public MCbranch(MCBasicBlock target, ConditionField cond) {
         super(TYPE.BRANCH, null, cond);
-        this.target = target.getName();
+        this.target = target.emit();
         withLink = false;
         targetBB = target;
     }
