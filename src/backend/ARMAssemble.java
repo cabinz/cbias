@@ -6,6 +6,7 @@ import ir.types.ArrayType;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;
+import ir.values.constants.ConstArray;
 import ir.values.constants.ConstInt;
 
 import java.util.ArrayList;
@@ -86,13 +87,13 @@ public class ARMAssemble implements Iterable<MCFunction>{
     }
 
     private void genInitial(Constant constVals, ArrayList<Integer> initial) {
-        for (int i=0; i<constVals.getNumOperands(); i++){
-            Constant val = ((Constant) constVals.getOperandAt(i));
-            if (val.getType().isIntegerType())
-                initial.add(((ConstInt) val).getVal());
-            else
-                genInitial(val, initial);
-        }
+            if (constVals.getType().isIntegerType())
+                initial.add(((ConstInt) constVals).getVal());
+            else {
+                ConstArray arr = ((ConstArray) constVals);
+                for (int i=0; i<arr.getNumOperands(); i++)
+                    genInitial(((Constant) arr.getOperandAt(i)), initial);
+            }
     }
 
     /**
