@@ -496,7 +496,7 @@ public class MCBuilder {
 
         if (!op1IsConst && !op2IsConst) {
             Register mul1 = (Register) findContainer(operand1, true);
-            Register mul2 = (Register) findContainer(operand1, true);
+            Register mul2 = (Register) findContainer(operand2, true);
 
             curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, mul1, mul2));
         }
