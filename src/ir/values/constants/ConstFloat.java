@@ -3,6 +3,8 @@ package ir.values.constants;
 import ir.types.FloatType;
 import ir.values.Constant;
 
+import java.util.Objects;
+
 import java.util.HashMap;
 
 /**
@@ -44,6 +46,19 @@ public class ConstFloat extends Constant {
         }
     }
     //</editor-fold>
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ConstFloat that)) return false;
+        return Float.compare(that.val, val) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(val);
+    }
 
     @Override
     public String toString() {
