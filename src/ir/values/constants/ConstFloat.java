@@ -5,6 +5,8 @@ import ir.values.Constant;
 
 import java.util.Objects;
 
+import java.util.HashMap;
+
 /**
  * Class ConstFloat instantiates the IR of float integer constant in source.
  */
@@ -25,14 +27,23 @@ public class ConstFloat extends Constant {
         this.setName("0x" + Long.toHexString(Double.doubleToLongBits((double) val)));
     }
 
+    // Instance pools.
+    private static final HashMap<Float, ConstFloat> pool = new HashMap<>();
+
     /**
      * Retrieve an IR Constant instance of given float.
-     *
      * @param val Mathematical value of the float.
      * @return Corresponding ConstFloat instance created.
      */
-    public static ir.values.constants.ConstFloat get(float val) {
-        return new ir.values.constants.ConstFloat(val);
+    public static ConstFloat get(float val) {
+        if (pool.containsKey(val)) {
+            return pool.get(val);
+        }
+        else {
+            var newInstance = new ConstFloat(val);
+            pool.put(val, newInstance);
+            return newInstance;
+        }
     }
     //</editor-fold>
 
