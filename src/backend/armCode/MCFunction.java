@@ -134,7 +134,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * This method should not be here, but ... I have no idea where to place it.
      */
     public void fixParamAddress() {
-        paramCal.forEach(load -> load.setOffset(new Immediate(((Immediate) load.getOffset()).getIntValue() + context.size())));
+        paramCal.forEach(load -> load.setOffset(new Immediate(((Immediate) load.getOffset()).getIntValue() + context.size()*4)));
     }
 
     /**

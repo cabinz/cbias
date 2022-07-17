@@ -140,6 +140,8 @@ public class GraphColoring implements MCPass {
     public void runOnModule(ARMAssemble armAssemble) {
         /* main produce of the Graph Coloring */
         for (MCFunction func : armAssemble){
+            if (func.isExternal())
+                continue;
             curFunc = func;
 
             /* Graph Coloring */
