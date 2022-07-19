@@ -165,7 +165,8 @@ public class GraphColoring implements MCPass {
             }
 
             /* Correct the offset of spilled loads */
-            spilledLoad.forEach((tmp, loads) -> loads.getA().forEach(inst -> inst.setOffset(new Immediate(loads.getB()*4))));
+            /* Because each def adds offset, so need to minus one. See {@link this::RewriteProgram()} */
+            spilledLoad.forEach((tmp, loads) -> loads.getA().forEach(inst -> inst.setOffset(new Immediate(loads.getB()*4-4))));
             //</editor-fold>
 
             //<editor-fold desc="Register Allocation">
@@ -377,6 +378,9 @@ public class GraphColoring implements MCPass {
                 var list = block.getInstructionList();
                 for (int i=0; i<list.size(); i++) {
                     var inst = list.get(i);
+
+                    /* If def */
+                    /* Each def adds all the loads' offset by one, including itself */
                     if (inst.getDef().contains(v)) {
                         /* If Alloca def the VR, spilled store needs to be moved to the last of the Alloca */
                         if (((VirtualRegister) v).getValue() instanceof MemoryInst.Alloca) {
