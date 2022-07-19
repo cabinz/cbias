@@ -131,7 +131,7 @@ public class GraphColoring implements MCPass {
     private MCFunction curFunc;
     private HashMap<MCBasicBlock, LiveInfo> liveInfo;
     private final int INF = 0x3F3F3F3F;
-    private HashMap<Register, Pair<HashSet<MCload>, Integer>> spilledLoad;
+    private HashMap<Register, Pair<HashSet<MCload>, Integer>> spilledLoad = new HashMap<>();
     private HashSet<Integer> usedColor;
     //</editor-fold>
     //</editor-fold>
@@ -218,7 +218,6 @@ public class GraphColoring implements MCPass {
         constrainedMoves = new HashSet<>();
         frozenMove = new HashSet<>();
 
-        spilledLoad = new HashMap<>();
         usedColor = new HashSet<>();
     }
 
