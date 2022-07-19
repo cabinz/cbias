@@ -9,6 +9,7 @@ import backend.operand.Immediate;
 import backend.operand.RealRegister;
 import backend.operand.Register;
 import backend.operand.VirtualRegister;
+import ir.values.instructions.MemoryInst;
 import passes.mc.MCPass;
 
 import java.util.*;
@@ -377,10 +378,30 @@ public class GraphColoring implements MCPass {
                 for (int i=0; i<list.size(); i++) {
                     var inst = list.get(i);
                     if (inst.getDef().contains(v)) {
-                        inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(-4), true));
-                        spilledLoad.values().forEach(p -> p.setB(p.getB()+1));
-                        i++;
+                        /* If Alloca def the VR, spilled store needs to be moved to the last of the Alloca */
+                        if (((VirtualRegister) v).getValue() instanceof MemoryInst.Alloca) {
+                            for (int j = i+1; j < list.size(); ) {
+                                inst = list.get(j);
+                                if (inst instanceof MCBinary) {
+                                    j += 2;
+                                }
+                                else {
+                                    inst.insertBefore(new MCstore(v, RealRegister.get(13), new Immediate(-4), true));
+                                    spilledLoad.values().forEach(p -> p.setB(p.getB()+1));
+                                    i = j;
+                                    break;
+                                }
+                            }
+                        }
+                        /* Else, just insert after def */
+                        else {
+                            inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(-4), true));
+                            spilledLoad.values().forEach(p -> p.setB(p.getB()+1));
+                            i++;
+                        }
                     }
+
+                    /* If use */
                     if (inst.getUse().contains(v)) {
                         // TODO: 更好的方法？
                         /* Create a temporary v_tmp for the use */
