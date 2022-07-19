@@ -19,7 +19,8 @@ public class MCReturn extends MCInstruction {
     @Override
     public HashSet<Register> getUse() {
         var ret = new HashSet<Register>();
-        ret.add(RealRegister.get(14));
+        if (!belongFunc.useLR)
+            ret.add(RealRegister.get(14));
         return ret;
     }
 

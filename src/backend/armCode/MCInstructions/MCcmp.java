@@ -21,7 +21,7 @@ public class MCcmp extends MCInstruction {
     public HashSet<Register> getUse() {
         var set = new HashSet<Register>();
         set.add(operand1);
-        if (operand2.isVirtualReg() || operand2.isVirtualReg())
+        if (operand2.isVirtualReg() || operand2.isRealReg())
             set.add(((Register) operand2));
         if (shift != null && shift.getOperand().isVirtualReg())
             set.add(((Register) shift.getOperand()));
