@@ -163,7 +163,31 @@ public class MCBuilder {
      * @return the corresponding operand
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
-        if (valueMap.containsKey(value)) {
+        if (value instanceof ConstInt) {
+            MCOperand temp = createConstInt(((ConstInt) value).getVal());
+            if (temp.isVirtualReg())
+                return temp;
+            /* temp is immediate */
+            else {
+                if (forceAllocReg){
+                    /* If force to allocate a register, should we create a new one or attempt to find one hold in VR? */
+                    /* For now, try to find the old one */
+                        /* Create new one: more MOV instruction is created */
+                        /* Find old one: Expand the live range of one VR, may cause SPILLING */
+                    if (valueMap.containsKey(value))
+                        return valueMap.get(value);
+                    else {
+                        VirtualRegister vr = curFunc.createVirReg(((ConstInt) value).getVal());
+                        valueMap.put(value, vr);
+                        curMCBB.appendInst(new MCMove(vr, temp));
+                        return vr;
+                    }
+                }
+                else
+                    return temp;
+            }
+        }
+        else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
         else if (value instanceof Instruction) {
@@ -176,19 +200,6 @@ public class MCBuilder {
             valueMap.put(value, vr);
             curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
-        }
-        else if (value instanceof ConstInt) {
-            // TODO: 顺序问题，是否寻找之前剩下的立即数
-            MCOperand temp = createConstInt(((ConstInt) value).getVal());
-            if (temp instanceof Register) return temp;
-            if (forceAllocReg){
-                VirtualRegister vr = curFunc.createVirReg(((ConstInt) value).getVal());
-                valueMap.put(value, vr);
-                curMCBB.appendInst(new MCMove(vr, temp));
-                return vr;
-            }
-            else
-                return temp;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
             // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别
