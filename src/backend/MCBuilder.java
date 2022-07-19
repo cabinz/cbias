@@ -190,9 +190,18 @@ public class MCBuilder {
         else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
-        else if (value instanceof Instruction) {
-            VirtualRegister vr = curFunc.createVirReg(value);
-            valueMap.put(value, vr);
+        else if (value instanceof Instruction inst) {
+            VirtualRegister vr;
+            /* This is used to translate the ZExt instruction */
+            /* Considering that all data used in competition is 32 bits, */
+            /* ignore the ZExt instruction */
+            /* and use the origin instruction's container */
+            if (inst instanceof CastInst.ZExt zExt)
+                vr = ((VirtualRegister) findContainer(zExt.getOperandAt(0)));
+            else
+                vr = curFunc.createVirReg(inst);
+
+            valueMap.put(inst, vr);
             return vr;
         }
         else if (value instanceof GlobalVariable) {
@@ -437,26 +446,34 @@ public class MCBuilder {
     private MCInstruction.ConditionField translateIcmp(BinaryOpInst icmp, boolean saveResult) {
         Value value1 = icmp.getOperandAt(0);
         Value value2 = icmp.getOperandAt(1);
-        if (value1 instanceof Instruction && ((Instruction) value1).isIcmp())
-            translateIcmp((BinaryOpInst) value1, true);
-        if (value2 instanceof Instruction && ((Instruction) value2).isIcmp())
-            translateIcmp((BinaryOpInst) value2, true);
 
-        MCOperand operand1;
+        /* If there is cmp or zext instruction in operands */
+        if (value1 instanceof BinaryOpInst biOp && biOp.isIcmp())
+            translateIcmp(biOp, true);
+        if (value2 instanceof BinaryOpInst biOp && biOp.isIcmp())
+            translateIcmp(biOp, true);
+        if (value1 instanceof CastInst.ZExt zExt)
+            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+        if (value2 instanceof CastInst.ZExt zExt)
+            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+
+        /* Translate */
+        Register operand1;
         MCOperand operand2;
         MCInstruction.ConditionField armCond = mapToArmCond(icmp);
         if (value1 instanceof ConstInt && !(value2 instanceof ConstInt)){
-            operand1 = findContainer(value2);
+            operand1 = (Register) findContainer(value2);
             operand2 = findContainer(value1);
-            armCond = reverseCond(armCond);
+            if (armCond != MCInstruction.ConditionField.EQ && armCond != MCInstruction.ConditionField.NE)
+                armCond = reverseCond(armCond);
         }
         else {
-            operand1 = findContainer(value1, true);
+            operand1 = (Register) findContainer(value1, true);
             operand2 = findContainer(value2);
         }
+        curMCBB.appendInst(new MCcmp(operand1, operand2));
 
-        curMCBB.appendInst(new MCcmp((Register) operand1, operand2));
-
+        /* Save result */
         if (saveResult) {
             curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(1), null, armCond));
             curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), null, reverseCond(armCond)));
@@ -482,6 +499,14 @@ public class MCBuilder {
     private void translateAddSub(BinaryOpInst IRinst, MCInstruction.TYPE type) {
         MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
         MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
+
+        /* If there is icmp instruction in operands */
+        if (IRinst.getOperandAt(0) instanceof CastInst.ZExt zExt)
+            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+        if (IRinst.getOperandAt(1) instanceof CastInst.ZExt zExt)
+            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+
+        /* Translate */
         if (operand1.isImmediate()) {
             if (operand2.isImmediate()) {
                 VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
@@ -506,12 +531,14 @@ public class MCBuilder {
         boolean op2IsConst = operand2 instanceof ConstInt;
         Register dst = (Register) findContainer(IRinst);
 
+        /* If both is not const, that's fine */
         if (!op1IsConst && !op2IsConst) {
             Register mul1 = (Register) findContainer(operand1, true);
             Register mul2 = (Register) findContainer(operand2, true);
 
             curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, mul1, mul2));
         }
+        /* If both const, fold */
         else if (op1IsConst && op2IsConst) {
             int result = ((ConstInt) operand1).getVal() * ((ConstInt) operand2).getVal();
             if (canEncodeImm(result)){
@@ -521,6 +548,7 @@ public class MCBuilder {
                 curMCBB.appendInst(new MCMove(dst, new Immediate(result), true));
             }
         }
+        /* If there is one const */
         else {
             Value v = operand1;
             Value c = operand2;
