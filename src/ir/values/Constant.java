@@ -9,20 +9,15 @@ import ir.types.IntegerType;
 import java.util.ArrayList;
 
 /**
- * A constant is a value that is immutable at runtime.
- * <br>
- * Though is reasonable to build a factory method for creating constant
- * on demand, Constant is implemented as normal class with public
- * constructor. Thus, there is NO guarantee that every value of constants
- * has only one Constant instance.
+ * A constant is a value that is immutable at runtime. Except ConstArray, all Constants are
+ * implemented with Singleton mechanisms, guaranteeing each Constant in a numeric value has
+ * only one existence (for the convenience of comparison using addresses).
  * <ul>
  *     <li>Integer and floating point values </li>
  *     <li>Arrays </li>
- *     <li>Functions (Cuz their address is immutable) ?</li>
- *     <li>Global variables </li>
+ *     <li>(Being referred in Global Variables)</li>
  * </ul>
- * All IR classes above are nested in Constant class.
- * Constant class has an operand list (inheriting from User).
+ * Constant class has an operand list (inheriting from User), which is factually dedicated to ConstArray.
  * <br>
  * Type for a Constant is the type of that constant value.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Constant.h#L41">
@@ -33,6 +28,5 @@ public abstract class Constant extends User {
     public Constant(Type type) {
         super(type);
     }
-
 
 }

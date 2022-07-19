@@ -5,6 +5,7 @@ import ir.Use;
 import ir.Value;
 import ir.values.Constant;
 import ir.values.Instruction;
+import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
@@ -22,7 +23,7 @@ public class Mem2reg implements IRPass {
         Mem2reg.optimize(module);
     }
 
-    private static void optimize(Module module) {
+    static void optimize(Module module) {
         module.functions.forEach(Mem2reg::optimize);
     }
 
@@ -31,7 +32,7 @@ public class Mem2reg implements IRPass {
      *
      * @param function The function to be optimized.
      */
-    private static void optimize(ir.values.Function function){
+    static void optimize(ir.values.Function function){
         var wrappedFunction = new Function(function);
         var promotableVariables = wrappedFunction.getPromotableAllocaInstructions();
 
@@ -39,7 +40,8 @@ public class Mem2reg implements IRPass {
         wrappedFunction.forEach(Mem2reg::insertEmptyPhi);
         wrappedFunction.forEach(Mem2reg::processInstructions);
         wrappedFunction.forEach(Mem2reg::fillEmptyPhi);
-        wrappedFunction.forEach(basicBlock -> Mem2reg.removeOptimizedVariable(basicBlock,promotableVariables));
+        wrappedFunction.forEach(basicBlock -> Mem2reg.removeLoadStoreInst(basicBlock,promotableVariables));
+        Mem2reg.removeAllocaInst(wrappedFunction, promotableVariables);
     }
 
     /**
@@ -48,7 +50,7 @@ public class Mem2reg implements IRPass {
      * @param function A wrapped function which is being processed.
      * @param variables Variables to be promoted.
      */
-    private static void collectUDInformation(Function function, Collection<MemoryInst.Alloca> variables){
+    static void collectUDInformation(Function function, Collection<MemoryInst.Alloca> variables){
         /*
             Collect information of promotable variables in each block, containing:
             1. Variables changed in each block.
@@ -93,7 +95,7 @@ public class Mem2reg implements IRPass {
      *
      * @param basicBlock The block which needs to insert PHI.
      */
-    private static void insertEmptyPhi(BasicBlock basicBlock){
+    static void insertEmptyPhi(BasicBlock basicBlock){
         if(basicBlock.previousBasicBlocks.size()==0){
             /* Entry block should not contain phi inst.
              * If the size of npdVar is not 0, it causes an undefined-behavior.
@@ -103,15 +105,15 @@ public class Mem2reg implements IRPass {
             basicBlock.npdVar.forEach(npdVar -> {
                 Constant constant;
                 if(npdVar.getAllocatedType().isIntegerType()){
-                    constant = ConstInt.get(0);
+                    constant = ConstInt.getI32(0);
                 }else{
-                    throw new RuntimeException("Float constant is not implemented yet.");
+                    constant = ConstFloat.get(0f);
                 }
                 basicBlock.latestDefineMap.put(npdVar,constant);
             });
         }else{
             basicBlock.npdVar.forEach( npdVar -> {
-                var phiInst = new PhiInst(npdVar.getAllocatedType(), basicBlock.getRawBasicBlock());
+                var phiInst = new PhiInst(npdVar.getAllocatedType());
                 basicBlock.getRawBasicBlock().insertAtFront(phiInst);
                 basicBlock.importPhiMap.put(npdVar,phiInst);
                 basicBlock.latestDefineMap.put(npdVar,phiInst);
@@ -127,7 +129,7 @@ public class Mem2reg implements IRPass {
      *
      * @param basicBlock The basic block to be processed.
      */
-    private static void processInstructions(BasicBlock basicBlock){
+    static void processInstructions(BasicBlock basicBlock){
         basicBlock.forEach(instruction -> {
             // Replace all usage of 'load' to register
             if(instruction instanceof MemoryInst.Load) {
@@ -137,7 +139,7 @@ public class Mem2reg implements IRPass {
                     //'uses' is changed during the following 'forEach', so we must clone one
                     @SuppressWarnings("unchecked")
                     var uses = (LinkedList<Use>) instruction.getUses().clone();
-                    uses.forEach(use -> use.setValue(register));
+                    uses.forEach(use -> use.setUsee(register));
                 }
             }
             // Record 'store' instruction
@@ -156,7 +158,7 @@ public class Mem2reg implements IRPass {
      *
      * @param basicBlock The block whose PHI instruction is empty.
      */
-    private static void fillEmptyPhi(BasicBlock basicBlock){
+    static void fillEmptyPhi(BasicBlock basicBlock){
         basicBlock.importPhiMap.forEach((alloca, phiInst) -> {
             var map = new HashMap<ir.values.BasicBlock, Value>();
             basicBlock.previousBasicBlocks.forEach(previousBasicBlock ->
@@ -166,7 +168,7 @@ public class Mem2reg implements IRPass {
         });
     }
 
-    private static void removeOptimizedVariable(BasicBlock basicBlock, Collection<MemoryInst.Alloca> variables){
+    static void removeLoadStoreInst(BasicBlock basicBlock, Collection<MemoryInst.Alloca> variables){
         // 'instructions' is changed during the following 'forEach', so we must clone one.
         @SuppressWarnings("unchecked")
         var instructions = (List<Instruction>) basicBlock.getRawBasicBlock().instructions.clone();
@@ -183,9 +185,18 @@ public class Mem2reg implements IRPass {
                     instruction.removeSelf();
                 }
             }
+        });
+    }
+
+    static void removeAllocaInst(Function function, Collection<MemoryInst.Alloca> variables){
+        var entryBlock = function.getRawFunction().getEntryBB();
+        @SuppressWarnings("unchecked")
+        var instructions = (List<Instruction>)entryBlock.instructions.clone();
+        instructions.forEach(instruction -> {
             if(instruction instanceof MemoryInst.Alloca && variables.contains(instruction)){
                 instruction.removeSelf();
             }
         });
     }
+
 }

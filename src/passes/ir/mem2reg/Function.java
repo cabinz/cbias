@@ -2,6 +2,7 @@ package passes.ir.mem2reg;
 
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
+import passes.ir.RelationAnalysis;
 
 import java.util.*;
 
@@ -15,21 +16,7 @@ class Function extends passes.ir.Function implements Iterable<BasicBlock> {
     public Function(ir.values.Function rawFunction){
         super(rawFunction);
         rawFunction.forEach(basicBlock -> basicBlockMap.put(basicBlock,new BasicBlock(basicBlock)));
-        basicBlockMap.values().forEach(basicBlock -> {
-            var lastInstruction = basicBlock.getRawBasicBlock().getLastInst();
-            if(lastInstruction.isBr()){
-                var br = (TerminatorInst.Br) lastInstruction;
-                List<BasicBlock> followingBasicBlocks = new ArrayList<>();
-                if(br.isCondJmp()){
-                    followingBasicBlocks.add(basicBlockMap.get((ir.values.BasicBlock) br.getOperandAt(1)));
-                    followingBasicBlocks.add(basicBlockMap.get((ir.values.BasicBlock) br.getOperandAt(2)));
-                }else{
-                    followingBasicBlocks.add(basicBlockMap.get((ir.values.BasicBlock) br.getOperandAt(0)));
-                }
-                followingBasicBlocks.forEach(followingBasicBlock -> followingBasicBlock.addPreviousBasicBlock(basicBlock));
-                basicBlock.setFollowingBasicBlocks(followingBasicBlocks);
-            }
-        });
+        RelationAnalysis.analysisBasicBlocks(basicBlockMap);
     }
 
     @Override

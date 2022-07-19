@@ -4,11 +4,11 @@ import ir.Value;
 import ir.values.Instruction;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
+import passes.ir.IBBRelationship;
 
 import java.util.*;
-import java.util.function.Consumer;
 
-class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction> {
+class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction>, IBBRelationship<BasicBlock> {
 
     List<BasicBlock> previousBasicBlocks = new ArrayList<>();
     List<BasicBlock> followingBasicBlocks = new ArrayList<>();
@@ -55,8 +55,8 @@ class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction> {
         rawBasicBlock.forEach(instruction -> {
             if(!instruction.isLoad() && !instruction.isStore()){
                 instruction.operands.forEach(use -> {
-                    if(use.getValue() instanceof MemoryInst.Alloca){
-                        allocaInstSet.remove((MemoryInst.Alloca) use.getValue());
+                    if(use.getUsee() instanceof MemoryInst.Alloca){
+                        allocaInstSet.remove((MemoryInst.Alloca) use.getUsee());
                     }
                 });
             }

@@ -29,6 +29,9 @@ public class GlobalVariable extends User {
     /**
      * Represent the initial value specified in the statement.
      * <br>
+     * Only for uninitialized global arrays, initVal will be null
+     * (emitting "zeroinitializer" correspondingly in LLVM IR)
+     * <br>
      * The actual value of a non-constant glb var can be change
      * by other instructions, after which the initVal makes no
      * sense to this Value no more.
@@ -48,7 +51,7 @@ public class GlobalVariable extends User {
         super(PointerType.getType(type));
         this.setName("@" + name);
         if(type.isIntegerType()) {
-            this.initVal = ConstInt.get(0);
+            this.initVal = ConstInt.getI32(0);
         }
         else if (type.isFloatType()) {
             this.initVal = ConstFloat.get(.0f);

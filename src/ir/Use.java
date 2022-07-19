@@ -9,24 +9,41 @@ public class Use {
     /**
      * Reference to value being used.
      */
-    private Value v;
+    private Value usee;
+
+    public Value getUsee() {
+        return usee;
+    }
+
+    public void setUsee(Value usee) {
+        this.usee.removeUse(this);
+        this.usee = usee;
+        this.usee.addUse(this);
+    }
 
     /**
      * Reference to the user value.
      */
-    private User u;
+    private User user;
+
+    public User getUser() {
+        return user;
+    }
 
     /**
      * The position number of the value as an operand of the user.
      */
     private int pos;
 
+    public int getOperandPos() {
+        return pos;
+    }
 
     /**
      * Construct a new Use edge.
      * <br>
-     * The constructor automatically inserts the user reference to usee's uses field,
-     * and the usee reference to user's operands field.
+     * The constructor DOES NOT automatically insert the Use link constructed to neither usee's [uses]
+     * field nor the user's [operands] field, which are left for the caller to manually handle.
      * <br>
      * The insertions of references DO NOT check the replicates in the list containers,
      * correctness should be guaranteed by programmer.
@@ -35,25 +52,18 @@ public class Use {
      * @param position The position of the used value as an operand.
      */
     public Use(Value value, User user, int position) {
-        this.v = value;
-        this.u = user;
+        this.usee = value;
+        this.user = user;
         this.pos = position;
-        v.addUse(this);
-        u.operands.add(this);
     }
 
-
-    public int getOperandPos() {
-        return pos;
+    /**
+     * Remove the Use link from its user and usee.
+     * Notice that the Use itself will not be destructed.
+     */
+    public void removeSelf() {
+        this.getUsee().removeUse(this);
+        this.getUser().removeOperandAt(this.getOperandPos());
     }
 
-    public Value getValue() {
-        return v;
-    }
-
-    public void setValue(Value v) {
-        this.v.removeUse(this);
-        this.v = v;
-        this.v.addUse(this);
-    }
 }

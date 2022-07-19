@@ -92,17 +92,19 @@ public abstract class Instruction extends User {
     /**
      * Reference of the basic block where the instruction lands.
      */
-    private BasicBlock bb;
+    private BasicBlock bb = null;
 
     public BasicBlock getBB() {
         return this.bb;
     }
 
+    public void setBB(BasicBlock bb) {
+        this.bb = bb;
+    }
 
-    public Instruction(Type type, InstCategory tag, BasicBlock bb){
+    public Instruction(Type type, InstCategory tag) {
         super(type);
         this.cat = tag;
-        this.bb = bb;
     }
 
 
@@ -123,10 +125,12 @@ public abstract class Instruction extends User {
 
     /**
      * Remove the instruction from the BasicBlock holding it.
+     * All related Use links will also be removed.
      */
     public void removeSelf() {
-        this.getBB().instructions.remove(this);
+        this.getBB().removeInst(this);
     }
+
 
     /**
      * Insert a new one at the front of the instruction.
@@ -135,6 +139,7 @@ public abstract class Instruction extends User {
     public void insertBefore(Instruction inst) {
         var instList = this.getBB().instructions;
         instList.add(instList.indexOf(this), inst);
+        inst.setBB(this.getBB());
     }
 
     /**
@@ -144,5 +149,6 @@ public abstract class Instruction extends User {
     public void insertAfter(Instruction inst) {
         var instList = this.getBB().instructions;
         instList.add(instList.indexOf(this) + 1, inst);
+        inst.setBB(this.getBB());
     }
 }

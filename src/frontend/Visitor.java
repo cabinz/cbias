@@ -35,6 +35,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
      * Stack for back-patching break and continue statements.
      */
     Stack<ArrayList<TerminatorInst.Br>> bpStk = new Stack<>();
+    //</editor-fold>
 
     //<editor-fold desc="Environment variables indicating the building status">
     private final boolean ON = true;
@@ -114,20 +115,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private float retFloat_;
     //</editor-fold>
 
-    //</editor-fold>
-
-
-    //<editor-fold desc="Constructors">
 
     public Visitor (Module module) {
         builder = new IRBuilder(module);
         this.initRuntimeFunctions();
     }
 
-    //</editor-fold>
-
-
-    //<editor-fold desc="Methods">
 
     /**
      * Add declarations of the runtime library functions to symbol table
@@ -1083,7 +1076,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
              */
             if(retVal_.getType().isI32()) { // i32 -> i1
                 // If eqExp gives a number (i32), cast it to be a boolean by NE comparison.
-                retVal_ = builder.buildComparison("!=", retVal_, ConstInt.get(0));
+                retVal_ = builder.buildComparison("!=", retVal_, ConstInt.getI32(0));
             }
             else if (retVal_.getType().isFloatType()) { // float -> i1
                 retVal_ = builder.buildComparison("!=", retVal_, ConstFloat.get(.0f));
@@ -2015,5 +2008,4 @@ public class Visitor extends SysYBaseVisitor<Void> {
         bpStk.peek().add(builder.buildBr(CONTINUE));
         return null;
     }
-    //</editor-fold>
 }

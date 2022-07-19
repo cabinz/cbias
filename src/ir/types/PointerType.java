@@ -8,7 +8,7 @@ import java.security.SecureRandom;
  * Class to represent pointers.
  * Technically, each type should correspond to a unique instance (singleton) of
  * pointer type. But for convenience, PointerType is implemented in ordinary class
- * fashion without singleton / factory method strategies.
+ * fashion without singleton method strategies.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h#L631">
  *     LLVM IR Source: PointerType</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#pointer-type">

@@ -3,21 +3,77 @@ package ir.values.instructions;
 import ir.Type;
 import ir.Value;
 import ir.values.BasicBlock;
+import ir.values.Constant;
 import ir.values.Instruction;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class PhiInst extends Instruction {
 
-    Map<BasicBlock, Value> phiMapping = new HashMap<>();
+    public PhiInst(Type type){
+        super(type, InstCategory.PHI);
+    }
 
-    public PhiInst(Type type, BasicBlock basicBlock){
-        super(type, InstCategory.PHI, basicBlock);
+    int nextMappingId = 0;
+    Map<BasicBlock, Integer> operandMapping = new HashMap<>();
+
+    public boolean hasEntry(){
+        return getNumOperands()!=0;
+    }
+
+    public void addMapping(BasicBlock basicBlock, Value value){
+        this.addOperandAt(value,nextMappingId);
+        this.addOperandAt(basicBlock,nextMappingId+1);
+        operandMapping.put(basicBlock, nextMappingId);
+        nextMappingId += 2;
+    }
+
+    public void removeMapping(BasicBlock basicBlock){
+        if(!operandMapping.containsKey(basicBlock)){
+            throw new RuntimeException("Trying to remove a mapping that does not exists");
+        }
+        int id = operandMapping.get(basicBlock);
+        this.removeOperandAt(id);
+        this.removeOperandAt(id+1);
+        operandMapping.remove(basicBlock);
     }
 
     public void setPhiMapping(Map<BasicBlock, Value> phiMapping){
-        this.phiMapping = phiMapping;
+        operandMapping.keySet().forEach(this::removeMapping);
+        phiMapping.forEach(this::addMapping);
+    }
+
+    public boolean isConstant(){
+        Value stdValue = null;
+        for (Integer id : operandMapping.values()) {
+            var value = getOperandAt(id);
+            if(stdValue==null){
+                stdValue = value;
+            }else{
+                if(!Objects.equals(stdValue,value)) return false;
+            }
+        }
+        if(!(stdValue instanceof Constant)) return false; //null cannot be derived
+        return true;
+    }
+
+    public Constant deriveConstant(){
+        Value stdValue = null;
+        for (Integer id : operandMapping.values()) {
+            var value = getOperandAt(id);
+            if(stdValue==null){
+                stdValue = value;
+            }else{
+                if(!Objects.equals(stdValue,value)){
+                    System.out.println(stdValue);
+                    System.out.println(value);
+                    throw new RuntimeException("PHI is not constant!");
+                }
+            }
+        }
+        return (Constant) stdValue;
     }
 
     @Override
@@ -28,12 +84,12 @@ public class PhiInst extends Instruction {
         builder.append("phi ");
         builder.append(this.getType().toString());
 
-        final Boolean[] isFirstBranch = {true}; // Only in this cay can we change the value inside lambda.
-        phiMapping.forEach((basicBlock, value) -> {
-            builder.append(isFirstBranch[0] ?' ':',');
-            builder.append(String.format("[%s,%s]",value.getName(),"%"+basicBlock.getName()));
-            isFirstBranch[0] = false;
-        });
+        boolean isFirstBranch = true;
+        for (Integer id : operandMapping.values()) {
+            builder.append(isFirstBranch ?' ':',');
+            builder.append(String.format("[%s,%s]",getOperandAt(id).getName(),"%"+getOperandAt(id+1).getName()));
+            isFirstBranch = false;
+        }
 
         return builder.toString();
     }

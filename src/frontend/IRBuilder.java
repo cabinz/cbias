@@ -26,8 +26,6 @@ import java.util.ArrayList;
  */
 public class IRBuilder {
 
-    //<editor-fold desc="Fields">
-
     //<editor-fold desc="Three current building pointers for different levels of IR.">
     /**
      * The module currently being built.
@@ -47,20 +45,14 @@ public class IRBuilder {
     private BasicBlock curBB;
     //</editor-fold>
 
-    //</editor-fold>
 
-
-    //<editor-fold desc="Constructors">
     /**
      * @param m The module to build on.
      */
     public IRBuilder(Module m) {
         this.setCurModule(m);
     }
-    //</editor-fold>
 
-
-    //<editor-fold desc="Methods">
 
     //<editor-fold desc="Setters for building pointers.">
     public void setCurModule(Module mod) {
@@ -96,7 +88,7 @@ public class IRBuilder {
      * @return The ConstInt Value with given numeric value.
      */
     public ConstInt buildConstant(int i) {
-        return ConstInt.get(i);
+        return ConstInt.getI32(i);
     }
 
     /**
@@ -211,7 +203,7 @@ public class IRBuilder {
             throw new RuntimeException("Try to return void with Ret inst in a non-void function.");
         }
         // Construct, insert, and return.
-        TerminatorInst.Ret ret = new TerminatorInst.Ret(curBB);
+        TerminatorInst.Ret ret = new TerminatorInst.Ret();
         getCurBB().insertAtEnd(ret);
         return ret;
     }
@@ -243,7 +235,7 @@ public class IRBuilder {
      */
     public TerminatorInst.Br buildBr(Value cond, BasicBlock trueBlk, BasicBlock falseBlk) {
         // Create and insert a block.
-        TerminatorInst.Br condBr = new TerminatorInst.Br(cond, trueBlk, falseBlk, curBB);
+        TerminatorInst.Br condBr = new TerminatorInst.Br(cond, trueBlk, falseBlk);
         getCurBB().insertAtEnd(condBr);
 
         return condBr;
@@ -262,7 +254,7 @@ public class IRBuilder {
             throw new RuntimeException("Cannot insert a Br after another Br.");
         }
         // Create and insert a block.
-        TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk, curBB);
+        TerminatorInst.Br uncondBr = new TerminatorInst.Br(blk);
         getCurBB().insertAtEnd(uncondBr);
 
         return uncondBr;
@@ -278,7 +270,7 @@ public class IRBuilder {
      * @return The call instruction inserted.
      */
     public CallInst buildCall(Function func, ArrayList<Value> args) {
-        CallInst call = new CallInst(func, args, curBB);
+        CallInst call = new CallInst(func, args);
         getCurBB().insertAtEnd(call);
         return call;
     }
@@ -308,13 +300,14 @@ public class IRBuilder {
     }
 
     /**
-     * Insert a Alloca instruction at the FRONT of current basic block.
+     * Insert a Alloca instruction at the FRONT of ENTRY basic block of the current Function.
      * @param allocatedType The type of memory space allocated.
      * @return The Alloca instruction inserted.
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
-        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType, curBB);
-        getCurFunc().getEntryBB().insertAtFront(inst);
+        var entryBlk = getCurFunc().getEntryBB();
+        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType, entryBlk);
+        entryBlk.insertAtFront(inst);
         return inst;
     }
 
@@ -329,7 +322,7 @@ public class IRBuilder {
             throw new RuntimeException("A non-i1 src Value is given.");
         }
         // Construct, insert, and return.
-        CastInst.ZExt zext = new CastInst.ZExt(srcVal, curBB);
+        CastInst.ZExt zext = new CastInst.ZExt(srcVal);
         getCurBB().insertAtEnd(zext);
         return zext;
     }
@@ -347,7 +340,7 @@ public class IRBuilder {
             throw new RuntimeException("A non-floatingPoint src Value is given.");
         }
         // Construct, insert, and return.
-        CastInst.Fptosi fptosi = new CastInst.Fptosi(srcVal, destType, curBB);
+        CastInst.Fptosi fptosi = new CastInst.Fptosi(srcVal, destType);
         getCurBB().insertAtEnd(fptosi);
         return fptosi;
     }
@@ -363,7 +356,7 @@ public class IRBuilder {
             throw new RuntimeException("A non-integer src Value is given.");
         }
         // Construct, insert, and return.
-        CastInst.Sitofp sitofp = new CastInst.Sitofp(srcVal, curBB);
+        CastInst.Sitofp sitofp = new CastInst.Sitofp(srcVal);
         getCurBB().insertAtEnd(sitofp);
         return sitofp;
     }
@@ -387,10 +380,10 @@ public class IRBuilder {
         BinaryOpInst instAdd = null;
         Type type = lOp.getType();
         if (type.isI32()) {
-            instAdd = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.ADD, lOp, rOp, curBB);
+            instAdd = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.ADD, lOp, rOp);
         }
         else if(type.isFloatType()) {
-            instAdd = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FADD, lOp, rOp, curBB);
+            instAdd = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FADD, lOp, rOp);
         }
         else {
             throw new RuntimeException("Unsupported type: " + type);
@@ -419,10 +412,10 @@ public class IRBuilder {
         BinaryOpInst instSub = null;
         Type type = lOp.getType();
         if (type.isI32()) {
-            instSub = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.SUB, lOp, rOp, curBB);
+            instSub = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.SUB, lOp, rOp);
         }
         else if(type.isFloatType()) {
-            instSub = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FSUB, lOp, rOp, curBB);
+            instSub = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FSUB, lOp, rOp);
         }
         else {
             throw new RuntimeException("Unsupported type: " + type);
@@ -451,10 +444,10 @@ public class IRBuilder {
         BinaryOpInst instMul = null;
         Type type = lOp.getType();
         if (type.isI32()) {
-            instMul = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.MUL, lOp, rOp, curBB);
+            instMul = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.MUL, lOp, rOp);
         }
         else if(type.isFloatType()) {
-            instMul = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FMUL, lOp, rOp, curBB);
+            instMul = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FMUL, lOp, rOp);
         }
         else {
             throw new RuntimeException("Unsupported type: " + type);
@@ -483,10 +476,10 @@ public class IRBuilder {
         BinaryOpInst instDiv = null;
         Type type = lOp.getType();
         if (type.isI32()) {
-            instDiv = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.DIV, lOp, rOp, curBB);
+            instDiv = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.DIV, lOp, rOp);
         }
         else if(type.isFloatType()) {
-            instDiv = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FDIV, lOp, rOp, curBB);
+            instDiv = new BinaryOpInst(FloatType.getType(), Instruction.InstCategory.FDIV, lOp, rOp);
         }
         else {
             throw new RuntimeException("Unsupported type: " + type);
@@ -515,24 +508,24 @@ public class IRBuilder {
         BinaryOpInst inst = null;
         if (lOp.getType().isIntegerType()) {
             switch (opr) {
-                case "<=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.LE, lOp, rOp, curBB);
-                case ">=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.GE, lOp, rOp, curBB);
-                case "<" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.LT, lOp, rOp, curBB);
-                case ">" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.GT, lOp, rOp, curBB);
-                case "==" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.EQ, lOp, rOp, curBB);
-                case "!=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.NE, lOp, rOp, curBB);
+                case "<=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.LE, lOp, rOp);
+                case ">=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.GE, lOp, rOp);
+                case "<" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.LT, lOp, rOp);
+                case ">" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.GT, lOp, rOp);
+                case "==" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.EQ, lOp, rOp);
+                case "!=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.NE, lOp, rOp);
                 default -> {}
             }
         }
         // Floating point comparison.
         else {
             switch (opr) {
-                case "<=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FLE, lOp, rOp, curBB);
-                case ">=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FGE, lOp, rOp, curBB);
-                case "<" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FLT, lOp, rOp, curBB);
-                case ">" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FGT, lOp, rOp, curBB);
-                case "==" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FEQ, lOp, rOp, curBB);
-                case "!=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FNE, lOp, rOp, curBB);
+                case "<=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FLE, lOp, rOp);
+                case ">=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FGE, lOp, rOp);
+                case "<" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FLT, lOp, rOp);
+                case ">" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FGT, lOp, rOp);
+                case "==" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FEQ, lOp, rOp);
+                case "!=" -> inst = new BinaryOpInst(IntegerType.getI1(), Instruction.InstCategory.FNE, lOp, rOp);
                 default -> {}
             }
         }
@@ -558,7 +551,7 @@ public class IRBuilder {
             case FNEG -> resType = FloatType.getType();
         }
         // Build the binary instruction.
-        UnaryOpInst unaryInst = new UnaryOpInst(resType, tag, opd, curBB);
+        UnaryOpInst unaryInst = new UnaryOpInst(resType, tag, opd);
         getCurBB().insertAtEnd(unaryInst);
         return unaryInst;
     }
@@ -593,9 +586,8 @@ public class IRBuilder {
      * @return The GEP instruction inserted.
      */
     public GetElemPtrInst buildGEP(Value ptr, ArrayList<Value> indices) {
-        GetElemPtrInst gepInst = new GetElemPtrInst(ptr, indices, curBB);
+        GetElemPtrInst gepInst = new GetElemPtrInst(ptr, indices);
         getCurBB().insertAtEnd(gepInst);
         return gepInst;
     }
-    //</editor-fold>
 }

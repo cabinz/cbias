@@ -3,6 +3,7 @@ package passes;
 import backend.ARMAssemble;
 import ir.Module;
 import passes.ir.IRPass;
+import passes.ir.constant_derivation.ConstantDerivation;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
 import passes.mc.RegisterAllocation.GraphColoring;
@@ -27,6 +28,7 @@ public class PassManager {
      */
     public void runPasses(Module module){
         run(Mem2reg.class, module);
+        run(ConstantDerivation.class, module);
     }
 
     /**
@@ -79,6 +81,7 @@ public class PassManager {
             // IR Passes
             ArrayList<IRPass> IRPasses = new ArrayList<>();
             IRPasses.add(new Mem2reg());
+            IRPasses.add(new ConstantDerivation());
             registerIRPasses(IRPasses);
 
             // MC Passes

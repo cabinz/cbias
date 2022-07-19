@@ -4,7 +4,6 @@ import ir.Type;
 import ir.Value;
 import ir.types.ArrayType;
 import ir.types.PointerType;
-import ir.values.BasicBlock;
 import ir.values.Instruction;
 
 import java.util.ArrayList;
@@ -48,12 +47,12 @@ public class GetElemPtrInst extends Instruction {
      * Construct a GEP instruction.
      * The 1st operand of a GEP is the ptr (first address of the array) applied on.
      * The following operands are the Values serving as indices.
-     * @param ptr The Value in PointerType (the first address of an array).
+     *
+     * @param ptr     The Value in PointerType (the first address of an array).
      * @param indices The indices for dereference.
-     * @param bb The parent block.
      */
-    public GetElemPtrInst(Value ptr, ArrayList<Value> indices, BasicBlock bb) {
-        super(PointerType.getType(getGEPElemType(ptr, indices)), InstCategory.GEP, bb);
+    public GetElemPtrInst(Value ptr, ArrayList<Value> indices) {
+        super(PointerType.getType(getGEPElemType(ptr, indices)), InstCategory.GEP);
         // The 1st operand of a GEP is the ptr (the address of the array) applied on.
         this.addOperandAt(ptr, 0);
         // The following operands are the Values serving as indices.

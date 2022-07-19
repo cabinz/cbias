@@ -2,18 +2,18 @@ package ir.values.instructions;
 
 import ir.Type;
 import ir.Value;
-import ir.values.BasicBlock;
 import ir.values.Instruction;
 
 public class UnaryOpInst extends Instruction {
     /**
      * User (Builder) needs to guarantee parameters passed correct.
+     *
      * @param type Type of operation result.
-     * @param tag Instruction category.
-     * @param opd The operand Value.
+     * @param tag  Instruction category.
+     * @param opd  The operand Value.
      */
-    public UnaryOpInst (Type type, Instruction.InstCategory tag, Value opd, BasicBlock bb) {
-        super(type, tag, bb);
+    public UnaryOpInst (Type type, InstCategory tag, Value opd) {
+        super(type, tag);
         // Add left and right operands.
         this.addOperandAt(opd, 0);
     }
