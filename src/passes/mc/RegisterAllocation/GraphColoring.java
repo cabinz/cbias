@@ -383,6 +383,7 @@ public class GraphColoring implements MCPass {
                     /* Each def adds all the loads' offset by one, including itself */
                     if (inst.getDef().contains(v)) {
                         /* If Alloca def the VR, spilled store needs to be moved to the last of the Alloca */
+                        // TODO: 这样导致不能定义超过13个数组，不过应该不会超过吧。。。。。
                         if (((VirtualRegister) v).getValue() instanceof MemoryInst.Alloca) {
                             for (int j = i+1; j < list.size(); ) {
                                 inst = list.get(j);
