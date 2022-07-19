@@ -667,6 +667,16 @@ public class GraphColoring implements MCPass {
             if (shift instanceof VirtualRegister shiftt)
                 replace(move, shiftt);
         }
+        else if (inst instanceof MCFma fma) {
+            Register accumulate = fma.getAccumulate();
+            Register multiple_1 = fma.getMultiple_1();
+            Register multiple_2 = fma.getMultiple_2();
+            Register dst = fma.getDst();
+            replace(fma, accumulate);
+            replace(fma, multiple_1);
+            replace(fma, multiple_2);
+            replace(fma, dst);
+        }
     }
 
     private void replace(MCInstruction inst, Register old) {

@@ -37,15 +37,10 @@ public class MCFma extends MCInstruction {
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
-        if (accumulate.equals(old)) {
-            accumulate = tmp;
-        } else if (multiple_1.equals(old)) {
-            multiple_1 = tmp;
-        } else if (multiple_2.equals(old)) {
-            multiple_2 = tmp;
-        } else if (dst.equals(old)) {
-            dst = tmp;
-        }
+        if (accumulate == old) accumulate = tmp;
+        if (multiple_1 == old) multiple_1 = tmp;
+        if (multiple_2 == old) multiple_2 = tmp;
+        if (dst == old) dst = tmp;
     }
 
     @Override
