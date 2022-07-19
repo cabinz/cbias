@@ -38,7 +38,10 @@ public class MCstore extends MCInstruction {
 
     @Override
     public HashSet<Register> getDef() {
-        return new HashSet<>();
+        var set = new HashSet<Register>();
+        if (write)
+            set.add(addr);
+        return set;
     }
 
     @Override

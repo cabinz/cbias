@@ -35,6 +35,8 @@ public class MCload extends MCInstruction {
     public HashSet<Register> getDef() {
         var set = new HashSet<Register>();
         set.add(dst);
+        if (write)
+            set.add(addr);
         return set;
     }
 
