@@ -144,7 +144,7 @@ public class GraphColoring implements MCPass {
                 continue;
             curFunc = func;
 
-            /* Graph Coloring */
+            //<editor-fold desc="Graph Coloring">
             while (true) {
                 Initialize();
                 liveInfo = LivenessAnalysis.run(func);
@@ -165,7 +165,9 @@ public class GraphColoring implements MCPass {
 
             /* Correct the offset of spilled loads */
             spilledLoad.forEach((tmp, loads) -> loads.getA().forEach(inst -> inst.setOffset(new Immediate(loads.getB()*4))));
+            //</editor-fold>
 
+            //<editor-fold desc="Register Allocation">
             /* Replace registers */
             func.forEach(block -> block.forEach(this::assignRealRegister));
 
@@ -175,6 +177,11 @@ public class GraphColoring implements MCPass {
             /* Fix function stack */
             usedColor.forEach(func::addContext);
             func.fixParamAddress();
+
+            /* Preserve the context (callee-save register) */
+            if (!func.getContext().isEmpty())
+                func.getEntryBlock().prependInst(new MCpush(func.getContext()));
+            //</editor-fold>
         }
     }
 

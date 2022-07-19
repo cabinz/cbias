@@ -47,9 +47,6 @@ public class MCEmitter {
             if (f.isExternal()) continue;
             strBd.append("\t.global " + f.emit() + '\n');
             strBd.append(f.emit() + ":\n");
-            /* Callee-save */
-            if (!f.getContext().isEmpty())
-                f.getEntryBlock().prependInst(new MCpush(f.getContext()));
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
                 strBd.append(bb.emit() + ":\n");
