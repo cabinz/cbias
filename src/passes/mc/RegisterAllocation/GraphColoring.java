@@ -349,8 +349,8 @@ public class GraphColoring implements MCPass {
 
             /* Remove unavailable color */
             if (adjList.containsKey(n))
-                adjList.get(n).forEach(w -> {
-                    if (isPrecolored(GetAlias(w)) || coloredNodes.contains(w))
+                adjList.getOrDefault(n, new HashSet<>()).forEach(w -> {
+                    if (isPrecolored(GetAlias(w)) || coloredNodes.contains(GetAlias(w)))
                         okColor.remove(color.get(GetAlias(w)));
                 });
 
