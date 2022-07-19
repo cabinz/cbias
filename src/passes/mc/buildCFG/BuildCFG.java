@@ -16,13 +16,18 @@ public class BuildCFG implements MCPass {
                 MCBasicBlock block = func.getBasicBlockList().get(i);
                 MCBasicBlock next = i==func.getBasicBlockList().size()-1 ?null :func.getBasicBlockList().get(i+1);
                 /* End with branch */
-                if (block.getLastInst() instanceof MCbranch branch && branch.isBranch()) {
-                    MCBasicBlock target = branch.getTargetBB();
-                    block.setTrueSuccessor(target);
-                    target.addPredecessor(block);
-                    if (branch.getCond() != null && next != null) {
-                        block.setFalseSuccessor(next);
-                        next.addPredecessor(block);
+                if (block.getLastInst() instanceof MCbranch branch1 && branch1.isBranch()) {
+                    var instList = block.getInstructionList();
+                    var target1 = branch1.getTargetBB();
+                    target1.addPredecessor(block);
+                    if (branch1.getCond() == null) {
+                        block.setTrueSuccessor(target1);
+                    }
+                    else {
+                        block.setFalseSuccessor(target1);
+                        var branch2 = ((MCbranch) instList.get(instList.size() - 2));
+                        block.setTrueSuccessor(branch2.getTargetBB());
+                        branch2.getTargetBB().addPredecessor(block);
                     }
                 }
                 /* End with return */
