@@ -68,6 +68,10 @@ public class MCstore extends MCInstruction {
     //<editor-fold desc="Constructor">
     public MCstore(Register src, Register addr) {super(TYPE.STORE); this.src = src; this.addr = addr;}
     public MCstore(Register src, Register addr, MCOperand offset) {super(TYPE.STORE);this.src = src;this.addr = addr;this.offset = offset;this.write=false;}
+
+    /**
+     * Make sure that write is a non-zero number!
+     */
     public MCstore(Register src, Register addr, MCOperand offset, boolean write) {super(TYPE.STORE);this.src = src;this.addr = addr;this.offset = offset;this.write=write;}
     public MCstore(Register src, Register addr, Shift shift, ConditionField cond) {super(TYPE.STORE, shift, cond); this.src = src; this.addr = addr;}
     //</editor-fold>
