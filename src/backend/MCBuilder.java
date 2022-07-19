@@ -170,18 +170,18 @@ public class MCBuilder {
             /* temp is immediate */
             else {
                 if (forceAllocReg){
-                    /* If force to allocate a register, should we create a new one or attempt to find one hold in VR? */
-                    /* For now, try to find the old one */
+                    /* TODO: If force to allocate a register, should we create a new one or attempt to find one hold in VR? */
                         /* Create new one: more MOV instruction is created */
                         /* Find old one: Expand the live range of one VR, may cause SPILLING */
-                    if (valueMap.containsKey(value))
-                        return valueMap.get(value);
-                    else {
+                    /* For now, try to create new one */
+//                    if (valueMap.containsKey(value))
+//                        return valueMap.get(value);
+//                    else {
                         VirtualRegister vr = curFunc.createVirReg(((ConstInt) value).getVal());
                         valueMap.put(value, vr);
                         curMCBB.appendInst(new MCMove(vr, temp));
                         return vr;
-                    }
+//                    }
                 }
                 else
                     return temp;
