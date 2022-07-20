@@ -376,7 +376,10 @@ public class MCBuilder {
 
     /**
      * Translate the IR alloca instruction into ARM. <br/>
-     * IR Alloca will be translated into "sp := sp - 4" and "MOV Vreg, sp".<br/>
+     * IR Alloca will be translated into "VirReg := sp + offset_before".
+     * And sp will be added in front of a procedure,
+     * meaning that the stack of function is allocated at beginning,
+     * and do NOT change in the procedure until a function call then balanced. <br/>
      * To be optimized later....
      * @param IRinst IR instruction to be translated
      */
@@ -389,8 +392,7 @@ public class MCBuilder {
         else if (allocated.isArrayType()) {
             offset = ((ArrayType) allocated).getSize() * 4;
         }
-        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(offset)));
-        curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(13)));
+        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, (Register) findContainer(IRinst), RealRegister.get(13), createConstInt(curFunc.getLocalVariable())));
 
         curFunc.addLocalVariable(offset);
     }

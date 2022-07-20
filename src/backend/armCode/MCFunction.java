@@ -38,7 +38,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * This field is used to record the sizes of
      * local variables.
      */
-    private ArrayList<Integer> localVariable;
+    private int localVariable;
     /**
      * This field is used to record the number of
      * spilled virtual registers.
@@ -109,7 +109,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         return vr;
     }
 
-    public void addLocalVariable(int i) {localVariable.add(i);}
+    public void addLocalVariable(int i) {localVariable += i;}
 
     /**
      * Add a register to context, meaning it was used in the function
@@ -142,7 +142,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * stackSize = sum(localVariable) + spilledNode*4
      */
     public int getStackSize() {
-        stackSize = localVariable.stream().mapToInt(v ->v).sum() + spilledNode*4;
+        stackSize = localVariable + spilledNode*4;
         return stackSize;
     }
 
@@ -162,7 +162,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public String getName() {return name;}
 
     public HashSet<RealRegister> getContext() {return context;}
-    public ArrayList<Integer> getLocalVariable() {return localVariable;}
+    public Integer getLocalVariable() {return localVariable;}
     public int getSpilledNode() {return spilledNode;}
 
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
@@ -181,7 +181,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         this.name = name;
         stackSize = 0;
         context = new HashSet<>();
-        localVariable = new ArrayList<>();
+        localVariable = 0;
         spilledNode = 0;
         paramCal = new HashSet<>();
         BasicBlockList = new LinkedList<>();

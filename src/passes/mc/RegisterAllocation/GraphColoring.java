@@ -410,7 +410,7 @@ public class GraphColoring implements MCPass {
                     if (inst.getUse().contains(v)) {
                         // TODO: 更好的方法？
                         /* Create a temporary v_tmp for the use */
-                        VirtualRegister tmp = curFunc.createVirReg(null);
+                        VirtualRegister tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
                         MCload load = new MCload(tmp, RealRegister.get(13), new Immediate(0));
                         inst.insertBefore(load);
                         spilledLoad.get(v).getA().add(load);
