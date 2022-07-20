@@ -497,30 +497,42 @@ public class MCBuilder {
      * @param type Operation type, ADD/SUB
      */
     private void translateAddSub(BinaryOpInst IRinst, MCInstruction.TYPE type) {
-        MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
-        MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
+        Value value1 = IRinst.getOperandAt(0);
+        Value value2 = IRinst.getOperandAt(1);
 
         /* If there is icmp instruction in operands */
-        if (IRinst.getOperandAt(0) instanceof CastInst.ZExt zExt)
+        if (value1 instanceof CastInst.ZExt zExt)
             translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
-        if (IRinst.getOperandAt(1) instanceof CastInst.ZExt zExt)
+        if (value2 instanceof CastInst.ZExt zExt)
             translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+
+        MCOperand operand1 = findContainer(value1);
+        MCOperand operand2 = findContainer(value2);
+        Register dst = (Register) findContainer(IRinst);
 
         /* Translate */
         if (operand1.isImmediate()) {
             if (operand2.isImmediate()) {
+                /* This case should not happen, so no optimization here */
                 VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
-                curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst), register, operand2));
+                curMCBB.appendInst(new MCBinary(type, dst, register, operand2));
             }
             else {
                 if (type != MCInstruction.TYPE.SUB)
-                    curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst),(Register)  operand2, operand1));
-                else
-                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst),(Register)  operand2, operand1));
+                    curMCBB.appendInst(new MCBinary(type, dst, (Register) operand2, operand1));
+                else {
+                    if (((ConstInt) value1).getVal() == 0)
+                        curMCBB.appendInst(new MCMove(dst, operand2));
+                    else
+                        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, (Register) operand2, operand1));
+                }
             }
         }
         else {
-            curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst),(Register) operand1, operand2));
+            if (operand2.isImmediate() && ((ConstInt) value2).getVal() == 0)
+                curMCBB.appendInst(new MCMove(dst, operand1));
+            else
+                curMCBB.appendInst(new MCBinary(type, dst, (Register) operand1, operand2));
         }
     }
 
