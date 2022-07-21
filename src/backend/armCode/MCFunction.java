@@ -25,8 +25,8 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     /**
      * Total stackSize, including local variables & spilled nodes. <br/>
-     * stackSize = sum(localVariable) + spilledNode*4; <br/>
-     * Function stack (from high to low): parameter, context, local variables, spilled nodes
+     * stackSize = localVariable + spilledNode*4; <br/>
+     * Function stack (from high to low): parameter, context, spilled nodes, local variables
      */
     private int stackSize;
     /**
@@ -131,7 +131,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     /**
      * Get total stackSize, including local variables & spilled nodes. <br/>
-     * stackSize = sum(localVariable) + spilledNode*4
+     * stackSize = localVariable + spilledNode*4
      */
     public int getStackSize() {
         stackSize = localVariable + spilledNode*4;

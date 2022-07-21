@@ -358,7 +358,7 @@ public class MCBuilder {
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
      * r0-r3 are caller-saved registers, while r4-r12 are callee-saved registers. <br/>
-     * Function stack (from high to low): parameter, context, local variables, spilled nodes <br/>
+     * Function stack (from high to low): parameter, context, spilled nodes, local variables <br/>
      * @param IRinst IR call instruction
      */
     private void translateCall(CallInst IRinst) {
