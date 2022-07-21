@@ -1,6 +1,7 @@
 package passes.mc.RegisterAllocation;
 
 import backend.ARMAssemble;
+import backend.TestInfo;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
@@ -9,10 +10,12 @@ import backend.operand.Immediate;
 import backend.operand.RealRegister;
 import backend.operand.Register;
 import backend.operand.VirtualRegister;
-import ir.values.instructions.MemoryInst;
 import passes.mc.MCPass;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -132,7 +135,6 @@ public class GraphColoring implements MCPass {
     private MCFunction curFunc;
     private HashMap<MCBasicBlock, LiveInfo> liveInfo;
     private final int INF = 0x3F3F3F3F;
-    private HashMap<Register, Pair<HashSet<MCload>, Integer>> spilledLoad = new HashMap<>();
     private HashSet<Integer> usedColor;
     //</editor-fold>
     //</editor-fold>
