@@ -109,6 +109,17 @@ public class MCBuilder {
                     translate(IRinst);
                 }
             }
+
+            /* Allocate function variable stack in front of procedure */
+            MCBasicBlock entry = curFunc.getEntryBlock();
+            int variableSize = curFunc.getLocalVariable();
+            if (canEncodeImm(variableSize)) {
+                entry.prependInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), new Immediate(variableSize)));
+            } else {
+                VirtualRegister vr = curFunc.createVirReg(variableSize);
+                entry.prependInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), vr));
+                entry.prependInst(new MCMove(vr, new Immediate(variableSize), true));
+            }
         }
     }
 
@@ -380,10 +391,10 @@ public class MCBuilder {
      * And sp will be added in front of a procedure,
      * meaning that the stack of function is allocated at beginning,
      * and do NOT change in the procedure until a function call then balanced. <br/>
-     * To be optimized later....
      * @param IRinst IR instruction to be translated
      */
     private void translateAlloca(MemoryInst.Alloca IRinst) {
+        // TODO: calculate address when used
         int offset = 0;
         Type allocated = IRinst.getAllocatedType();
         if (allocated.isIntegerType() || allocated.isPointerType()) {
