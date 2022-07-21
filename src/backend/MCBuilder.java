@@ -538,14 +538,14 @@ public class MCBuilder {
                 curMCBB.appendInst(new MCBinary(type, dst, register, operand2));
             }
             else {
-                if (type != MCInstruction.TYPE.SUB)
-                    curMCBB.appendInst(new MCBinary(type, dst, (Register) operand2, operand1));
-                else {
+                if (type != MCInstruction.TYPE.SUB) {
                     if (((ConstInt) value1).getVal() == 0)
                         curMCBB.appendInst(new MCMove(dst, operand2));
                     else
-                        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, (Register) operand2, operand1));
+                        curMCBB.appendInst(new MCBinary(type, dst, (Register) operand2, operand1));
                 }
+                else
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, (Register) operand2, operand1));
             }
         }
         else {
