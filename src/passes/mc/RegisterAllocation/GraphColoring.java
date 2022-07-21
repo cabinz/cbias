@@ -163,10 +163,6 @@ public class GraphColoring implements MCPass {
                 else
                     RewriteProgram();
             }
-
-            /* Correct the offset of spilled loads */
-            /* Because each def adds offset, so need to minus one. See {@link this::RewriteProgram()} */
-            spilledLoad.forEach((tmp, loads) -> loads.getA().forEach(inst -> inst.setOffset(new Immediate(loads.getB()*4-4))));
             //</editor-fold>
 
             //<editor-fold desc="Register Allocation">
@@ -178,7 +174,21 @@ public class GraphColoring implements MCPass {
 
             /* Fix function stack */
             usedColor.forEach(func::addContext);
-            func.fixParamAddress();
+
+            /* Adjust the parameters' load address */
+            func.getParamCal().forEach(load -> load.setOffset(new Immediate(
+                    ((Immediate) load.getOffset()).getIntValue()
+                    + func.getContext().size() * 4
+                    + func.getSpilledNode() * 4
+            )));
+
+            /* Adjust stack allocate */
+            MCBinary allocate = (MCBinary) func.getEntryBlock().getFirstInst();
+            Immediate old_offset = (Immediate) allocate.getOperand2();
+            allocate.setOperand2(new Immediate(
+                    old_offset.getIntValue()
+                    + func.getSpilledNode() * 4
+            ));
 
             /* Preserve the context (callee-save register) */
             if (!func.getContext().isEmpty())
@@ -371,54 +381,33 @@ public class GraphColoring implements MCPass {
 
     private void RewriteProgram() {
         for (var v : spilledNodes) {
-            curFunc.addSpilledNode();
-            spilledLoad.putIfAbsent(v, new Pair<>(new HashSet<>(), 0));
+            int offset = curFunc.getStackSize();
 
             for (var block : curFunc) {
                 var list = block.getInstructionList();
                 for (int i=0; i<list.size(); i++) {
                     var inst = list.get(i);
 
-                    /* If def */
-                    /* Each def adds all the loads' offset by one, including itself */
+                    /* If def, store the def into memory */
                     if (inst.getDef().contains(v)) {
-                        /* If Alloca def the VR, spilled store needs to be moved to the last of the Alloca */
-                        // TODO: 这样导致不能定义超过13个数组，不过应该不会超过吧。。。。。
-                        if (((VirtualRegister) v).getValue() instanceof MemoryInst.Alloca) {
-                            for (int j = i+1; j < list.size(); ) {
-                                inst = list.get(j);
-                                if (inst instanceof MCBinary) {
-                                    j += 2;
-                                }
-                                else {
-                                    inst.insertBefore(new MCstore(v, RealRegister.get(13), new Immediate(-4), true));
-                                    spilledLoad.values().forEach(p -> p.setB(p.getB()+1));
-                                    i = j;
-                                    break;
-                                }
-                            }
-                        }
-                        /* Else, just insert after def */
-                        else {
-                            inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(-4), true));
-                            spilledLoad.values().forEach(p -> p.setB(p.getB()+1));
-                            i++;
-                        }
+                        inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(offset)));
+                        i++;
                     }
 
-                    /* If use */
+                    /* If use, load from memory */
                     if (inst.getUse().contains(v)) {
                         // TODO: 更好的方法？
                         /* Create a temporary v_tmp for the use */
                         VirtualRegister tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
-                        MCload load = new MCload(tmp, RealRegister.get(13), new Immediate(0));
+                        MCload load = new MCload(tmp, RealRegister.get(13), new Immediate(offset));
                         inst.insertBefore(load);
-                        spilledLoad.get(v).getA().add(load);
                         inst.replaceRegister(v, tmp);
                         i++;
                     }
                 }
             }
+
+            curFunc.addSpilledNode();
         }
     }
     //</editor-fold>

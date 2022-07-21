@@ -3,7 +3,6 @@ package backend;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
-import backend.armCode.MCInstructions.MCpush;
 import backend.operand.Label;
 
 import java.io.FileWriter;

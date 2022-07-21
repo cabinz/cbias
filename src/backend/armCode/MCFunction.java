@@ -130,14 +130,6 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public void addParamCal(MCload move) {paramCal.add(move);}
 
     /**
-     * Fix the bug of parameter address calculation causing by {@link passes.mc.RegisterAllocation.GraphColoring}. <br/>
-     * This method should not be here, but ... I have no idea where to place it.
-     */
-    public void fixParamAddress() {
-        paramCal.forEach(load -> load.setOffset(new Immediate(((Immediate) load.getOffset()).getIntValue() + context.size()*4)));
-    }
-
-    /**
      * Get total stackSize, including local variables & spilled nodes. <br/>
      * stackSize = sum(localVariable) + spilledNode*4
      */
@@ -164,6 +156,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public HashSet<RealRegister> getContext() {return context;}
     public Integer getLocalVariable() {return localVariable;}
     public int getSpilledNode() {return spilledNode;}
+    public HashSet<MCload> getParamCal() {return paramCal;}
 
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
     public ArrayList<VirtualRegister> getVirtualRegisters() {return VirtualRegisters;}

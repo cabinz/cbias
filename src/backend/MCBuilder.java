@@ -120,6 +120,12 @@ public class MCBuilder {
                 entry.prependInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), vr));
                 entry.prependInst(new MCMove(vr, new Immediate(variableSize), true));
             }
+
+            /* Adjust parameter loads' offset */
+            curFunc.getParamCal().forEach(load -> load.setOffset(new Immediate(
+                    ((Immediate) load.getOffset()).getIntValue()
+                            + curFunc.getLocalVariable()
+            )));
         }
     }
 
@@ -223,6 +229,7 @@ public class MCBuilder {
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
             // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别
+            // TODO: 使用到全局变量的时候才计算地址
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             int pos = ((Function.FuncArg) value).getPos();
