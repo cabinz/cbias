@@ -204,6 +204,13 @@ public class MCBuilder {
                     return temp;
             }
         }
+        else if (value instanceof GlobalVariable) {
+            // TODO: 采用控制流分析，是否能访问到之前的地址
+            VirtualRegister vr = curFunc.createVirReg(value);
+            valueMap.put(value, vr);
+            curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
+            return vr;
+        }
         else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
@@ -219,12 +226,6 @@ public class MCBuilder {
                 vr = curFunc.createVirReg(inst);
 
             valueMap.put(inst, vr);
-            return vr;
-        }
-        else if (value instanceof GlobalVariable) {
-            VirtualRegister vr = curFunc.createVirReg(value);
-            valueMap.put(value, vr);
-            curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
