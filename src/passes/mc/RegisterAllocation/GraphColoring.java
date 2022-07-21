@@ -183,12 +183,19 @@ public class GraphColoring implements MCPass {
             )));
 
             /* Adjust stack allocate */
-            MCBinary allocate = (MCBinary) func.getEntryBlock().getFirstInst();
-            Immediate old_offset = (Immediate) allocate.getOperand2();
-            allocate.setOperand2(new Immediate(
-                    old_offset.getIntValue()
+            MCInstruction allocate = func.getEntryBlock().getFirstInst();
+            if (allocate instanceof MCBinary bi) {
+                bi.setOperand2(new Immediate(
+                    ((Immediate) bi.getOperand2()).getIntValue()
                     + func.getSpilledNode() * 4
-            ));
+                ));
+            }
+            else if (allocate instanceof MCMove mov) {
+                mov.setSrc(new Immediate(
+                    ((Immediate) mov.getSrc()).getIntValue()
+                    + func.getSpilledNode() * 4
+                ));
+            }
 
             /* Preserve the context (callee-save register) */
             if (!func.getContext().isEmpty())
