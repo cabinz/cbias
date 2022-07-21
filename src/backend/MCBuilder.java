@@ -688,7 +688,7 @@ public class MCBuilder {
                 else {
                     /* Create register for scale */
                     VirtualRegister vr = curFunc.createVirReg(scale);
-                    curMCBB.appendInst(new MCMove(vr, new Immediate(scale), canEncodeImm(scale)));
+                    curMCBB.appendInst(new MCMove(vr, new Immediate(scale), !canEncodeImm(scale)));
                     curMCBB.appendInst(new MCFma(MCInstruction.TYPE.MLA, dst, ((Register) index), vr, baseAddr));
                 }
 
