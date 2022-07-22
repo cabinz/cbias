@@ -49,9 +49,9 @@ public class MCReturn extends MCInstruction {
                 int high16 = stackSize >>> 16;
                 int low16 = stackSize & 0xFFFF;
                 if (high16 == 0)
-                    assemble.append("MOVW r5, #").append(low16).append("\n\t");
+                    assemble.append("MOVW r5, #").append(low16).append("\n\tADD sp, sp, r5").append("\n\t");
                 else
-                    assemble.append("MOVW r5, #").append(low16).append("\n\tMOVT r5, #").append(high16).append("\n\t");
+                    assemble.append("MOVW r5, #").append(low16).append("\n\tMOVT r5, #").append(high16).append("\n\tADD sp, sp, r5").append("\n\t");
             }
         }
 
