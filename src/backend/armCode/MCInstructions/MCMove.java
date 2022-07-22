@@ -21,6 +21,8 @@ public class MCMove extends MCInstruction {
 
     public boolean isCopy() {return src.isVirtualReg() || src.isRealReg();}
 
+    public void setExceededLimit() {exceededLimit = true;}
+
     @Override
     public HashSet<Register> getUse() {
         var set = new HashSet<Register>();

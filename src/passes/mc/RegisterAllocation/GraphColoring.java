@@ -169,42 +169,18 @@ public class GraphColoring implements MCPass {
             //</editor-fold>
 
             //<editor-fold desc="Register Allocation">
-            /* Replace registers */
-            func.forEach(block -> block.forEach(this::assignRealRegister));
+            ReplaceRegisters();
 
-            /* Remove the coalesced moves */
-            coalescedMoves.forEach(MCInstruction::removeSelf);
+            RemoveCoalesced();
 
             /* Fix function stack */
             usedColor.forEach(func::addContext);
-            func.addContext(12);
 
-            // TODO: 超过限制时需要生成move
-            /* Adjust the parameters' load address */
-            func.getParamCal().forEach(load -> load.setOffset(new Immediate(
-                    ((Immediate) load.getOffset()).getIntValue()
-                    + func.getContext().size() * 4
-                    + func.getSpilledNode() * 4
-            )));
+            AdjustParamLoad();
 
-            /* Adjust stack allocate */
-            MCInstruction allocate = func.getEntryBlock().getFirstInst();
-            if (allocate instanceof MCBinary bi) {
-                bi.setOperand2(new Immediate(
-                    ((Immediate) bi.getOperand2()).getIntValue()
-                    + func.getSpilledNode() * 4
-                ));
-            }
-            else if (allocate instanceof MCMove mov) {
-                mov.setSrc(new Immediate(
-                    ((Immediate) mov.getSrc()).getIntValue()
-                    + func.getSpilledNode() * 4
-                ));
-            }
+            AdjustStack();
 
-            /* Preserve the context (callee-save register) */
-            if (!func.getContext().isEmpty())
-                func.getEntryBlock().prependInst(new MCpush(func.getContext()));
+            PreserveContext();
             //</editor-fold>
         }
     }
@@ -348,6 +324,9 @@ public class GraphColoring implements MCPass {
         }
     }
 
+    /**
+     * Freeze the copy to keep simplifying
+     */
     private void Freeze() {
         var u = freezeWorklist.iterator().next();
         freezeWorklist.remove(u);
@@ -355,6 +334,11 @@ public class GraphColoring implements MCPass {
         FreezeMoves(u);
     }
 
+    /**
+     * Select a node to be spilled, but not real spilled. <br/>
+     * Spilling is postponed after AssignColor, because the spilled node may be able to be colored. <br/>
+     * Random select now, be to optimized later ...
+     */
     private void SelectSpill() {
         // TODO: BETTER WAY
         var m = spillWorklist.iterator().next();
@@ -363,6 +347,10 @@ public class GraphColoring implements MCPass {
         FreezeMoves(m);
     }
 
+    /**
+     * Assign color to all nodes, trying to assign the spilled node.
+     * If the color available is empty, the node must be spilled.
+     */
     private void AssignColors() {
         while (!selectStack.isEmpty()) {
             /* Initialize */
@@ -391,6 +379,10 @@ public class GraphColoring implements MCPass {
         coalescedNodes.forEach(n -> color.put(n, color.get(GetAlias(n))));
     }
 
+    /**
+     * Spilling using store after def and load before use. <br/>
+     * That's ugly, but useful and simple.
+     */
     private void RewriteProgram() {
         for (var v : spilledNodes) {
             int offset = curFunc.getStackSize();
@@ -435,6 +427,58 @@ public class GraphColoring implements MCPass {
 
             curFunc.addSpilledNode();
         }
+    }
+
+    private void ReplaceRegisters() {
+        curFunc.forEach(block -> block.forEach(this::assignRealRegister));
+    }
+
+    private void RemoveCoalesced() {
+        coalescedMoves.forEach(MCInstruction::removeSelf);
+    }
+
+    /**
+     * Add the context and spilled nodes' space to the parameter loads' offset
+     */
+    private void AdjustParamLoad() {
+        // TODO: 超过限制时需要生成move
+        curFunc.getParamCal().forEach(load -> load.setOffset(new Immediate(
+                ((Immediate) load.getOffset()).getIntValue()
+                        + curFunc.getContext().size() * 4
+                        + curFunc.getSpilledNode() * 4
+        )));
+    }
+
+    /**
+     * Add the spilled nodes' space to the function stack
+     */
+    private void AdjustStack() {
+        MCInstruction allocate = curFunc.getEntryBlock().getFirstInst();
+        if (allocate instanceof MCBinary bi) {
+            int new_offset = ((Immediate) bi.getOperand2()).getIntValue() + curFunc.getSpilledNode() * 4;
+            if (MCBuilder.canEncodeImm(new_offset))
+                bi.setOperand2(new Immediate(new_offset));
+            else {
+                bi.insertBefore(new MCMove(RealRegister.get(4), new Immediate(new_offset), true));
+            }
+        }
+        else if (allocate instanceof MCMove mov) {
+            int new_offset = ((Immediate) mov.getSrc()).getIntValue() + curFunc.getSpilledNode() * 4;
+            if (MCBuilder.canEncodeImm(new_offset))
+                mov.setSrc(new Immediate(new_offset));
+            else {
+                mov.setSrc(new Immediate(new_offset));
+                mov.setExceededLimit();
+            }
+        }
+    }
+
+    /**
+     * Add PUSH in the front of procedure to preserve the context if necessary
+     */
+    private void PreserveContext() {
+        if (!curFunc.getContext().isEmpty())
+            curFunc.getEntryBlock().prependInst(new MCpush(curFunc.getContext()));
     }
     //</editor-fold>
 
