@@ -604,16 +604,16 @@ public class MCBuilder {
                 }
             }
             else if (isPowerOfTwo(abs + 1)) {
+                MCInstruction.TYPE type = intVal<0 ?MCInstruction.TYPE.SUB : MCInstruction.TYPE.RSB;
+                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs+1));
+                curMCBB.appendInst(new MCBinary(type, dst, mul, mul, shift, null));
+            }
+            else if (isPowerOfTwo(abs - 1)) {
                 MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs));
-                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, mul, mul, shift, null));
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, mul, mul, shift, null));
                 if (intVal < 0) {
                     curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
                 }
-            }
-            else if (isPowerOfTwo(abs - 1)) {
-                MCInstruction.TYPE type = intVal<0 ?MCInstruction.TYPE.ADD : MCInstruction.TYPE.RSB;
-                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs+1));
-                curMCBB.appendInst(new MCBinary(type, dst, mul, mul, shift, null));
             }
             else {
                 Register mul1 = (Register) findContainer(operand1, true);
