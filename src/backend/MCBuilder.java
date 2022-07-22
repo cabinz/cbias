@@ -190,7 +190,7 @@ public class MCBuilder {
                 if (forceAllocReg){
                     /* TODO: If force to allocate a register, should we create a new one or attempt to find one hold in VR? */
                         /* Create new one: more MOV instruction is created */
-                        /* Find old one: Expand the live range of one VR, may cause SPILLING */
+                        /* Find old one: Expand the live range of one VR, may cause SPILLING, and must follow the CFG */
                     /* For now, try to create new one */
 //                    if (valueMap.containsKey(value))
 //                        return valueMap.get(value);
@@ -605,19 +605,19 @@ public class MCBuilder {
             }
             else if (isPowerOfTwo(abs + 1)) {
                 MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs));
-                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, mul, mul, shift, null));
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, mul, mul, shift, null));
                 if (intVal < 0) {
                     curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
                 }
             }
             else if (isPowerOfTwo(abs - 1)) {
-                MCInstruction.TYPE type = intVal<0 ?MCInstruction.TYPE.SUB : MCInstruction.TYPE.RSB;
+                MCInstruction.TYPE type = intVal<0 ?MCInstruction.TYPE.ADD : MCInstruction.TYPE.RSB;
                 MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs+1));
                 curMCBB.appendInst(new MCBinary(type, dst, mul, mul, shift, null));
             }
             else {
                 Register mul1 = (Register) findContainer(operand1, true);
-                Register mul2 = (Register) findContainer(operand1, true);
+                Register mul2 = (Register) findContainer(operand2, true);
                 curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, mul1, mul2));
             }
         }
