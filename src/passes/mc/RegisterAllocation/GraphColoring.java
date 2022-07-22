@@ -177,6 +177,7 @@ public class GraphColoring implements MCPass {
 
             /* Fix function stack */
             usedColor.forEach(func::addContext);
+            func.addContext(12);
 
             // TODO: 超过限制时需要生成move
             /* Adjust the parameters' load address */
@@ -366,7 +367,7 @@ public class GraphColoring implements MCPass {
         while (!selectStack.isEmpty()) {
             /* Initialize */
             var n = selectStack.pop();
-            var okColor = IntStream.range(0, 13).boxed()// TODO: 考虑使用r14 lr?
+            var okColor = IntStream.range(0, 12).boxed()// TODO: 考虑使用r14 lr? 使用r12 ip
                     .collect(Collectors.toList());
 
             /* Remove unavailable color */
