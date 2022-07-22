@@ -1,6 +1,7 @@
 package passes.mc.RegisterAllocation;
 
 import backend.ARMAssemble;
+import backend.MCBuilder;
 import backend.TestInfo;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
@@ -177,6 +178,7 @@ public class GraphColoring implements MCPass {
             /* Fix function stack */
             usedColor.forEach(func::addContext);
 
+            // TODO: 超过限制时需要生成move
             /* Adjust the parameters' load address */
             func.getParamCal().forEach(load -> load.setOffset(new Immediate(
                     ((Immediate) load.getOffset()).getIntValue()
@@ -399,7 +401,15 @@ public class GraphColoring implements MCPass {
 
                     /* If def, store the def into memory */
                     if (inst.getDef().contains(v)) {
-                        inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(offset)));
+                        /* The max size can the offset can be, see {@link ARMARMv7}  A8.6.58 Page: A8-121 */
+                        if (4096 > offset && offset > -4096)
+                            inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(offset)));
+                        else {
+                            VirtualRegister tmp = curFunc.createVirReg(offset);
+                            inst.insertAfter(new MCstore(v, RealRegister.get(13), tmp));
+                            inst.insertAfter(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
+                            i++;
+                        }
                         i++;
                     }
 
@@ -407,10 +417,16 @@ public class GraphColoring implements MCPass {
                     if (inst.getUse().contains(v)) {
                         // TODO: 更好的方法？
                         /* Create a temporary v_tmp for the use */
-                        VirtualRegister tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
-                        MCload load = new MCload(tmp, RealRegister.get(13), new Immediate(offset));
-                        inst.insertBefore(load);
-                        inst.replaceRegister(v, tmp);
+                        VirtualRegister v_tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
+                        if (4096 > offset && offset > -4096)
+                            inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                        else {
+                            VirtualRegister tmp = curFunc.createVirReg(offset);
+                            inst.insertBefore(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
+                            inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), tmp));
+                            i++;
+                        }
+                        inst.replaceRegister(v, v_tmp);
                         i++;
                     }
                 }

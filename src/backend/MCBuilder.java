@@ -121,6 +121,7 @@ public class MCBuilder {
                 entry.prependInst(new MCMove(vr, new Immediate(variableSize), true));
             }
 
+            // TODO: 超出限制时使用move指令
             /* Adjust parameter loads' offset */
             curFunc.getParamCal().forEach(load -> load.setOffset(new Immediate(
                     ((Immediate) load.getOffset()).getIntValue()
