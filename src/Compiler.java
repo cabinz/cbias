@@ -3,7 +3,7 @@
  * Class Compiler is just a wrapper parsing commandline arguments and launching
  * the underlying compiler driver who controls the concrete compilation flow.
  */
-public class compiler{
+public class Compiler {
 
     private final static CompileConfig config = new CompileConfig();
 
