@@ -88,7 +88,8 @@ public class ConstantDerivation implements IRPass {
         for (Use use : expression.operands) {
             if (!isConstant(use.getUsee())) return false;
         }
-        if (expression instanceof PhiInst phiInst) {
+        if (expression instanceof PhiInst) {
+            var phiInst = (PhiInst) expression;
             return phiInst.isConstant();
         } else if (expression instanceof CallInst || expression instanceof MemoryInst) {
             return false;
@@ -235,11 +236,12 @@ public class ConstantDerivation implements IRPass {
             Instruction expression = queue.remove();
 
             // Such PHI should be deleted instead of derive
-            if(expression instanceof PhiInst phiInst && !phiInst.hasEntry()) continue;
+            if(expression instanceof PhiInst&& !((PhiInst)expression).hasEntry()) continue;
 
             if (expression.getType().isVoidType()) {
                 // Br, Load, Store, etc.
-                if (expression instanceof TerminatorInst.Br br) {
+                if (expression instanceof TerminatorInst.Br) {
+                    var br = (TerminatorInst.Br) expression;
                     optimizeBr(br,queue);
                 }
             } else {
@@ -248,7 +250,8 @@ public class ConstantDerivation implements IRPass {
                 var uses = (List<Use>) expression.getUses().clone();
                 uses.forEach(use -> {
                     use.setUsee(constant);
-                    if(use.getUser() instanceof Instruction user){
+                    if(use.getUser() instanceof Instruction){
+                        var user = (Instruction) use.getUser();
                         if(canDeriveExpression(user)){
                             queue.add(user);
                         }
@@ -267,7 +270,8 @@ public class ConstantDerivation implements IRPass {
     private static void optimizeBr(TerminatorInst.Br br, Queue<Instruction> deriveQueue) {
         if(!br.isCondJmp()) return;
         var cond_ = br.getOperandAt(0);
-        if(!(cond_ instanceof ConstInt cond)) return;
+        if(!(cond_ instanceof ConstInt)) return;
+        var cond = (ConstInt) cond_;
         var bTrue = (BasicBlock) br.getOperandAt(1);
         var bFalse = (BasicBlock) br.getOperandAt(2);
         br.removeOperandAt(0);
@@ -290,7 +294,8 @@ public class ConstantDerivation implements IRPass {
      */
     static void removeEntry(BasicBlock basicBlock, BasicBlock entry, Queue<Instruction> deriveQueue){
         for (Instruction instruction : basicBlock.instructions) {
-            if(instruction instanceof PhiInst phiInst){
+            if(instruction instanceof PhiInst){
+                var phiInst = (PhiInst) instruction;
                 phiInst.removeMapping(entry);
                 if(phiInst.isConstant()){
                     deriveQueue.add(phiInst);
