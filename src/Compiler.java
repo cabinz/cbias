@@ -11,10 +11,9 @@ public class Compiler {
 
     public static void main(String[] args){
         for (int i = 0; i < args.length; i++){
-            if ("-s".equals(args[i])){
-                // presume source path is given
-                config.source = args[++i];
-//                config.ASMout = config.source.replace(".sy", ".s");
+            if (args[i].endsWith(".sy")){
+                // path to the source is given
+                config.source = args[i];
             }
             else if ("-o".equals(args[i])){
                 // presume output path is given
