@@ -52,7 +52,7 @@ public class MCMove extends MCInstruction {
             return "MOVW" + emitCond() + ' ' + dst.emit() + ", :lower16:" + src.emit() + "\n\tMOVT" + emitCond() + ' ' + dst.emit() + ", :upper16:" + src.emit();
         else if (exceededLimit) {
             int value = ((Immediate) src).getIntValue();
-            if (MCBuilder.canEncodeImm(-value)) {
+            if (MCBuilder.canEncodeImm(~value)) {
                 return "MVN" + emitCond() + ' ' + dst.emit() + ", #" + -value;
             }
             else {
