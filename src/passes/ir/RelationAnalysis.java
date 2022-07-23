@@ -30,7 +30,8 @@ public class RelationAnalysis {
     public static Collection<ir.values.BasicBlock> getFollowingBB(ir.values.BasicBlock basicBlock){
         var lastInst = basicBlock.getLastInst();
         var ret = new ArrayList<ir.values.BasicBlock>();
-        if(!(lastInst instanceof TerminatorInst.Br br)) return ret;
+        if(!(lastInst instanceof TerminatorInst.Br)) return ret;
+        var br = (TerminatorInst.Br) lastInst;
         if(br.isCondJmp()){
             ret.add((ir.values.BasicBlock) br.getOperandAt(1));
             ret.add((ir.values.BasicBlock) br.getOperandAt(2));
