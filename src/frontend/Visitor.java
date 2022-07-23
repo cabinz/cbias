@@ -773,9 +773,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // It's an ugly way to retrieve the name of the args
             // since no elegant way is found so far.
             String argName = null;
-            if (ctx.funcFParams().funcFParam(i) instanceof SysYParser.ScalarFuncFParamContext ctxArg) {
+            if (ctx.funcFParams().funcFParam(i) instanceof SysYParser.ScalarFuncFParamContext) {
+                var ctxArg = (SysYParser.ScalarFuncFParamContext) ctx.funcFParams().funcFParam(i);
                 argName = ctxArg.Identifier().getText();
-            } else if (ctx.funcFParams().funcFParam(i) instanceof SysYParser.ArrFuncFParamContext ctxArg) {
+            } else if (ctx.funcFParams().funcFParam(i) instanceof SysYParser.ArrFuncFParamContext) {
+                var ctxArg = (SysYParser.ArrFuncFParamContext) ctx.funcFParams().funcFParam(i);
                 argName = ctxArg.Identifier().getText();
             }
             scope.addDecl(argName, localVar);
