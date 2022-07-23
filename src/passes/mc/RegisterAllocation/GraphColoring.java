@@ -460,6 +460,8 @@ public class GraphColoring implements MCPass {
                 bi.setOperand2(new Immediate(new_offset));
             else {
                 bi.insertBefore(new MCMove(RealRegister.get(4), new Immediate(new_offset), true));
+                bi.setOperand2(RealRegister.get(4));
+                curFunc.addContext(4);
             }
         }
         else if (allocate instanceof MCMove mov) {
