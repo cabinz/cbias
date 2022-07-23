@@ -215,14 +215,15 @@ public class MCBuilder {
         else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
-        else if (value instanceof Instruction inst) {
+        else if (value instanceof Instruction) {
+            var inst = ((Instruction) value);
             VirtualRegister vr;
             /* This is used to translate the ZExt instruction */
             /* Considering that all data used in competition is 32 bits, */
             /* ignore the ZExt instruction */
             /* and use the origin instruction's container */
-            if (inst instanceof CastInst.ZExt zExt)
-                vr = ((VirtualRegister) findContainer(zExt.getOperandAt(0)));
+            if (inst instanceof CastInst.ZExt)
+                vr = ((VirtualRegister) findContainer(inst.getOperandAt(0)));
             else
                 vr = curFunc.createVirReg(inst);
 
@@ -473,14 +474,14 @@ public class MCBuilder {
         Value value2 = icmp.getOperandAt(1);
 
         /* If there is cmp or zext instruction in operands */
-        if (value1 instanceof BinaryOpInst biOp && biOp.isIcmp())
-            translateIcmp(biOp, true);
-        if (value2 instanceof BinaryOpInst biOp && biOp.isIcmp())
-            translateIcmp(biOp, true);
-        if (value1 instanceof CastInst.ZExt zExt)
-            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
-        if (value2 instanceof CastInst.ZExt zExt)
-            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+        if (value1 instanceof BinaryOpInst && ((BinaryOpInst) value1).isIcmp())
+            translateIcmp((BinaryOpInst) value1, true);
+        if (value2 instanceof BinaryOpInst && ((BinaryOpInst) value2).isIcmp())
+            translateIcmp((BinaryOpInst) value2, true);
+        if (value1 instanceof CastInst.ZExt)
+            translateIcmp((BinaryOpInst) ((CastInst.ZExt) value1).getOperandAt(0), true);
+        if (value2 instanceof CastInst.ZExt )
+            translateIcmp((BinaryOpInst) ((CastInst.ZExt) value2).getOperandAt(0), true);
 
         /* Translate */
         Register operand1;
@@ -526,10 +527,10 @@ public class MCBuilder {
         Value value2 = IRinst.getOperandAt(1);
 
         /* If there is icmp instruction in operands */
-        if (value1 instanceof CastInst.ZExt zExt)
-            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
-        if (value2 instanceof CastInst.ZExt zExt)
-            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+        if (value1 instanceof CastInst.ZExt)
+            translateIcmp((BinaryOpInst) ((CastInst.ZExt) value1).getOperandAt(0), true);
+        if (value2 instanceof CastInst.ZExt)
+            translateIcmp((BinaryOpInst) ((CastInst.ZExt) value2).getOperandAt(0), true);
 
         MCOperand operand1 = findContainer(value1);
         MCOperand operand2 = findContainer(value2);

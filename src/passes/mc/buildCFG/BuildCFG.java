@@ -3,6 +3,7 @@ package passes.mc.buildCFG;
 import backend.ARMAssemble;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
+import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.MCReturn;
 import backend.armCode.MCInstructions.MCbranch;
 import passes.mc.MCPass;
@@ -15,9 +16,11 @@ public class BuildCFG implements MCPass {
             for (int i=0; i<func.getBasicBlockList().size(); i++) {
                 MCBasicBlock block = func.getBasicBlockList().get(i);
                 MCBasicBlock next = i==func.getBasicBlockList().size()-1 ?null :func.getBasicBlockList().get(i+1);
+                MCInstruction lastInst = block.getLastInst();
                 /* End with branch */
-                if (block.getLastInst() instanceof MCbranch branch1 && branch1.isBranch()) {
+                if (lastInst instanceof MCbranch && ((MCbranch) lastInst).isBranch()) {
                     var instList = block.getInstructionList();
+                    var branch1 = ((MCbranch) lastInst);
                     var target1 = branch1.getTargetBB();
                     target1.addPredecessor(block);
                     if (branch1.getCond() == null) {
