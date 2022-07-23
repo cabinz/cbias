@@ -6,6 +6,8 @@ import backend.operand.Immediate;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashSet;
+
 /**
  * This class represent the register transfer instructions of VFP, <br/>
  * including VMOV & VMRS. The instruction is legal ONLY when transferring:<br/>
@@ -32,6 +34,20 @@ public class MCFPmove extends MCInstruction {
      */
     private boolean doubleMove;
 
+    @Override
+    public HashSet<Register> getUse() {
+        return null;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return null;
+    }
+
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+
+    }
     @Override
     public String emit() {
         if (doubleMove) {

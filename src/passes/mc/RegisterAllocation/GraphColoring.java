@@ -2,7 +2,6 @@ package passes.mc.RegisterAllocation;
 
 import backend.ARMAssemble;
 import backend.MCBuilder;
-import backend.TestInfo;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;

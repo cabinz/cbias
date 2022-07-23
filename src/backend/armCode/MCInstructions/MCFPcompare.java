@@ -2,6 +2,9 @@ package backend.armCode.MCInstructions;
 
 import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
+import backend.operand.Register;
+
+import java.util.HashSet;
 
 /**
  * This class represent the VCMP. <br/>
@@ -11,6 +14,21 @@ public class MCFPcompare extends MCInstruction {
 
     private ExtensionRegister operand1;
     private ExtensionRegister operand2;
+
+    @Override
+    public HashSet<Register> getUse() {
+        return null;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return null;
+    }
+
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+
+    }
 
     @Override
     public String emit() {

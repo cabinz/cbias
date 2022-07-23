@@ -5,6 +5,8 @@ import backend.operand.ExtensionRegister;
 import backend.operand.Immediate;
 import backend.operand.Register;
 
+import java.util.HashSet;
+
 /**
  * This class represents the VSTR instruction.
  */
@@ -17,6 +19,21 @@ public class MCFPstore extends MCInstruction {
      * which can be divided by 4.
      */
     private Immediate offset;
+
+    @Override
+    public HashSet<Register> getUse() {
+        return null;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return null;
+    }
+
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+
+    }
 
     @Override
     public String emit() {

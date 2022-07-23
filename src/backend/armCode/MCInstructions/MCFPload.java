@@ -5,6 +5,8 @@ import backend.operand.ExtensionRegister;
 import backend.operand.Immediate;
 import backend.operand.Register;
 
+import java.util.HashSet;
+
 /**
  * This class represent the VLDR instruction.<br/>
  * Format: VLDR Fd, [Rn{, #&lt;immed&gt;}]
@@ -18,6 +20,21 @@ public class MCFPload extends MCInstruction {
      * which can be divided by 4.
      */
     private Immediate offset;
+
+    @Override
+    public HashSet<Register> getUse() {
+        return null;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return null;
+    }
+
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+
+    }
 
     @Override
     public String emit() {

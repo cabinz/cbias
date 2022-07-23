@@ -2,6 +2,9 @@ package backend.armCode.MCInstructions;
 
 import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
+import backend.operand.Register;
+
+import java.util.HashSet;
 
 /**
  * This class represents the VCVT in ARM. <br/>
@@ -20,6 +23,21 @@ public class MCFPconvert extends MCInstruction {
     private ExtensionRegister src;
 
     private final boolean f2i;
+
+    @Override
+    public HashSet<Register> getUse() {
+        return null;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return null;
+    }
+
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+
+    }
 
     @Override
     public String emit() {
