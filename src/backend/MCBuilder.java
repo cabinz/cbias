@@ -373,15 +373,18 @@ public class MCBuilder {
                 curMCBB.appendInst(new MCMove(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
             }
             else {
-                // TODO: 可能要换成push
-                curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), true), RealRegister.get(13), createConstInt(-4), true));
+                curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), true), RealRegister.get(13), new Immediate((i-oprNum)*4)));
             }
         }
+        /* SUB here, instead of using PUSH, to avoid segmentation fault if spilling happens in parameter passing */
+        /* Move SP */
+        if (oprNum > 5)
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt((oprNum-5) * 4)));
         /* Branch */
         curMCBB.appendInst(new MCbranch(target.findMCFunc((Function) IRinst.getOperandAt(0))));
         /* Stack balancing */
         if (oprNum > 5)
-            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(4*oprNum-20)));
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt((oprNum-5) * 4)));
         /* Save result */
         curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
 
