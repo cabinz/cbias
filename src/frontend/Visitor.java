@@ -14,6 +14,7 @@ import ir.values.instructions.GetElemPtrInst;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.TerminatorInst;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -1218,17 +1219,30 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitIntConst(SysYParser.IntConstContext ctx) {
         int ret;
 
+        /*
+            Use BigInteger but not Integer::parseInt.
+
+            Especially notice that INT_MAX+1 (2147483648, 0x80000000) will be normally parsed
+            and a BigInteger will be constructed, in which BigInteger::intValue() will return
+            an abnormal value INT_MIN (-2147483648).
+            Since INT_MAX+1 is not a legal value as an immediate in SysY (and won't
+            exist in test cases), it will definitely be converted as -(INT_MAX+1) with a negation
+            operator, which is exactly the bit value of INT_MIN.
+            And INT_MIN = -INT_MIN (they have the same bit pattern), the value of the immediate
+            is correct after the negation in constant folding.
+         */
+
         // DecIntConst: Integer in decimal format, parse directly.
         if (ctx.DecIntConst() != null) {
-            ret = Integer.parseInt(ctx.DecIntConst().getText(), 10);
+            ret = new BigInteger(ctx.DecIntConst().getText(), 10).intValue();
         }
         // OctIntConst: Integer in octal format, parse directly in radix of 8.
         else if (ctx.OctIntConst() != null) {
-            ret = Integer.parseInt(ctx.OctIntConst().getText(), 8);
+            ret = new BigInteger(ctx.OctIntConst().getText(), 8).intValue();
         }
         // HexIntConst: Integer in hexadecimal format, drop the first two characters '0x'
         else {
-            ret = Integer.parseInt(ctx.HexIntConst().getText().substring(2), 16);
+            ret = new BigInteger(ctx.HexIntConst().getText().substring(2), 16).intValue();
         }
 
         setConveyedType(DataType.INT);
