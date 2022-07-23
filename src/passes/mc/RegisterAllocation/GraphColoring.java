@@ -232,7 +232,9 @@ public class GraphColoring implements MCPass {
                 var defs = inst.getDef();
 
                 /* Copy will be coalescing */
-                if (inst instanceof MCMove move && move.getShift() == null && move.getCond() == null && move.isCopy()) {
+                if (inst instanceof MCMove && inst.getShift() == null && inst.getCond() == null && ((MCMove) inst).isCopy()) {
+                    var move = ((MCMove) inst);
+
                     /* Delete the variable in live */
                     live.removeAll(uses);
 
@@ -453,7 +455,8 @@ public class GraphColoring implements MCPass {
      */
     private void AdjustStack() {
         MCInstruction allocate = curFunc.getEntryBlock().getFirstInst();
-        if (allocate instanceof MCBinary bi) {
+        if (allocate instanceof MCBinary) {
+            var bi = ((MCBinary) allocate);
             int new_offset = ((Immediate) bi.getOperand2()).getIntValue() + curFunc.getSpilledNode() * 4;
             if (MCBuilder.canEncodeImm(new_offset))
                 bi.setOperand2(new Immediate(new_offset));
@@ -463,7 +466,8 @@ public class GraphColoring implements MCPass {
                 curFunc.addContext(4);
             }
         }
-        else if (allocate instanceof MCMove mov) {
+        else if (allocate instanceof MCMove) {
+            var mov = ((MCMove) allocate);
             int new_offset = ((Immediate) mov.getSrc()).getIntValue() + curFunc.getSpilledNode() * 4;
             if (MCBuilder.canEncodeImm(new_offset))
                 mov.setSrc(new Immediate(new_offset));
@@ -678,57 +682,63 @@ public class GraphColoring implements MCPass {
      * to restrict the operand.
      */
     private void assignRealRegister(MCInstruction inst) {
-        if (inst instanceof MCBinary bi) {
+        if (inst instanceof MCBinary) {
+            var bi = ((MCBinary) inst);
             var op1 = bi.getOperand1();
             var op2 = bi.getOperand2();
             var dst = bi.getDestination();
             var shift = bi.getShift()==null ?null :bi.getShift().getOperand();
             replace(bi, op1);
-            if (op2 instanceof VirtualRegister op22)
-                replace(bi, op22);
-            if (shift instanceof VirtualRegister shiftt)
-                replace(bi, shiftt);
+            if (op2 instanceof VirtualRegister)
+                replace(bi, ((VirtualRegister) op2));
+            if (shift instanceof VirtualRegister)
+                replace(bi, ((VirtualRegister) shift));
             replace(bi, dst);
         }
-        else if (inst instanceof MCcmp cmp) {
+        else if (inst instanceof MCcmp) {
+            var cmp = ((MCcmp) inst);
             var op1 = cmp.getOperand1();
             var op2 = cmp.getOperand2();
             var shift = cmp.getShift()==null ?null :cmp.getShift().getOperand();
             replace(cmp, op1);
-            if (op2 instanceof VirtualRegister op22)
-                replace(cmp, op22);
-            if (shift instanceof VirtualRegister shiftt)
-                replace(cmp, shiftt);
+            if (op2 instanceof VirtualRegister)
+                replace(cmp, ((VirtualRegister) op2));
+            if (shift instanceof VirtualRegister)
+                replace(cmp, ((VirtualRegister) shift));
         }
-        else if (inst instanceof MCload load) {
+        else if (inst instanceof MCload) {
+            var load = ((MCload) inst);
             var dst = load.getDst();
             var addr = load.getAddr();
             var offset = load.getOffset();
             replace(load, dst);
             replace(load, addr);
-            if (offset instanceof VirtualRegister offsett)
-                replace(load, offsett);
+            if (offset instanceof VirtualRegister)
+                replace(load, ((VirtualRegister) offset));
         }
-        else if (inst instanceof MCstore store) {
+        else if (inst instanceof MCstore) {
+            var store = ((MCstore) inst);
             var src = store.getSrc();
             var addr = store.getAddr();
             var offset = store.getOffset();
             replace(store, src);
             replace(store, addr);
-            if (offset instanceof VirtualRegister offsett)
-                replace(store, offsett);
+            if (offset instanceof VirtualRegister)
+                replace(store, ((VirtualRegister) offset));
         }
-        else if (inst instanceof MCMove move) {
+        else if (inst instanceof MCMove) {
+            var move = ((MCMove) inst);
             var dst = move.getDst();
             var src = move.getSrc();
             var shift = move.getShift()==null ?null :move.getShift().getOperand();
             replace(move, dst);
-            if (src instanceof VirtualRegister srcc)
-                replace(move, srcc);
-            if (shift instanceof VirtualRegister shiftt)
-                replace(move, shiftt);
+            if (src instanceof VirtualRegister)
+                replace(move, ((VirtualRegister) src));
+            if (shift instanceof VirtualRegister)
+                replace(move, ((VirtualRegister) shift));
         }
-        else if (inst instanceof MCFma fma) {
+        else if (inst instanceof MCFma) {
+            var fma = ((MCFma) inst);
             Register accumulate = fma.getAccumulate();
             Register multiple_1 = fma.getMultiple_1();
             Register multiple_2 = fma.getMultiple_2();
