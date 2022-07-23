@@ -34,23 +34,23 @@ public class MCEmitter {
     public void emitTo(ARMAssemble target, String outputPath) throws IOException {
         /* header */
         StringBuilder strBd = new StringBuilder();
-        strBd.append("\t.arch " + target.getArchitecture() + '\n');
+        strBd.append("\t.cpu "  + target.cpu + '\n');
+        strBd.append("\t.arch " + target.architecture + '\n');
+        strBd.append("\t.fpu "  + target.fpu + '\n');
         strBd.append("\n");
         strBd.append("\t.text\n");
         strBd.append("\n");
 
         /* handle each function */
         for (MCFunction f : target) {
-            System.out.println(f.getName());
             if (f.isExternal()) continue;
-            strBd.append("\t.global " + f.getName() + '\n');
-            strBd.append(f.getName() + ":\n");
+            strBd.append("\t.global " + f.emit() + '\n');
+            strBd.append(f.emit() + ":\n");
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
-                strBd.append("." + bb.getName() + ":\n");
+                strBd.append(bb.emit() + ":\n");
                 /* handle each instruction */
                 for (MCInstruction mcInstruction : bb) {
-                    System.out.println("\tNOW:" + mcInstruction.emit());
                     strBd.append('\t' + mcInstruction.emit() + '\n');
                 }
             }
@@ -84,7 +84,7 @@ public class MCEmitter {
             strBd.append("\n\n");
         }
 
-        strBd.append("\t.end");
+        strBd.append("\t.end\n");
 
         /* write to the file */
         FileWriter fw = new FileWriter(outputPath);

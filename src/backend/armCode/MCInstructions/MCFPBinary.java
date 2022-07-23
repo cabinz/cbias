@@ -2,6 +2,9 @@ package backend.armCode.MCInstructions;
 
 import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
+import backend.operand.Register;
+
+import java.util.HashSet;
 
 /**
  * This class is a aggregation of the BINARY data-processing <br/>
@@ -16,6 +19,21 @@ public class MCFPBinary extends MCInstruction {
     private ExtensionRegister operand1;
     private ExtensionRegister operand2;
     private ExtensionRegister destination;
+
+    @Override
+    public HashSet<Register> getUse() {
+        return null;
+    }
+
+    @Override
+    public HashSet<Register> getDef() {
+        return null;
+    }
+
+    @Override
+    public void replaceRegister(Register old, Register tmp) {
+
+    }
 
     public String emit() {
         return type.name() + emitCond() + ".F32 " + destination.emit()

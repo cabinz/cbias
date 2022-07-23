@@ -40,13 +40,32 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
         inst.setBelongFunc(belongFunc);
     }
 
+    public void insertAt(int index, MCInstruction inst) {
+        instructionList.add(index, inst);
+        inst.setBelongBB(this);
+        inst.setBelongFunc(belongFunc);
+    }
+
+    public void removeInst(MCInstruction inst) {instructionList.remove(inst);}
+
+    public void removeAt(int index) {instructionList.remove(index);}
+
+    public int getIndex(MCInstruction inst) {return instructionList.indexOf(inst);}
+
     public void addPredecessor(MCBasicBlock BB) {predecessors.add(BB);}
 
     public MCBasicBlock findMCBB(BasicBlock IRBB) {return belongFunc.findMCBB(IRBB);}
 
+    public MCInstruction getFirstInst() {return instructionList.getFirst();}
+
+    public MCInstruction getLastInst() {return instructionList.getLast();}
+
     public Iterator<MCInstruction> iterator() {return instructionList.iterator();}
     //</editor-fold>
 
+    public String emit() {
+        return "." + label;
+    }
 
     //<editor-fold desc="Getter & Setter">
     public LinkedList<MCInstruction> getInstructionList() {return instructionList;}
@@ -72,12 +91,14 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     public MCBasicBlock(MCFunction belongingFunction) {
         this.belongFunc = belongingFunction;
         instructionList = new LinkedList<>();
+        predecessors = new ArrayList<>();
         label = "BLOCK_" + count;
         count++;
     }
     public MCBasicBlock(MCFunction belongingFunction, String label) {
         this.belongFunc = belongingFunction;
         instructionList = new LinkedList<>();
+        predecessors = new ArrayList<>();
         this.label = label;
     }
     //</editor-fold>

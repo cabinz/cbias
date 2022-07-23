@@ -1,7 +1,11 @@
 package backend.armCode;
 
 
+import backend.operand.Immediate;
+import backend.operand.MCOperand;
 import backend.operand.Register;
+
+import java.util.HashSet;
 
 /**
  * This class represents all instructions of ARM in memory. <br/>
@@ -24,7 +28,6 @@ public abstract class MCInstruction {
         ORR,
         MLA,
         MLS,
-        LongMUL,
         MOV,
         RET,
         BRANCH,
@@ -51,7 +54,6 @@ public abstract class MCInstruction {
      * The instance of this class represents the condition field of an instruction in ARM.
      */
     public enum ConditionField {
-        NOPE,
         EQ,
         NE,
         GE,
@@ -82,15 +84,45 @@ public abstract class MCInstruction {
     protected MCFunction belongFunc;
     //</editor-fold>
 
+    //<editor-fold desc="Functional">
+    abstract public HashSet<Register> getUse();
 
+    abstract public HashSet<Register> getDef();
+
+    public void insertBefore(MCInstruction inst) {
+        belongBasicBlock.insertAt(belongBasicBlock.getIndex(this), inst);
+    }
+
+    public void insertAfter(MCInstruction inst) {
+        belongBasicBlock.insertAt(belongBasicBlock.getIndex(this)+1, inst);
+    }
+
+    public void removeSelf() {belongBasicBlock.removeInst(this);}
+
+    /**
+     * If use the user as IR, this abstract method is completely unnecessary.
+     */
+    public abstract void replaceRegister(Register old, Register tmp);
+    //</editor-fold>
+
+
+    //<editor-fold desc="Emits">
     abstract public String emit();
 
     protected String emitCond() {
-        if (cond == ConditionField.NOPE || cond == null)
+        if (cond == null)
             return "";
         else
             return cond.name();
     }
+
+    protected String emitShift() {
+        if (shift == null)
+            return "";
+        else
+            return ", " + shift.emit();
+    }
+    //</editor-fold>
 
 
     //<editor-fold desc="Getter & Setter">
@@ -121,12 +153,15 @@ public abstract class MCInstruction {
 
 
     /**
-     * This class represents the shift operation of the second operand in an instruction.
+     * This class represents the shift operation of the second operand in an instruction.<br/>
+     * The shift operand can be <br/>
+     * &emsp;&emsp; - 5 bit immediate <br/>
+     * &emsp;&emsp; - the last byte of one register <br/>
+     * In fact this class should be not replaced here.
      */
     public static class Shift {
 
         public enum TYPE {
-            NOPE,
             ASR,//算数右移
             LSR,//逻辑右移
             LSL,//逻辑左移
@@ -136,24 +171,27 @@ public abstract class MCInstruction {
 
         //<editor-fold desc="Fields">
         private TYPE type;
-        private int immediate;
+        private Immediate immediate;
         private Register register;
         //</editor-fold>
+
+        public String emit() {
+            return type.name() + " " + getOperand().emit();
+        }
 
 
         //<editor-fold desc="Getter & Setter">
         public TYPE getType() {return type;}
-        public int getImmediate() {return immediate;}
-        public Register getRegister() {return register;}
+        public MCOperand getOperand() {return register==null ?immediate :register;}
 
         public void setType(TYPE type) {this.type = type;}
-        public void setImmediate(int immediate) {this.immediate = immediate;}
-        public void setRegister(Register register) {this.register = register;}
+        public void setImmediate(int immediate) {this.immediate = new Immediate(immediate); this.register=null;}
+        public void setRegister(Register register) {this.register = register; this.immediate=null;}
         //</editor-fold>
 
 
         //<editor-fold desc="Constructor">
-        public Shift(TYPE type, int imm) {this.type = type; this.immediate = imm;}
+        public Shift(TYPE type, int imm) {this.type = type; this.immediate = new Immediate(imm);}
         public Shift(TYPE type, Register reg) {this.type = type; this.register = reg;}
         //</editor-fold>
 

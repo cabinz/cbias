@@ -20,7 +20,9 @@ public class ConstFloat extends Constant {
         return val;
     }
 
-    //<editor-fold desc="Factory Method">
+
+    //<editor-fold desc="Singleton">
+
     private ConstFloat(float val) {
         super(FloatType.getType());
         this.val = val;
@@ -32,7 +34,7 @@ public class ConstFloat extends Constant {
 
     /**
      * Retrieve an IR Constant instance of given float.
-     * @param val Mathematical value of the float.
+     * @param val Numeric value of the float.
      * @return Corresponding ConstFloat instance created.
      */
     public static ConstFloat get(float val) {

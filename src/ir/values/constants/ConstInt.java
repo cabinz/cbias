@@ -22,7 +22,7 @@ public class ConstInt extends Constant {
     }
 
 
-    //<editor-fold desc="Factory Method">
+    //<editor-fold desc="Singleton">
 
     private ConstInt(Type type, int val) {
         super(type);
@@ -38,8 +38,8 @@ public class ConstInt extends Constant {
     /**
      * Retrieve an i32 Constant instance of given integer.
      *
-     * @param val Mathematical value of the integer (i32).
-     * @return Corresponding ConstInt instance created.
+     * @param val Numeric value of the integer.
+     * @return Corresponding ConstInt (i32) instance created.
      */
     public static ConstInt getI32(int val) {
         if (pool.containsKey(val)) {
@@ -56,8 +56,8 @@ public class ConstInt extends Constant {
     /**
      * Retrieve an i1 Constant instance of given boolean.
      *
-     * @param val Mathematical value of the integer (i1).
-     * @return Corresponding ConstInt instance created.
+     * @param val Numeric value of the integer.
+     * @return Corresponding ConstInt (i1) instance created.
      */
     public static ConstInt getI1(int val) {
         switch (val) {

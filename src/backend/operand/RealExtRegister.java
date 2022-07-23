@@ -13,23 +13,25 @@ import java.util.ArrayList;
  */
 public class RealExtRegister extends ExtensionRegister{
 
-    private final String name;
+    private final int index;
 
-    public String getName() {return name;}
+    public int getIndex() {return index;}
 
-    public String emit() {return name;}
+    public String getName() {return "s"+index;}
+
+    public String emit() {return "s"+index;}
 
     //<editor-fold desc="Multition Pattern">
-    private RealExtRegister(String name) {
+    private RealExtRegister(int index) {
         super(TYPE.ERLR);
-        this.name = name;
+        this.index = index;
     }
 
     static private final ArrayList<RealExtRegister> exts = new ArrayList<>();
 
     static {
         for (int i=0; i<32; i++)
-            exts.add(new RealExtRegister("s" + i));
+            exts.add(new RealExtRegister(i));
     }
 
     static public RealExtRegister get(int i) {return exts.get(i);}

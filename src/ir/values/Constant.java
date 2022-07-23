@@ -10,7 +10,8 @@ import java.util.ArrayList;
 
 /**
  * A constant is a value that is immutable at runtime. Except ConstArray, all Constants are
- * implemented with real Factory Methods
+ * implemented with Singleton mechanisms, guaranteeing each Constant in a numeric value has
+ * only one existence (for the convenience of comparison using addresses).
  * <ul>
  *     <li>Integer and floating point values </li>
  *     <li>Arrays </li>

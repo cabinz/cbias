@@ -26,8 +26,6 @@ import java.util.ArrayList;
  */
 public class IRBuilder {
 
-    //<editor-fold desc="Fields">
-
     //<editor-fold desc="Three current building pointers for different levels of IR.">
     /**
      * The module currently being built.
@@ -47,20 +45,14 @@ public class IRBuilder {
     private BasicBlock curBB;
     //</editor-fold>
 
-    //</editor-fold>
 
-
-    //<editor-fold desc="Constructors">
     /**
      * @param m The module to build on.
      */
     public IRBuilder(Module m) {
         this.setCurModule(m);
     }
-    //</editor-fold>
 
-
-    //<editor-fold desc="Methods">
 
     //<editor-fold desc="Setters for building pointers.">
     public void setCurModule(Module mod) {
@@ -598,5 +590,4 @@ public class IRBuilder {
         getCurBB().insertAtEnd(gepInst);
         return gepInst;
     }
-    //</editor-fold>
 }

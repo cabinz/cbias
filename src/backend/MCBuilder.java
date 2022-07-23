@@ -24,9 +24,7 @@ public class MCBuilder {
     //<editor-fold desc="Singleton Pattern">
     static private final MCBuilder builder = new MCBuilder();
 
-    private MCBuilder() {
-        valueMap = new HashMap<>();
-    }
+    private MCBuilder() {}
 
     static public MCBuilder get() {return builder;}
     //</editor-fold>
@@ -42,14 +40,9 @@ public class MCBuilder {
     private MCBasicBlock curMCBB;
 
     /**
-     * This is used to name the virtual register.
-     */
-    private int VirtualRegCounter = 0;
-
-    /**
      * This class records the map between values and virtual registers.
      */
-    private final HashMap<Value, VirtualRegister> valueMap;
+    private HashMap<Value, VirtualRegister> valueMap;
     //</editor-fold>
 
 
@@ -65,7 +58,7 @@ public class MCBuilder {
      * Translate LLVM IR to ARM assemble target. <br/>
      * <ul>
      *     <li>Map IR global variable into target global variable list</li>
-     *     <li>Map IR function into target function list and Map IR BasicBlock into target function BasicBlock<</li>
+     *     <li>Map IR function into target function list and Map IR BasicBlock into target function BasicBlock</li>
      *     <li>Calculate loop info of function ( TO BE FINISHED )(为什么不放在pass)</li>
      *     <li>Find predecessors of a MCBasicBlock AND Calculate loop info of BasicBlock( TO BE FINISHED )(为什么不放在pass)( TO BE FINISHED )</li>
      *     <li>BFS travel the BasicBlock and then translate into ARM instruction()</li>
@@ -96,15 +89,13 @@ public class MCBuilder {
      * </ul>
      */
     private void mapFunction(Module IRModule, ARMAssemble target) {
-        for (Function IRfunc : IRModule.functions) {
-            //System.out.println(IRfunc.getName());
-            if (IRfunc.isExternal()) {
-                target.useExternalFunction(IRfunc);
-                continue;
-            }
+        for (Function IRfunc : IRModule.externFunctions) {
+            target.useExternalFunction(IRfunc);
+        }
 
-            VirtualRegCounter = 0;
+        for (Function IRfunc : IRModule.functions) {
             curIRFunc = IRfunc;
+            valueMap = new HashMap<>();
             curFunc = target.createFunction(IRfunc);
 
             /* This loop is to create the MC basic block in the same order of IR */
@@ -115,10 +106,27 @@ public class MCBuilder {
             for (BasicBlock IRBB : IRfunc){
                 curMCBB = curFunc.findMCBB(IRBB);
                 for (Instruction IRinst : IRBB) {
-                    //System.out.println("\tNOW: " + IRinst.toString());
                     translate(IRinst);
                 }
             }
+
+            /* Allocate function variable stack in front of procedure */
+            MCBasicBlock entry = curFunc.getEntryBlock();
+            int variableSize = curFunc.getLocalVariable();
+            if (canEncodeImm(variableSize)) {
+                entry.prependInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), new Immediate(variableSize)));
+            } else {
+                VirtualRegister vr = curFunc.createVirReg(variableSize);
+                entry.prependInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), vr));
+                entry.prependInst(new MCMove(vr, new Immediate(variableSize), true));
+            }
+
+            // TODO: 超出限制时使用move指令
+            /* Adjust parameter loads' offset */
+            curFunc.getParamCal().forEach(load -> load.setOffset(new Immediate(
+                    ((Immediate) load.getOffset()).getIntValue()
+                            + curFunc.getLocalVariable()
+            )));
         }
     }
 
@@ -131,17 +139,16 @@ public class MCBuilder {
             translateRet((TerminatorInst.Ret) IRinst);
         }
         else if (IRinst.isAdd()) {
-            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
+            translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
         }
         else if (IRinst.isSub()) {
-            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
+            translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
         }
-        // TODO: 乘法和除法的操作数必须是寄存器
         else if (IRinst.isMul()) {
-            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.MUL);
+            translateMul((BinaryOpInst) IRinst);
         }
         else if (IRinst.isDiv()) {
-            translateBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.SDIV);
+            translateSDiv((BinaryOpInst) IRinst);
         }
         else if (IRinst.isAlloca()) {
             translateAlloca((MemoryInst.Alloca) IRinst);
@@ -174,36 +181,58 @@ public class MCBuilder {
      * @return the corresponding operand
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
-        // TODO: move VirtualRegCounter to MCFunction? & add method newVTR()?
-        if (valueMap.containsKey(value)) {
-            return valueMap.get(value);
-        }
-        else if (value instanceof Instruction) {
-            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
-            valueMap.put(value, vr);
-            return vr;
+        if (value instanceof ConstInt) {
+            MCOperand temp = createConstInt(((ConstInt) value).getVal());
+            if (temp.isVirtualReg())
+                return temp;
+            /* temp is immediate */
+            else {
+                if (forceAllocReg){
+                    /* TODO: If force to allocate a register, should we create a new one or attempt to find one hold in VR? */
+                        /* Create new one: more MOV instruction is created */
+                        /* Find old one: Expand the live range of one VR, may cause SPILLING, and must follow the CFG */
+                    /* For now, try to create new one */
+//                    if (valueMap.containsKey(value))
+//                        return valueMap.get(value);
+//                    else {
+                        VirtualRegister vr = curFunc.createVirReg(((ConstInt) value).getVal());
+                        valueMap.put(value, vr);
+                        curMCBB.appendInst(new MCMove(vr, temp));
+                        return vr;
+//                    }
+                }
+                else
+                    return temp;
+            }
         }
         else if (value instanceof GlobalVariable) {
-            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            // TODO: 采用控制流分析，是否能访问到之前的地址
+            VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
         }
-        else if (value instanceof ConstInt) {
-            // 顺序问题，是否寻找之前剩下的立即数？
-            MCOperand temp = createConstInt(((ConstInt) value).getVal());
-            if (temp instanceof Register) return temp;
-            if (forceAllocReg){
-                VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, ((ConstInt) value).getVal());
-                valueMap.put(value, vr);
-                curMCBB.appendInst(new MCMove(vr, temp));
-                return vr;
-            }
+        else if (valueMap.containsKey(value)) {
+            return valueMap.get(value);
+        }
+        else if (value instanceof Instruction inst) {
+            VirtualRegister vr;
+            /* This is used to translate the ZExt instruction */
+            /* Considering that all data used in competition is 32 bits, */
+            /* ignore the ZExt instruction */
+            /* and use the origin instruction's container */
+            if (inst instanceof CastInst.ZExt zExt)
+                vr = ((VirtualRegister) findContainer(zExt.getOperandAt(0)));
             else
-                return temp;
+                vr = curFunc.createVirReg(inst);
+
+            valueMap.put(inst, vr);
+            return vr;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
-            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别
+            // TODO: 使用到全局变量的时候才计算地址
+            VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             int pos = ((Function.FuncArg) value).getPos();
             MCBasicBlock entry = curFunc.getEntryBlock();
@@ -211,9 +240,10 @@ public class MCBuilder {
                 entry.prependInst(new MCMove(vr, RealRegister.get(pos)));
             }
             else {
-                VirtualRegister tmp = new VirtualRegister(VirtualRegCounter++, (pos-4)*4);
-                entry.prependInst(new MCload(vr, RealRegister.get(13), tmp));
-                entry.prependInst(new MCMove(tmp, createConstInt((pos-4)*4)));
+                /* Considering that parameter should not be too many .... use Immediate directly here */
+                var load = new MCload(vr, RealRegister.get(13), new Immediate((pos-4)*4));
+                entry.prependInst(load);
+                curFunc.addParamCal(load);
             }
             return vr;
         }
@@ -253,9 +283,30 @@ public class MCBuilder {
         return false;
     }
 
+    /**
+     * Determine whether a number is the integer power of two.
+     */
+    private boolean isPowerOfTwo(int n) {
+        return (n & (n-1)) == 0;
+    }
 
     /**
-     * Create a container for a constant INT.
+     * Calculate the result of log_2 n
+     * @param n the integer power of 2
+     * @return the result
+     */
+    private int log2(int n) {
+        int ret = 0;
+        while (n != 0){
+            n = n >>> 1;
+            ret++;
+        }
+        return ret-1;
+    }
+
+
+    /**
+     * Create a container for a constant INT, may be immediate or register.
      * @param value the INT value to be translated into an immediate
      * @return the created container, maybe register or immediate.
      * @see backend.MCBuilder#canEncodeImm(int)
@@ -264,7 +315,7 @@ public class MCBuilder {
         if (canEncodeImm(value))
             return new Immediate(value);
         else{
-            VirtualRegister vr = new VirtualRegister(VirtualRegCounter++, value);
+            VirtualRegister vr = curFunc.createVirReg(value);
             curMCBB.appendInst(new MCMove(vr, new Immediate(value), true));
             return vr;
         }
@@ -300,7 +351,6 @@ public class MCBuilder {
             case LE -> MCInstruction.ConditionField.GT;
             case GT -> MCInstruction.ConditionField.LE;
             case LT -> MCInstruction.ConditionField.GE;
-            default -> null;
         };
     }
     //</editor-fold>
@@ -309,11 +359,13 @@ public class MCBuilder {
     //<editor-fold desc="Translate functions">
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
-     * Function Stack: parameter, context(registers & lr), local variables<br/>
-     * &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp; high &emsp;&emsp;&emsp; -->> &emsp;&emsp;&emsp; low <br/>
+     * r0-r3 are caller-saved registers, while r4-r12 are callee-saved registers. <br/>
+     * Function stack (from high to low): parameter, context, spilled nodes, local variables <br/>
      * @param IRinst IR call instruction
      */
     private void translateCall(CallInst IRinst) {
+        // TODO: 浮点参数传递使用s0-s3
+        // 另外，前4个浮点和整型使用寄存器传递
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
         for (int i=oprNum-1; i>=1; i--) {
@@ -321,34 +373,40 @@ public class MCBuilder {
                 curMCBB.appendInst(new MCMove(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
             }
             else {
-                // 可能要换成push？
-                curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), true), RealRegister.get(13), createConstInt(-4), true));
+                curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), true), RealRegister.get(13), new Immediate((i-oprNum)*4)));
             }
         }
+        /* SUB here, instead of using PUSH, to avoid segmentation fault if spilling happens in parameter passing */
+        /* Move SP */
+        if (oprNum > 5)
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt((oprNum-5) * 4)));
         /* Branch */
         curMCBB.appendInst(new MCbranch(target.findMCFunc((Function) IRinst.getOperandAt(0))));
         /* Stack balancing */
         if (oprNum > 5)
-            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(4*oprNum-20)));
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt((oprNum-5) * 4)));
         /* Save result */
         curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
 
-        curFunc.useLR = true;
+        curFunc.setUseLR();
     }
 
     private void translateRet(TerminatorInst.Ret IRinst) {
         if (IRinst.getNumOperands() != 0)
             curMCBB.appendInst(new MCMove(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
-        curMCBB.appendInst(new MCReturn(findContainer(IRinst.getOperandAt(0))));
+        curMCBB.appendInst(new MCReturn());
     }
 
     /**
      * Translate the IR alloca instruction into ARM. <br/>
-     * IR Alloca will be translated into "sp := sp - 4" and "MOV Vreg, sp".<br/>
-     * To be optimized later....
+     * IR Alloca will be translated into "VirReg := sp + offset_before".
+     * And sp will be added in front of a procedure,
+     * meaning that the stack of function is allocated at beginning,
+     * and do NOT change in the procedure until a function call then balanced. <br/>
      * @param IRinst IR instruction to be translated
      */
     private void translateAlloca(MemoryInst.Alloca IRinst) {
+        // TODO: calculate address when used
         int offset = 0;
         Type allocated = IRinst.getAllocatedType();
         if (allocated.isIntegerType() || allocated.isPointerType()) {
@@ -357,10 +415,9 @@ public class MCBuilder {
         else if (allocated.isArrayType()) {
             offset = ((ArrayType) allocated).getSize() * 4;
         }
-        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(offset)));
-        curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(13)));
+        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, (Register) findContainer(IRinst), RealRegister.get(13), createConstInt(curFunc.getLocalVariable())));
 
-        curFunc.addStackSize(offset);
+        curFunc.addLocalVariable(offset);
     }
 
     /**
@@ -369,9 +426,9 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      */
     private void translateStore(MemoryInst.Store IRinst) {
-        MCOperand src = findContainer(IRinst.getOperandAt(0), true);
-        MCOperand addr = findContainer(IRinst.getOperandAt(1));
-        curMCBB.appendInst(new MCstore((Register) src, addr));
+        Register src = ((Register) findContainer(IRinst.getOperandAt(0), true));
+        Register addr = ((Register) findContainer(IRinst.getOperandAt(1)));
+        curMCBB.appendInst(new MCstore(src, addr));
     }
 
     /**
@@ -379,7 +436,7 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      */
     private void translateLoad(MemoryInst.Load IRinst) {
-        curMCBB.appendInst(new MCload((Register) findContainer(IRinst), findContainer(IRinst.getOperandAt(0))));
+        curMCBB.appendInst(new MCload((Register) findContainer(IRinst), ((Register) findContainer(IRinst.getOperandAt(0)))));
     }
 
     /**
@@ -398,6 +455,7 @@ public class MCBuilder {
             else {
                 MCInstruction.ConditionField cond = translateIcmp((BinaryOpInst) IRinst.getOperandAt(0));
                 curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(1)), cond));
+                curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(2)), reverseCond(cond)));
             }
         }
         else {
@@ -413,29 +471,37 @@ public class MCBuilder {
     private MCInstruction.ConditionField translateIcmp(BinaryOpInst icmp, boolean saveResult) {
         Value value1 = icmp.getOperandAt(0);
         Value value2 = icmp.getOperandAt(1);
-        if (value1 instanceof Instruction && ((Instruction) value1).isIcmp())
-            translateIcmp((BinaryOpInst) value1, true);
-        if (value2 instanceof Instruction && ((Instruction) value2).isIcmp())
-            translateIcmp((BinaryOpInst) value2, true);
 
-        MCOperand operand1;
+        /* If there is cmp or zext instruction in operands */
+        if (value1 instanceof BinaryOpInst biOp && biOp.isIcmp())
+            translateIcmp(biOp, true);
+        if (value2 instanceof BinaryOpInst biOp && biOp.isIcmp())
+            translateIcmp(biOp, true);
+        if (value1 instanceof CastInst.ZExt zExt)
+            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+        if (value2 instanceof CastInst.ZExt zExt)
+            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+
+        /* Translate */
+        Register operand1;
         MCOperand operand2;
         MCInstruction.ConditionField armCond = mapToArmCond(icmp);
         if (value1 instanceof ConstInt && !(value2 instanceof ConstInt)){
-            operand1 = findContainer(value2);
+            operand1 = (Register) findContainer(value2);
             operand2 = findContainer(value1);
-            armCond = reverseCond(armCond);
+            if (armCond != MCInstruction.ConditionField.EQ && armCond != MCInstruction.ConditionField.NE)
+                armCond = reverseCond(armCond);
         }
         else {
-            operand1 = findContainer(value1, true);
+            operand1 = (Register) findContainer(value1, true);
             operand2 = findContainer(value2);
         }
+        curMCBB.appendInst(new MCcmp(operand1, operand2));
 
-        curMCBB.appendInst(new MCcmp((Register) operand1, operand2));
-
+        /* Save result */
         if (saveResult) {
-            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(1), armCond));
-            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), reverseCond(armCond)));
+            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(1), null, armCond));
+            curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), null, reverseCond(armCond)));
         }
 
         return armCond;
@@ -453,32 +519,125 @@ public class MCBuilder {
      * Translate IR binary expression instruction into ARM instruction. <br/>
      * NOTE: The first operand must be a REGISTER!!
      * @param IRinst IR instruction to be translated
-     * @param type Operation type, ADD/SUB/MUL/SDIV or more?
+     * @param type Operation type, ADD/SUB
      */
-    private void translateBinary(BinaryOpInst IRinst, MCInstruction.TYPE type) {
-        // TODO: 2的整数倍乘法，常量除法
-        // TODO: ADD&SUB的operand2可以为为立即数，MUL和SDIV不行
-        MCOperand operand1 = findContainer(IRinst.getOperandAt(0));
-        MCOperand operand2 = findContainer(IRinst.getOperandAt(1));
+    private void translateAddSub(BinaryOpInst IRinst, MCInstruction.TYPE type) {
+        Value value1 = IRinst.getOperandAt(0);
+        Value value2 = IRinst.getOperandAt(1);
+
+        /* If there is icmp instruction in operands */
+        if (value1 instanceof CastInst.ZExt zExt)
+            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+        if (value2 instanceof CastInst.ZExt zExt)
+            translateIcmp((BinaryOpInst) zExt.getOperandAt(0), true);
+
+        MCOperand operand1 = findContainer(value1);
+        MCOperand operand2 = findContainer(value2);
+        Register dst = (Register) findContainer(IRinst);
+
+        /* Translate */
         if (operand1.isImmediate()) {
             if (operand2.isImmediate()) {
+                /* This case should not happen, so no optimization here */
                 VirtualRegister register = (VirtualRegister) findContainer(IRinst.getOperandAt(0), true);
-                curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst), register, operand2));
+                curMCBB.appendInst(new MCBinary(type, dst, register, operand2));
             }
             else {
-                if (type != MCInstruction.TYPE.SUB)
-                    curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst),(Register)  operand2, operand1));
+                if (type != MCInstruction.TYPE.SUB) {
+                    if (((ConstInt) value1).getVal() == 0)
+                        curMCBB.appendInst(new MCMove(dst, operand2));
+                    else
+                        curMCBB.appendInst(new MCBinary(type, dst, (Register) operand2, operand1));
+                }
                 else
-                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, (Register) findContainer(IRinst),(Register)  operand2, operand1));
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, (Register) operand2, operand1));
             }
         }
         else {
-            curMCBB.appendInst(new MCBinary(type, (Register) findContainer(IRinst),(Register) operand1, operand2));
+            if (operand2.isImmediate() && ((ConstInt) value2).getVal() == 0)
+                curMCBB.appendInst(new MCMove(dst, operand1));
+            else
+                curMCBB.appendInst(new MCBinary(type, dst, (Register) operand1, operand2));
         }
+    }
+
+    private void translateMul(BinaryOpInst IRinst) {
+        Value operand1 = IRinst.getOperandAt(0);
+        Value operand2 = IRinst.getOperandAt(1);
+        boolean op1IsConst = operand1 instanceof ConstInt;
+        boolean op2IsConst = operand2 instanceof ConstInt;
+        Register dst = (Register) findContainer(IRinst);
+
+        /* If both is not const, that's fine */
+        if (!op1IsConst && !op2IsConst) {
+            Register mul1 = (Register) findContainer(operand1, true);
+            Register mul2 = (Register) findContainer(operand2, true);
+
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, mul1, mul2));
+        }
+        /* If both const, fold */
+        else if (op1IsConst && op2IsConst) {
+            int result = ((ConstInt) operand1).getVal() * ((ConstInt) operand2).getVal();
+            if (canEncodeImm(result)){
+                curMCBB.appendInst(new MCMove(dst, new Immediate(result)));
+            }
+            else {
+                curMCBB.appendInst(new MCMove(dst, new Immediate(result), true));
+            }
+        }
+        /* If there is one const */
+        else {
+            Value v = operand1;
+            Value c = operand2;
+            if (operand1 instanceof Constant) {
+                v = operand2;
+                c = operand1;
+            }
+            Register mul = (Register) findContainer(v);
+
+            int intVal = ((ConstInt) c).getVal();
+            int abs = intVal>0 ?intVal :-intVal;
+
+            /* Optimization: 2^n = LSL n, 2^n-1 = RSB LSL n, 2^n+1 = ADD LSL n */
+            if (isPowerOfTwo(abs)) {
+                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs));
+                curMCBB.appendInst(new MCMove(dst, mul, shift, null));
+                if (intVal < 0) {
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
+                }
+            }
+            else if (isPowerOfTwo(abs + 1)) {
+                MCInstruction.TYPE type = intVal<0 ?MCInstruction.TYPE.SUB : MCInstruction.TYPE.RSB;
+                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs+1));
+                curMCBB.appendInst(new MCBinary(type, dst, mul, mul, shift, null));
+            }
+            else if (isPowerOfTwo(abs - 1)) {
+                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(abs));
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, mul, mul, shift, null));
+                if (intVal < 0) {
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
+                }
+            }
+            else {
+                Register mul1 = (Register) findContainer(operand1, true);
+                Register mul2 = (Register) findContainer(operand2, true);
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.MUL, dst, mul1, mul2));
+            }
+        }
+    }
+
+    private void translateSDiv(BinaryOpInst IRinst) {
+        // TODO: 常量除数转乘法
+        Register operand1 = (Register) findContainer(IRinst.getOperandAt(0), true);
+        Register operand2 = (Register) findContainer(IRinst.getOperandAt(1), true);
+        Register dst = (Register) findContainer(IRinst);
+
+        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, operand1, operand2));
     }
 
     /**
      * Translate IR GEP. Calculate the address of an element. <br/>
+     * Each index's base address is the last address resolution.
      */
     private void translateGEP(GetElemPtrInst IRinst) {
         // 不能确定的elementType是否是一层指针
@@ -490,8 +649,8 @@ public class MCBuilder {
         if (elemetType.isArrayType())
             lengths = ((ArrayType) elemetType).getDimSize();
 
-        /* Prepare, dst = addr + totalOffset */
-        Register addr = (Register) findContainer(IRinst.getOperandAt(0));
+        /* Prepare, dst = baseAddr + totalOffset */
+        Register baseAddr = (Register) findContainer(IRinst.getOperandAt(0));
         int totalOffset = 0;
         Register dst = (Register) findContainer(IRinst);
 
@@ -503,20 +662,41 @@ public class MCBuilder {
                 for (int j=i-1; j<lengths.size(); j++)
                     scale *= lengths.get(j);
 
+            /* If index is an immediate, calculate address until next variable or the last operand */
             if (index.isImmediate()) {
                 int offset = scale * ((Immediate) index).getIntValue();
                 totalOffset += offset;
                 if (i == operandNum) {
                     if (totalOffset == 0)
-                        curMCBB.appendInst(new MCMove(dst, addr));
+                        curMCBB.appendInst(new MCMove(dst, baseAddr));
                     else
-                        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, addr, createConstInt(totalOffset)));
-                    addr = dst;
+                        curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, baseAddr, createConstInt(totalOffset)));
                 }
             }
+            /* If index is a variable */
             else {
-                // TODO: 寻址优化
-                System.out.println("出现操作立即数范围的寻址地址，报错");
+                /* If the index before is immediate, calculate here */
+                if (totalOffset != 0) {
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, baseAddr, createConstInt(totalOffset)));
+                    totalOffset = 0;
+                    baseAddr = dst;
+                }
+
+                /* Handle the variable calculation */
+                /* If the scale is the integer power of two, use the {@link MCInstruction#shift} */
+                if (isPowerOfTwo(scale)) {
+                    /* Considering the size of array, 5 bits immediate is enough */
+                    var shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSL, log2(scale));
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, dst, baseAddr, index, shift, null));
+                }
+                else {
+                    /* Create register for scale */
+                    VirtualRegister vr = curFunc.createVirReg(scale);
+                    curMCBB.appendInst(new MCMove(vr, new Immediate(scale), !canEncodeImm(scale)));
+                    curMCBB.appendInst(new MCFma(MCInstruction.TYPE.MLA, dst, ((Register) index), vr, baseAddr));
+                }
+
+                baseAddr = dst;
             }
         }
     }

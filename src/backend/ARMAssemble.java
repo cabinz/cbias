@@ -2,9 +2,11 @@ package backend;
 
 import backend.armCode.MCFunction;
 import backend.operand.Label;
+import ir.types.ArrayType;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;
+import ir.values.constants.ConstArray;
 import ir.values.constants.ConstInt;
 
 import java.util.ArrayList;
@@ -18,7 +20,9 @@ import java.util.LinkedList;
 public class ARMAssemble implements Iterable<MCFunction>{
 
     //<editor-fold desc="Fields">
-    private final String architecture = "armv7";
+    public final String cpu = "cortex-a7";
+    public final String architecture = "armv7ve";
+    public final String fpu = "vfpv4";
     private final LinkedList<MCFunction> functionList;
     private final LinkedList<Label> globalVars;
 
@@ -66,7 +70,13 @@ public class ARMAssemble implements Iterable<MCFunction>{
         Label label;
 
         ArrayList<Integer> initial = new ArrayList<>();
-        genInitial(gv.getInitVal(), initial);
+        /* When global variable is not initialized, the getInitVal() will return null */
+        if (gv.getInitVal() == null) {
+            int size = ((ArrayType) gv.getConstType()).getSize();
+            while ((size--) != 0) initial.add(0);
+        }
+        else
+            genInitial(gv.getInitVal(), initial);
 
         /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
         label = new Label(gv.getName().substring(1), initial);
@@ -77,13 +87,13 @@ public class ARMAssemble implements Iterable<MCFunction>{
     }
 
     private void genInitial(Constant constVals, ArrayList<Integer> initial) {
-        for (int i=0; i<constVals.getNumOperands(); i++){
-            Constant tmp = ((Constant) constVals.getOperandAt(i));
-            if (tmp.getType().isIntegerType())
-                initial.add(((ConstInt) tmp).getVal());
-            else
-                genInitial(constVals, initial);
-        }
+            if (constVals.getType().isIntegerType())
+                initial.add(((ConstInt) constVals).getVal());
+            else {
+                ConstArray arr = ((ConstArray) constVals);
+                for (int i=0; i<arr.getNumOperands(); i++)
+                    genInitial(((Constant) arr.getOperandAt(i)), initial);
+            }
     }
 
     /**
@@ -96,8 +106,6 @@ public class ARMAssemble implements Iterable<MCFunction>{
     public Iterator<MCFunction> iterator(){return functionList.iterator();}
 
     //<editor-fold desc="Getter & Setter">
-    public String getArchitecture() {return architecture;}
-
     public LinkedList<MCFunction> getFunctionList() {return functionList;}
 
     public LinkedList<Label> getGlobalVars() {return globalVars;}

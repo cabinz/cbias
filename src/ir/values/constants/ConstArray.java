@@ -9,14 +9,14 @@ import java.util.ArrayList;
  * Class for (integer/float) constant array in initialization.
  * All the Constants in the array will be the operands of it.
  * <br>
- * Though interfaces of ConstArray is also designed in Factory Method fashion,
- * and it's indeed reasonable to build a factory method for creating constant array
+ * Though interfaces of ConstArray is also designed in Singleton fashion,
+ * and it's indeed reasonable to build a Singleton method for creating constant array
  * on demand, there is NO guarantee that every value of ConstArray has only one
  * instance existing (unlike ConstInt and ConstFloat).
  */
 public class ConstArray extends Constant {
 
-    //<editor-fold desc="Factory Method">
+    //<editor-fold desc="Singleton Fashion">
 
     /**
      * Construct a constant array.
@@ -33,8 +33,8 @@ public class ConstArray extends Constant {
 
     /**
      * Retrieve a constant array with a list of initial values (Constants).
-     * A Factory Method fashion interface, but work with a normal class constructor without
-     * factory method pooling.
+     * A Singleton fashion interface, but work with a normal class constructor without
+     * instance pooling.
      *
      * @param arrType  The ArrayType.
      * @param initList ArrayList of Constants in a same Type.

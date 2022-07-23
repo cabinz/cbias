@@ -38,8 +38,7 @@ public class Driver{
         visitor.visit(ast);
 
         /* Intermediate code optimization */
-        PassManager.getInstance().runPasses(module);
-        //System.out.println("Optimization has not been done.");
+//        PassManager.getInstance().runPasses(module);
 
         /* Emit the IR text to an output file for testing. */
         if (config.llOut != null) {
@@ -53,6 +52,9 @@ public class Driver{
         MCBuilder mcBuilder = MCBuilder.get();
         mcBuilder.loadModule(module);
         ARMAssemble target = mcBuilder.codeGeneration();
+
+        /* Machine code optimization */
+        PassManager.getInstance().runPasses(target);
 
         /* Write file */
         MCEmitter mcEmitter = MCEmitter.get();

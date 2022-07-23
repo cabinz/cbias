@@ -6,6 +6,8 @@ import passes.ir.IRPass;
 import passes.ir.constant_derivation.ConstantDerivation;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
+import passes.mc.RegisterAllocation.GraphColoring;
+import passes.mc.buildCFG.BuildCFG;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +37,8 @@ public class PassManager {
      * @param module The module to be optimized.
      */
     public void runPasses(ARMAssemble module){
-
+        run(BuildCFG.class, module);
+        run(GraphColoring.class, module);
     }
 
     private void run(Class<?> passClass, Module module){
@@ -82,6 +85,10 @@ public class PassManager {
             registerIRPasses(IRPasses);
 
             // MC Passes
+            ArrayList<MCPass> MCPasses = new ArrayList<>();
+            MCPasses.add(new BuildCFG());
+            MCPasses.add(new GraphColoring());
+            registerMCPasses(MCPasses);
         }
         return instance;
     }
