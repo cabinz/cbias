@@ -13,7 +13,7 @@ public class MCload extends MCInstruction {
     /**
      * Addressing offset. <br/>
      * In ARM, this can be <br/>
-     * &nbsp; - 12 bits immediate <br/>
+     * &nbsp; - 12 bits immediate, ranging from -4095 to 4095 <br/>
      * &nbsp; - a register
      */
     private MCOperand offset;
