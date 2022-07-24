@@ -1,6 +1,7 @@
 package passes.ir.dce;
 
 import ir.Module;
+import ir.Use;
 import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.instructions.CallInst;
@@ -9,6 +10,7 @@ import ir.values.instructions.TerminatorInst;
 import passes.ir.IRPass;
 
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Queue;
 
 public class DeadCodeEmit implements IRPass {
@@ -34,8 +36,15 @@ public class DeadCodeEmit implements IRPass {
         }));
         while (!queue.isEmpty()){
             Instruction instruction = queue.remove();
-            //todo:
+            @SuppressWarnings("unchecked")
+            List<Use> operandList = (List<Use>) instruction.operands.clone();
             instruction.removeSelf();
+            operandList.forEach(use -> {
+                var usee = use.getUsee();
+                if(!(usee instanceof Instruction)) return;
+                var nextInst = (Instruction) usee;
+                if(canSafelyRemove(nextInst)) queue.add(nextInst);
+            });
         }
     }
 
