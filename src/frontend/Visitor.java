@@ -2021,6 +2021,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitBreakStmt(SysYParser.BreakStmtContext ctx) {
         bpStk.peek().add(builder.buildBr(BREAK));
+        builder.buildBB("_FOLLOWING_BLK");
         return null;
     }
 
@@ -2030,6 +2031,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitContStmt(SysYParser.ContStmtContext ctx) {
         bpStk.peek().add(builder.buildBr(CONTINUE));
+        builder.buildBB("_FOLLOWING_BLK");
         return null;
     }
 }
