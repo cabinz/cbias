@@ -9,6 +9,7 @@ import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
+import passes.PassManager;
 import passes.ir.IRPass;
 import passes.ir.dce.UnreachableCodeElim;
 
@@ -25,7 +26,7 @@ public class Mem2reg implements IRPass {
     }
 
     static void optimize(Module module) {
-        (new UnreachableCodeElim()).runOnModule(module);
+        PassManager.getInstance().run(UnreachableCodeElim.class, module);
         module.functions.forEach(Mem2reg::optimize);
     }
 

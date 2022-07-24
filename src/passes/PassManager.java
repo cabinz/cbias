@@ -44,13 +44,13 @@ public class PassManager {
         run(GraphColoring.class, module);
     }
 
-    private void run(Class<?> passClass, Module module){
+    public void run(Class<?> passClass, Module module){
         if(registeredIRPasses.containsKey(passClass)){
             registeredIRPasses.get(passClass).runOnModule(module);
         }
     }
 
-    private void run(Class<?> passClass, ARMAssemble module){
+    public void run(Class<?> passClass, ARMAssemble module){
         if(registeredMCPasses.containsKey(passClass)){
             registeredMCPasses.get(passClass).runOnModule(module);
         }
