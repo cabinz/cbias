@@ -106,8 +106,10 @@ public class Mem2reg implements IRPass {
                 Constant constant;
                 if(npdVar.getAllocatedType().isIntegerType()){
                     constant = ConstInt.getI32(0);
-                }else{
+                }else if(npdVar.getAllocatedType().isFloatType()){
                     constant = ConstFloat.get(0f);
+                }else{
+                    throw new RuntimeException("Unable to generate default value for type "+npdVar.getAllocatedType());
                 }
                 basicBlock.latestDefineMap.put(npdVar,constant);
             });
