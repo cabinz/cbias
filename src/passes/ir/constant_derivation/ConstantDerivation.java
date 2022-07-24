@@ -286,7 +286,7 @@ public class ConstantDerivation implements IRPass {
         }
     }
 
-    // This function should not be here, but I don't know where to put it.
+    // Special way of removing designed for ConstantDerivation
     /**
      * Remove one entry of a block.
      * @param basicBlock Basic block one of whose entry is removed.
