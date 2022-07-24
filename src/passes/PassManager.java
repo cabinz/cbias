@@ -4,6 +4,8 @@ import backend.ARMAssemble;
 import ir.Module;
 import passes.ir.IRPass;
 import passes.ir.constant_derivation.ConstantDerivation;
+import passes.ir.dce.UnreachableCodeElim;
+import passes.ir.dce.UselessCodeElim;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
 import passes.mc.RegisterAllocation.GraphColoring;
@@ -29,6 +31,7 @@ public class PassManager {
     public void runPasses(Module module){
         run(Mem2reg.class, module);
         run(ConstantDerivation.class, module);
+        run(UselessCodeElim.class, module);
     }
 
     /**
@@ -82,6 +85,8 @@ public class PassManager {
             ArrayList<IRPass> IRPasses = new ArrayList<>();
             IRPasses.add(new Mem2reg());
             IRPasses.add(new ConstantDerivation());
+            IRPasses.add(new UnreachableCodeElim());
+            IRPasses.add(new UselessCodeElim());
             registerIRPasses(IRPasses);
 
             // MC Passes
