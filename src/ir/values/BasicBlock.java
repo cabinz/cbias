@@ -101,9 +101,15 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * @param inst The instruction to be inserted.
      */
     public void insertAtEnd(Instruction inst) {
+        // Security checks.
         if (inst.getBB() != null) {
             throw new RuntimeException("Try to insert an Inst that has already belonged to another BB.");
         }
+        if (this.instructions.size() != 0 && this.getLastInst().cat.isTerminator()) {
+            throw new RuntimeException("Try to insert an Inst to a BB which has already ended with a Terminator.");
+        }
+
+        // Insertion.
         inst.setBB(this);
         this.instructions.addLast(inst);
     }
