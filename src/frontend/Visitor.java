@@ -43,28 +43,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
     private final boolean OFF = false;
 
     /**
-     * If the visitor is currently building initialization of global
-     * variables / constants.
-     */
-    private boolean envGlbInit = OFF;
-
-    /**
-     * Set the environment variable of global initialization.
-     * @param stat ON / OFF
-     */
-    private void setGlbInit(boolean stat) {
-        envGlbInit = stat;
-    }
-
-    /**
-     * If the building is currently in any global initialization process.
-     * @return Yes or no.
-     */
-    private boolean inGlbInit() {
-        return envGlbInit;
-    }
-
-    /**
      * If the visitor is currently in a constant folding progression.
      */
     private boolean envConstFolding = OFF;
@@ -308,15 +286,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitScalarConstInitVal(SysYParser.ScalarConstInitValContext ctx) {
-        if (scope.isGlobal()) {
-            this.setGlbInit(ON);
-        }
         this.setConstFolding(ON);
 
         super.visitScalarConstInitVal(ctx);
 
         this.setConstFolding(OFF);
-        this.setGlbInit(OFF);
 
         // Convert the constant value aft folding as a Constant IR Value.
         switch (getConveyedType()) {
@@ -365,9 +339,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // which will be filled with 0 by visitArrConstInitVal if the number of given initial
                 // values is not enough.
                 ctx.constInitVal().dimLens = dimLens;
-                setGlbInit(ON);
+
+                this.setConstFolding(ON);
                 visit(ctx.constInitVal());
-                setGlbInit(OFF);
+                this.setConstFolding(OFF);
+
                 // ArrConstInitVal will generate an array of Values,
                 // convert them into Constants and build a ConstArray.
                 ArrayList<Constant> initList = new ArrayList<>();
@@ -571,20 +547,18 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitScalarInitVal(SysYParser.ScalarInitValContext ctx) {
-        // Turn on global var switch.
+        // Turn on constant folding switch.
         if (scope.isGlobal()) {
-            this.setGlbInit(ON);
             this.setConstFolding(ON);
         }
         super.visitScalarInitVal(ctx);
-        // Turn off global var switch.
-        if (this.inGlbInit()) {
+        // Turn off constant folding switch.
+        if (scope.isGlobal()) {
             switch (getConveyedType()) {
                 case INT -> retVal_ = builder.buildConstant(retInt_);
                 case FLT -> retVal_ = builder.buildConstant(retFloat_);
             }
             setConstFolding(OFF);
-            this.setGlbInit(OFF);
         }
 
         return null;
@@ -643,9 +617,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Get all lengths of dimension by looping through the constExp list.
         ArrayList<Integer> dimLens = new ArrayList<>();
         for (SysYParser.ConstExpContext constExpContext : ctx.constExp()) {
-            setGlbInit(ON);
+            this.setConstFolding(ON);
             visit(constExpContext);
-            setGlbInit(OFF);
+            this.setConstFolding(OFF);
+
             int dimLen = retInt_;
             dimLens.add(dimLen);
         }
@@ -672,9 +647,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Pass down dim info.
                 // Visit child to retrieve the initialized Value list (stored in retValList_).
                 ctx.initVal().dimLens = dimLens;
-                this.setGlbInit(ON);
+
+                this.setConstFolding(ON);
                 visit(ctx.initVal());
-                this.setGlbInit(OFF);
+                this.setConstFolding(OFF);
+
                 // Convert the Values returned into Constants.
                 ArrayList<Constant> initList = new ArrayList<>();
                 for (Value val : retValList_) {
@@ -1306,7 +1283,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         Global expression: Compute value of the expr w/o instruction generation.
          */
-        if (this.inGlbInit() || this.inConstFolding()) {
+        if (this.inConstFolding()) {
             // Retrieve the value of unaryExp() by visiting child.
             visit(ctx.unaryExp());
             switch (getConveyedType()) {
@@ -1370,7 +1347,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         Global expression: Compute value of the expr w/o instruction generation.
          */
-        if (this.inGlbInit() || this.inConstFolding()) {
+        if (this.inConstFolding()) {
             int rOpInt = 0;
             float rOpFloat = 0;
 
@@ -1508,7 +1485,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         Global expression: Compute value of the expr w/o instruction generation.
          */
-        if (this.inGlbInit() || this.inConstFolding()) {
+        if (this.inConstFolding()) {
             int rOpInt = 0;
             float rOpFloat = 0;
 
@@ -1791,7 +1768,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         Global expression: Compute value of the expr w/o instruction generation.
          */
-        if (this.inGlbInit() || this.inConstFolding()) {
+        if (this.inConstFolding()) {
             visit(ctx.lVal());
             if (retVal_.getType().isIntegerType()) {
                 retInt_ = ((ConstInt) retVal_).getVal();
@@ -1828,7 +1805,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitNumber(SysYParser.NumberContext ctx) {
         super.visitNumber(ctx);
-        if (!this.inGlbInit() && !this.inConstFolding()) {
+        if (!this.inConstFolding()) {
             switch (getConveyedType()) {
                 case INT -> retVal_ = builder.buildConstant(retInt_);
                 case FLT -> retVal_ = builder.buildConstant(retFloat_);
