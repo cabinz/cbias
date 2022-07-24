@@ -20,11 +20,11 @@ public class UnreachableCodeElim implements IRPass {
         function.forEach(basicBlock -> entryMap.put(basicBlock, new HashSet<>()));
         function.forEach(basicBlock -> {
             var followingBBs = RelationAnalysis.getFollowingBB(basicBlock);
-            followingBBs.forEach(followingBB-> entryMap.get(basicBlock).add(followingBB));
+            followingBBs.forEach(followingBB-> entryMap.get(followingBB).add(basicBlock));
         });
         Queue<BasicBlock> removeQueue = new ArrayDeque<>();
         entryMap.forEach((basicBlock, entrySet) -> {
-            if(entrySet.isEmpty()){
+            if(basicBlock!=function.getEntryBB()&&entrySet.isEmpty()){
                 removeQueue.add(basicBlock);
             }
         });
