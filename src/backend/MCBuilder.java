@@ -158,38 +158,25 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      */
     private void translate(Instruction IRinst) {
-        if (IRinst.isRet()) {
-            translateRet((TerminatorInst.Ret) IRinst);
-        }
-        else if (IRinst.isAdd()) {
-            translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
-        }
-        else if (IRinst.isSub()) {
-            translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
-        }
-        else if (IRinst.isMul()) {
-            translateMul((BinaryOpInst) IRinst);
-        }
-        else if (IRinst.isDiv()) {
-            translateSDiv((BinaryOpInst) IRinst);
-        }
-        else if (IRinst.isAlloca()) {
-            translateAlloca((MemoryInst.Alloca) IRinst);
-        }
-        else if (IRinst.isStore()) {
-            translateStore((MemoryInst.Store) IRinst);
-        }
-        else if (IRinst.isLoad()) {
-            translateLoad((MemoryInst.Load) IRinst);
-        }
-        else if (IRinst.isCall()) {
-            translateCall((CallInst) IRinst);
-        }
-        else if (IRinst.isBr()) {
-            translateBr((TerminatorInst.Br) IRinst);
-        }
-        else if (IRinst.isGEP()) {
-            translateGEP((GetElemPtrInst) IRinst);
+        switch (IRinst.cat) {
+            case RET    -> translateRet((TerminatorInst.Ret) IRinst);
+            case ADD    -> translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
+            case SUB    -> translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
+            case MUL    -> translateMul((BinaryOpInst) IRinst);
+            case DIV    -> translateSDiv((BinaryOpInst) IRinst);
+            case ALLOCA -> translateAlloca((MemoryInst.Alloca) IRinst);
+            case STORE  -> translateStore((MemoryInst.Store) IRinst);
+            case LOAD   -> translateLoad((MemoryInst.Load) IRinst);
+            case CALL   -> translateCall((CallInst) IRinst);
+            case BR     -> translateBr((TerminatorInst.Br) IRinst);
+            case GEP    -> translateGEP((GetElemPtrInst) IRinst);
+            case FADD   -> translateFloatBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.VADD);
+            case FSUB   -> translateFloatBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.VSUB);
+            case FMUL   -> translateFloatBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.VMUL);
+            case FDIV   -> translateFloatBinary((BinaryOpInst) IRinst, MCInstruction.TYPE.VDIV);
+            case FNEG   -> translateFloatNeg((UnaryOpInst) IRinst);
+            case FPTOSI -> translateConvert((CastInst) IRinst, true);
+            case SITOFP -> translateConvert((CastInst) IRinst, false);
         }
     }
 
@@ -288,6 +275,80 @@ public class MCBuilder {
      */
     private MCOperand findContainer(Value value) {
         return findContainer(value, false);
+    }
+
+    /**
+     * Allocate a container for float value
+     * @param value the value that needs a container
+     * @param forceAllocReg need to force allocate an extension register for the value
+     * @return the corresponding container (ONLY extension register or float immediate)
+     */
+    private MCOperand findFloatContainer(Value value, boolean forceAllocReg) {
+        if (value instanceof ConstFloat) {
+            float v = ((ConstFloat) value).getVal();
+            if (canEncodeFloat(v)){
+                if (forceAllocReg) {
+                    var extVr = curFunc.createExtVirReg(value);
+                    curMCBB.appendInst(new MCFPmove(extVr, new FPImmediate(v)));
+                    floatValueMap.put(value, extVr);
+                    return extVr;
+                }
+                else {
+                    return new FPImmediate(v);
+                }
+            }
+            else {
+                var vr = curFunc.createVirReg(value);
+                var extVr = curFunc.createExtVirReg(value);
+                curMCBB.appendInst(new MCMove(vr, new FPImmediate(v), true));
+                curMCBB.appendInst(new MCFPmove(extVr, vr));
+                floatValueMap.put(value, extVr);
+                return extVr;
+            }
+        }
+        else if (valueMap.containsKey(value)) {
+            return valueMap.get(value);
+        }
+        else if (floatValueMap.containsKey(value)) {
+            return floatValueMap.get(value);
+        }
+        else if (value instanceof Instruction) {
+            var inst = ((Instruction) value);
+            var vr = curFunc.createExtVirReg(inst);
+            floatValueMap.put(value, vr);
+            return vr;
+        }
+        else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
+            VirtualExtRegister extVr = curFunc.createExtVirReg(value);
+            floatValueMap.put(value, extVr);
+
+            int pos = ((Function.FuncArg) value).getPos();
+            MCBasicBlock entry = curFunc.getEntryBlock();
+            if (pos < 16) {
+                entry.prependInst(new MCFPmove(extVr, RealExtRegister.get(pos)));
+            }
+            else {
+                /* Considering that parameter should not be too many .... use Immediate directly here */
+                // TODO: 确定压栈顺序
+                var load = new MCFPload(extVr, RealRegister.get(13), new Immediate((pos-16)*4));
+                entry.prependInst(load);
+                curFunc.addFloatParamLoads(load);
+            }
+
+            return extVr;
+        }
+        else
+            return null;
+    }
+
+    /**
+     * Syntactic sugar of {@link #findFloatContainer(Value, boolean)} <br/>
+     * Default DO force allocate a virtual extension register
+     * , because most float instruction use extension register
+     * rather than immediate. <br/>
+     */
+    private MCOperand findFloatContainer(Value value) {
+        return findFloatContainer(value, true);
     }
 
 
@@ -671,6 +732,30 @@ public class MCBuilder {
         Register dst = (Register) findContainer(IRinst);
 
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, operand1, operand2));
+    }
+
+    private void translateFloatBinary(BinaryOpInst IRinst, MCInstruction.TYPE type) {
+        curMCBB.appendInst(new MCFPBinary(
+                type,
+                (ExtensionRegister) findFloatContainer(IRinst),
+                (ExtensionRegister) findFloatContainer(IRinst.getOperandAt(0)),
+                (ExtensionRegister) findFloatContainer(IRinst.getOperandAt(1))
+        ));
+    }
+
+    private void translateFloatNeg(UnaryOpInst IRinst) {
+        curMCBB.appendInst(new MCFPneg(
+                (ExtensionRegister) findFloatContainer(IRinst),
+                (ExtensionRegister) findFloatContainer(IRinst.getOperandAt(0))
+        ));
+    }
+
+    private void translateConvert(CastInst IRinst, boolean f2i) {
+        curMCBB.appendInst(new MCFPconvert(
+                f2i,
+                (ExtensionRegister) findFloatContainer(IRinst),
+                (ExtensionRegister) findContainer(IRinst.getOperandAt(0))
+        ));
     }
 
     /**
