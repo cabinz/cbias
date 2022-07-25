@@ -487,8 +487,18 @@ public class MCBuilder {
     }
 
     private void translateRet(TerminatorInst.Ret IRinst) {
-        if (IRinst.getNumOperands() != 0)
-            curMCBB.appendInst(new MCMove(RealRegister.get(0), findContainer(IRinst.getOperandAt(0))));
+        if (IRinst.getNumOperands() != 0) {
+            var returnValue = IRinst.getOperandAt(0);
+            if (returnValue.getType().isFloatType()){
+                MCOperand ret = findFloatContainer(returnValue);
+                if (ret.isFPImm())
+                    curMCBB.appendInst(new MCFPmove(RealExtRegister.get(0), ((FPImmediate) ret)));
+                else
+                    curMCBB.appendInst(new MCFPmove(RealExtRegister.get(0), ((ExtensionRegister) ret)));
+            }
+            else
+                curMCBB.appendInst(new MCMove(RealRegister.get(0), findContainer(returnValue)));
+        }
         curMCBB.appendInst(new MCReturn());
     }
 
