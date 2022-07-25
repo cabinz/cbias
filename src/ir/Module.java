@@ -12,7 +12,7 @@ import ir.values.GlobalVariable;
  * resources needed.
  */
 
-public class Module{
+public class Module {
     public final ArrayList<Function> functions = new ArrayList<>();
 
     public final ArrayList<Function> externFunctions = new ArrayList<>();

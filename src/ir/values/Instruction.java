@@ -71,6 +71,7 @@ public abstract class Instruction extends User {
      * An InstCategory instance indicating an instruction type.
      */
     public InstCategory cat;
+    // TODO: rename as tag, add a getter for it
 
     /**
      * If an instruction has result, a name (register) should be

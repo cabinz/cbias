@@ -10,6 +10,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * The ‘phi’ instruction is used to implement the φ node in the SSA graph representing the function.
+ * @see <a href="https://llvm.org/docs/LangRef.html#phi-instruction">
+ *     LLVM IR LangRef: phi instruction</a>
+ */
 public class PhiInst extends Instruction {
 
     public PhiInst(Type type){

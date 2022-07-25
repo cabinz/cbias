@@ -24,6 +24,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * All the Instructions in the BB.
      */
     public final LinkedList<Instruction> instructions = new LinkedList<>();
+    // TODO: private the field, add a getter for it
 
     /**
      * Reference of the Function where the BasicBlock lands.

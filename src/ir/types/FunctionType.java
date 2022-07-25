@@ -18,15 +18,30 @@ import java.util.ArrayList;
  */
 public class FunctionType extends Type {
 
-    private Type retType; // void / int / float
+    /**
+     * Return type of the function. (VoidType / IntegerType / FloatType)
+     */
+    private Type retType;
+
+    public Type getRetType() {
+        return retType;
+    }
+
+    /**
+     * Argument types in the function prototype.
+     */
     private ArrayList<Type> argTypes;
+
+    public ArrayList<Type> getArgTypes() {
+        return argTypes;
+    }
+
 
 
     private FunctionType(Type retType, ArrayList<Type> argTypes) {
         this.retType = retType;
         this.argTypes = argTypes;
     }
-
 
 
     /**
@@ -41,11 +56,4 @@ public class FunctionType extends Type {
         return new FunctionType(retType, argTypes);
     }
 
-    public Type getRetType() {
-        return retType;
-    }
-
-    public ArrayList<Type> getArgTypes() {
-        return argTypes;
-    }
 }

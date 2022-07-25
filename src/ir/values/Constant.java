@@ -21,7 +21,7 @@ import java.util.ArrayList;
  * <br>
  * Type for a Constant is the type of that constant value.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Constant.h#L41">
- *     LLVM IR Reference</a>
+ *     LLVM IR Source</a>
  */
 public abstract class Constant extends User {
 
