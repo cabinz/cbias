@@ -15,9 +15,7 @@ import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class is used to CodeGen, or translate LLVM IR into ARM assemble
@@ -150,6 +148,10 @@ public class MCBuilder {
                     ((Immediate) load.getOffset()).getIntValue()
                             + curFunc.getLocalVariable()
             )));
+            curFunc.getFloatParamLoads().forEach(load -> load.setOffset(new Immediate(
+                    load.getOffset().getIntValue()
+                            + curFunc.getLocalVariable()
+            )));
         }
     }
 
@@ -208,7 +210,7 @@ public class MCBuilder {
 //                    if (valueMap.containsKey(value))
 //                        return valueMap.get(value);
 //                    else {
-                        VirtualRegister vr = curFunc.createVirReg(((ConstInt) value).getVal());
+                        VirtualRegister vr = curFunc.createVirReg(val);
                         valueMap.put(value, vr);
                         curMCBB.appendInst(new MCMove(vr, temp));
                         return vr;
@@ -228,6 +230,11 @@ public class MCBuilder {
         else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
+        else if (floatValueMap.containsKey(value)) {
+            var vr = curFunc.createVirReg(value);
+            curMCBB.appendInst(new MCFPmove(vr, floatValueMap.get(value)));
+            return vr;
+        }
         else if (value instanceof Instruction) {
             var inst = ((Instruction) value);
             VirtualRegister vr;
@@ -245,20 +252,21 @@ public class MCBuilder {
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
             // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别
-            // TODO: 使用到全局变量的时候才计算地址
+            // TODO: 使用到传参的时候才计算load
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
-            int pos = ((Function.FuncArg) value).getPos();
             MCBasicBlock entry = curFunc.getEntryBlock();
-            if (pos < 4) {
-                entry.prependInst(new MCMove(vr, RealRegister.get(pos)));
+
+            if (curFunc.getAPVCR().contains(value)) {
+                entry.prependInst(new MCMove(vr, RealRegister.get(curFunc.getAPVCR().indexOf(value))));
             }
             else {
                 /* Considering that parameter should not be too many .... use Immediate directly here */
-                var load = new MCload(vr, RealRegister.get(13), new Immediate((pos-4)*4));
+                var load = new MCload(vr, RealRegister.get(13), new Immediate(curFunc.getACTM().indexOf(value)*4));
                 entry.prependInst(load);
                 curFunc.addParamCal(load);
             }
+
             return vr;
         }
         else
@@ -280,8 +288,10 @@ public class MCBuilder {
      * @return the corresponding container (ONLY extension register or float immediate)
      */
     private MCOperand findFloatContainer(Value value, boolean forceAllocReg) {
-        if (value instanceof ConstFloat) {
-            float v = ((ConstFloat) value).getVal();
+        if (value instanceof Constant) {
+            float v = value instanceof ConstFloat
+                    ? ((ConstFloat) value).getVal()
+                    : ((ConstInt) value).getVal();
             if (canEncodeFloat(v)){
                 if (forceAllocReg) {
                     var extVr = curFunc.createExtVirReg(value);
@@ -302,11 +312,13 @@ public class MCBuilder {
                 return extVr;
             }
         }
-        else if (valueMap.containsKey(value)) {
-            return valueMap.get(value);
-        }
         else if (floatValueMap.containsKey(value)) {
             return floatValueMap.get(value);
+        }
+        else if (valueMap.containsKey(value)) {
+            var extVr = curFunc.createExtVirReg(value);
+            curMCBB.appendInst(new MCFPmove(extVr, valueMap.get(value)));
+            return extVr;
         }
         else if (value instanceof Instruction) {
             var inst = ((Instruction) value);
@@ -317,16 +329,14 @@ public class MCBuilder {
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
             VirtualExtRegister extVr = curFunc.createExtVirReg(value);
             floatValueMap.put(value, extVr);
-
-            int pos = ((Function.FuncArg) value).getPos();
             MCBasicBlock entry = curFunc.getEntryBlock();
-            if (pos < 16) {
-                entry.prependInst(new MCFPmove(extVr, RealExtRegister.get(pos)));
+
+            if (curFunc.getAPVER().contains(value)) {
+                entry.prependInst(new MCFPmove(extVr, RealExtRegister.get(curFunc.getAPVER().indexOf(value))));
             }
             else {
                 /* Considering that parameter should not be too many .... use Immediate directly here */
-                // TODO: 确定压栈顺序
-                var load = new MCFPload(extVr, RealRegister.get(13), new Immediate((pos-16)*4));
+                var load = new MCFPload(extVr, RealRegister.get(13), new Immediate(curFunc.getACTM().indexOf(value)*4));
                 entry.prependInst(load);
                 curFunc.addFloatParamLoads(load);
             }
@@ -806,7 +816,7 @@ public class MCBuilder {
         curMCBB.appendInst(new MCFPconvert(
                 f2i,
                 (ExtensionRegister) findFloatContainer(IRinst),
-                (ExtensionRegister) findContainer(IRinst.getOperandAt(0))
+                (ExtensionRegister) findFloatContainer(IRinst.getOperandAt(0))
         ));
     }
 
