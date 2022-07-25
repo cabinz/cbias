@@ -1,8 +1,9 @@
 package backend.armCode;
 
+import backend.armCode.MCInstructions.MCFPload;
 import backend.armCode.MCInstructions.MCload;
-import backend.operand.Immediate;
 import backend.operand.RealRegister;
+import backend.operand.VirtualExtRegister;
 import backend.operand.VirtualRegister;
 import ir.Value;
 import ir.values.BasicBlock;
@@ -16,12 +17,16 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     //<editor-fold desc="Fields">
     private final LinkedList<MCBasicBlock> BasicBlockList;
+    private final String name;
+
     /**
      * This is used to name the virtual register.
      */
     private int VirtualRegCounter = 0;
     private final ArrayList<VirtualRegister> VirtualRegisters;
-    private final String name;
+
+    private int virtualExtRegCounter = 0;
+    private final ArrayList<VirtualExtRegister> virtualExtRegisters;
 
     /**
      * Total stackSize, including local variables & spilled nodes. <br/>
@@ -109,6 +114,12 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         return vr;
     }
 
+    public VirtualExtRegister createExtVirReg(Value value) {
+        var vr = new VirtualExtRegister(virtualExtRegCounter++, value);
+        virtualExtRegisters.add(vr);
+        return vr;
+    }
+
     public void addLocalVariable(int i) {localVariable += i;}
 
     /**
@@ -177,8 +188,10 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         localVariable = 0;
         spilledNode = 0;
         paramCal = new HashSet<>();
+        floatParamLoads = new HashSet<>();
         BasicBlockList = new LinkedList<>();
         VirtualRegisters = new ArrayList<>();
+        virtualExtRegisters = new ArrayList<>();
         BBmap = new HashMap<>();
         this.isExternal = isExternal;
 //        argList = new LinkedList<MCOperand>();
