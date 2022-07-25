@@ -188,7 +188,7 @@ public class MCBuilder {
      * values are stored in the immediate position, or register.
      * @param value the value to handle
      * @param forceAllocReg force allocate a virtual register if true
-     * @return the corresponding operand
+     * @return the corresponding container (ONLY core register or integer immediate)
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
         if (value instanceof ConstInt) {
@@ -458,12 +458,12 @@ public class MCBuilder {
     //<editor-fold desc="Translate functions">
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
-     * r0-r3 are caller-saved registers, while r4-r12 are callee-saved registers. <br/>
+     * r0-r3 & s0-s15 are caller-saved registers, while r4-r12 & s16-s31 are callee-saved registers. <br/>
      * Function stack (from high to low): parameter, context, spilled nodes, local variables <br/>
      * @param IRinst IR call instruction
      */
     private void translateCall(CallInst IRinst) {
-        // TODO: 浮点参数传递使用s0-s3
+        // TODO: 浮点参数传递使用s0-s15
         // 另外，前4个浮点和整型使用寄存器传递
         int oprNum = IRinst.getNumOperands();
         /* Argument push */
@@ -572,9 +572,9 @@ public class MCBuilder {
         Value value2 = icmp.getOperandAt(1);
 
         /* If there is cmp or zext instruction in operands */
-        if (value1 instanceof BinaryOpInst && ((BinaryOpInst) value1).isIcmp())
+        if (value1 instanceof BinaryOpInst && ((BinaryOpInst) value1).cat.isIntRelationalBinary())
             translateIcmp((BinaryOpInst) value1, true);
-        if (value2 instanceof BinaryOpInst && ((BinaryOpInst) value2).isIcmp())
+        if (value2 instanceof BinaryOpInst && ((BinaryOpInst) value2).cat.isIntRelationalBinary())
             translateIcmp((BinaryOpInst) value2, true);
         if (value1 instanceof CastInst.ZExt)
             translateIcmp((BinaryOpInst) ((CastInst.ZExt) value1).getOperandAt(0), true);
