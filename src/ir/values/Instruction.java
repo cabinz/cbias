@@ -60,6 +60,17 @@ public abstract class Instruction extends User {
                     && this.ordinal() <= InstCategory.FGE.ordinal();
         }
 
+        public boolean isIntRelationalBinary() {
+            return InstCategory.LT.ordinal() <= this.ordinal()
+                    && this.ordinal() <= InstCategory.GE.ordinal();
+        }
+
+        public boolean isFloatRelationalBinary() {
+            return InstCategory.FLT.ordinal() <= this.ordinal()
+                    && this.ordinal() <= InstCategory.FGE.ordinal();
+
+        }
+
         public boolean isTerminator() {
             return InstCategory.RET.ordinal() <= this.ordinal()
                     && this.ordinal() <= InstCategory.BR.ordinal();
