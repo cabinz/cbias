@@ -3,10 +3,13 @@ package backend;
 import backend.armCode.MCFunction;
 import backend.operand.Label;
 import ir.types.ArrayType;
+import ir.types.IntegerType;
+import ir.types.PointerType;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;
 import ir.values.constants.ConstArray;
+import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 
 import java.util.ArrayList;
@@ -69,26 +72,41 @@ public class ARMAssemble implements Iterable<MCFunction>{
     public Label addGlobalVariable(GlobalVariable gv) {
         Label label;
 
-        ArrayList<Integer> initial = new ArrayList<>();
-        /* When global variable is not initialized, the getInitVal() will return null */
-        if (gv.getInitVal() == null) {
-            int size = ((ArrayType) gv.getConstType()).getSize();
-            while ((size--) != 0) initial.add(0);
-        }
-        else
-            genInitial(gv.getInitVal(), initial);
+        if (((PointerType) gv.getType()).getRootType() instanceof IntegerType) {
+            ArrayList<Integer> initial = new ArrayList<>();
+            /* When global variable is not initialized, the getInitVal() will return null */
+            if (gv.getInitVal() == null) {
+                int size = ((ArrayType) gv.getConstType()).getSize();
+                while ((size--) != 0) initial.add(0);
+            }
+            else
+                genInitial(gv.getInitVal(), initial);
 
-        /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
-        label = new Label(gv.getName().substring(1), initial);
+            /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
+            label = new Label(gv.getName().substring(1), Label.TAG.Int, initial);
+        }
+        else {
+            ArrayList<Float> initial = new ArrayList<>();
+            if (gv.getInitVal() == null) {
+                int size = ((ArrayType) gv.getConstType()).getSize();
+            }
+            else
+                genInitial(gv.getInitVal(), initial);
+
+            /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
+            label = new Label(gv.getName().substring(1), Label.TAG.Float, initial);
+        }
 
         globalVars.add(label);
         glbVarMap.put(gv, label);
         return label;
     }
 
-    private void genInitial(Constant constVals, ArrayList<Integer> initial) {
+    private void genInitial(Constant constVals, ArrayList initial) {
             if (constVals.getType().isIntegerType())
                 initial.add(((ConstInt) constVals).getVal());
+            else if (constVals.getType().isFloatType())
+                initial.add(((ConstFloat) constVals).getVal());
             else {
                 ConstArray arr = ((ConstArray) constVals);
                 for (int i=0; i<arr.getNumOperands(); i++)
