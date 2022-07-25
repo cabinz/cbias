@@ -53,10 +53,7 @@ public class ConstantDerivation implements IRPass {
                 var gvUses = (List<Use>) globalVariable.getUses().clone();
                 gvUses.forEach(loadUse -> {
                     var loadInst = (MemoryInst.Load) loadUse.getUser();
-                    @SuppressWarnings("unchecked")
-                    var loadUses = (List<Use>) loadInst.getUses().clone();
-                    loadUses.forEach(use -> use.setUsee(constant));
-                    loadInst.removeSelf();
+                    loadInst.replaceSelfTo(constant);
                 });
                 module.globalVariables.remove(globalVariable);
             }
@@ -246,18 +243,7 @@ public class ConstantDerivation implements IRPass {
                 }
             } else {
                 Constant constant = calculateExpressionValue(expression);
-                @SuppressWarnings("unchecked")
-                var uses = (List<Use>) expression.getUses().clone();
-                uses.forEach(use -> {
-                    use.setUsee(constant);
-                    if(use.getUser() instanceof Instruction){
-                        var user = (Instruction) use.getUser();
-                        if(canDeriveExpression(user)){
-                            queue.add(user);
-                        }
-                    }
-                });
-                expression.removeSelf();
+                expression.replaceSelfTo(constant);
             }
         }
     }
