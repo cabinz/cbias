@@ -423,12 +423,12 @@ public class MCBuilder {
      */
     private MCInstruction.ConditionField mapToArmCond(BinaryOpInst IRinst) {
         return switch (IRinst.cat) {
-            case EQ -> MCInstruction.ConditionField.EQ;
-            case NE -> MCInstruction.ConditionField.NE;
-            case GE -> MCInstruction.ConditionField.GE;
-            case LE -> MCInstruction.ConditionField.LE;
-            case GT -> MCInstruction.ConditionField.GT;
-            case LT -> MCInstruction.ConditionField.LT;
+            case EQ, FEQ -> MCInstruction.ConditionField.EQ;
+            case NE, FNE -> MCInstruction.ConditionField.NE;
+            case GE, FGE -> MCInstruction.ConditionField.GE;
+            case LE, FLE -> MCInstruction.ConditionField.LE;
+            case GT, FGT -> MCInstruction.ConditionField.GT;
+            case LT, FLT -> MCInstruction.ConditionField.LT;
             default -> null;
         };
     }
@@ -567,7 +567,7 @@ public class MCBuilder {
                     curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(1))));
             }
             else {
-                MCInstruction.ConditionField cond = translateIcmp((BinaryOpInst) IRinst.getOperandAt(0));
+                MCInstruction.ConditionField cond = dealCmpOpr((BinaryOpInst) IRinst.getOperandAt(0), false);
                 curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(1)), cond));
                 curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(2)), reverseCond(cond)));
             }
@@ -575,6 +575,17 @@ public class MCBuilder {
         else {
             curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(0))));
         }
+    }
+
+    private MCInstruction.ConditionField dealCmpOpr(Instruction cmp, boolean saveResult) {
+        if (cmp.isIcmp())
+            return translateIcmp((BinaryOpInst) cmp, saveResult);
+        else if (cmp.isFcmp())
+            return translateFcmp((BinaryOpInst) cmp, saveResult);
+        else if (cmp.isZext())
+            return dealCmpOpr((BinaryOpInst) cmp.getOperandAt(0), true);
+        else
+            return null;
     }
 
     /**
@@ -587,14 +598,10 @@ public class MCBuilder {
         Value value2 = icmp.getOperandAt(1);
 
         /* If there is cmp or zext instruction in operands */
-        if (value1 instanceof BinaryOpInst && ((BinaryOpInst) value1).cat.isIntRelationalBinary())
-            translateIcmp((BinaryOpInst) value1, true);
-        if (value2 instanceof BinaryOpInst && ((BinaryOpInst) value2).cat.isIntRelationalBinary())
-            translateIcmp((BinaryOpInst) value2, true);
-        if (value1 instanceof CastInst.ZExt)
-            translateIcmp((BinaryOpInst) ((CastInst.ZExt) value1).getOperandAt(0), true);
-        if (value2 instanceof CastInst.ZExt )
-            translateIcmp((BinaryOpInst) ((CastInst.ZExt) value2).getOperandAt(0), true);
+        if (value1 instanceof Instruction)
+            dealCmpOpr((Instruction) value1, true);
+        if (value2 instanceof Instruction)
+            dealCmpOpr((Instruction) value2, true);
 
         /* Translate */
         Register operand1;
@@ -627,6 +634,36 @@ public class MCBuilder {
      */
     private MCInstruction.ConditionField translateIcmp(BinaryOpInst icmp) {
         return translateIcmp(icmp, false);
+    }
+
+    private MCInstruction.ConditionField translateFcmp(BinaryOpInst fcmp, boolean saveResult) {
+        Value value1 = fcmp.getOperandAt(0);
+        Value value2 = fcmp.getOperandAt(1);
+
+        /* If there is cmp or zext instruction in operands */
+        if (value1 instanceof Instruction)
+            dealCmpOpr((Instruction) value1, true);
+        if (value2 instanceof Instruction)
+            dealCmpOpr((Instruction) value2, true);
+
+        /* Translate */
+        ExtensionRegister operand1 = (ExtensionRegister) findFloatContainer(value1);
+        ExtensionRegister operand2 = (ExtensionRegister) findFloatContainer(value2);
+        MCInstruction.ConditionField armCond = mapToArmCond(fcmp);
+        curMCBB.appendInst(new MCFPcompare(operand1, operand2));
+        curMCBB.appendInst(new MCFPmove());
+
+        /* Save result */
+        if (saveResult) {
+            curMCBB.appendInst(new MCMove((Register) findContainer(fcmp), createConstInt(1), null, armCond));
+            curMCBB.appendInst(new MCMove((Register) findContainer(fcmp), createConstInt(0), null, reverseCond(armCond)));
+        }
+
+        return armCond;
+    }
+
+    private MCInstruction.ConditionField translateFcmp(BinaryOpInst fcmp) {
+        return translateFcmp(fcmp, false);
     }
 
     /**
