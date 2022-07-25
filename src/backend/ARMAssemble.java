@@ -39,7 +39,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
      * @return the corresponding MC Function
      */
     public MCFunction createFunction(Function IRf){
-        var MCf = new MCFunction(IRf.getName(), false);
+        var MCf = new MCFunction(IRf, false);
         functionList.add(MCf);
         functionMap.put(IRf, MCf);
         return MCf;
@@ -51,7 +51,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
      * @param IRFunc the external IR Function to be used
      */
     public void useExternalFunction(Function IRFunc){
-        var MCFunc = new MCFunction(IRFunc.getName(), true);
+        var MCFunc = new MCFunction(IRFunc, true);
         functionList.add(MCFunc);
         functionMap.put(IRFunc, MCFunc);
     }
