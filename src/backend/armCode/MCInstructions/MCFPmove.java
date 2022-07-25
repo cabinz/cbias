@@ -1,10 +1,7 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCInstruction;
-import backend.operand.ExtensionRegister;
-import backend.operand.Immediate;
-import backend.operand.MCOperand;
-import backend.operand.Register;
+import backend.operand.*;
 
 import java.util.HashSet;
 
@@ -68,7 +65,7 @@ public class MCFPmove extends MCInstruction {
      * This constructor is designed to new a VMRS instruction.
      */
     public MCFPmove() {super(TYPE.VMRS);doubleMove=false;}
-    public MCFPmove(ExtensionRegister dst1, Immediate src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
+    public MCFPmove(ExtensionRegister dst1, FPImmediate src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
     public MCFPmove(Register dst1, ExtensionRegister src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
     public MCFPmove(ExtensionRegister dst1, Register src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
     public MCFPmove(ExtensionRegister dst1, ExtensionRegister src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
