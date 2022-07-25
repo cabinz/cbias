@@ -50,5 +50,5 @@ public class MCFPconvert extends MCInstruction {
     public ExtensionRegister getSrc() {return src;}
     public void setSrc(ExtensionRegister src) {this.src = src;}
 
-    public MCFPconvert(ExtensionRegister dst, ExtensionRegister src, boolean f2i) {super(TYPE.VCVT);this.dst = dst;this.src = src;this.f2i = f2i;}
+    public MCFPconvert(boolean f2i, ExtensionRegister dst, ExtensionRegister src) {super(TYPE.VCVT);this.dst = dst;this.src = src;this.f2i = f2i;}
 }

@@ -981,7 +981,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Get trueBlkEndWithTerminator flag.
         Instruction trueExitBlkLastInst = trueExitBlk.getLastInst();
         boolean trueBlkEndWithTerminator = trueExitBlkLastInst != null &&
-                (trueExitBlkLastInst.isRet() || trueExitBlkLastInst.isBr());
+                trueExitBlkLastInst.cat.isTerminator();
 
         /*
         Build the FALSE branch (a block for jumping if condition is false),
@@ -1002,7 +1002,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Get falseBlkEndWithTerminator flag.
             Instruction falseExitBlkLastInst = falseExitBlk.getLastInst();
             falseBlkEndWithTerminator = falseExitBlkLastInst != null &&
-                (falseExitBlkLastInst.isRet() || falseExitBlkLastInst.isBr());
+                    trueExitBlkLastInst.cat.isTerminator();
         }
 
         /*

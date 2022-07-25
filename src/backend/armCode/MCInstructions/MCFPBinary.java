@@ -40,7 +40,7 @@ public class MCFPBinary extends MCInstruction {
                 + ", " + operand1.emit() + ", " + operand2.emit();
     }
 
-    public MCFPBinary(TYPE type, ExtensionRegister operand1, ExtensionRegister operand2, ExtensionRegister destination) {
+    public MCFPBinary(TYPE type, ExtensionRegister destination, ExtensionRegister operand1, ExtensionRegister operand2) {
         super(type);
         this.operand1 = operand1;
         this.operand2 = operand2;
