@@ -1,6 +1,8 @@
 package backend;
 
-import backend.armCode.*;
+import backend.armCode.MCBasicBlock;
+import backend.armCode.MCFunction;
+import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.*;
 import backend.operand.*;
 import ir.Module;
@@ -9,10 +11,12 @@ import ir.Value;
 import ir.types.ArrayType;
 import ir.types.PointerType;
 import ir.values.*;
+import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -43,6 +47,24 @@ public class MCBuilder {
      * This class records the map between values and virtual registers.
      */
     private HashMap<Value, VirtualRegister> valueMap;
+    private HashMap<Value, VirtualExtRegister> floatValueMap;
+
+    /**
+     * Contains the floats that can be encoded in VMOV instruction.
+     * @see backend.operand.FPImmediate
+     */
+    private static final HashSet<Float> immFloat = new HashSet<>();
+    static {
+        float t = 2.0f;
+        for (int n=0; n<=7; n++) {
+            t /= 2;
+            for (int m=16; m<=31; m++) {
+                float tmp = m * t;
+                immFloat.add(tmp);
+                immFloat.add(-tmp);
+            }
+        }
+    }
     //</editor-fold>
 
 
@@ -96,6 +118,7 @@ public class MCBuilder {
         for (Function IRfunc : IRModule.functions) {
             curIRFunc = IRfunc;
             valueMap = new HashMap<>();
+            floatValueMap = new HashMap<>();
             curFunc = target.createFunction(IRfunc);
 
             /* This loop is to create the MC basic block in the same order of IR */
@@ -205,6 +228,13 @@ public class MCBuilder {
                     return temp;
             }
         }
+        else if (value instanceof ConstFloat) {
+            // TODO: 判断能否编码？
+            VirtualRegister vr = curFunc.createVirReg(value);
+            valueMap.put(value, vr);
+            curMCBB.appendInst(new MCMove(vr, new FPImmediate(((ConstFloat) value).getVal()), true));
+            return vr;
+        }
         else if (value instanceof GlobalVariable) {
             // TODO: 采用控制流分析，是否能访问到之前的地址
             VirtualRegister vr = curFunc.createVirReg(value);
@@ -282,6 +312,13 @@ public class MCBuilder {
             n = (n << 2) | (n >>> 30);
         }
         return false;
+    }
+
+    public static boolean canEncodeFloat(float n) {
+        if (immFloat.contains(n))
+            return true;
+        else
+            return false;
     }
 
     /**
