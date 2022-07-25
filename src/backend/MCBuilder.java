@@ -191,8 +191,11 @@ public class MCBuilder {
      * @return the corresponding container (ONLY core register or integer immediate)
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
-        if (value instanceof ConstInt) {
-            MCOperand temp = createConstInt(((ConstInt) value).getVal());
+        if (value instanceof Constant) {
+            int val = value instanceof ConstInt
+                    ? ((ConstInt) value).getVal()
+                    : Float.floatToRawIntBits(((ConstFloat) value).getVal());
+            MCOperand temp = createConstInt(val);
             if (temp.isVirtualReg())
                 return temp;
             /* temp is immediate */
@@ -214,13 +217,6 @@ public class MCBuilder {
                 else
                     return temp;
             }
-        }
-        else if (value instanceof ConstFloat) {
-            // TODO: 判断能否编码？
-            VirtualRegister vr = curFunc.createVirReg(value);
-            valueMap.put(value, vr);
-            curMCBB.appendInst(new MCMove(vr, new FPImmediate(((ConstFloat) value).getVal()), true));
-            return vr;
         }
         else if (value instanceof GlobalVariable) {
             // TODO: 采用控制流分析，是否能访问到之前的地址
@@ -508,7 +504,7 @@ public class MCBuilder {
         // TODO: calculate address when used
         int offset = 0;
         Type allocated = IRinst.getAllocatedType();
-        if (allocated.isIntegerType() || allocated.isPointerType()) {
+        if (allocated.isIntegerType() || allocated.isFloatType() || allocated.isPointerType()) {
             offset = 4;
         }
         else if (allocated.isArrayType()) {
@@ -521,13 +517,19 @@ public class MCBuilder {
 
     /**
      * Translate the IR store instruction into ARM. <br/>
-     * NOTE: The first operand must be a REGISTER!!
      * @param IRinst IR instruction to be translated
      */
     private void translateStore(MemoryInst.Store IRinst) {
-        Register src = ((Register) findContainer(IRinst.getOperandAt(0), true));
+        Value source = IRinst.getOperandAt(0);
         Register addr = ((Register) findContainer(IRinst.getOperandAt(1)));
-        curMCBB.appendInst(new MCstore(src, addr));
+        if (source.getType().isIntegerType() || source instanceof ConstFloat){
+            Register src = ((Register) findContainer(source, true));
+            curMCBB.appendInst(new MCstore(src, addr));
+        }
+        else {
+            ExtensionRegister src = (ExtensionRegister) findFloatContainer(source);
+            curMCBB.appendInst(new MCFPstore(src, addr));
+        }
     }
 
     /**
@@ -535,7 +537,10 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      */
     private void translateLoad(MemoryInst.Load IRinst) {
-        curMCBB.appendInst(new MCload((Register) findContainer(IRinst), ((Register) findContainer(IRinst.getOperandAt(0)))));
+        if (IRinst.getType().isIntegerType())
+            curMCBB.appendInst(new MCload((Register) findContainer(IRinst), ((Register) findContainer(IRinst.getOperandAt(0)))));
+        else
+            curMCBB.appendInst(new MCFPload((ExtensionRegister) findFloatContainer(IRinst), (Register) findContainer(IRinst.getOperandAt(0))));
     }
 
     /**
