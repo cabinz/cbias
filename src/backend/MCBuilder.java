@@ -464,32 +464,48 @@ public class MCBuilder {
     //<editor-fold desc="Translate functions">
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
-     * r0-r3 & s0-s15 are caller-saved registers, while r4-r12 & s16-s31 are callee-saved registers. <br/>
+     * r0-r3 & s0-s15 are caller-saved registers, via which the first 4 int & 16 float arguments will be passed. <br/>
+     * The other arguments will be copied to memory, pushed in the reversed order. <br/>
      * Function stack (from high to low): parameter, context, spilled nodes, local variables <br/>
      * @param IRinst IR call instruction
+     * @see <a href='https://web.eecs.umich.edu/~prabal/teaching/resources/eecs373/ARM-AAPCS-EABI-v2.08.pdf'>Procedure Call Standard for the ARM Architecture</a> <br/>
+     * Charpter 5 The Base Procedure Call Standard & Charpter 6 The Standard Variants
      */
     private void translateCall(CallInst IRinst) {
-        // TODO: 浮点参数传递使用s0-s15
-        // 另外，前4个浮点和整型使用寄存器传递
-        int oprNum = IRinst.getNumOperands();
-        /* Argument push */
-        for (int i=oprNum-1; i>=1; i--) {
-            if (i <= 4) {
-                curMCBB.appendInst(new MCMove(RealRegister.get(i-1), findContainer(IRinst.getOperandAt(i))));
+        var callee = (Function) IRinst.getOperandAt(0);
+        var MCCalee = target.findMCFunc(callee);
+        var args = callee.getArgs();
+        var APVCR = MCCalee.getAPVCR();
+        var APVER = MCCalee.getAPVER();
+        var ACTM = MCCalee.getACTM();
+
+        /* Generate Instruction */
+        int stackSize = ACTM.size();
+        for (int i = IRinst.getNumOperands()-1; i > 0; i--) {
+            var param = IRinst.getOperandAt(i);
+            var crspArg = args.get(i-1);
+            if (ACTM.contains(crspArg)) {
+                if (param.getType().isIntegerType() || param.getType().isPointerType() || param instanceof ConstFloat)
+                    curMCBB.appendInst(new MCstore((Register) findContainer(param, true), RealRegister.get(13), new Immediate((ACTM.indexOf(crspArg)-stackSize)*4)));
+                else
+                    curMCBB.appendInst(new MCFPstore((ExtensionRegister) findFloatContainer(param), RealRegister.get(13), new Immediate((ACTM.indexOf(crspArg)-stackSize)*4)));
             }
-            else {
-                curMCBB.appendInst(new MCstore((Register) findContainer(IRinst.getOperandAt(i), true), RealRegister.get(13), new Immediate((i-oprNum)*4)));
+            else if (APVCR.contains(crspArg)) {
+                curMCBB.appendInst(new MCMove(RealRegister.get(APVCR.indexOf(crspArg)), findContainer(param)));
+            }
+            else if (APVER.contains(crspArg)) {
+                curMCBB.appendInst(new MCFPmove(RealExtRegister.get(APVER.indexOf(crspArg)), findFloatContainer(param, false)));
             }
         }
-        /* SUB here, instead of using PUSH, to avoid segmentation fault if spilling happens in parameter passing */
-        /* Move SP */
-        if (oprNum > 5)
-            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt((oprNum-5) * 4)));
+
+        /* SUB sp here, instead of using PUSH, to avoid segmentation fault if spilling happens in parameter passing */
+        if (stackSize > 0)
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, RealRegister.get(13), RealRegister.get(13), createConstInt(stackSize * 4)));
         /* Branch */
         curMCBB.appendInst(new MCbranch(target.findMCFunc((Function) IRinst.getOperandAt(0))));
         /* Stack balancing */
-        if (oprNum > 5)
-            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt((oprNum-5) * 4)));
+        if (stackSize > 0)
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(stackSize * 4)));
         /* Save result */
         curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
 
