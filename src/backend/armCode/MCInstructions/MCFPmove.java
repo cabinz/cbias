@@ -33,22 +33,31 @@ public class MCFPmove extends MCInstruction {
 
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        var set = new HashSet<Register>();
+        if (src1.isVirtualReg()) set.add((Register) src1);
+        if (src2.isVirtualReg()) set.add((Register) src2);
+        return set;
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        var set = new HashSet<Register>();
+        if (dst1.isVirtualReg()) set.add((Register) dst1);
+        if (dst2.isVirtualReg()) set.add((Register) dst2);
+        return set;
     }
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
-
+        if (src1 == old) src1 = tmp;
+        if (src2 == old) src2 = tmp;
+        if (dst1 == old) dst1 = tmp;
+        if (dst2 == old) dst2 = tmp;
     }
+
     @Override
     public String emit() {
         if (doubleMove) {
-            // TODO: 不是相邻的扩展寄存器时报错
             return "VMOV" + emitCond() + ' ' + dst1.emit() + ", " + dst2.emit() + ", "
                     + src1.emit() + ", " + src2.emit();
         }
@@ -69,6 +78,7 @@ public class MCFPmove extends MCInstruction {
     public MCFPmove(Register dst1, ExtensionRegister src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
     public MCFPmove(ExtensionRegister dst1, Register src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
     public MCFPmove(ExtensionRegister dst1, ExtensionRegister src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
+    public MCFPmove(MCOperand dst1, MCOperand src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
 
     /* Double move */
     public MCFPmove(ExtensionRegister dst1, ExtensionRegister dst2, Register src1, Register src2) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;this.src2 = src2;this.dst2 = dst2;doubleMove = true;}

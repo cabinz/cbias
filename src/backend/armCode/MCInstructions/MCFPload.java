@@ -23,7 +23,9 @@ public class MCFPload extends MCInstruction {
 
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        var set = new HashSet<Register>();
+        set.add(addr);
+        return set;
     }
 
     @Override
@@ -33,7 +35,7 @@ public class MCFPload extends MCInstruction {
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
-
+        if (addr == old) addr = tmp;
     }
 
     @Override

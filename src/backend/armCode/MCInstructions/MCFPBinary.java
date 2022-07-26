@@ -22,17 +22,16 @@ public class MCFPBinary extends MCInstruction {
 
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
-
     }
 
     public String emit() {
