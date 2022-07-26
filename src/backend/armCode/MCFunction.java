@@ -2,6 +2,7 @@ package backend.armCode;
 
 import backend.armCode.MCInstructions.MCFPload;
 import backend.armCode.MCInstructions.MCload;
+import backend.operand.RealExtRegister;
 import backend.operand.RealRegister;
 import backend.operand.VirtualExtRegister;
 import backend.operand.VirtualRegister;
@@ -49,10 +50,15 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      */
     private int stackSize;
     /**
-     * This field is used to record the number of
-     * callee-saved registers that need to be saved.
+     * This field is used to record the callee-saved registers
+     * that need to be saved in this function.
      */
     private HashSet<RealRegister> context;
+    /**
+     * This field is used to record the callee-saved registers
+     * that need to be saved in this function.
+     */
+    private HashSet<RealExtRegister> extContext;
     /**
      * This field is used to record the sizes of
      * local variables.
@@ -66,7 +72,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     /**
      * This set holds all the load related to the
      * function's parameter address, <br/>
-     * which need to be adjusted after {@link passes.mc.RegisterAllocation.GraphColoring}.
+     * which need to be adjusted after {@link passes.mc.registerAllocation.GraphColoring}.
      */
     private HashSet<MCload> paramCal;
     private HashSet<MCFPload> floatParamLoads;
@@ -186,6 +192,10 @@ public class MCFunction implements Iterable<MCBasicBlock> {
             context.add(RealRegister.get(index));
     }
 
+    public void addExtContext(int index) {
+        extContext.add(RealExtRegister.get(index));
+    }
+
     public void addSpilledNode() {spilledNode++;}
 
     /**
@@ -224,6 +234,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public ArrayList<Function.FuncArg> getACTM() {return ACTM;}
 
     public HashSet<RealRegister> getContext() {return context;}
+    public HashSet<RealExtRegister> getExtContext() {return extContext;}
     public Integer getLocalVariable() {return localVariable;}
     public int getSpilledNode() {return spilledNode;}
     public HashSet<MCload> getParamCal() {return paramCal;}
@@ -246,6 +257,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         this.IRFunction = IRFunction;
         stackSize = 0;
         context = new HashSet<>();
+        extContext = new HashSet<>();
         localVariable = 0;
         spilledNode = 0;
         paramCal = new HashSet<>();
