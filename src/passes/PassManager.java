@@ -4,10 +4,10 @@ import backend.ARMAssemble;
 import ir.Module;
 import passes.ir.IRPass;
 import passes.ir.constant_derivation.ConstantDerivation;
-import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
-import passes.mc.RegisterAllocation.GraphColoring;
+import passes.mc.MCPass;
 import passes.mc.buildCFG.BuildCFG;
+import passes.mc.registerAllocation.RegisterAllocation;
 
 import java.util.ArrayList;
 import java.util.Collection;

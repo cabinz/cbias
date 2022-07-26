@@ -3,14 +3,11 @@ package passes.mc.registerAllocation;
 import backend.ARMAssemble;
 import backend.MCBuilder;
 import backend.armCode.MCBasicBlock;
+import backend.armCode.MCFPInstruction;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.*;
-import backend.operand.Immediate;
-import backend.operand.RealRegister;
-import backend.operand.Register;
-import backend.operand.VirtualRegister;
-import passes.mc.MCPass;
+import backend.operand.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,38 +19,35 @@ import java.util.stream.IntStream;
 
 
 /**
- * Implement using George's Iterated Register Coalescing Graph Coloring.<br/>
- * @see <a href='https://zh.hu1lib.vip/book/3715805/6a4e7d'>Modern Compiler Implementation in C</a> Charpter 11
- * @see <a href='http://underpop.online.fr/j/java/help/graph-coloring-implementation-compiler-java-programming-language.html.gz'>
- *     Graph-Coloring implement</a>
+ * Graph Coloring for Virtual Extension Registers
  */
-public class GraphColoring {
+public class GC4VER {
 
     /**
      * Color, also the number of register.<br/>
-     * In ARM, we use r0-r11
-     * @see backend.operand.RealRegister
+     * In ARM, we use s0-s31 for float
+     * @see backend.operand.RealExtRegister
      */
-    private int K = 12;
+    private int K = 32;
 
     //<editor-fold desc="Data Structure">
     //<editor-fold desc="Key worklist set">
     /**
      * The set of low-degree non-move-related nodes
      */
-    private HashSet<Register> simplifyWorklist;
+    private HashSet<ExtensionRegister> simplifyWorklist;
     /**
      * The set of move instructions that might be coalescing
      */
-    private HashSet<MCMove> worklistMoves;
+    private HashSet<MCFPmove> worklistMoves;
     /**
      * The set of low-degree move-related nodes
      */
-    private HashSet<Register> freezeWorklist;
+    private HashSet<ExtensionRegister> freezeWorklist;
     /**
      * The set of high-degree nodes
      */
-    private HashSet<Register> spillWorklist;
+    private HashSet<ExtensionRegister> spillWorklist;
     //</editor-fold>
 
     //<editor-fold desc="Register Interfere Graph">
@@ -62,32 +56,32 @@ public class GraphColoring {
      * For each non-precolored temporary <i>u</i>, adjList[<i>u</i> ] is
      * the set of nodes that interfere with <i>u</i>
      */
-    private HashMap<Register, HashSet<Register>> adjList;
+    private HashMap<ExtensionRegister, HashSet<ExtensionRegister>> adjList;
     /**
      * The set of interference edge (<i>u</i>, <i>v</i> ) in the graph. <br/>
      * If (<i>u</i>, <i>v</i> ) ∈ adjSet, then (<i>v</i>, <i>u</i> ) ∈ adjSet
      */
-    private HashSet<Pair<Register, Register>> adjSet;
+    private HashSet<Pair<ExtensionRegister, ExtensionRegister>> adjSet;
     /**
      * an array containing the current degree of each node
      */
-    HashMap<Register, Integer> degree;
+    HashMap<ExtensionRegister, Integer> degree;
     //</editor-fold>
 
     //<editor-fold desc="Coloring Info">
     /**
      * Stack containing temporaries removed from the graph
      */
-    private Stack<Register> selectStack;
+    private Stack<ExtensionRegister> selectStack;
     /**
      * As its name
      */
-    private HashSet<Register> coloredNodes;
+    private HashSet<ExtensionRegister> coloredNodes;
     /**
      * The color chosen by algorithm for a node. <br/>
      * For the precolored nodes, this is initialized to the given color.
      */
-    private HashMap<Register, Integer> color;
+    private HashMap<ExtensionRegister, Integer> color;
     //</editor-fold>
 
     //<editor-fold desc="Node Info">
@@ -96,39 +90,39 @@ public class GraphColoring {
      * when <i>u</i> &#8592<i>v</i> is coalesced, <i>v</i> is added to this set
      * and <i>u</i> put back on some worklist (or vice versa)
      */
-    private HashSet<Register> coalescedNodes;
+    private HashSet<ExtensionRegister> coalescedNodes;
     /**
      * When a move (<i>u</i>, <i>v</i> ) has been coalesced,
      * and <i>v</i> put in coalescedNodes, then alias(<i>v</i> ) = <i>u</i>
      */
-    private HashMap<Register, Register> alias;
+    private HashMap<ExtensionRegister, ExtensionRegister> alias;
     /**
      * The nodes marked for spilling during this round; initially empty;
      */
-    private HashSet<Register> spilledNodes;
+    private HashSet<ExtensionRegister> spilledNodes;
     //</editor-fold>
 
     //<editor-fold desc="Move Info">
     /**
      * a mapping from a node to the list of moves it is associated with
      */
-    private HashMap<Register, HashSet<MCMove>> moveList;
+    private HashMap<ExtensionRegister, HashSet<MCFPmove>> moveList;
     /**
      * Moves not yet ready for coalescing
      */
-    private HashSet<MCMove> activeMoves;
+    private HashSet<MCFPmove> activeMoves;
     /**
      * Moves that have been coalesced
      */
-    private HashSet<MCMove> coalescedMoves;
+    private HashSet<MCFPmove> coalescedMoves;
     /**
      * Moves whose source and target interfere
      */
-    private HashSet<MCMove> constrainedMoves;
+    private HashSet<MCFPmove> constrainedMoves;
     /**
      * Moves that will no longer be considered for coalescing
      */
-    private HashSet<MCMove> frozenMove;
+    private HashSet<MCFPmove> frozenMove;
     //</editor-fold>
 
     //<editor-fold desc="Tools">
@@ -172,7 +166,7 @@ public class GraphColoring {
             RemoveCoalesced();
 
             /* Fix function stack */
-            usedColor.forEach(func::addContext);
+            usedColor.forEach(func::addExtContext);
 
             AdjustParamLoad();
 
@@ -195,16 +189,17 @@ public class GraphColoring {
 
         adjList = new HashMap<>();
         adjSet = new HashSet<>();
-        degree = new HashMap<>(IntStream.range(0, 16)
-                .mapToObj(RealRegister::get)
+        degree = new HashMap<>(IntStream.range(0, K+1)
+                .mapToObj(RealExtRegister::get)
                 .collect(Collectors.toMap(x -> x, x -> INF)));
 
         selectStack = new Stack<>();
-        coloredNodes = IntStream.range(0, 16)
-                .mapToObj(RealRegister::get).collect(Collectors.toCollection(HashSet::new));
-        color = new HashMap<>(IntStream.range(0, 16)
-                .mapToObj(RealRegister::get)
-                .collect(Collectors.toMap(x -> x, RealRegister::getIndex)));
+        coloredNodes = IntStream.range(0, K+1)
+                .mapToObj(RealExtRegister::get)
+                .collect(Collectors.toCollection(HashSet::new));
+        color = new HashMap<>(IntStream.range(0, K+1)
+                .mapToObj(RealExtRegister::get)
+                .collect(Collectors.toMap(x -> x, RealExtRegister::getIndex)));
         coalescedNodes = new HashSet<>();
         alias = new HashMap<>();
         spilledNodes = new HashSet<>();
@@ -224,15 +219,17 @@ public class GraphColoring {
      */
     private void Build() {
         for (var block : curFunc) {
-            var live = new HashSet<>(liveInfo.get(block).out);
+            var live = new HashSet<>(liveInfo.get(block).extOut);
             for (int i=block.getInstructionList().size()-1; i>=0; i--) {
-                MCInstruction inst = block.getInstructionList().get(i);
-                var uses = inst.getUse();
-                var defs = inst.getDef();
+                MCInstruction instruction = block.getInstructionList().get(i);
+                if (!(instruction instanceof MCFPInstruction)) continue;
+                var inst = (MCFPInstruction) instruction;
+                var uses = inst.getExtUse();
+                var defs = inst.getExtDef();
 
                 /* Copy will be coalescing */
-                if (inst instanceof MCMove && inst.getShift() == null && inst.getCond() == null && ((MCMove) inst).isCopy()) {
-                    var move = ((MCMove) inst);
+                if (inst instanceof MCFPmove && inst.getCond() == null && ((MCFPmove) inst).isCopy()) {
+                    var move = (MCFPmove) inst;
 
                     /* Delete the variable in live */
                     live.removeAll(uses);
@@ -265,7 +262,7 @@ public class GraphColoring {
      * Fill the worklist
      */
     private void MakeWorklist() {
-        curFunc.getVirtualRegisters().forEach(n -> {
+        curFunc.getVirtualExtRegisters().forEach(n -> {
             if (degree.getOrDefault(n, 0) >= K)
                 spillWorklist.add(n);
             else if (MoveRelated(n))
@@ -279,7 +276,7 @@ public class GraphColoring {
      * Simplify the RIG by removing the simplifyWorklist and push into selectStack
      */
     private void Simplify() {
-        Register n = simplifyWorklist.iterator().next();
+        ExtensionRegister n = simplifyWorklist.iterator().next();
         simplifyWorklist.remove(n);
         selectStack.push(n);
         Adjacent(n).forEach(this::DecrementDegree);
@@ -289,13 +286,13 @@ public class GraphColoring {
      * Coalesce copy instruction
      */
     private void Coalesce() {
-        MCMove m = worklistMoves.iterator().next();
+        MCFPmove m = worklistMoves.iterator().next();
         worklistMoves.remove(m);
 
-        Register x = GetAlias(m.getDst());
-        Register y = GetAlias(((Register) m.getSrc()));
+        ExtensionRegister x = GetAlias((ExtensionRegister) m.getDst1());
+        ExtensionRegister y = GetAlias((ExtensionRegister) m.getSrc1());
 
-        Register u, v;
+        ExtensionRegister u, v;
         if (isPrecolored(y)) {
             u = y;
             v = x;
@@ -355,7 +352,7 @@ public class GraphColoring {
         while (!selectStack.isEmpty()) {
             /* Initialize */
             var n = selectStack.pop();
-            var okColor = IntStream.range(0, 12).boxed()// TODO: 考虑使用r14 lr? 使用r12 ip
+            var okColor = IntStream.range(0, K+1).boxed()// TODO: 考虑使用r14 lr? 使用r12 ip
                     .collect(Collectors.toList());
 
             /* Remove unavailable color */
@@ -390,36 +387,40 @@ public class GraphColoring {
             for (var block : curFunc) {
                 var list = block.getInstructionList();
                 for (int i=0; i<list.size(); i++) {
-                    var inst = list.get(i);
+                    var instruction = list.get(i);
+                    if (!(instruction instanceof MCFPInstruction)) continue;
+                    var inst = (MCFPInstruction) instruction;
 
                     /* If def, store the def into memory */
-                    if (inst.getDef().contains(v)) {
-                        /* The max size can the offset can be, see {@link ARMARMv7}  A8.6.58 Page: A8-121 */
-                        if (4096 > offset && offset > -4096)
-                            inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(offset)));
+                    if (inst.getExtDef().contains(v)) {
+                        /* The max size can the offset can be */
+                        if (1020 > offset && offset > -1020)
+                            inst.insertAfter(new MCFPstore(v, RealRegister.get(13), new Immediate(offset)));
                         else {
-                            VirtualRegister tmp = curFunc.createVirReg(offset);
-                            inst.insertAfter(new MCstore(v, RealRegister.get(13), tmp));
-                            inst.insertAfter(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
+                            VirtualRegister addr = curFunc.createVirReg(offset);
+                            inst.insertAfter(new MCFPstore(v, addr));
+                            inst.insertAfter(new MCBinary(MCInstruction.TYPE.ADD, addr, RealRegister.get(13), addr));
+                            inst.insertAfter(new MCMove(addr, new Immediate(offset), true));
                             i++;
                         }
                         i++;
                     }
 
                     /* If use, load from memory */
-                    if (inst.getUse().contains(v)) {
+                    if (inst.getExtUse().contains(v)) {
                         // TODO: 更好的方法？
                         /* Create a temporary v_tmp for the use */
-                        VirtualRegister v_tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
-                        if (4096 > offset && offset > -4096)
-                            inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                        VirtualExtRegister v_tmp = curFunc.createExtVirReg(((VirtualExtRegister) v).getValue());
+                        if (1020 > offset && offset > -1020)
+                            inst.insertBefore(new MCFPload(v_tmp, RealRegister.get(13), new Immediate(offset)));
                         else {
-                            VirtualRegister tmp = curFunc.createVirReg(offset);
-                            inst.insertBefore(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
-                            inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), tmp));
+                            VirtualRegister addr = curFunc.createVirReg(offset);
+                            inst.insertBefore(new MCMove(addr, new Immediate(offset), true));
+                            inst.insertBefore(new MCBinary(MCInstruction.TYPE.ADD, addr, RealRegister.get(13), addr));
+                            inst.insertBefore(new MCFPload(v_tmp, addr));
                             i++;
                         }
-                        inst.replaceRegister(v, v_tmp);
+                        inst.replaceExtReg(v, v_tmp);
                         i++;
                     }
                 }
@@ -430,7 +431,10 @@ public class GraphColoring {
     }
 
     private void ReplaceRegisters() {
-        curFunc.forEach(block -> block.forEach(this::assignRealRegister));
+        curFunc.forEach(block -> block.forEach(inst -> {
+            if (inst instanceof MCFPInstruction)
+                assignRealRegister((MCFPInstruction) inst);
+        }));
     }
 
     private void RemoveCoalesced() {
@@ -444,13 +448,11 @@ public class GraphColoring {
         // TODO: 超过限制时需要生成move
         curFunc.getParamCal().forEach(load -> load.setOffset(new Immediate(
                 ((Immediate) load.getOffset()).getIntValue()
-                        + curFunc.getContext().size() * 4
-                        + curFunc.getSpilledNode() * 4
+                        + curFunc.getExtContext().size() * 4
         )));
         curFunc.getFloatParamLoads().forEach(load -> load.setOffset(new Immediate(
                 load.getOffset().getIntValue()
-                        + curFunc.getContext().size() * 4
-                        + curFunc.getSpilledNode() * 4
+                        + curFunc.getExtContext().size() * 4
         )));
     }
 
@@ -487,7 +489,7 @@ public class GraphColoring {
      */
     private void PreserveContext() {
         if (!curFunc.getContext().isEmpty())
-            curFunc.getEntryBlock().prependInst(new MCpush(curFunc.getContext()));
+            curFunc.getEntryBlock().prependInst(new MCFPpush(curFunc.getExtContext()));
     }
     //</editor-fold>
 
@@ -497,7 +499,7 @@ public class GraphColoring {
      * @param u node 1
      * @param v node 2
      */
-    private void AddEdge(Register u, Register v) {
+    private void AddEdge(ExtensionRegister u, ExtensionRegister v) {
         if (!adjSet.contains(new Pair<>(u, v)) && !u.equals(v)) {
             /* Build edge */
             adjSet.add(new Pair<>(u, v));
@@ -526,7 +528,7 @@ public class GraphColoring {
      * Decrement the degree of one node
      * @param m the node to be operated
      */
-    private void DecrementDegree(Register m) {
+    private void DecrementDegree(ExtensionRegister m) {
         Integer d = degree.get(m);
         degree.put(m, d-1);
 
@@ -547,7 +549,7 @@ public class GraphColoring {
      * Enable the move to be coalesced
      * @param n the node to be operated
      */
-    private void EnableMoves(Register n) {
+    private void EnableMoves(ExtensionRegister n) {
         NodeMoves(n).forEach(m -> {
             if (activeMoves.contains(m)) {
                 activeMoves.remove(m);
@@ -559,7 +561,7 @@ public class GraphColoring {
     /**
      * Determine whether the node is move-related
      */
-    private boolean MoveRelated(Register n) {
+    private boolean MoveRelated(ExtensionRegister n) {
         return !NodeMoves(n).isEmpty();
     }
 
@@ -568,7 +570,7 @@ public class GraphColoring {
      * @param n the node to find
      * @return the set of MOVE
      */
-    private Set<MCMove> NodeMoves(Register n) {
+    private Set<MCFPmove> NodeMoves(ExtensionRegister n) {
         return moveList.getOrDefault(n, new HashSet<>()).stream()
                 .filter(move -> activeMoves.contains(move) || worklistMoves.contains(move))
                 .collect(Collectors.toSet());
@@ -579,7 +581,7 @@ public class GraphColoring {
      * @param n the node to find
      * @return the set of neighbor
      */
-    private Set<Register> Adjacent(Register n) {
+    private Set<ExtensionRegister> Adjacent(ExtensionRegister n) {
         return adjList.getOrDefault(n, new HashSet<>()).stream()
                 .filter(node -> !selectStack.contains(node) && !coalescedNodes.contains(node))
                 .collect(Collectors.toSet());
@@ -588,7 +590,7 @@ public class GraphColoring {
     /**
      * Make one node to be simplified
      */
-    private void AddWorkList(Register u) {
+    private void AddWorkList(ExtensionRegister u) {
         if (!isPrecolored(u) && !MoveRelated(u) && degree.getOrDefault(u, 0)<K) {
             freezeWorklist.remove(u);
             simplifyWorklist.add(u);
@@ -598,7 +600,7 @@ public class GraphColoring {
     /**
      * Get alias of a node.
      */
-    private Register GetAlias(Register n) {
+    private ExtensionRegister GetAlias(ExtensionRegister n) {
         while (coalescedNodes.contains(n))
             n = alias.get(n);
         return n;
@@ -608,7 +610,7 @@ public class GraphColoring {
      * Test the Adjacent is OK for coalescing <br/>
      * George’s Algorithm
      */
-    private boolean OK(Set<Register> ts, Register r) {
+    private boolean OK(Set<ExtensionRegister> ts, ExtensionRegister r) {
         return ts.stream().allMatch(t -> OK(t, r));
     }
 
@@ -616,7 +618,7 @@ public class GraphColoring {
      * Test two node is OK for coalescing <br/>
      * George’s Algorithm
      */
-    private boolean OK(Register t, Register r) {
+    private boolean OK(ExtensionRegister t, ExtensionRegister r) {
         return degree.get(t) < K || isPrecolored(t) || adjSet.contains(new Pair<>(t, r));
     }
 
@@ -624,7 +626,7 @@ public class GraphColoring {
      * Test the coalescing using conservative way <br/>
      * Briggs's Algorithm
      */
-    private boolean Conservative(Set<Register> nodes, Set<Register> v) {
+    private boolean Conservative(Set<ExtensionRegister> nodes, Set<ExtensionRegister> v) {
         nodes.addAll(v);
         AtomicInteger k = new AtomicInteger();
         nodes.forEach(n -> {
@@ -639,7 +641,7 @@ public class GraphColoring {
      * @param u the node combine to
      * @param v the node to be combined
      */
-    private void Combine(Register u,Register v) {
+    private void Combine(ExtensionRegister u,ExtensionRegister v) {
         if (freezeWorklist.contains(v))
             freezeWorklist.remove(v);
         else
@@ -662,21 +664,23 @@ public class GraphColoring {
         }
     }
 
-    private void FreezeMoves(Register u) {
-         NodeMoves(u).forEach(move -> {
-             var v = GetAlias(((Register) move.getSrc())) == GetAlias(u) ?GetAlias(move.getDst()) :GetAlias(((Register) move.getSrc()));
+    private void FreezeMoves(ExtensionRegister u) {
+        NodeMoves(u).forEach(move -> {
+            var v = GetAlias(((ExtensionRegister) move.getSrc1())) == GetAlias(u)
+                    ?GetAlias((ExtensionRegister) move.getDst1())
+                    :GetAlias((ExtensionRegister) move.getSrc1());
 
-             activeMoves.remove(move);
-             frozenMove.add(move);
-             if (NodeMoves(v).isEmpty() && degree.get(v) < K) {
-                 freezeWorklist.remove(v);
-                 simplifyWorklist.add(v);
-             }
-         });
+            activeMoves.remove(move);
+            frozenMove.add(move);
+            if (NodeMoves(v).isEmpty() && degree.get(v) < K) {
+                freezeWorklist.remove(v);
+                simplifyWorklist.add(v);
+            }
+        });
     }
 
-    private boolean isPrecolored(Register r) {
-        return r instanceof RealRegister;
+    private boolean isPrecolored(ExtensionRegister r) {
+        return r instanceof RealExtRegister;
     }
 
     /**
@@ -685,77 +689,50 @@ public class GraphColoring {
      * It should be like IR using the user to hold operands, using constructor <br/>
      * to restrict the operand.
      */
-    private void assignRealRegister(MCInstruction inst) {
-        if (inst instanceof MCBinary) {
-            var bi = ((MCBinary) inst);
-            var op1 = bi.getOperand1();
-            var op2 = bi.getOperand2();
-            var dst = bi.getDestination();
-            var shift = bi.getShift()==null ?null :bi.getShift().getOperand();
-            replace(bi, op1);
-            if (op2 instanceof VirtualRegister)
-                replace(bi, ((VirtualRegister) op2));
-            if (shift instanceof VirtualRegister)
-                replace(bi, ((VirtualRegister) shift));
-            replace(bi, dst);
+    private void assignRealRegister(MCFPInstruction inst) {
+        if (inst instanceof MCFPBinary) {
+            var bi = ((MCFPBinary) inst);
+            replace(bi, bi.getDestination());
+            replace(bi, bi.getOperand1());
+            replace(bi, bi.getOperand2());
         }
-        else if (inst instanceof MCcmp) {
-            var cmp = ((MCcmp) inst);
-            var op1 = cmp.getOperand1();
-            var op2 = cmp.getOperand2();
-            var shift = cmp.getShift()==null ?null :cmp.getShift().getOperand();
-            replace(cmp, op1);
-            if (op2 instanceof VirtualRegister)
-                replace(cmp, ((VirtualRegister) op2));
-            if (shift instanceof VirtualRegister)
-                replace(cmp, ((VirtualRegister) shift));
+        else if (inst instanceof MCFPcompare) {
+            var cmp = ((MCFPcompare) inst);
+            replace(cmp, cmp.getOperand1());
+            replace(cmp, cmp.getOperand2());
         }
-        else if (inst instanceof MCload) {
-            var load = ((MCload) inst);
-            var dst = load.getDst();
-            var addr = load.getAddr();
-            var offset = load.getOffset();
-            replace(load, dst);
-            replace(load, addr);
-            if (offset instanceof VirtualRegister)
-                replace(load, ((VirtualRegister) offset));
+        else if (inst instanceof MCFPconvert) {
+            var cvt = ((MCFPconvert) inst);
+            replace(cvt, cvt.getSrc());
+            replace(cvt, cvt.getDst());
         }
-        else if (inst instanceof MCstore) {
-            var store = ((MCstore) inst);
-            var src = store.getSrc();
-            var addr = store.getAddr();
-            var offset = store.getOffset();
-            replace(store, src);
-            replace(store, addr);
-            if (offset instanceof VirtualRegister)
-                replace(store, ((VirtualRegister) offset));
+        else if (inst instanceof MCFPneg) {
+            var neg = ((MCFPneg) inst);
+            replace(neg, neg.getOperand());
+            replace(neg, neg.getDestination());
         }
-        else if (inst instanceof MCMove) {
-            var move = ((MCMove) inst);
-            var dst = move.getDst();
-            var src = move.getSrc();
-            var shift = move.getShift()==null ?null :move.getShift().getOperand();
-            replace(move, dst);
-            if (src instanceof VirtualRegister)
-                replace(move, ((VirtualRegister) src));
-            if (shift instanceof VirtualRegister)
-                replace(move, ((VirtualRegister) shift));
+        else if (inst instanceof MCFPload) {
+            var load = ((MCFPload) inst);
+            replace(load, load.getDst());
         }
-        else if (inst instanceof MCFma) {
-            var fma = ((MCFma) inst);
-            Register accumulate = fma.getAccumulate();
-            Register multiple_1 = fma.getMultiple_1();
-            Register multiple_2 = fma.getMultiple_2();
-            Register dst = fma.getDst();
-            replace(fma, accumulate);
-            replace(fma, multiple_1);
-            replace(fma, multiple_2);
-            replace(fma, dst);
+        else if (inst instanceof MCFPstore) {
+            var store = ((MCFPstore) inst);
+            replace(store, store.getSrc());
         }
+        else if (inst instanceof MCFPmove) {
+            var mov = ((MCFPmove) inst);
+            var src1 = mov.getSrc1();
+            var dst1 = mov.getDst1();
+            if (src1.isVirtualExtReg())
+                replace(mov, (ExtensionRegister) src1);
+            if (dst1.isVirtualExtReg())
+                replace(mov, (ExtensionRegister) dst1);
+        }
+
     }
 
-    private void replace(MCInstruction inst, Register old) {
-        inst.replaceRegister(old, RealRegister.get(color.get(old)));
+    private void replace(MCFPInstruction inst, ExtensionRegister old) {
+        inst.replaceExtReg(old, RealExtRegister.get(color.get(old)));
     }
     //</editor-fold>
 }
