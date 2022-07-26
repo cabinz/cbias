@@ -750,6 +750,21 @@ public class GraphColoring {
             replace(fma, multiple_2);
             replace(fma, dst);
         }
+        else if (inst instanceof MCFPload) {
+            var load = ((MCFPload) inst);
+            replace(load, load.getAddr());
+        }
+        else if (inst instanceof MCFPstore) {
+            var store = ((MCFPstore) inst);
+            replace(store, store.getAddr());
+        }
+        else if (inst instanceof MCFPmove) {
+            var move = ((MCFPmove) inst);
+            if (move.getSrc1().isVirtualReg())
+                replace(move, (Register) move.getSrc1());
+            if (move.getDst1().isVirtualReg())
+                replace(move, (Register) move.getDst1());
+        }
     }
 
     private void replace(MCInstruction inst, Register old) {

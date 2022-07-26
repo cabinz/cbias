@@ -3,10 +3,13 @@ package backend.armCode.MCInstructions;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
+import backend.operand.ExtensionRegister;
+import backend.operand.RealExtRegister;
 import backend.operand.RealRegister;
 import backend.operand.Register;
 
 import java.util.HashSet;
+import java.util.stream.IntStream;
 
 public class MCbranch extends MCInstruction {
 
@@ -44,9 +47,6 @@ public class MCbranch extends MCInstruction {
         var set = new HashSet<Register>();
         if (withLink) {
             set.add(RealRegister.get(0));
-            set.add(RealRegister.get(1));
-            set.add(RealRegister.get(2));
-            set.add(RealRegister.get(3));
             /* lr <- pc */
             set.add(RealRegister.get(14));
         }
@@ -55,6 +55,20 @@ public class MCbranch extends MCInstruction {
 
     @Override
     public void replaceRegister(Register old, Register tmp) {}
+
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        if (withLink)
+            IntStream.range(0, 16).forEach(x -> set.add(RealExtRegister.get(x)));
+        return set;
+    }
+
+    public HashSet<ExtensionRegister> getExtDef() {
+        var set = new HashSet<ExtensionRegister>();
+        if (withLink)
+            set.add(RealExtRegister.get(0));
+        return set;
+    }
 
     public MCFunction getTargetFunc() {return targetFunc;}
     public void setTargetFunc(MCFunction targetFunc) {this.targetFunc = targetFunc;}

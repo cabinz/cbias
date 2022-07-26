@@ -222,6 +222,22 @@ public class GC4VER {
             var live = new HashSet<>(liveInfo.get(block).extOut);
             for (int i=block.getInstructionList().size()-1; i>=0; i--) {
                 MCInstruction instruction = block.getInstructionList().get(i);
+                if (instruction instanceof MCbranch) {
+                    var br = ((MCbranch) instruction);
+                    var uses = br.getExtUse();
+                    var defs = br.getExtDef();
+
+                    /* live = live ∪ def */
+                    live.addAll(defs);
+
+                    /* Build the RIG */
+                    /* Add an edge from def to each node in live */
+                    defs.forEach(d -> live.forEach(l -> AddEdge(l, d)));
+
+                    /* live = uses ∪ live\defs) */
+                    live.removeAll(defs);
+                    live.addAll(uses);
+                }
                 if (!(instruction instanceof MCFPInstruction)) continue;
                 var inst = (MCFPInstruction) instruction;
                 var uses = inst.getExtUse();

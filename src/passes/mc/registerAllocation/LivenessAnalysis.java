@@ -4,6 +4,7 @@ import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFPInstruction;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
+import backend.armCode.MCInstructions.MCbranch;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
@@ -40,6 +41,16 @@ public class LivenessAnalysis {
                     fpInst.getExtDef().stream()
                             .filter(extDef -> !info.extUse.contains(extDef))
                             .forEach(info.extDef::add);
+                }
+                else if (inst instanceof MCbranch) {
+                    var br = (MCbranch) inst;
+                    br.getExtUse().stream()
+                            .filter(extUse -> !info.extDef.contains(extUse))
+                            .forEach(info.extUse::add);
+                    br.getExtDef().stream()
+                            .filter(extDef -> !info.extUse.contains(extDef))
+                            .forEach(info.extDef::add);
+
                 }
             }
 
