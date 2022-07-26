@@ -516,7 +516,10 @@ public class MCBuilder {
         if (stackSize > 0)
             curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, RealRegister.get(13), RealRegister.get(13), createConstInt(stackSize * 4)));
         /* Save result */
-        curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
+        if (callee.getType().getRetType().isFloatType())
+            curMCBB.appendInst(new MCFPmove((VirtualExtRegister) findFloatContainer(IRinst), RealExtRegister.get(0)));
+        else
+            curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
 
         curFunc.setUseLR();
     }
