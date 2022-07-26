@@ -187,7 +187,8 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     }
 
     public void addExtContext(int index) {
-        extContext.add(RealExtRegister.get(index));
+        if (15 < index)
+            extContext.add(RealExtRegister.get(index));
     }
 
     public void addSpilledNode() {spilledNode++;}
