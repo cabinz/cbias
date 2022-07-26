@@ -89,6 +89,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
             ArrayList<Float> initial = new ArrayList<>();
             if (gv.getInitVal() == null) {
                 int size = ((ArrayType) gv.getConstType()).getSize();
+                while ((size--) != 0) initial.add(0.0f);
             }
             else
                 genInitial(gv.getInitVal(), initial);
