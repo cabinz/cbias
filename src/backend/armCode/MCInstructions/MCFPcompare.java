@@ -1,7 +1,6 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCFPInstruction;
-import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 

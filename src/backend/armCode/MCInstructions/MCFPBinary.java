@@ -1,7 +1,6 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCFPInstruction;
-import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
@@ -61,6 +60,10 @@ public class MCFPBinary extends MCFPInstruction {
         return type.name() + emitCond() + ".F32 " + destination.emit()
                 + ", " + operand1.emit() + ", " + operand2.emit();
     }
+
+    public ExtensionRegister getOperand1() {return operand1;}
+    public ExtensionRegister getOperand2() {return operand2;}
+    public ExtensionRegister getDestination() {return destination;}
 
     public MCFPBinary(TYPE type, ExtensionRegister destination, ExtensionRegister operand1, ExtensionRegister operand2) {
         super(type);

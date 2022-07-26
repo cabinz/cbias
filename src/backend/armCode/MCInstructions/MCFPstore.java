@@ -1,7 +1,6 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCFPInstruction;
-import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Immediate;
 import backend.operand.Register;
@@ -30,7 +29,7 @@ public class MCFPstore extends MCFPInstruction {
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override

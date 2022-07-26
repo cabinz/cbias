@@ -1,7 +1,6 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCFPInstruction;
-import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
@@ -52,6 +51,9 @@ public class MCFPneg extends MCFPInstruction {
         return "VNEG" + emitCond() + ".F32 " + destination.emit()
                 + ", " + operand.emit();
     }
+
+    public ExtensionRegister getDestination() {return destination;}
+    public ExtensionRegister getOperand() {return operand;}
 
     public MCFPneg(ExtensionRegister destination, ExtensionRegister operand) {
         super(TYPE.VNEG);

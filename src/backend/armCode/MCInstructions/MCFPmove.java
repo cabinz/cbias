@@ -1,8 +1,10 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCFPInstruction;
-import backend.armCode.MCInstruction;
-import backend.operand.*;
+import backend.operand.ExtensionRegister;
+import backend.operand.FPImmediate;
+import backend.operand.MCOperand;
+import backend.operand.Register;
 
 import java.util.HashSet;
 
@@ -32,11 +34,13 @@ public class MCFPmove extends MCFPInstruction {
      */
     private boolean doubleMove;
 
+    public boolean isCopy() {return (src1.isVirtualExtReg() || src1.isRealExtReg()) && (dst1.isVirtualExtReg() || dst1.isRealExtReg());}
+
     @Override
     public HashSet<Register> getUse() {
         var set = new HashSet<Register>();
         if (src1.isVirtualReg() || src1.isRealReg()) set.add((Register) src1);
-        if (src2.isVirtualReg() || src2.isRealReg()) set.add((Register) src2);
+//        if (src2.isVirtualReg() || src2.isRealReg()) set.add((Register) src2);
         return set;
     }
 
@@ -44,23 +48,23 @@ public class MCFPmove extends MCFPInstruction {
     public HashSet<Register> getDef() {
         var set = new HashSet<Register>();
         if (dst1.isVirtualReg() || dst1.isRealReg()) set.add((Register) dst1);
-        if (dst2.isVirtualReg() || dst2.isRealReg()) set.add((Register) dst2);
+//        if (dst2.isVirtualReg() || dst2.isRealReg()) set.add((Register) dst2);
         return set;
     }
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
         if (src1 == old) src1 = tmp;
-        if (src2 == old) src2 = tmp;
+//        if (src2 == old) src2 = tmp;
         if (dst1 == old) dst1 = tmp;
-        if (dst2 == old) dst2 = tmp;
+//        if (dst2 == old) dst2 = tmp;
     }
 
     @Override
     public HashSet<ExtensionRegister> getExtUse() {
         var set = new HashSet<ExtensionRegister>();
         if (src1.isVirtualExtReg() || src1.isRealExtReg()) set.add((ExtensionRegister) src1);
-        if (src2.isVirtualExtReg() || src2.isRealExtReg()) set.add((ExtensionRegister) src2);
+//        if (src2.isVirtualExtReg() || src2.isRealExtReg()) set.add((ExtensionRegister) src2);
         return set;
     }
 
@@ -68,16 +72,16 @@ public class MCFPmove extends MCFPInstruction {
     public HashSet<ExtensionRegister> getExtDef() {
         var set = new HashSet<ExtensionRegister>();
         if (dst1.isVirtualExtReg() || dst1.isRealExtReg()) set.add((ExtensionRegister) dst1);
-        if (dst2.isVirtualExtReg() || dst2.isRealExtReg()) set.add((ExtensionRegister) dst2);
+//        if (dst2.isVirtualExtReg() || dst2.isRealExtReg()) set.add((ExtensionRegister) dst2);
         return set;
     }
 
     @Override
     public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
         if (src1 == old) src1 = brand_new;
-        if (src2 == old) src2 = brand_new;
+//        if (src2 == old) src2 = brand_new;
         if (dst1 == old) dst1 = brand_new;
-        if (dst2 == old) dst2 = brand_new;
+//        if (dst2 == old) dst2 = brand_new;
     }
 
     @Override
@@ -93,6 +97,9 @@ public class MCFPmove extends MCFPInstruction {
                 return "VMOV" + emitCond() + ' ' + dst1.emit() + ", " + src1.emit();
         }
     }
+
+    public MCOperand getSrc1() {return src1;}
+    public MCOperand getDst1() {return dst1;}
 
     /* Single move */
     /**

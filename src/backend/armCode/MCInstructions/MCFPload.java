@@ -1,7 +1,6 @@
 package backend.armCode.MCInstructions;
 
 import backend.armCode.MCFPInstruction;
-import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Immediate;
 import backend.operand.Register;
@@ -17,7 +16,7 @@ public class MCFPload extends MCFPInstruction {
     private ExtensionRegister dst;
     private Register addr;
     /**
-     * The offset must be an integer number between 0 and 1020,<br/>
+     * The offset must be an integer number between +/- 0 and 1020,<br/>
      * which can be divided by 4.
      */
     private Immediate offset;
@@ -31,7 +30,7 @@ public class MCFPload extends MCFPInstruction {
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override

@@ -48,7 +48,9 @@ public abstract class MCInstruction {
         VMOV,
         VMRS,
         VLDR,
-        VSTR
+        VSTR,
+        VPUSH,
+        VPOP
     }
 
     /**
