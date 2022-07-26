@@ -564,7 +564,7 @@ public class MCBuilder {
     private void translateStore(MemoryInst.Store IRinst) {
         Value source = IRinst.getOperandAt(0);
         Register addr = ((Register) findContainer(IRinst.getOperandAt(1)));
-        if (source.getType().isIntegerType() || source instanceof ConstFloat){
+        if (source.getType().isIntegerType() || source.getType().isPointerType() || source instanceof ConstFloat){
             Register src = ((Register) findContainer(source, true));
             curMCBB.appendInst(new MCstore(src, addr));
         }
