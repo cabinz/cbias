@@ -1,12 +1,13 @@
 package backend.armCode.MCInstructions;
 
+import backend.armCode.MCFPInstruction;
 import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
 import java.util.HashSet;
 
-public class MCFPneg extends MCInstruction {
+public class MCFPneg extends MCFPInstruction {
 
     private ExtensionRegister destination;
     private ExtensionRegister operand;
@@ -24,6 +25,26 @@ public class MCFPneg extends MCInstruction {
     @Override
     public void replaceRegister(Register old, Register tmp) {
 
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(operand);
+        return set;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(destination);
+        return set;
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (destination == old) destination = brand_new;
+        if (operand == old) operand = brand_new;
     }
 
     @Override

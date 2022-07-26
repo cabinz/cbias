@@ -1,5 +1,6 @@
 package backend.armCode.MCInstructions;
 
+import backend.armCode.MCFPInstruction;
 import backend.armCode.MCInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
@@ -14,7 +15,7 @@ import java.util.HashSet;
  *     ARM Architecture Reference Manual ARMv7 edition </a> <br/>
  *     A4.14 Page: A4-38
  */
-public class MCFPBinary extends MCInstruction {
+public class MCFPBinary extends MCFPInstruction {
 
     private ExtensionRegister operand1;
     private ExtensionRegister operand2;
@@ -32,6 +33,28 @@ public class MCFPBinary extends MCInstruction {
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(operand1);
+        set.add(operand2);
+        return set;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(destination);
+        return set;
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (operand1 == old) operand1 = brand_new;
+        if (operand2 == old) operand2 = brand_new;
+        if (destination == old) destination = brand_new;
     }
 
     public String emit() {

@@ -1,5 +1,6 @@
 package backend.armCode.MCInstructions;
 
+import backend.armCode.MCFPInstruction;
 import backend.armCode.MCInstruction;
 import backend.operand.*;
 
@@ -15,7 +16,7 @@ import java.util.HashSet;
  * @see <a href="https://developer.arm.com/documentation/ddi0406/latest/">
  *     ARM Architecture Reference Manual ARMv7 edition </a> A4.12 Page: A4-29
  */
-public class MCFPmove extends MCInstruction {
+public class MCFPmove extends MCFPInstruction {
 
     private MCOperand src1;
     private MCOperand dst1;
@@ -34,16 +35,16 @@ public class MCFPmove extends MCInstruction {
     @Override
     public HashSet<Register> getUse() {
         var set = new HashSet<Register>();
-        if (src1.isVirtualReg()) set.add((Register) src1);
-        if (src2.isVirtualReg()) set.add((Register) src2);
+        if (src1.isVirtualReg() || src1.isRealReg()) set.add((Register) src1);
+        if (src2.isVirtualReg() || src2.isRealReg()) set.add((Register) src2);
         return set;
     }
 
     @Override
     public HashSet<Register> getDef() {
         var set = new HashSet<Register>();
-        if (dst1.isVirtualReg()) set.add((Register) dst1);
-        if (dst2.isVirtualReg()) set.add((Register) dst2);
+        if (dst1.isVirtualReg() || dst1.isRealReg()) set.add((Register) dst1);
+        if (dst2.isVirtualReg() || dst2.isRealReg()) set.add((Register) dst2);
         return set;
     }
 
@@ -53,6 +54,30 @@ public class MCFPmove extends MCInstruction {
         if (src2 == old) src2 = tmp;
         if (dst1 == old) dst1 = tmp;
         if (dst2 == old) dst2 = tmp;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        if (src1.isVirtualExtReg() || src1.isRealExtReg()) set.add((ExtensionRegister) src1);
+        if (src2.isVirtualExtReg() || src2.isRealExtReg()) set.add((ExtensionRegister) src2);
+        return set;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        var set = new HashSet<ExtensionRegister>();
+        if (dst1.isVirtualExtReg() || dst1.isRealExtReg()) set.add((ExtensionRegister) dst1);
+        if (dst2.isVirtualExtReg() || dst2.isRealExtReg()) set.add((ExtensionRegister) dst2);
+        return set;
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (src1 == old) src1 = brand_new;
+        if (src2 == old) src2 = brand_new;
+        if (dst1 == old) dst1 = brand_new;
+        if (dst2 == old) dst2 = brand_new;
     }
 
     @Override
