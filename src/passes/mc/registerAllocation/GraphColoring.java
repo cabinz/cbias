@@ -760,9 +760,11 @@ public class GraphColoring {
         }
         else if (inst instanceof MCFPmove) {
             var move = ((MCFPmove) inst);
-            if (move.getSrc1().isVirtualReg())
+            var src1 = move.getSrc1();
+            var dst1 = move.getDst1();
+            if (src1 != null && src1.isVirtualReg())
                 replace(move, (Register) move.getSrc1());
-            if (move.getDst1().isVirtualReg())
+            if (dst1 != null && dst1.isVirtualReg())
                 replace(move, (Register) move.getDst1());
         }
     }

@@ -738,9 +738,9 @@ public class GC4VER {
             var mov = ((MCFPmove) inst);
             var src1 = mov.getSrc1();
             var dst1 = mov.getDst1();
-            if (src1.isVirtualExtReg())
+            if (src1 != null && src1.isVirtualExtReg())
                 replace(mov, (ExtensionRegister) src1);
-            if (dst1.isVirtualExtReg())
+            if (dst1 != null && dst1.isVirtualExtReg())
                 replace(mov, (ExtensionRegister) dst1);
         }
 
