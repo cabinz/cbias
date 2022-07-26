@@ -1002,7 +1002,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Get falseBlkEndWithTerminator flag.
             Instruction falseExitBlkLastInst = falseExitBlk.getLastInst();
             falseBlkEndWithTerminator = falseExitBlkLastInst != null &&
-                    trueExitBlkLastInst.cat.isTerminator();
+                    falseExitBlkLastInst.cat.isTerminator();
         }
 
         /*
