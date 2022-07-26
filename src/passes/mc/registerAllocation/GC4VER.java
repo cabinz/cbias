@@ -445,15 +445,14 @@ public class GC4VER {
      * Add the context and spilled nodes' space to the parameter loads' offset
      */
     private void AdjustParamLoad() {
-        // TODO: 超过限制时需要生成move
-        curFunc.getParamCal().forEach(load -> load.setOffset(new Immediate(
-                ((Immediate) load.getOffset()).getIntValue()
-                        + curFunc.getExtContext().size() * 4
-        )));
-        curFunc.getFloatParamLoads().forEach(load -> load.setOffset(new Immediate(
-                load.getOffset().getIntValue()
-                        + curFunc.getExtContext().size() * 4
-        )));
+        curFunc.getParamCal().forEach(move -> {
+            int new_offset =
+                    ((Immediate) move.getSrc()).getIntValue()
+                    + curFunc.getExtContext().size() * 4;
+            move.setSrc(new Immediate(new_offset));
+            if (!MCBuilder.canEncodeImm(new_offset))
+                move.setExceededLimit();
+        });
     }
 
     /**

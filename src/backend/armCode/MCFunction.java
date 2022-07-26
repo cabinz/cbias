@@ -1,7 +1,6 @@
 package backend.armCode;
 
-import backend.armCode.MCInstructions.MCFPload;
-import backend.armCode.MCInstructions.MCload;
+import backend.armCode.MCInstructions.MCMove;
 import backend.operand.RealExtRegister;
 import backend.operand.RealRegister;
 import backend.operand.VirtualExtRegister;
@@ -74,8 +73,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * function's parameter address, <br/>
      * which need to be adjusted after {@link passes.mc.registerAllocation.GraphColoring}.
      */
-    private HashSet<MCload> paramCal;
-    private HashSet<MCFPload> floatParamLoads;
+    private HashSet<MCMove> paramCal;
     //</editor-fold>
 
     //<editor-fold desc="Other info">
@@ -128,22 +126,18 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         int NERN = 0;
 
         /* Assignment of arguments to registers and stack */
-        for (int i=0; i<argNum; i++) {
-            var param = args.get(i);
+        for (Function.FuncArg param : args) {
             if (param.getType().isIntegerType() || param.getType().isPointerType()) {
                 if (NCRN < 4) {
                     APVCR.add(param);
                     NCRN++;
-                }
-                else
+                } else
                     ACTM.add(param);
-            }
-            else if (param.getType().isFloatType()) {
+            } else if (param.getType().isFloatType()) {
                 if (NERN < 16) {
                     APVER.add(param);
                     NERN++;
-                }
-                else
+                } else
                     ACTM.add(param);
             }
         }
@@ -201,9 +195,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     /**
      * Add a parameter load instruction into function
      */
-    public void addParamCal(MCload move) {paramCal.add(move);}
-
-    public void addFloatParamLoads(MCFPload load) {floatParamLoads.add(load);}
+    public void addParamCal(MCMove move) {paramCal.add(move);}
 
     /**
      * Get total stackSize, including local variables & spilled nodes. <br/>
@@ -237,8 +229,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public HashSet<RealExtRegister> getExtContext() {return extContext;}
     public Integer getLocalVariable() {return localVariable;}
     public int getSpilledNode() {return spilledNode;}
-    public HashSet<MCload> getParamCal() {return paramCal;}
-    public HashSet<MCFPload> getFloatParamLoads() {return floatParamLoads;}
+    public HashSet<MCMove> getParamCal() {return paramCal;}
 
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
     public ArrayList<VirtualRegister> getVirtualRegisters() {return VirtualRegisters;}
@@ -261,7 +252,6 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         localVariable = 0;
         spilledNode = 0;
         paramCal = new HashSet<>();
-        floatParamLoads = new HashSet<>();
         BasicBlockList = new LinkedList<>();
         ACTM = new ArrayList<>();
         APVCR = new ArrayList<>();

@@ -142,16 +142,15 @@ public class MCBuilder {
                 entry.prependInst(new MCMove(vr, new Immediate(variableSize), true));
             }
 
-            // TODO: 超出限制时使用move指令
             /* Adjust parameter loads' offset */
-            curFunc.getParamCal().forEach(load -> load.setOffset(new Immediate(
-                    ((Immediate) load.getOffset()).getIntValue()
-                            + curFunc.getLocalVariable()
-            )));
-            curFunc.getFloatParamLoads().forEach(load -> load.setOffset(new Immediate(
-                    load.getOffset().getIntValue()
-                            + curFunc.getLocalVariable()
-            )));
+            curFunc.getParamCal().forEach(move -> {
+                int new_offset =
+                        ((Immediate) move.getSrc()).getIntValue()
+                        + curFunc.getLocalVariable();
+                move.setSrc(new Immediate(new_offset));
+                if (!canEncodeImm(new_offset))
+                    move.setExceededLimit();
+            });
         }
     }
 
@@ -262,10 +261,12 @@ public class MCBuilder {
                 entry.prependInst(new MCMove(vr, RealRegister.get(curFunc.getAPVCR().indexOf(value))));
             }
             else {
-                /* Considering that parameter should not be too many .... use Immediate directly here */
-                var load = new MCload(vr, RealRegister.get(13), new Immediate(curFunc.getACTM().indexOf(value)*4));
-                entry.prependInst(load);
-                curFunc.addParamCal(load);
+                int offsetVal = curFunc.getACTM().indexOf(value)*4;
+                var offset = curFunc.createVirReg(offsetVal);
+                entry.prependInst(new MCload(vr, RealRegister.get(13), offset));
+                var move = new MCMove(offset, new Immediate(offsetVal), !canEncodeImm(offsetVal));
+                entry.prependInst(move);
+                curFunc.addParamCal(move);
             }
 
             return vr;
@@ -337,10 +338,13 @@ public class MCBuilder {
                 entry.prependInst(new MCFPmove(extVr, RealExtRegister.get(curFunc.getAPVER().indexOf(value))));
             }
             else {
-                /* Considering that parameter should not be too many .... use Immediate directly here */
-                var load = new MCFPload(extVr, RealRegister.get(13), new Immediate(curFunc.getACTM().indexOf(value)*4));
-                entry.prependInst(load);
-                curFunc.addFloatParamLoads(load);
+                int offsetVal = curFunc.getACTM().indexOf(value)*4;
+                var addr = curFunc.createVirReg(offsetVal);
+                entry.prependInst(new MCFPload(extVr, addr));
+                entry.prependInst(new MCBinary(MCInstruction.TYPE.ADD, addr, RealRegister.get(13), addr));
+                var move = new MCMove(addr, new Immediate(offsetVal), !canEncodeImm(offsetVal));
+                entry.prependInst(move);
+                curFunc.addParamCal(move);
             }
 
             return extVr;
