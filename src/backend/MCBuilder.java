@@ -291,26 +291,33 @@ public class MCBuilder {
      */
     private MCOperand findFloatContainer(Value value, boolean forceAllocReg) {
         if (value instanceof Constant) {
-            float v = value instanceof ConstFloat
-                    ? ((ConstFloat) value).getVal()
-                    : ((ConstInt) value).getVal();
-            if (canEncodeFloat(v)){
-                if (forceAllocReg) {
+            /* Find a float container for the const float (the format is IEEE 754 FLOAT) */
+            if (value instanceof ConstFloat) {
+                float v = ((ConstFloat) value).getVal();
+                if (canEncodeFloat(v)) {
+                    if (forceAllocReg) {
+                        var extVr = curFunc.createExtVirReg(value);
+                        curMCBB.appendInst(new MCFPmove(extVr, new FPImmediate(v)));
+                        floatValueMap.put(value, extVr);
+                        return extVr;
+                    } else {
+                        return new FPImmediate(v);
+                    }
+                }
+                else {
+                    var vr = curFunc.createVirReg(value);
                     var extVr = curFunc.createExtVirReg(value);
-                    curMCBB.appendInst(new MCFPmove(extVr, new FPImmediate(v)));
+                    curMCBB.appendInst(new MCMove(vr, new FPImmediate(v), true));
+                    curMCBB.appendInst(new MCFPmove(extVr, vr));
                     floatValueMap.put(value, extVr);
                     return extVr;
                 }
-                else {
-                    return new FPImmediate(v);
-                }
             }
+            /* Find a float container for the const int (the format is IEEE 754 INT!) */
             else {
-                var vr = curFunc.createVirReg(value);
+                var vr = (Register) findContainer(value, true);
                 var extVr = curFunc.createExtVirReg(value);
-                curMCBB.appendInst(new MCMove(vr, new FPImmediate(v), true));
                 curMCBB.appendInst(new MCFPmove(extVr, vr));
-                floatValueMap.put(value, extVr);
                 return extVr;
             }
         }
