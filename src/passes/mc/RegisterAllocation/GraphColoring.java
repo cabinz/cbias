@@ -31,10 +31,10 @@ public class GraphColoring implements MCPass {
 
     /**
      * Color, also the number of register.<br/>
-     * In ARM, we use r0-r12
+     * In ARM, we use r0-r11
      * @see backend.operand.RealRegister
      */
-    private int K = 13;
+    private int K = 12;
 
     //<editor-fold desc="Data Structure">
     //<editor-fold desc="Key worklist set">
