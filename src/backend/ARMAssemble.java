@@ -72,7 +72,8 @@ public class ARMAssemble implements Iterable<MCFunction>{
     public Label addGlobalVariable(GlobalVariable gv) {
         Label label;
 
-        if (((PointerType) gv.getType()).getRootType() instanceof IntegerType) {
+        var type = ((PointerType) gv.getType()).getRootType();
+        if (type.isIntegerType() || (type.isArrayType() && ((ArrayType) type).getPrimitiveType().isIntegerType())) {
             ArrayList<Integer> initial = new ArrayList<>();
             /* When global variable is not initialized, the getInitVal() will return null */
             if (gv.getInitVal() == null) {
