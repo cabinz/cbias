@@ -1,8 +1,10 @@
 package passes.mc.registerAllocation;
 
 import backend.armCode.MCBasicBlock;
+import backend.armCode.MCFPInstruction;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
+import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
 import java.util.HashMap;
@@ -30,10 +32,20 @@ public class LivenessAnalysis {
                 inst.getDef().stream()
                         .filter(def -> !info.use.contains(def))
                         .forEach(info.def::add);
+                if (inst instanceof MCFPInstruction) {
+                    var fpInst = (MCFPInstruction) inst;
+                    fpInst.getExtUse().stream()
+                            .filter(extUse -> !info.extDef.contains(extUse))
+                            .forEach(info.extUse::add);
+                    fpInst.getExtDef().stream()
+                            .filter(extDef -> !info.extUse.contains(extDef))
+                            .forEach(info.extDef::add);
+                }
             }
 
             /* Add all use into in */
             info.in.addAll(info.use);
+            info.extIn.addAll(info.extUse);
         }
 
         /* Calculate out set until convergence */
@@ -44,12 +56,17 @@ public class LivenessAnalysis {
             for (MCBasicBlock block : func) {
                 var info = liveMap.get(block);
                 var out = new HashSet<Register>();
+                var extOut = new HashSet<ExtensionRegister>();
 
                 /* out = union(in_of_all_successor) */
-                if (block.getTrueSuccessor() != null)
+                if (block.getTrueSuccessor() != null) {
                     out.addAll(liveMap.get(block.getTrueSuccessor()).in);
-                if (block.getFalseSuccessor() != null)
+                    extOut.addAll(liveMap.get(block.getTrueSuccessor()).extIn);
+                }
+                if (block.getFalseSuccessor() != null) {
                     out.addAll(liveMap.get(block.getFalseSuccessor()).in);
+                    extOut.addAll(liveMap.get(block.getTrueSuccessor()).extIn);
+                }
 
                 if (!out.equals(info.out)) {
                     convergence = false;
@@ -60,6 +77,16 @@ public class LivenessAnalysis {
                     info.out.stream()
                             .filter(x -> !info.def.contains(x))
                             .forEach(info.in::add);
+                }
+                if (!extOut.equals(info.extOut)) {
+                    convergence = false;
+                    /* Set out = new out */
+                    info.extOut = extOut;
+                    /* Set in = union(use, out\def) */
+                    info.extIn  = new HashSet<>(info.extUse);
+                    info.extOut.stream()
+                            .filter(x -> !info.extDef.contains(x))
+                            .forEach(info.extIn::add);
                 }
             }
         }
