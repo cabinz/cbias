@@ -43,8 +43,7 @@ public class MCbranch extends MCInstruction {
     public HashSet<Register> getDef() {
         var set = new HashSet<Register>();
         if (withLink) {
-            if (!(targetFunc.getIRFunction().getType().getRetType().isFloatType()))
-                set.add(RealRegister.get(0));
+            IntStream.range(0, 4).forEach(x -> set.add(RealRegister.get(x)));
             /* lr <- pc */
             set.add(RealRegister.get(14));
         }
@@ -63,8 +62,8 @@ public class MCbranch extends MCInstruction {
 
     public HashSet<ExtensionRegister> getExtDef() {
         var set = new HashSet<ExtensionRegister>();
-        if (withLink && targetFunc.getIRFunction().getType().getRetType().isFloatType())
-            set.add(RealExtRegister.get(0));
+        if (withLink)
+            IntStream.range(0, 16).forEach(x -> set.add(RealExtRegister.get(x)));
         return set;
     }
 
