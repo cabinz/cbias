@@ -232,6 +232,7 @@ public class MCBuilder {
         }
         else if (floatValueMap.containsKey(value)) {
             var vr = curFunc.createVirReg(value);
+            valueMap.put(value, vr);
             curMCBB.appendInst(new MCFPmove(vr, floatValueMap.get(value)));
             return vr;
         }
@@ -317,6 +318,7 @@ public class MCBuilder {
         }
         else if (valueMap.containsKey(value)) {
             var extVr = curFunc.createExtVirReg(value);
+            floatValueMap.put(value, extVr);
             curMCBB.appendInst(new MCFPmove(extVr, valueMap.get(value)));
             return extVr;
         }
