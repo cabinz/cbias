@@ -487,7 +487,7 @@ public class GC4VER {
      * Add PUSH in the front of procedure to preserve the context if necessary
      */
     private void PreserveContext() {
-        if (!curFunc.getContext().isEmpty())
+        if (!curFunc.getExtContext().isEmpty())
             curFunc.getEntryBlock().prependInst(new MCFPpush(curFunc.getExtContext()));
     }
     //</editor-fold>
