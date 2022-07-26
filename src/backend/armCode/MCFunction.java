@@ -222,6 +222,8 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     //<editor-fold desc="Getter & Setter">
     public String getName() {return IRFunction.getName();}
+    public Function getIRFunction() {return IRFunction;}
+
     public ArrayList<Function.FuncArg> getAPVCR() {return APVCR;}
     public ArrayList<Function.FuncArg> getAPVER() {return APVER;}
     public ArrayList<Function.FuncArg> getACTM() {return ACTM;}

@@ -32,10 +32,7 @@ public class MCbranch extends MCInstruction {
     public HashSet<Register> getUse() {
         var set = new HashSet<Register>();
         if (withLink) {
-            set.add(RealRegister.get(0));
-            set.add(RealRegister.get(1));
-            set.add(RealRegister.get(2));
-            set.add(RealRegister.get(3));
+            IntStream.range(0, targetFunc.getAPVCR().size()).forEach(x -> set.add(RealRegister.get(x)));
             /* lr <- pc */
             set.add(RealRegister.get(15));
         }
@@ -46,7 +43,8 @@ public class MCbranch extends MCInstruction {
     public HashSet<Register> getDef() {
         var set = new HashSet<Register>();
         if (withLink) {
-            set.add(RealRegister.get(0));
+            if (!(targetFunc.getIRFunction().getType().getRetType().isFloatType()))
+                set.add(RealRegister.get(0));
             /* lr <- pc */
             set.add(RealRegister.get(14));
         }
@@ -59,13 +57,13 @@ public class MCbranch extends MCInstruction {
     public HashSet<ExtensionRegister> getExtUse() {
         var set = new HashSet<ExtensionRegister>();
         if (withLink)
-            IntStream.range(0, 16).forEach(x -> set.add(RealExtRegister.get(x)));
+            IntStream.range(0, targetFunc.getAPVER().size()).forEach(x -> set.add(RealExtRegister.get(x)));
         return set;
     }
 
     public HashSet<ExtensionRegister> getExtDef() {
         var set = new HashSet<ExtensionRegister>();
-        if (withLink)
+        if (withLink && targetFunc.getIRFunction().getType().getRetType().isFloatType())
             set.add(RealExtRegister.get(0));
         return set;
     }
