@@ -52,10 +52,10 @@ public class MCFPcompare extends MCFPInstruction {
     @Override
     public String emit() {
         if (operand2 == null) {
-            return "VCMP" + emitCond() + ' ' + operand1.emit() + ", #0.0";
+            return "VCMP" + emitCond() + ".F32 " + operand1.emit() + ", #0.0";
         }
         else {
-            return "VCMP" + emitCond() + ' ' + operand1.emit() + ", " + operand2.emit();
+            return "VCMP" + emitCond() + ".F32 " + operand1.emit() + ", " + operand2.emit();
         }
     }
 

@@ -132,7 +132,7 @@ public abstract class Instruction extends User {
     public boolean isAlloca() {return this.cat == InstCategory.ALLOCA;}
     public boolean isLoad  () {return this.cat == InstCategory.LOAD;}
     public boolean isStore () {return this.cat == InstCategory.STORE;}
-    public boolean isIcmp  () {return this.cat.isRelationalBinary();}
+    public boolean isIcmp  () {return this.cat.isIntRelationalBinary();}
     public boolean isGEP   () {return this.cat == InstCategory.GEP;}
     public boolean isFcmp  () {return this.cat.isFloatRelationalBinary();}
     public boolean isZext  () {return this.cat == InstCategory.ZEXT;}
