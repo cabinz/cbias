@@ -38,7 +38,7 @@ public class PassManager {
      */
     public void runPasses(ARMAssemble module){
         run(BuildCFG.class, module);
-        run(GraphColoring.class, module);
+        run(RegisterAllocation.class, module);
     }
 
     private void run(Class<?> passClass, Module module){
@@ -87,7 +87,7 @@ public class PassManager {
             // MC Passes
             ArrayList<MCPass> MCPasses = new ArrayList<>();
             MCPasses.add(new BuildCFG());
-            MCPasses.add(new GraphColoring());
+            MCPasses.add(new RegisterAllocation());
             registerMCPasses(MCPasses);
         }
         return instance;

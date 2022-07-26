@@ -1,4 +1,4 @@
-package passes.mc.RegisterAllocation;
+package passes.mc.registerAllocation;
 
 import backend.ARMAssemble;
 import backend.MCBuilder;
@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
  * @see <a href='http://underpop.online.fr/j/java/help/graph-coloring-implementation-compiler-java-programming-language.html.gz'>
  *     Graph-Coloring implement</a>
  */
-public class GraphColoring implements MCPass {
+public class GraphColoring {
 
     /**
      * Color, also the number of register.<br/>

@@ -1,4 +1,4 @@
-package passes.mc.RegisterAllocation;
+package passes.mc.registerAllocation;
 
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
