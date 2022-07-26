@@ -14,7 +14,7 @@ public class Immediate extends MCOperand {
 
 
     public String emit() {
-        return "#" + Integer.toString(intValue);
+        return "#" + intValue;
     }
 
 

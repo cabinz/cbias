@@ -14,8 +14,7 @@ public class FPImmediate extends MCOperand{
     public float getFloatValue() {return floatValue;}
     public void setFloatValue(float floatValue) {this.floatValue = floatValue;}
 
-    // TODO: 输出符合格式的浮点数
-    public String emit() {return "#" + Float.toString(floatValue);}
+    public String emit() {return "#" + floatValue;}
 
     public FPImmediate(float floatValue) {
         super(TYPE.FP);
