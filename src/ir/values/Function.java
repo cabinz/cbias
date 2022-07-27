@@ -27,6 +27,9 @@ public class Function extends Value implements Iterable<BasicBlock>{
      */
     public class FuncArg extends Value {
 
+        /**
+         * Position of the arg in the function parameter list.
+         */
         private int pos;
 
 
@@ -87,7 +90,11 @@ public class Function extends Value implements Iterable<BasicBlock>{
     }
 
 
-
+    /**
+     * Retrieve a list of formal arguments of the function.
+     * The indices of the FArgs in the list returned are their positions in the argument list.
+     * @return An ArrayList of formal arguments.
+     */
     public ArrayList<FuncArg> getArgs() {
         return args;
     }

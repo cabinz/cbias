@@ -89,10 +89,16 @@ public class IREmitter {
         for (Function func : m.externFunctions) {
             strBuilder.append("declare ").append(func).append("\n");
         }
+        if (m.externFunctions.size() > 0) {
+            strBuilder.append("\n\n");
+        }
 
         // Emit global variable declarations.
         for (GlobalVariable glbVar : m.globalVariables) {
             strBuilder.append(glbVar).append("\n");
+        }
+        if (m.globalVariables.size() > 0) {
+            strBuilder.append("\n\n");
         }
 
         // Emit all the functions defined in the module.
@@ -100,23 +106,21 @@ public class IREmitter {
             // Head of a function: prototype of it.
             strBuilder.append("define dso_local ")
                     .append(func.toString())
-                    .append("{\n");
+                    .append(" {\n");
             // Body of a function: basic blocks in it.
             for (BasicBlock bb : func) {
-                // Emit label of the block if it's not the first block.
+                // Emit label of the block if it's not the first block. [Intended x1]
                 if (!func.getEntryBB().equals(bb)) {
                     strBuilder.append(bb.getName()).append(":\n");
                 }
-                // Content (instructions) in the block.
+                // Content (instructions) in the block. [Intended x2]
                 for (Instruction inst : bb) {
-                    strBuilder.append(inst.toString())
-                            .append("\n");
+                    strBuilder.append("\t")
+                            .append(inst.toString()).append("\n");
                 }
-                // End of current bb.
-                strBuilder.append("\n");
             }
             // Tail of a function: A right bracket to close it.
-            strBuilder.append("}\n");
+            strBuilder.append("}\n\n");
         }
 
         /*

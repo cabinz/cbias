@@ -1,4 +1,4 @@
-package passes.mc.RegisterAllocation;
+package passes.mc.registerAllocation;
 
 /**
  * Unchangeable pair

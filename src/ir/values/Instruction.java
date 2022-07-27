@@ -64,6 +64,17 @@ public abstract class Instruction extends User {
                     && this.ordinal() <= InstCategory.FGE.ordinal();
         }
 
+        public boolean isIntRelationalBinary() {
+            return InstCategory.LT.ordinal() <= this.ordinal()
+                    && this.ordinal() <= InstCategory.GE.ordinal();
+        }
+
+        public boolean isFloatRelationalBinary() {
+            return InstCategory.FLT.ordinal() <= this.ordinal()
+                    && this.ordinal() <= InstCategory.FGE.ordinal();
+
+        }
+
         public boolean isTerminator() {
             return InstCategory.RET.ordinal() <= this.ordinal()
                     && this.ordinal() <= InstCategory.BR.ordinal();
@@ -75,6 +86,7 @@ public abstract class Instruction extends User {
      * An InstCategory instance indicating an instruction type.
      */
     public InstCategory cat;
+    // TODO: rename as tag, add a getter for it
 
     /**
      * If an instruction has result, a name (register) should be
@@ -124,8 +136,10 @@ public abstract class Instruction extends User {
     public boolean isAlloca() {return this.cat == InstCategory.ALLOCA;}
     public boolean isLoad  () {return this.cat == InstCategory.LOAD;}
     public boolean isStore () {return this.cat == InstCategory.STORE;}
-    public boolean isIcmp  () {return this.cat.isRelationalBinary();}
+    public boolean isIcmp  () {return this.cat.isIntRelationalBinary();}
     public boolean isGEP   () {return this.cat == InstCategory.GEP;}
+    public boolean isFcmp  () {return this.cat.isFloatRelationalBinary();}
+    public boolean isZext  () {return this.cat == InstCategory.ZEXT;}
 
     /**
      * Remove the instruction from the BasicBlock holding it.

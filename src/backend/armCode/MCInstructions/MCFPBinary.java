@@ -1,6 +1,6 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCInstruction;
+import backend.armCode.MCFPInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
@@ -14,7 +14,7 @@ import java.util.HashSet;
  *     ARM Architecture Reference Manual ARMv7 edition </a> <br/>
  *     A4.14 Page: A4-38
  */
-public class MCFPBinary extends MCInstruction {
+public class MCFPBinary extends MCFPInstruction {
 
     private ExtensionRegister operand1;
     private ExtensionRegister operand2;
@@ -22,17 +22,38 @@ public class MCFPBinary extends MCInstruction {
 
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
+    }
 
+    @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(operand1);
+        set.add(operand2);
+        return set;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(destination);
+        return set;
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (operand1 == old) operand1 = brand_new;
+        if (operand2 == old) operand2 = brand_new;
+        if (destination == old) destination = brand_new;
     }
 
     public String emit() {
@@ -40,7 +61,11 @@ public class MCFPBinary extends MCInstruction {
                 + ", " + operand1.emit() + ", " + operand2.emit();
     }
 
-    public MCFPBinary(TYPE type, ExtensionRegister operand1, ExtensionRegister operand2, ExtensionRegister destination) {
+    public ExtensionRegister getOperand1() {return operand1;}
+    public ExtensionRegister getOperand2() {return operand2;}
+    public ExtensionRegister getDestination() {return destination;}
+
+    public MCFPBinary(TYPE type, ExtensionRegister destination, ExtensionRegister operand1, ExtensionRegister operand2) {
         super(type);
         this.operand1 = operand1;
         this.operand2 = operand2;

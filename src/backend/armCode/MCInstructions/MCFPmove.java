@@ -1,8 +1,8 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCInstruction;
+import backend.armCode.MCFPInstruction;
 import backend.operand.ExtensionRegister;
-import backend.operand.Immediate;
+import backend.operand.FPImmediate;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
@@ -18,7 +18,7 @@ import java.util.HashSet;
  * @see <a href="https://developer.arm.com/documentation/ddi0406/latest/">
  *     ARM Architecture Reference Manual ARMv7 edition </a> A4.12 Page: A4-29
  */
-public class MCFPmove extends MCInstruction {
+public class MCFPmove extends MCFPInstruction {
 
     private MCOperand src1;
     private MCOperand dst1;
@@ -34,24 +34,59 @@ public class MCFPmove extends MCInstruction {
      */
     private boolean doubleMove;
 
+    public boolean isCopy() {return (src1 != null) && (src1.isVirtualExtReg() || src1.isRealExtReg()) && (dst1.isVirtualExtReg() || dst1.isRealExtReg());}
+
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        var set = new HashSet<Register>();
+        if (src1 != null && (src1.isVirtualReg() || src1.isRealReg())) set.add((Register) src1);
+//        if (src2.isVirtualReg() || src2.isRealReg()) set.add((Register) src2);
+        return set;
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        var set = new HashSet<Register>();
+        if (dst1 != null && (dst1.isVirtualReg() || dst1.isRealReg())) set.add((Register) dst1);
+//        if (dst2.isVirtualReg() || dst2.isRealReg()) set.add((Register) dst2);
+        return set;
     }
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
-
+        if (src1 != null && src1 == old) src1 = tmp;
+//        if (src2 == old) src2 = tmp;
+        if (dst1 != null && dst1 == old) dst1 = tmp;
+//        if (dst2 == old) dst2 = tmp;
     }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        if (src1 != null && (src1.isVirtualExtReg() || src1.isRealExtReg())) set.add((ExtensionRegister) src1);
+//        if (src2.isVirtualExtReg() || src2.isRealExtReg()) set.add((ExtensionRegister) src2);
+        return set;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        var set = new HashSet<ExtensionRegister>();
+        if (dst1 != null && (dst1.isVirtualExtReg() || dst1.isRealExtReg())) set.add((ExtensionRegister) dst1);
+//        if (dst2.isVirtualExtReg() || dst2.isRealExtReg()) set.add((ExtensionRegister) dst2);
+        return set;
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (src1 != null && src1 == old) src1 = brand_new;
+//        if (src2 == old) src2 = brand_new;
+        if (dst1 != null && dst1 == old) dst1 = brand_new;
+//        if (dst2 == old) dst2 = brand_new;
+    }
+
     @Override
     public String emit() {
         if (doubleMove) {
-            // TODO: 不是相邻的扩展寄存器时报错
             return "VMOV" + emitCond() + ' ' + dst1.emit() + ", " + dst2.emit() + ", "
                     + src1.emit() + ", " + src2.emit();
         }
@@ -63,15 +98,19 @@ public class MCFPmove extends MCInstruction {
         }
     }
 
+    public MCOperand getSrc1() {return src1;}
+    public MCOperand getDst1() {return dst1;}
+
     /* Single move */
     /**
      * This constructor is designed to new a VMRS instruction.
      */
     public MCFPmove() {super(TYPE.VMRS);doubleMove=false;}
-    public MCFPmove(ExtensionRegister dst1, Immediate src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
+    public MCFPmove(ExtensionRegister dst1, FPImmediate src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
     public MCFPmove(Register dst1, ExtensionRegister src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
     public MCFPmove(ExtensionRegister dst1, Register src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
     public MCFPmove(ExtensionRegister dst1, ExtensionRegister src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
+    public MCFPmove(MCOperand dst1, MCOperand src1) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;doubleMove=false;}
 
     /* Double move */
     public MCFPmove(ExtensionRegister dst1, ExtensionRegister dst2, Register src1, Register src2) {super(TYPE.VMOV);this.src1 = src1;this.dst1 = dst1;this.src2 = src2;this.dst2 = dst2;doubleMove = true;}

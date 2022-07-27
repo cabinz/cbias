@@ -958,7 +958,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Get trueBlkEndWithTerminator flag.
         Instruction trueExitBlkLastInst = trueExitBlk.getLastInst();
         boolean trueBlkEndWithTerminator = trueExitBlkLastInst != null &&
-                (trueExitBlkLastInst.isRet() || trueExitBlkLastInst.isBr());
+                trueExitBlkLastInst.cat.isTerminator();
 
         /*
         Build the FALSE branch (a block for jumping if condition is false),
@@ -979,7 +979,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Get falseBlkEndWithTerminator flag.
             Instruction falseExitBlkLastInst = falseExitBlk.getLastInst();
             falseBlkEndWithTerminator = falseExitBlkLastInst != null &&
-                (falseExitBlkLastInst.isRet() || falseExitBlkLastInst.isBr());
+                    falseExitBlkLastInst.cat.isTerminator();
         }
 
         /*
@@ -1229,10 +1229,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
         int ret;
 
         /*
-            Use BigInteger but not Integer::parseInt.
+            Use BigInteger but not Integer::parseInt because of INT_MIN.
 
             Especially notice that INT_MAX+1 (2147483648, 0x80000000) will be normally parsed
-            and a BigInteger will be constructed, in which BigInteger::intValue() will return
+            and a BigInteger will be constructed, in which however BigInteger::intValue() will return
             an abnormal value INT_MIN (-2147483648).
             Since INT_MAX+1 is not a legal value as an immediate in SysY (and won't
             exist in test cases), it will definitely be converted as -(INT_MAX+1) with a negation
@@ -1925,7 +1925,9 @@ public class Visitor extends SysYBaseVisitor<Void> {
      */
     @Override
     public Void visitStrRParam(SysYParser.StrRParamContext ctx) {
-        // todo: Cope with string function argument.
+        /*
+        We don't have to cope with string factually.
+         */
         retVal_ = null;
 
         return null;

@@ -6,19 +6,31 @@ import java.util.ArrayList;
 
 
 public class ArrayType extends Type {
-    
+
+    /**
+     * The length of the array.
+     * <br>
+     * e.g. Length of [3 x [2 x i32]] is 3.
+     */
     private int len;
 
     public int getLen() {
         return len;
     }
 
-    
+    /**
+     * The type of direct array elements (one step forward on the nesting chain).
+     * <br>
+     * e.g. ElemType of [3 x [2 x i32]] is [2 x i32]
+     * <br>
+     * If you want to retrieve the ultimate type of the array, use getPrimitiveType().
+     */
     private Type elemType;
 
     public Type getElemType() {
         return elemType;
     }
+
 
     /**
      * This method calculates the sizes of each dimension of this array.
@@ -44,7 +56,7 @@ public class ArrayType extends Type {
 
     /**
      * Return the primitive type of this array.
-     * @return the primitive type
+     * @return The ultimate element type on the nesting chain.
      */
     public Type getPrimitiveType() {
         Type tmp = this;

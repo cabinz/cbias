@@ -60,9 +60,13 @@ public class MCReturn extends MCInstruction {
             var restore = new HashSet<>(belongFunc.getContext());
             restore.remove(RealRegister.get(14));
             restore.add(RealRegister.get(15));
+            if (!belongFunc.getExtContext().isEmpty())
+                assemble.append((new MCFPpop(belongFunc.getExtContext())).emit()).append("\n\t");
             assemble.append((new MCpop(restore)).emit());
         }
         else {
+            if (!belongFunc.getExtContext().isEmpty())
+                assemble.append((new MCFPpop(belongFunc.getExtContext())).emit()).append("\n\t");
             if (!belongFunc.getContext().isEmpty())
                 assemble.append((new MCpop(belongFunc.getContext())).emit()).append("\n\t");
             assemble.append("BX lr");

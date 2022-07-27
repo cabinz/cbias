@@ -1,6 +1,6 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCInstruction;
+import backend.armCode.MCFPInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Immediate;
 import backend.operand.Register;
@@ -11,29 +11,48 @@ import java.util.HashSet;
  * This class represent the VLDR instruction.<br/>
  * Format: VLDR Fd, [Rn{, #&lt;immed&gt;}]
  */
-public class MCFPload extends MCInstruction {
+public class MCFPload extends MCFPInstruction {
 
     private ExtensionRegister dst;
     private Register addr;
     /**
-     * The offset must be an integer number between 0 and 1020,<br/>
+     * The offset must be an integer number between +/- 0 and 1020,<br/>
      * which can be divided by 4.
      */
     private Immediate offset;
 
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        var set = new HashSet<Register>();
+        set.add(addr);
+        return set;
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
+        if (addr == old) addr = tmp;
+    }
 
+    @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        return new HashSet<>();
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(dst);
+        return set;
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (dst == old) dst = brand_new;
     }
 
     @Override

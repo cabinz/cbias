@@ -17,8 +17,9 @@ import java.security.SecureRandom;
 public class PointerType extends Type {
 
     /**
-     * Type of the pointed-to memory space.
-     * (i.e. Type of the element one step up on the pointing chain.)
+     * Type of the pointed-to memory space. (one step forward on the pointing chain)
+     * <br>
+     * e.g. Root type of PtrType( [3 x i32]*** ) is PtrType( [3 x i32]** )
      */
     private Type pointeeType;
 
@@ -27,14 +28,15 @@ public class PointerType extends Type {
     }
 
     /**
-     * Type of the ultimate atom element tracing up the pointing chain.
+     * Type of the ultimate element tracing up the pointing chain.
+     * <br>
+     * e.g. Root type of PtrType( [3 x i32]*** ) is ArrayType( [3 x i32] )
      */
     private Type rootType;
 
     public Type getRootType() {
         return rootType;
     }
-
 
 
     private PointerType(Type pointeeType) {

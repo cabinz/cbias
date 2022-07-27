@@ -9,8 +9,9 @@ import passes.ir.dce.UselessCodeElim;
 import passes.ir.hoist.Hoist;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
-import passes.mc.RegisterAllocation.GraphColoring;
+import passes.mc.MCPass;
 import passes.mc.buildCFG.BuildCFG;
+import passes.mc.registerAllocation.RegisterAllocation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class PassManager {
      */
     public void runPasses(ARMAssemble module){
         run(BuildCFG.class, module);
-        run(GraphColoring.class, module);
+        run(RegisterAllocation.class, module);
     }
 
     public void run(Class<?> passClass, Module module){
@@ -95,7 +96,7 @@ public class PassManager {
             // MC Passes
             ArrayList<MCPass> MCPasses = new ArrayList<>();
             MCPasses.add(new BuildCFG());
-            MCPasses.add(new GraphColoring());
+            MCPasses.add(new RegisterAllocation());
             registerMCPasses(MCPasses);
         }
         return instance;

@@ -19,7 +19,6 @@ public class RealRegister extends Register{
     @Override
     public String getName() {
         return switch (index){
-            case 16 -> "cpsr";
             case 15 -> "pc";
             case 14 -> "lr";
             case 13 -> "sp";
