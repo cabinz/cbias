@@ -203,14 +203,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         // void starttime()
         scope.addDecl("starttime",
-                builder.buildFunction("starttime", FunctionType.getType(
-                        voidTy, emptyArgTypeList
+                builder.buildFunction("_sysy_starttime", FunctionType.getType(
+                        voidTy, intArgTypeList
                 ), true)
         );
         // void stoptime()
         scope.addDecl("stoptime",
-                builder.buildFunction("stoptime", FunctionType.getType(
-                        voidTy, emptyArgTypeList
+                builder.buildFunction("_sysy_stoptime", FunctionType.getType(
+                        voidTy, intArgTypeList
                 ), true)
         );
     }
