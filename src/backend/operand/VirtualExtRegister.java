@@ -17,6 +17,10 @@ public class VirtualExtRegister extends ExtensionRegister{
 
     public String emit() {return "EVR_" + getName();}
 
+    public Value getValue() {
+        return value;
+    }
+
     public VirtualExtRegister(int name, Value value) {
         super(TYPE.EVTR);
         this.name = name;

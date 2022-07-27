@@ -67,19 +67,38 @@ public class MCEmitter {
                 strBd.append(label.emit() + ":\n");
 
                 int count = 0;
-                for (Integer tmp : label.getIntial()) {
-                    if (tmp == 0)
-                        count++;
-                    else {
-                        if (count != 0) {
-                            strBd.append("\t.zero\t" + count * 4 + '\n');
-                            count = 0;
+                if (label.isInt()) {
+                    for (Object ini : label.getInitial()) {
+                        var tmp = ((Integer) ini);
+                        if (tmp == 0)
+                            count++;
+                        else {
+                            if (count != 0) {
+                                strBd.append("\t.zero\t" + count * 4 + '\n');
+                                count = 0;
+                            }
+                            strBd.append("\t.word\t" + tmp + '\n');
                         }
-                        strBd.append("\t.word\t" + tmp + '\n');
                     }
+                    if (count != 0)
+                        strBd.append("\t.zero\t" + count * 4 + '\n');
                 }
-                if (count != 0)
-                    strBd.append("\t.zero\t" + count * 4 + '\n');
+                else {
+                    for (Object ini : label.getInitial()) {
+                        var tmp = ((Float) ini);
+                        if (tmp == 0.0F)
+                            count++;
+                        else {
+                            if (count != 0) {
+                                strBd.append("\t.zero\t" + count * 4 + '\n');
+                                count = 0;
+                            }
+                            strBd.append("\t.word\t" + Float.floatToRawIntBits(tmp) + '\n');
+                        }
+                    }
+                    if (count != 0)
+                        strBd.append("\t.zero\t" + count * 4 + '\n');
+                }
             }
             strBd.append("\n\n");
         }

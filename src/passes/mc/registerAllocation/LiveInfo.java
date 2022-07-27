@@ -1,8 +1,8 @@
-package passes.mc.RegisterAllocation;
+package passes.mc.registerAllocation;
 
 import backend.armCode.MCBasicBlock;
+import backend.operand.ExtensionRegister;
 import backend.operand.Register;
-import backend.operand.VirtualRegister;
 
 import java.util.HashSet;
 
@@ -15,7 +15,7 @@ public class LiveInfo {
     /**
      * The set of incoming live variables
      */
-    public HashSet<Register> in = new HashSet<>();
+    public HashSet<Register> in  = new HashSet<>();
     /**
      * The set of outgoing live variables
      */
@@ -28,6 +28,11 @@ public class LiveInfo {
      * The set of variables which is def before use in the block
      */
     public HashSet<Register> def = new HashSet<>();
+
+    public HashSet<ExtensionRegister> extIn  = new HashSet<>();
+    public HashSet<ExtensionRegister> extOut = new HashSet<>();
+    public HashSet<ExtensionRegister> extUse = new HashSet<>();
+    public HashSet<ExtensionRegister> extDef = new HashSet<>();
 
     private final MCBasicBlock basicBlock;
 

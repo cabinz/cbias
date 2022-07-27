@@ -1,6 +1,6 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCInstruction;
+import backend.armCode.MCFPInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Immediate;
 import backend.operand.Register;
@@ -10,7 +10,7 @@ import java.util.HashSet;
 /**
  * This class represents the VSTR instruction.
  */
-public class MCFPstore extends MCInstruction {
+public class MCFPstore extends MCFPInstruction {
 
     private ExtensionRegister src;
     private Register addr;
@@ -22,17 +22,36 @@ public class MCFPstore extends MCInstruction {
 
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        var set = new HashSet<Register>();
+        set.add(addr);
+        return set;
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
+        if (addr == old) addr = tmp;
+    }
 
+    @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(src);
+        return set;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        return new HashSet<>();
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (src == old) src = brand_new;
     }
 
     @Override

@@ -42,12 +42,15 @@ public abstract class MCInstruction {
         VMLA,
         VMLS,
         VDIV,
+        VNEG,
         VCMP,
         VCVT,
         VMOV,
         VMRS,
         VLDR,
-        VSTR
+        VSTR,
+        VPUSH,
+        VPOP
     }
 
     /**

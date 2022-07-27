@@ -30,7 +30,7 @@ public class RealExtRegister extends ExtensionRegister{
     static private final ArrayList<RealExtRegister> exts = new ArrayList<>();
 
     static {
-        for (int i=0; i<32; i++)
+        for (int i=0; i<33; i++)
             exts.add(new RealExtRegister(i));
     }
 
