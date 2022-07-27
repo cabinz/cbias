@@ -14,6 +14,8 @@ import ir.values.*;
 import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
+import passes.ir.IBBRelationship;
+import passes.ir.RelationAnalysis;
 
 import java.util.*;
 
@@ -22,6 +24,33 @@ import java.util.*;
  * (both are in memory). As the emitter, it's a Singleton.
  */
 public class MCBuilder {
+
+    class IRBlockInfo extends passes.ir.BasicBlock implements IBBRelationship<IRBlockInfo> {
+
+        public LinkedList<IRBlockInfo> predecessors = new LinkedList<>();
+        public IRBlockInfo trueBlock;
+        public IRBlockInfo falseBlock;
+
+        @Override
+        public void addPreviousBasicBlock(IRBlockInfo previousBlock) {
+            predecessors.add(previousBlock);
+        }
+
+        @Override
+        public void setFollowingBasicBlocks(List<IRBlockInfo> followingBasicBlocks) {
+            switch (followingBasicBlocks.size()) {
+                case 1 -> trueBlock = followingBasicBlocks.get(0);
+                case 2 -> {
+                    trueBlock = followingBasicBlocks.get(0);
+                    falseBlock = followingBasicBlocks.get(1);
+                }
+            }
+        }
+
+        public IRBlockInfo(BasicBlock rawBasicBlock) {
+            super(rawBasicBlock);
+        }
+    }
 
     //<editor-fold desc="Singleton Pattern">
     static private final MCBuilder builder = new MCBuilder();
@@ -46,6 +75,7 @@ public class MCBuilder {
      */
     private HashMap<Value, VirtualRegister> valueMap;
     private HashMap<Value, VirtualExtRegister> floatValueMap;
+    private Map<BasicBlock, IRBlockInfo> blockInfo;
 
     /**
      * Contains the floats that can be encoded in VMOV instruction.
@@ -82,7 +112,7 @@ public class MCBuilder {
      *     <li>Calculate loop info of function ( TO BE FINISHED )(为什么不放在pass)</li>
      *     <li>Find predecessors of a MCBasicBlock AND Calculate loop info of BasicBlock( TO BE FINISHED )(为什么不放在pass)( TO BE FINISHED )</li>
      *     <li>BFS travel the BasicBlock and then translate into ARM instruction()</li>
-     *     <li>Handle PHI instruction( TO BE FINISHED )</li>
+     *     <li>Handle PHI instruction</li>
      *     <li>Calculate the cost of the MCInstruction( TO BE FINISHED )(为什么不放在pass)</li>
      * </ul>
      * @return generated ARM assemble target
@@ -117,19 +147,23 @@ public class MCBuilder {
             curIRFunc = IRfunc;
             valueMap = new HashMap<>();
             floatValueMap = new HashMap<>();
+            blockInfo = new HashMap<>();
+            IRfunc.forEach(bb -> blockInfo.put(bb, new IRBlockInfo(bb)));
+            RelationAnalysis.analysisBasicBlocks(blockInfo);
             curFunc = target.createFunction(IRfunc);
 
             /* This loop is to create the MC basic block in the same order of IR */
             for (BasicBlock IRBB : IRfunc)
                 curFunc.createBB(IRBB);
 
-            // TODO: 改成BFS
             for (BasicBlock IRBB : IRfunc){
                 curMCBB = curFunc.findMCBB(IRBB);
                 for (Instruction IRinst : IRBB) {
                     translate(IRinst);
                 }
             }
+
+            translatePhi();
 
             /* Allocate function variable stack in front of procedure */
             MCBasicBlock entry = curFunc.getEntryBlock();
@@ -916,6 +950,89 @@ public class MCBuilder {
                 }
 
                 baseAddr = dst;
+            }
+        }
+    }
+
+    private void translatePhi() {
+        for (BasicBlock IRBB : curIRFunc) {
+            var info = blockInfo.get(IRBB);
+            if (info.predecessors.size() <= 1) continue;
+
+            var phis = new ArrayList<PhiInst>();
+            for (Instruction inst : IRBB)
+                if (inst instanceof PhiInst)
+                    phis.add((PhiInst) inst);
+                else
+                    break;
+
+            for (var pre : info.predecessors) {
+                /* Build the map between phi operands */
+                var preIRBB = pre.getRawBasicBlock();
+                var phiMap = new HashMap<MCOperand, MCOperand>();
+
+                phis.forEach(phi -> {
+                    if (phi.getType().isFloatType())
+                        phiMap.put(findFloatContainer(phi), findFloatContainer(phi.findValue(preIRBB)));
+                    else // FIXME: 可能导致立即数报错
+                        phiMap.put(findContainer(phi), findFloatContainer(phi.findValue(preIRBB)));
+                });
+
+                /* Generate code */
+                /* Store the moves in reversed order for insert */
+                var moves = new LinkedList<MCInstruction>();
+
+                phiMap.keySet().forEach(k -> {
+                    /* Build the use stack */
+                    var useStack = new Stack<MCOperand>();
+                    var dealing = k;
+                    while (true) {
+                        if (!phiMap.containsKey(dealing))
+                            break;
+                        else if (useStack.contains(dealing))
+                            break;
+                        else {
+                            useStack.push(dealing);
+                            dealing = phiMap.get(dealing);
+                        }
+                    }
+
+                    /* Dealing phi in a loop */
+                    if (phiMap.containsKey(dealing)) {
+                        VirtualRegister tmp = curFunc.createVirReg(null);
+                        MCOperand dst = tmp;
+                        MCOperand src;
+                        while (useStack.contains(dealing)) {
+                            src = useStack.pop();
+                            moves.addFirst(new MCMove((Register) dst, src));
+                            dst = src;
+                            phiMap.remove(src);
+                        }
+                        moves.addFirst(new MCMove((Register) dealing, tmp));
+
+                    }
+                    /* Dealing nested phi */
+                    MCOperand dst;
+                    MCOperand src = dealing;
+                    while (!useStack.isEmpty()) {
+                        dst = useStack.pop();
+                        moves.addFirst(new MCMove((Register) dst, src));
+                        src = dst;
+                        phiMap.remove(dst);
+                    }
+                });
+
+                /* Insert */
+                var preList = curFunc.findMCBB(preIRBB).getInstructionList();
+                for (int i=preList.size(); i-->0; ) {
+                    var inst = preList.get(i);
+                    if (inst instanceof MCbranch)
+                        continue;
+                    else {
+                        moves.forEach(inst::insertAfter);
+                        break;
+                    }
+                }
             }
         }
     }
