@@ -3,10 +3,9 @@ package passes.ir.hoist;
 import ir.Use;
 import ir.Value;
 import ir.values.Instruction;
+import ir.values.instructions.PhiInst;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class InstructionSet {
 
@@ -54,11 +53,15 @@ public class InstructionSet {
     }
 
     static boolean isEqual(Instruction a, Instruction b){
-        return a.cat==b.cat&&Objects.equals(getOperandMap(a),getOperandMap(b));
+        return a.cat==b.cat&&a.getBB()==b.getBB()&&Objects.equals(getOperandMap(a),getOperandMap(b));
     }
 
     static int hash(Instruction instruction){
-        return Objects.hash(instruction.cat,getOperandMap(instruction).hashCode());
+        ArrayList<Object> features = new ArrayList<>();
+        features.add(instruction.cat);
+        features.add(instruction.getBB());
+        features.add(getOperandMap(instruction));
+        return Arrays.hashCode(features.toArray());
     }
 
 }
