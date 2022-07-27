@@ -85,7 +85,7 @@ public class ConstantDerivation implements IRPass {
      * @param expression The expression to be judged.
      */
     static boolean canDeriveExpression(Instruction expression) {
-        for (Use use : expression.operands) {
+        for (Use use : expression.getOperands()) {
             if (!isConstant(use.getUsee())) return false;
         }
         if (expression instanceof PhiInst) {

@@ -54,7 +54,7 @@ class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction>, 
     public void filterUnpromotableAllocaInst(Set<MemoryInst.Alloca> allocaInstSet){
         rawBasicBlock.forEach(instruction -> {
             if(!instruction.isLoad() && !instruction.isStore()){
-                instruction.operands.forEach(use -> {
+                instruction.getOperands().forEach(use -> {
                     if(use.getUsee() instanceof MemoryInst.Alloca){
                         allocaInstSet.remove((MemoryInst.Alloca) use.getUsee());
                     }
