@@ -975,7 +975,7 @@ public class MCBuilder {
                     if (phi.getType().isFloatType())
                         phiMap.put(findFloatContainer(phi), findFloatContainer(phi.findValue(preIRBB)));
                     else // FIXME: 可能导致立即数报错
-                        phiMap.put(findContainer(phi), findFloatContainer(phi.findValue(preIRBB)));
+                        phiMap.put(findContainer(phi), findContainer(phi.findValue(preIRBB)));
                 });
 
                 /* Generate code */
