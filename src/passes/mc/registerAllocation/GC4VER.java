@@ -170,8 +170,6 @@ public class GC4VER {
 
             AdjustParamLoad();
 
-            AdjustStack();
-
             PreserveContext();
             //</editor-fold>
         }
@@ -469,34 +467,6 @@ public class GC4VER {
             if (!MCBuilder.canEncodeImm(new_offset))
                 move.setExceededLimit();
         });
-    }
-
-    /**
-     * Add the spilled nodes' space to the function stack
-     */
-    private void AdjustStack() {
-        MCInstruction allocate = curFunc.getEntryBlock().getFirstInst();
-        if (allocate instanceof MCBinary) {
-            var bi = ((MCBinary) allocate);
-            int new_offset = ((Immediate) bi.getOperand2()).getIntValue() + curFunc.getSpilledNode() * 4;
-            if (MCBuilder.canEncodeImm(new_offset))
-                bi.setOperand2(new Immediate(new_offset));
-            else {
-                bi.insertBefore(new MCMove(RealRegister.get(4), new Immediate(new_offset), true));
-                bi.setOperand2(RealRegister.get(4));
-                curFunc.addContext(4);
-            }
-        }
-        else if (allocate instanceof MCMove) {
-            var mov = ((MCMove) allocate);
-            int new_offset = ((Immediate) mov.getSrc()).getIntValue() + curFunc.getSpilledNode() * 4;
-            if (MCBuilder.canEncodeImm(new_offset))
-                mov.setSrc(new Immediate(new_offset));
-            else {
-                mov.setSrc(new Immediate(new_offset));
-                mov.setExceededLimit();
-            }
-        }
     }
 
     /**
