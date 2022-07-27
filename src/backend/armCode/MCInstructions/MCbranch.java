@@ -32,7 +32,10 @@ public class MCbranch extends MCInstruction {
     public HashSet<Register> getUse() {
         var set = new HashSet<Register>();
         if (withLink) {
-            IntStream.range(0, targetFunc.getAPVCR().size()).forEach(x -> set.add(RealRegister.get(x)));
+            switch (targetFunc.getIRFunction().getName()) {
+                case "starttime", "stoptime" -> set.add(RealRegister.get(0));
+                default -> IntStream.range(0, targetFunc.getAPVCR().size()).forEach(x -> set.add(RealRegister.get(x)));
+            }
             /* lr <- pc */
             set.add(RealRegister.get(15));
         }

@@ -52,7 +52,6 @@ public class Driver{
         MCBuilder mcBuilder = MCBuilder.get();
         mcBuilder.loadModule(module);
         ARMAssemble target = mcBuilder.codeGeneration();
-        MCEmitter.get().emitTo(target, "test/be.s");
 
         /* Machine code optimization */
         PassManager.getInstance().runPasses(target);
