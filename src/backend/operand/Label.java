@@ -7,21 +7,30 @@ import java.util.ArrayList;
  */
 public class Label extends MCOperand {
 
+    public enum TAG {
+        Int,
+        Float
+    }
+
     private final String name;
-    private final ArrayList<Integer> intial;
+    private final TAG tag;
+    private final ArrayList initial;
 
-    public boolean isArray() {return intial.size() != 1;}
+    public boolean isArray() {return initial.size() != 1;}
 
-    public ArrayList<Integer> getIntial() {return intial;}
+    public ArrayList getInitial() {return initial;}
+
+    public boolean isInt() {return tag == TAG.Int;}
 
     @Override
     public String emit() {
         return name;
     }
 
-    public Label(String name, ArrayList<Integer> initial) {
+    public Label(String name, TAG tag, ArrayList initial) {
         super(TYPE.GBV);
         this.name = name;
-        this.intial = initial;
+        this.tag = tag;
+        this.initial = initial;
     }
 }

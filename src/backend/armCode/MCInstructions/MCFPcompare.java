@@ -1,6 +1,6 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCInstruction;
+import backend.armCode.MCFPInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
@@ -10,19 +10,19 @@ import java.util.HashSet;
  * This class represent the VCMP. <br/>
  * One parameter constructor will compare to zero as default.
  */
-public class MCFPcompare extends MCInstruction {
+public class MCFPcompare extends MCFPInstruction {
 
     private ExtensionRegister operand1;
     private ExtensionRegister operand2;
 
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
@@ -31,12 +31,31 @@ public class MCFPcompare extends MCInstruction {
     }
 
     @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(operand1);
+        set.add(operand2);
+        return set;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        return new HashSet<>();
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (operand1 == old) operand1 = brand_new;
+        if (operand2 == old) operand2 = brand_new;
+    }
+
+    @Override
     public String emit() {
         if (operand2 == null) {
-            return "VCMP" + emitCond() + ' ' + operand1.emit() + ", #0.0";
+            return "VCMP" + emitCond() + ".F32 " + operand1.emit() + ", #0.0";
         }
         else {
-            return "VCMP" + emitCond() + ' ' + operand1.emit() + ", " + operand2.emit();
+            return "VCMP" + emitCond() + ".F32 " + operand1.emit() + ", " + operand2.emit();
         }
     }
 

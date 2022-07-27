@@ -1,11 +1,13 @@
 package backend.armCode;
 
-import backend.armCode.MCInstructions.MCload;
-import backend.operand.Immediate;
+import backend.armCode.MCInstructions.MCMove;
+import backend.operand.RealExtRegister;
 import backend.operand.RealRegister;
+import backend.operand.VirtualExtRegister;
 import backend.operand.VirtualRegister;
 import ir.Value;
 import ir.values.BasicBlock;
+import ir.values.Function;
 
 import java.util.*;
 
@@ -15,14 +17,31 @@ import java.util.*;
 public class MCFunction implements Iterable<MCBasicBlock> {
 
     //<editor-fold desc="Fields">
+
+    //<editor-fold desc="Basic info">
     private final LinkedList<MCBasicBlock> BasicBlockList;
+    private final Function IRFunction;
+    /* Arguments passed via core register */
+    private final ArrayList<Function.FuncArg> APVCR;
+    /* Arguments passed via extension register */
+    private final ArrayList<Function.FuncArg> APVER;
+    /* Arguments copied to memory */
+    private final ArrayList<Function.FuncArg> ACTM;
+    /* 起名真的太难了 */
+    //</editor-fold>
+
+    //<editor-fold desc="Registers">
     /**
      * This is used to name the virtual register.
      */
     private int VirtualRegCounter = 0;
     private final ArrayList<VirtualRegister> VirtualRegisters;
-    private final String name;
 
+    private int virtualExtRegCounter = 0;
+    private final ArrayList<VirtualExtRegister> virtualExtRegisters;
+    //</editor-fold>
+
+    //<editor-fold desc="Stack frame info">
     /**
      * Total stackSize, including local variables & spilled nodes. <br/>
      * stackSize = localVariable + spilledNode*4; <br/>
@@ -30,10 +49,15 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      */
     private int stackSize;
     /**
-     * This field is used to record the number of
-     * callee-saved registers that need to be saved.
+     * This field is used to record the callee-saved registers
+     * that need to be saved in this function.
      */
     private HashSet<RealRegister> context;
+    /**
+     * This field is used to record the callee-saved registers
+     * that need to be saved in this function.
+     */
+    private HashSet<RealExtRegister> extContext;
     /**
      * This field is used to record the sizes of
      * local variables.
@@ -47,10 +71,12 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     /**
      * This set holds all the load related to the
      * function's parameter address, <br/>
-     * which need to be adjusted after {@link passes.mc.RegisterAllocation.GraphColoring}.
+     * which need to be adjusted after {@link passes.mc.registerAllocation.GraphColoring}.
      */
-    private HashSet<MCload> paramCal;
+    private HashSet<MCMove> paramCal;
+    //</editor-fold>
 
+    //<editor-fold desc="Other info">
     public boolean useLR;
     private final boolean isExternal;
 
@@ -59,10 +85,12 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      */
     private final HashMap<BasicBlock, MCBasicBlock> BBmap;
     //</editor-fold>
+    //</editor-fold>
 
 
     //<editor-fold desc="Useful methods">
 
+    //<editor-fold desc="Basic">
     /**
      * Append at the end of the BasicBlock list to a function.
      * @param IRBB the BasicBlock to be appended
@@ -89,6 +117,34 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         return BasicBlockList.getFirst();
     }
 
+    public void paramAnalysis() {
+        var args = IRFunction.getArgs();
+        int argNum = args.size();
+        /* Next Core Register Number, @see AAPCS */
+        int NCRN = 0;
+        /* Next Extension Register Number */
+        int NERN = 0;
+
+        /* Assignment of arguments to registers and stack */
+        for (Function.FuncArg param : args) {
+            if (param.getType().isIntegerType() || param.getType().isPointerType()) {
+                if (NCRN < 4) {
+                    APVCR.add(param);
+                    NCRN++;
+                } else
+                    ACTM.add(param);
+            } else if (param.getType().isFloatType()) {
+                if (NERN < 16) {
+                    APVER.add(param);
+                    NERN++;
+                } else
+                    ACTM.add(param);
+            }
+        }
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Register related">
     /**
      * Create a virtual register for some instruction
      * in the function
@@ -109,6 +165,14 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         return vr;
     }
 
+    public VirtualExtRegister createExtVirReg(Value value) {
+        var vr = new VirtualExtRegister(virtualExtRegCounter++, value);
+        virtualExtRegisters.add(vr);
+        return vr;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Stack frame related">
     public void addLocalVariable(int i) {localVariable += i;}
 
     /**
@@ -122,12 +186,17 @@ public class MCFunction implements Iterable<MCBasicBlock> {
             context.add(RealRegister.get(index));
     }
 
+    public void addExtContext(int index) {
+        if (15 < index)
+            extContext.add(RealExtRegister.get(index));
+    }
+
     public void addSpilledNode() {spilledNode++;}
 
     /**
      * Add a parameter load instruction into function
      */
-    public void addParamCal(MCload move) {paramCal.add(move);}
+    public void addParamCal(MCMove move) {paramCal.add(move);}
 
     /**
      * Get total stackSize, including local variables & spilled nodes. <br/>
@@ -138,6 +207,11 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         return stackSize;
     }
 
+    public int getFullStackSize() {
+        return context.size()*4 + extContext.size()*4 + localVariable + spilledNode*4;
+    }
+    //</editor-fold>
+
     /**
      * Iterable implement
      * @return Iterator<MCBasicBlock>
@@ -147,19 +221,26 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     //</editor-fold>
 
     public String emit() {
-        return name;
+        return IRFunction.getName();
     }
 
     //<editor-fold desc="Getter & Setter">
-    public String getName() {return name;}
+    public String getName() {return IRFunction.getName();}
+    public Function getIRFunction() {return IRFunction;}
+
+    public ArrayList<Function.FuncArg> getAPVCR() {return APVCR;}
+    public ArrayList<Function.FuncArg> getAPVER() {return APVER;}
+    public ArrayList<Function.FuncArg> getACTM() {return ACTM;}
 
     public HashSet<RealRegister> getContext() {return context;}
+    public HashSet<RealExtRegister> getExtContext() {return extContext;}
     public Integer getLocalVariable() {return localVariable;}
     public int getSpilledNode() {return spilledNode;}
-    public HashSet<MCload> getParamCal() {return paramCal;}
+    public HashSet<MCMove> getParamCal() {return paramCal;}
 
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
     public ArrayList<VirtualRegister> getVirtualRegisters() {return VirtualRegisters;}
+    public ArrayList<VirtualExtRegister> getVirtualExtRegisters() {return virtualExtRegisters;}
 
     public void setUseLR() {
         context.add(RealRegister.get(14));
@@ -170,17 +251,23 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
 
     //<editor-fold desc="Constructor">
-    public MCFunction(String name, boolean isExternal) {
-        this.name = name;
+    public MCFunction(Function IRFunction, boolean isExternal) {
+        this.IRFunction = IRFunction;
         stackSize = 0;
         context = new HashSet<>();
+        extContext = new HashSet<>();
         localVariable = 0;
         spilledNode = 0;
         paramCal = new HashSet<>();
         BasicBlockList = new LinkedList<>();
+        ACTM = new ArrayList<>();
+        APVCR = new ArrayList<>();
+        APVER = new ArrayList<>();
         VirtualRegisters = new ArrayList<>();
+        virtualExtRegisters = new ArrayList<>();
         BBmap = new HashMap<>();
         this.isExternal = isExternal;
+        paramAnalysis();
 //        argList = new LinkedList<MCOperand>();
     }
     //</editor-fold>

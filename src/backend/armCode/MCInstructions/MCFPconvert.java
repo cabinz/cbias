@@ -1,6 +1,6 @@
 package backend.armCode.MCInstructions;
 
-import backend.armCode.MCInstruction;
+import backend.armCode.MCFPInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
@@ -17,7 +17,7 @@ import java.util.HashSet;
  *     ARM Architecture Reference Manual ARMv7 edition </a><br/>
  *     A8.6.295  Page: A8-578
  */
-public class MCFPconvert extends MCInstruction {
+public class MCFPconvert extends MCFPInstruction {
 
     private ExtensionRegister dst;
     private ExtensionRegister src;
@@ -26,17 +26,37 @@ public class MCFPconvert extends MCInstruction {
 
     @Override
     public HashSet<Register> getUse() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public HashSet<Register> getDef() {
-        return null;
+        return new HashSet<>();
     }
 
     @Override
     public void replaceRegister(Register old, Register tmp) {
 
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtUse() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(src);
+        return set;
+    }
+
+    @Override
+    public HashSet<ExtensionRegister> getExtDef() {
+        var set = new HashSet<ExtensionRegister>();
+        set.add(dst);
+        return set;
+    }
+
+    @Override
+    public void replaceExtReg(ExtensionRegister old, ExtensionRegister brand_new) {
+        if (src == old) src = brand_new;
+        if (dst == old) dst = brand_new;
     }
 
     @Override
@@ -50,5 +70,5 @@ public class MCFPconvert extends MCInstruction {
     public ExtensionRegister getSrc() {return src;}
     public void setSrc(ExtensionRegister src) {this.src = src;}
 
-    public MCFPconvert(ExtensionRegister dst, ExtensionRegister src, boolean f2i) {super(TYPE.VCVT);this.dst = dst;this.src = src;this.f2i = f2i;}
+    public MCFPconvert(boolean f2i, ExtensionRegister dst, ExtensionRegister src) {super(TYPE.VCVT);this.dst = dst;this.src = src;this.f2i = f2i;}
 }
