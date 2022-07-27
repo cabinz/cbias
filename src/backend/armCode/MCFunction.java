@@ -206,6 +206,10 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         stackSize = localVariable + spilledNode*4;
         return stackSize;
     }
+
+    public int getFullStackSize() {
+        return context.size()*4 + extContext.size()*4 + localVariable + spilledNode*4;
+    }
     //</editor-fold>
 
     /**

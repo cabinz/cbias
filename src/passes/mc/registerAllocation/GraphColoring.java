@@ -174,9 +174,9 @@ public class GraphColoring {
             /* Fix function stack */
             usedColor.forEach(func::addContext);
 
-            AdjustParamLoad();
-
             AdjustStack();
+
+            AdjustParamLoad();
 
             PreserveContext();
             //</editor-fold>
@@ -457,9 +457,17 @@ public class GraphColoring {
      */
     private void AdjustStack() {
         MCInstruction allocate = curFunc.getEntryBlock().getFirstInst();
+        if (allocate instanceof MCFPpush) allocate = curFunc.getEntryBlock().getInstructionList().get(1);
+
+        int new_offset = curFunc.getStackSize();
+        /* Public interface stack must align to 8, @see AAPCS 5.2.1.2 */
+        if (curFunc.getFullStackSize() % 8 != 0) {
+            curFunc.addSpilledNode();
+            new_offset = new_offset + 4;
+        }
+
         if (allocate instanceof MCBinary) {
             var bi = ((MCBinary) allocate);
-            int new_offset = ((Immediate) bi.getOperand2()).getIntValue() + curFunc.getSpilledNode() * 4;
             if (MCBuilder.canEncodeImm(new_offset))
                 bi.setOperand2(new Immediate(new_offset));
             else {
@@ -470,7 +478,6 @@ public class GraphColoring {
         }
         else if (allocate instanceof MCMove) {
             var mov = ((MCMove) allocate);
-            int new_offset = ((Immediate) mov.getSrc()).getIntValue() + curFunc.getSpilledNode() * 4;
             if (MCBuilder.canEncodeImm(new_offset))
                 mov.setSrc(new Immediate(new_offset));
             else {
