@@ -28,6 +28,10 @@ public class PhiInst extends Instruction {
         return getNumOperands()!=0;
     }
 
+    public Value findValue(BasicBlock basicBlock) {
+        return getOperandAt(operandMapping.get(basicBlock));
+    }
+
     public void addMapping(BasicBlock basicBlock, Value value){
         this.addOperandAt(value,nextMappingId);
         this.addOperandAt(basicBlock,nextMappingId+1);
