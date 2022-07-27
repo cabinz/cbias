@@ -9,6 +9,7 @@ import ir.values.Instruction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * The ‘phi’ instruction is used to implement the φ node in the SSA graph representing the function.
@@ -39,6 +40,10 @@ public class PhiInst extends Instruction {
         nextMappingId += 2;
     }
 
+    public Set<BasicBlock> getEntries() {
+        return operandMapping.keySet();
+    }
+
     public void removeMapping(BasicBlock basicBlock){
         if(!operandMapping.containsKey(basicBlock)){
             throw new RuntimeException("Trying to remove a mapping that does not exists");
@@ -54,7 +59,7 @@ public class PhiInst extends Instruction {
         phiMapping.forEach(this::addMapping);
     }
 
-    public boolean isConstant(){
+    public boolean canDerive(){
         Value stdValue = null;
         for (Integer id : operandMapping.values()) {
             var value = getOperandAt(id);
@@ -64,11 +69,10 @@ public class PhiInst extends Instruction {
                 if(!Objects.equals(stdValue,value)) return false;
             }
         }
-        if(!(stdValue instanceof Constant)) return false; //null cannot be derived
         return true;
     }
 
-    public Constant deriveConstant(){
+    public Value deriveConstant(){
         Value stdValue = null;
         for (Integer id : operandMapping.values()) {
             var value = getOperandAt(id);
@@ -78,11 +82,11 @@ public class PhiInst extends Instruction {
                 if(!Objects.equals(stdValue,value)){
                     System.out.println(stdValue);
                     System.out.println(value);
-                    throw new RuntimeException("PHI is not constant!");
+                    throw new RuntimeException(String.format("Value of PHI cannot be determined! Conflict values are: (1) %s (2) %s.",stdValue,value));
                 }
             }
         }
-        return (Constant) stdValue;
+        return stdValue;
     }
 
     @Override
