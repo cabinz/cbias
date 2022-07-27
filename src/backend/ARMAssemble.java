@@ -3,7 +3,6 @@ package backend;
 import backend.armCode.MCFunction;
 import backend.operand.Label;
 import ir.types.ArrayType;
-import ir.types.IntegerType;
 import ir.types.PointerType;
 import ir.values.Constant;
 import ir.values.Function;
@@ -104,6 +103,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
         return label;
     }
 
+    @SuppressWarnings("unchecked")
     private void genInitial(Constant constVals, ArrayList initial) {
             if (constVals.getType().isIntegerType())
                 initial.add(((ConstInt) constVals).getVal());
