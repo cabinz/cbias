@@ -982,7 +982,9 @@ public class MCBuilder {
                 /* Store the moves in reversed order for insert */
                 var moves = new LinkedList<MCInstruction>();
 
-                phiMap.keySet().forEach(k -> {
+                while (!phiMap.isEmpty()) {
+                    var k = phiMap.keySet().iterator().next();
+
                     /* Build the use stack */
                     var useStack = new Stack<MCOperand>();
                     var dealing = k;
@@ -1020,7 +1022,7 @@ public class MCBuilder {
                         src = dst;
                         phiMap.remove(dst);
                     }
-                });
+                }
 
                 /* Insert */
                 var preList = curFunc.findMCBB(preIRBB).getInstructionList();
