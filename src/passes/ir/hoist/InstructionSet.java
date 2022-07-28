@@ -46,7 +46,7 @@ public class InstructionSet {
 
     static Map<Integer, Value> getOperandMap(Instruction instruction){
         var ret = new HashMap<Integer,Value>();
-        for (Use use : instruction.operands) {
+        for (Use use : instruction.getOperands()) {
             ret.put(use.getOperandPos(), use.getUsee());
         }
         return ret;
