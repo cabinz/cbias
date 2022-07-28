@@ -90,6 +90,12 @@ public class PhiInst extends Instruction {
     }
 
     @Override
+    public void removeSelf() {
+        super.removeSelf();
+        operandMapping.clear();
+    }
+
+    @Override
     public String toString() {
         var builder = new StringBuilder();
         builder.append(this.getName());

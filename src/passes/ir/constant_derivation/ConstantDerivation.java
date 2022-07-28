@@ -82,6 +82,10 @@ public class ConstantDerivation implements IRPass {
      * @param expression The expression to be judged.
      */
     static boolean canDeriveExpression(Instruction expression) {
+        // Removed expression doesn't need to be derived.
+        if(expression.getBB()==null){
+            return false;
+        }
         // Call and MemoryInst returns void
         if (expression instanceof CallInst || expression instanceof MemoryInst) {
             return false;
