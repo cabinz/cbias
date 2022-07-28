@@ -81,12 +81,14 @@ public abstract class Instruction extends User {
         }
     }
 
-
     /**
      * An InstCategory instance indicating an instruction type.
      */
-    public InstCategory cat;
-    // TODO: rename as tag, add a getter for it
+    private final InstCategory tag;
+
+    public InstCategory getTag() {
+        return tag;
+    }
 
     /**
      * If an instruction has result, a name (register) should be
@@ -120,26 +122,26 @@ public abstract class Instruction extends User {
 
     public Instruction(Type type, InstCategory tag) {
         super(type);
-        this.cat = tag;
+        this.tag = tag;
     }
 
 
-    public boolean isAdd   () {return this.cat == InstCategory.ADD;}
-    public boolean isSub   () {return this.cat == InstCategory.SUB;}
-    public boolean isMul   () {return this.cat == InstCategory.MUL;}
-    public boolean isDiv   () {return this.cat == InstCategory.DIV;}
-    public boolean isAnd   () {return this.cat == InstCategory.AND;}
-    public boolean isOr    () {return this.cat == InstCategory.OR;}
-    public boolean isRet   () {return this.cat == InstCategory.RET;}
-    public boolean isBr    () {return this.cat == InstCategory.BR;}
-    public boolean isCall  () {return this.cat == InstCategory.CALL;}
-    public boolean isAlloca() {return this.cat == InstCategory.ALLOCA;}
-    public boolean isLoad  () {return this.cat == InstCategory.LOAD;}
-    public boolean isStore () {return this.cat == InstCategory.STORE;}
-    public boolean isIcmp  () {return this.cat.isIntRelationalBinary();}
-    public boolean isGEP   () {return this.cat == InstCategory.GEP;}
-    public boolean isFcmp  () {return this.cat.isFloatRelationalBinary();}
-    public boolean isZext  () {return this.cat == InstCategory.ZEXT;}
+    public boolean isAdd   () {return this.getTag() == InstCategory.ADD;}
+    public boolean isSub   () {return this.getTag() == InstCategory.SUB;}
+    public boolean isMul   () {return this.getTag() == InstCategory.MUL;}
+    public boolean isDiv   () {return this.getTag() == InstCategory.DIV;}
+    public boolean isAnd   () {return this.getTag() == InstCategory.AND;}
+    public boolean isOr    () {return this.getTag() == InstCategory.OR;}
+    public boolean isRet   () {return this.getTag() == InstCategory.RET;}
+    public boolean isBr    () {return this.getTag() == InstCategory.BR;}
+    public boolean isCall  () {return this.getTag() == InstCategory.CALL;}
+    public boolean isAlloca() {return this.getTag() == InstCategory.ALLOCA;}
+    public boolean isLoad  () {return this.getTag() == InstCategory.LOAD;}
+    public boolean isStore () {return this.getTag() == InstCategory.STORE;}
+    public boolean isIcmp  () {return this.getTag().isIntRelationalBinary();}
+    public boolean isGEP   () {return this.getTag() == InstCategory.GEP;}
+    public boolean isFcmp  () {return this.getTag().isFloatRelationalBinary();}
+    public boolean isZext  () {return this.getTag() == InstCategory.ZEXT;}
 
     /**
      * Remove the instruction from the BasicBlock holding it.

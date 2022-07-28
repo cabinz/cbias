@@ -104,7 +104,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         if (inst.getBB() != null) {
             throw new RuntimeException("Try to insert an Inst that has already belonged to another BB.");
         }
-        if (this.instructions.size() != 0 && this.getLastInst().cat.isTerminator()) {
+        if (this.instructions.size() != 0 && this.getLastInst().getTag().isTerminator()) {
             throw new RuntimeException("Try to insert an Inst to a BB which has already ended with a Terminator.");
         }
 

@@ -193,7 +193,7 @@ public class MCBuilder {
      * @param IRinst IR instruction to be translated
      */
     private void translate(Instruction IRinst) {
-        switch (IRinst.cat) {
+        switch (IRinst.getTag()) {
             case RET    -> translateRet((TerminatorInst.Ret) IRinst);
             case ADD    -> translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.ADD);
             case SUB    -> translateAddSub((BinaryOpInst) IRinst, MCInstruction.TYPE.SUB);
@@ -487,7 +487,7 @@ public class MCBuilder {
      * @return the corresponding ARM condition field
      */
     private MCInstruction.ConditionField mapToArmCond(BinaryOpInst IRinst) {
-        return switch (IRinst.cat) {
+        return switch (IRinst.getTag()) {
             case EQ, FEQ -> MCInstruction.ConditionField.EQ;
             case NE, FNE -> MCInstruction.ConditionField.NE;
             case GE, FGE -> MCInstruction.ConditionField.GE;

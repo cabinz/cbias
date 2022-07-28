@@ -103,11 +103,11 @@ public class ConstantDerivation implements IRPass {
     }
 
     static Value calculateExpressionValue(Instruction expression) {
-        switch (expression.cat) {
+        switch (expression.getTag()) {
             case ADD, SUB, MUL, DIV -> {
                 var c1 = (ConstInt) expression.getOperandAt(0);
                 var c2 = (ConstInt) expression.getOperandAt(1);
-                switch (expression.cat) {
+                switch (expression.getTag()) {
                     case ADD -> {
                         return ConstInt.getI32(c1.getVal() + c2.getVal());
                     }
@@ -125,7 +125,7 @@ public class ConstantDerivation implements IRPass {
             case FADD, FSUB, FMUL, FDIV -> {
                 var c1 = (ConstFloat) expression.getOperandAt(0);
                 var c2 = (ConstFloat) expression.getOperandAt(1);
-                switch (expression.cat) {
+                switch (expression.getTag()) {
                     case FADD -> {
                         return ConstFloat.get(c1.getVal() + c2.getVal());
                     }
@@ -147,7 +147,7 @@ public class ConstantDerivation implements IRPass {
             case LT, GT, EQ, NE, LE, GE -> {
                 var c1 = (ConstInt) expression.getOperandAt(0);
                 var c2 = (ConstInt) expression.getOperandAt(1);
-                switch (expression.cat) {
+                switch (expression.getTag()) {
                     case LT -> {
                         return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
                     }
@@ -171,7 +171,7 @@ public class ConstantDerivation implements IRPass {
             case FLT, FGT, FEQ, FNE, FLE, FGE -> {
                 var c1 = (ConstFloat) expression.getOperandAt(0);
                 var c2 = (ConstFloat) expression.getOperandAt(1);
-                switch (expression.cat) {
+                switch (expression.getTag()) {
                     case FLT -> {
                         return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
                     }
@@ -195,7 +195,7 @@ public class ConstantDerivation implements IRPass {
             case AND, OR -> {
                 var c1 = (ConstInt) expression.getOperandAt(0);
                 var c2 = (ConstInt) expression.getOperandAt(0);
-                switch (expression.cat) {
+                switch (expression.getTag()) {
                     case AND -> {
                         return ConstInt.getI1(c1.getVal() & c2.getVal());
                     }
@@ -205,7 +205,7 @@ public class ConstantDerivation implements IRPass {
                 }
             }
             case ZEXT, FPTOSI, SITOFP -> {
-                switch (expression.cat) {
+                switch (expression.getTag()) {
                     case ZEXT -> {
                         var c1 = (ConstInt) expression.getOperandAt(0);
                         return ConstInt.getI32(c1.getVal());
@@ -224,7 +224,7 @@ public class ConstantDerivation implements IRPass {
                 return ((PhiInst) expression).deriveConstant();
             }
         }
-        throw new RuntimeException("Unable to derive expression of type " + expression.cat);
+        throw new RuntimeException("Unable to derive expression of type " + expression.getTag());
     }
 
     static void deriveConstantExpression(Function function) {

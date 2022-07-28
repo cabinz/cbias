@@ -804,7 +804,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         Instruction tailInst = builder.getCurBB().getLastInst();
         // If no instruction in the bb, or the last instruction is not a terminator.
-        if (tailInst == null || !tailInst.cat.isTerminator()) {
+        if (tailInst == null || !tailInst.getTag().isTerminator()) {
             if (function.getType().getRetType().isVoidType()) {
                 builder.buildRet();
             }
@@ -960,7 +960,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Get trueBlkEndWithTerminator flag.
         Instruction trueExitBlkLastInst = trueExitBlk.getLastInst();
         boolean trueBlkEndWithTerminator = trueExitBlkLastInst != null &&
-                trueExitBlkLastInst.cat.isTerminator();
+                trueExitBlkLastInst.getTag().isTerminator();
 
         /*
         Build the FALSE branch (a block for jumping if condition is false),
@@ -981,7 +981,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Get falseBlkEndWithTerminator flag.
             Instruction falseExitBlkLastInst = falseExitBlk.getLastInst();
             falseBlkEndWithTerminator = falseExitBlkLastInst != null &&
-                    falseExitBlkLastInst.cat.isTerminator();
+                    falseExitBlkLastInst.getTag().isTerminator();
         }
 
         /*
@@ -1998,7 +1998,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // If the loop body doesn't end with Ret,
         // add a Br jumping back to the conditional statement.
         if (bodyExitBlk.instructions.isEmpty()
-                || !bodyExitBlk.getLastInst().cat.isTerminator()) {
+                || !bodyExitBlk.getLastInst().getTag().isTerminator()) {
             builder.setCurBB(bodyExitBlk);
             builder.buildBr(condEntryBlk);
         }

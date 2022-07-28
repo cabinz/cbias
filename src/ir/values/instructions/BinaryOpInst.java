@@ -49,7 +49,7 @@ public class BinaryOpInst extends Instruction {
             // Result name: "%1 = "
             this.getName() + " = "
             // Operation code and type: "add i32 "
-            + switch (this.cat) {
+            + switch (this.getTag()) {
                 // Integer arithmetics.
                 case ADD -> "add i32 ";
                 case SUB -> "sub i32 ";

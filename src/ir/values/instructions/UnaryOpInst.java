@@ -25,7 +25,7 @@ public class UnaryOpInst extends Instruction {
         return
                 this.getName() + " = " // "%4 = "
                 // Operation code
-                + switch (this.cat) {
+                + switch (this.getTag()) {
                     case FNEG -> "fneg ";
                     default -> "";
                 }
