@@ -32,6 +32,7 @@ public class Use {
 
     /**
      * The position number of the value as an operand of the user.
+     * It starts from 0.
      */
     private int pos;
 
@@ -58,8 +59,9 @@ public class Use {
     }
 
     /**
-     * Remove the Use link from its user and usee.
-     * Notice that the Use itself will not be destructed.
+     * A safe way to delete a user-usee relation.
+     * i.e. to remove the Use link from its user and usee.
+     * Notice that the Use itself will not be destructed (if there is still any object referring it).
      */
     public void removeSelf() {
         this.getUsee().removeUse(this);

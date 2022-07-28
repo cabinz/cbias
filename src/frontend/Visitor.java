@@ -201,13 +201,15 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 ), true)
         );
 
-        // void starttime()
+        // void starttime() -> _sysy_starttime(i32)
+        // See special case in visitFcall.
         scope.addDecl("starttime",
                 builder.buildFunction("_sysy_starttime", FunctionType.getType(
                         voidTy, intArgTypeList
                 ), true)
         );
-        // void stoptime()
+        // void stoptime() -> _sysy_stoptime(i32)
+        //        // See special case in visitFcall.
         scope.addDecl("stoptime",
                 builder.buildFunction("_sysy_stoptime", FunctionType.getType(
                         voidTy, intArgTypeList
@@ -1851,13 +1853,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
         // The identifier needs to be previously defined as a function
         // and in the symbol table.
-        String name = ctx.Identifier().getText();
-        Value val = scope.getValByName(name);
+        String funcName = ctx.Identifier().getText();
+        Value val = scope.getValByName(funcName);
         if (val == null) {
-            throw new RuntimeException("Undefined name: " + name + ".");
+            throw new RuntimeException("Undefined name: " + funcName + ".");
         }
         if (!val.getType().isFunctionType()) {
-            throw new RuntimeException(name + " is not a function and cannot be invoked.");
+            throw new RuntimeException(funcName + " is not a function and cannot be invoked.");
         }
         Function func = (Function) val;
 
@@ -1865,7 +1867,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayList<Value> args = new ArrayList<>();
         if (ctx.funcRParams() != null) {
             var argCtxs = ctx.funcRParams().funcRParam();
-            ArrayList<Type> argTypes = ((FunctionType)func.getType()).getArgTypes();
+            ArrayList<Type> argTypes = func.getType().getArgTypes();
             // Loop through both the lists of context and type simultaneously.
             for (int i = 0; i < argCtxs.size(); i++) {
                 var argCtx = argCtxs.get(i);
@@ -1909,6 +1911,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Add the argument Value retrieved by visiting to the container.
                 args.add(arg);
             }
+        }
+
+        // Special cases for start/stoptime() macro:
+        // pass a arbitrary number (i32 0) to timer functions.
+        else if (funcName.equals("starttime") || funcName.equals("stoptime")) {
+            args.add(ConstInt.getI32(0));
         }
 
         // Build a Call instruction.

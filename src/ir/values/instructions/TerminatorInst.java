@@ -103,7 +103,8 @@ public abstract class TerminatorInst extends Instruction {
             this.addOperandAt(blk, 0);
         }
 
-        public boolean isCondJmp() {return operands.size() == 3;}
+        public boolean isCondJmp() {return this.getOperands().size() == 3;}
+        // TODO: ??? use tag!
 
         @Override
         public String toString() {

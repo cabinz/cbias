@@ -76,9 +76,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
             @SuppressWarnings("unchecked")
             LinkedList<Use> tmpUses = (LinkedList<Use>) inst.getUses().clone();
             tmpUses.forEach(Use::removeSelf);
-            @SuppressWarnings("unchecked")
-            LinkedList<Use> tmpOpds = (LinkedList<Use>) inst.operands.clone();
-            tmpOpds.forEach(Use::removeSelf);
+            inst.getOperands().forEach(Use::removeSelf);
             // Remove the inst from the bb.
             instructions.remove(inst);
             inst.setBB(null);
@@ -131,5 +129,14 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     @Override
     public Iterator<Instruction> iterator() {
         return instructions.iterator();
+    }
+
+    /**
+     * Get LabelType for a BB.
+     * @return A LabelType.
+     */
+    @Override
+    public LabelType getType() {
+        return (LabelType) super.getType();
     }
 }

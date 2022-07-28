@@ -80,7 +80,7 @@ public class GlobalVariable extends User {
     }
 
     public boolean isArray() {
-        return ((PointerType) getType()).getPointeeType().isArrayType();
+        return this.getType().getPointeeType().isArrayType();
     }
 
     /**
@@ -103,7 +103,7 @@ public class GlobalVariable extends User {
      * @return The type of the memory.
      */
     public Type getConstType() {
-        return ((PointerType) this.getType()).getPointeeType();
+        return this.getType().getPointeeType();
     }
 
     @Override
@@ -115,7 +115,7 @@ public class GlobalVariable extends User {
 
         // uninitialized array
         if (initVal == null) {
-            Type arrType = ((PointerType) this.getType()).getPointeeType();
+            Type arrType = this.getType().getPointeeType();
             strBuilder.append(arrType)
                     .append(" zeroinitializer");
         }
@@ -124,5 +124,14 @@ public class GlobalVariable extends User {
         }
 
         return strBuilder.toString();
+    }
+
+    /**
+     * Get the PointerType to the memory block referenced.
+     * @return Corresponding PointerType of the GlbVar.
+     */
+    @Override
+    public PointerType getType() {
+        return (PointerType) super.getType();
     }
 }

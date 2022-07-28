@@ -83,7 +83,7 @@ public class Function extends Value implements Iterable<BasicBlock>{
         this.isExternal = isExternal;
 
         // Add arguments into the args list.
-        ArrayList<Type> ar = ((FunctionType)this.getType()).getArgTypes();
+        ArrayList<Type> ar = this.getType().getArgTypes();
         for (int i = 0; i < ar.size(); i++) {
             args.add(new FuncArg(ar.get(i), i));
         }
@@ -145,7 +145,7 @@ public class Function extends Value implements Iterable<BasicBlock>{
 
         StringBuilder strBuilder = new StringBuilder();
         // Name of the function.
-        strBuilder.append(((FunctionType) this.getType()).getRetType())
+        strBuilder.append(this.getType().getRetType())
                 .append(" @")
                 .append(this.getName())
                 .append("(");

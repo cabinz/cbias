@@ -1,5 +1,6 @@
 package ir;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -17,11 +18,11 @@ import java.util.LinkedList;
 public abstract class User extends Value {
 
     /**
-     * Keep track of all the Values used.
+     * Keep track of all the Values used by a (pos -> val) mapping.
      * <br>
      * To safely add operands to it, use addOperandAt().
      */
-    public LinkedList<Use> operands = new LinkedList<Use>();
+    private final HashMap<Integer, Use> operands = new HashMap<>();
 
 
     public User(Type type) {
@@ -30,11 +31,22 @@ public abstract class User extends Value {
 
 
     /**
-     * Retrieve the number of Value it use.
+     * Retrieve the number of Value it uses.
      * @return Number of operands of the user.
      */
     public int getNumOperands() {
         return operands.size();
+    }
+
+    /**
+     * Retrieve a LinkedList containing all Uses for operands used.
+     * (The LinkedList does NOT guarantee the order of the operands,
+     * i.e. the index of each element in the LinkedList may not be
+     * the position of the operand)
+     * @return A LinkedList of all Uses of the operands.
+     */
+    public LinkedList<Use> getOperands() {
+        return new LinkedList<>(operands.values());
     }
 
     /**
@@ -43,12 +55,10 @@ public abstract class User extends Value {
      * @return Reference of the target operand at the given position. Null if it doesn't exist.
      */
     public Value getOperandAt(int pos) {
-        for (Use use : operands) {
-            if (use.getOperandPos() == pos) {
-                return use.getUsee();
-            }
+        if (!operands.containsKey(pos)) {
+            throw new RuntimeException("Operand index (position) doesn't exist.");
         }
-        return null;
+        return operands.get(pos).getUsee();
     }
 
     /**
@@ -60,54 +70,49 @@ public abstract class User extends Value {
     public void addOperandAt(Value val, int pos) {
         // Check if there is an existing operand on the given position.
         // If there is, throw an exception.
-        for (Use use : operands) {
-            // If there is, replace with the new Value.
-            if (use.getOperandPos() == pos) {
-                throw new RuntimeException("Try to add an operand at an occupied position.");
-            }
+        if (operands.containsKey(pos)) {
+            throw new RuntimeException("Try to add an operand at an occupied position.");
         }
         // If not, add the given Value as a new use.
         var use = new Use(val, this, pos);
-        this.operands.add(use);
+        this.operands.put(pos, use);
         val.addUse(use);
     }
 
     /**
      * Set an operand at the specified position to be another Value given.
      * If there's no existing operand matched, an Exception will be thrown.
+     * <br>
+     * NOTICE: This method uses Use::setUsee to change the operand referred
+     * by the Use object, other than building a new Use edge aft removing the
+     * old one. This means your shallow copy of Uses retrieved from User::getOperands
+     * may have its content of elements changed aft calling this method.
      * @param val The value to be set as an operand.
      * @param pos Given operand position.
      */
     public void setOperandAt(Value val, int pos) {
         // Check if there is the matched operand on the given position.
         // If there is, redirect it safely.
-        for (Use use : operands) {
-            // If there is, replace with the new Value.
-            if (use.getOperandPos() == pos) {
-                // Got the target use.
-                use.setUsee(val); // Cover the use.v at specified position (pos) with given v.
-                return;
-            }
+        if (operands.containsKey(pos)) {
+            operands.get(pos).setUsee(val);
         }
         // If not, throw an exception.
-        throw new RuntimeException("Try to reassign a non-existent operand.");
+        else {
+            throw new RuntimeException("Try to reassign a non-existent operand.");
+        }
     }
 
     /**
      * Remove an operand at the specified position
      * If there's no existing operand matched, an Exception will be thrown.
+     * <br>
+     * NOTICE: This is a unilateral removal. To safely delete a
+     * user-usee relation, use Use::removeSelf instead.
      * @param pos Given operand position.
      */
     public void removeOperandAt(int pos) {
-        for (Use use : operands) {
-            // If there is, remove it.
-            if (use.getOperandPos() == pos) {
-                // Got the target use.
-                this.operands.remove(use);
-                return;
-            }
+        if (operands.remove(pos) == null) { // from User
+            throw new RuntimeException("Try to remove a non-existent operand.");
         }
-        // If not, throw an exception.
-        throw new RuntimeException("Try to remove a non-existent operand.");
     }
 }
