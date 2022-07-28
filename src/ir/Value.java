@@ -42,7 +42,6 @@ public abstract class Value {
         this.type = type;
     }
 
-    //<editor-fold desc="Getters">
     public Type getType() {
         return type;
     }
@@ -54,13 +53,10 @@ public abstract class Value {
     public LinkedList<Use> getUses() {
         return uses;
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Setters">
     public void setName(String name) {
         this.name = name;
     }
-    //</editor-fold>
 
     /**
      * Add a Use to the use-list of the Value.
@@ -75,12 +71,11 @@ public abstract class Value {
      * If there's no existing use matched, an Exception will be thrown.
      * <br>
      * NOTICE: This is a unilateral removal. To safely delete a
-     * user-usee relation, use Use::removeSelf instead.
+     * user-usee relation, try Use::removeSelf or User::removeOperandAt instead.
      * @param u The Use to be matched and removed.
-     * @return Return true if any Use in the list has been removed. Otherwise, false.
      */
-    public void removeUse(Use u) {
-        if(!this.uses.removeIf(x -> x.equals(u))) { // from Usee
+    public void removeUseRaw(Use u) {
+        if(!this.uses.removeIf(x -> x.equals(u))) { // from Usee only
             throw new RuntimeException("Try to remove a Use that doesn't exist from Value's use-list.");
         }
     }

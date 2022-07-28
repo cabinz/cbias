@@ -16,7 +16,7 @@ public class Use {
     }
 
     public void setUsee(Value usee) {
-        this.usee.removeUse(this);
+        this.usee.removeUseRaw(this);
         this.usee = usee;
         this.usee.addUse(this);
     }
@@ -64,8 +64,8 @@ public class Use {
      * Notice that the Use itself will not be destructed (if there is still any object referring it).
      */
     public void removeSelf() {
-        this.getUsee().removeUse(this);
-        this.getUser().removeOperandAt(this.getOperandPos());
+        this.getUsee().removeUseRaw(this);
+        this.getUser().removeOperandRaw(this.getOperandPos());
     }
 
 }
