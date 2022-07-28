@@ -1,7 +1,11 @@
 package ir.values;
 
+import ir.Use;
 import ir.User;
 import ir.Type;
+import ir.Value;
+
+import java.util.List;
 
 /**
  * Instruction class is the base class for all the IR instructions.
@@ -164,5 +168,14 @@ public abstract class Instruction extends User {
         var instList = this.getBB().instructions;
         instList.add(instList.indexOf(this) + 1, inst);
         inst.setBB(this.getBB());
+    }
+
+    public void replaceSelfTo(Value value){
+        @SuppressWarnings("unchecked")
+        var uses = (List<Use>) this.getUses().clone();
+        for (Use use : uses) {
+            use.setUsee(value);
+        }
+        removeSelf();
     }
 }

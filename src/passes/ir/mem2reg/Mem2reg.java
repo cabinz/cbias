@@ -9,7 +9,9 @@ import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
+import passes.PassManager;
 import passes.ir.IRPass;
+import passes.ir.dce.UnreachableCodeElim;
 
 import java.util.*;
 
@@ -24,6 +26,7 @@ public class Mem2reg implements IRPass {
     }
 
     static void optimize(Module module) {
+        PassManager.getInstance().run(UnreachableCodeElim.class, module);
         module.functions.forEach(Mem2reg::optimize);
     }
 
@@ -106,8 +109,10 @@ public class Mem2reg implements IRPass {
                 Constant constant;
                 if(npdVar.getAllocatedType().isIntegerType()){
                     constant = ConstInt.getI32(0);
-                }else{
+                }else if(npdVar.getAllocatedType().isFloatType()){
                     constant = ConstFloat.get(0f);
+                }else{
+                    throw new RuntimeException("Unable to generate default value for type "+npdVar.getAllocatedType());
                 }
                 basicBlock.latestDefineMap.put(npdVar,constant);
             });

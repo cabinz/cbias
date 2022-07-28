@@ -51,7 +51,7 @@ public class MCMove extends MCInstruction {
     public String emit(){
         if (src.isGlobalVar())
             return "MOVW" + emitCond() + ' ' + dst.emit() + ", :lower16:" + src.emit() + "\n\tMOVT" + emitCond() + ' ' + dst.emit() + ", :upper16:" + src.emit();
-        else if (exceededLimit) {
+        else if (exceededLimit && (src.isFPImm() || src.isImmediate())) {
             int value = 0;
             if (src.isImmediate())
                 value = ((Immediate) src).getIntValue();
@@ -61,7 +61,7 @@ public class MCMove extends MCInstruction {
             if (MCBuilder.canEncodeImm(value))
                 return "MOV" + emitCond() + ' ' + dst.emit() + ", #" + value;
             else if (MCBuilder.canEncodeImm(~value))
-                return "MVN" + emitCond() + ' ' + dst.emit() + ", #" + -value;
+                return "MVN" + emitCond() + ' ' + dst.emit() + ", #" + ~value;
             else {
                 int high16 = value >>> 16;
                 int low16 = value & 0xFFFF;
