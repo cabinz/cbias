@@ -100,16 +100,13 @@ public abstract class User extends Value {
     /**
      * Remove an operand at the specified position
      * If there's no existing operand matched, an Exception will be thrown.
+     * <br>
+     * NOTICE: This is a unilateral removal. To safely delete a
+     * user-usee relation, use Use::removeSelf instead.
      * @param pos Given operand position.
      */
     public void removeOperandAt(int pos) {
-        // If there is, remove it from the fields of the User AND USEE.
-        if (operands.containsKey(pos)) {
-            Use use = operands.remove(pos); // from User
-            use.getUsee().removeUse(use); // from Usee
-        }
-        // If not, throw an exception.
-        else {
+        if (operands.remove(pos) == null) { // from User
             throw new RuntimeException("Try to remove a non-existent operand.");
         }
     }
