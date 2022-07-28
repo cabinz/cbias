@@ -213,6 +213,9 @@ public class MCBuilder {
             case FPTOSI -> translateConvert((CastInst) IRinst, true);
             case SITOFP -> translateConvert((CastInst) IRinst, false);
         }
+        if (PrintInfo.printIR && !IRinst.isAlloca() && !(IRinst instanceof PhiInst) && !IRinst.isIcmp() && !IRinst.isFcmp()) {
+            curMCBB.getLastInst().val = IRinst;
+        }
     }
 
 
@@ -304,6 +307,7 @@ public class MCBuilder {
                 entry.prependInst(new MCload(vr, RealRegister.get(13), offset));
                 var move = new MCMove(offset, new Immediate(offsetVal), !canEncodeImm(offsetVal));
                 entry.prependInst(move);
+                move.val = value;
                 curFunc.addParamCal(move);
             }
 
@@ -716,6 +720,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), null, reverseCond(armCond)));
         }
 
+        curMCBB.getLastInst().val = icmp;
+
         return armCond;
     }
 
@@ -747,6 +753,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove((Register) findContainer(fcmp), createConstInt(1), null, armCond));
             curMCBB.appendInst(new MCMove((Register) findContainer(fcmp), createConstInt(0), null, reverseCond(armCond)));
         }
+
+        curMCBB.getLastInst().val = fcmp;
 
         return armCond;
     }
