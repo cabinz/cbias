@@ -173,9 +173,7 @@ public abstract class Instruction extends User {
     }
 
     public void replaceSelfTo(Value value){
-        @SuppressWarnings("unchecked")
-        var uses = (List<Use>) this.getUses().clone();
-        for (Use use : uses) {
+        for (Use use : this.getUses()) {
             use.setUsee(value);
         }
         removeSelf();

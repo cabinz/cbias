@@ -37,8 +37,7 @@ public class Hoist implements IRPass {
                 if (instructionSet.contains(instruction)) {
                     var oldInst = instructionSet.get(instruction);
                     if(oldInst==instruction) continue; // Maybe pushed twice
-                    @SuppressWarnings("unchecked")
-                    var changedList = (List<Use>)instruction.getUses().clone();
+                    var changedList = instruction.getUses();
                     instruction.replaceSelfTo(oldInst);
                     for (Use use : changedList) {
                         var user = use.getUser();

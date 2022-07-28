@@ -19,6 +19,10 @@ public abstract class Value {
 
     private final Type type;
 
+    public Type getType() {
+        return type;
+    }
+
     /**
      * All values can potentially be named.
      * The meaning of it depends on what derived Value it is.
@@ -32,31 +36,33 @@ public abstract class Value {
      */
     private String name = "";
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     /**
      * The "use list" keeping track of Values using it.
      */
     private LinkedList<Use> uses = new LinkedList<>();
+
+    /**
+     * Retrieve all Use links in the use-list of the Value in a LinkedList.
+     * @return A list of all Use links.
+     */
+    @SuppressWarnings("unchecked")
+    public LinkedList<Use> getUses() {
+        return (LinkedList<Use>) uses.clone();
+    }
 
 
     public Value(Type type) {
         this.type = type;
     }
 
-    public Type getType() {
-        return type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public LinkedList<Use> getUses() {
-        return uses;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     /**
      * Add a Use to the use-list of the Value.

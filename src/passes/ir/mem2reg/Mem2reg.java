@@ -141,10 +141,7 @@ public class Mem2reg implements IRPass {
                 var address = instruction.getOperandAt(0);
                 if(address instanceof MemoryInst.Alloca && basicBlock.latestDefineMap.containsKey(address)){
                     var register = basicBlock.latestDefineMap.get(address);
-                    //'uses' is changed during the following 'forEach', so we must clone one
-                    @SuppressWarnings("unchecked")
-                    var uses = (LinkedList<Use>) instruction.getUses().clone();
-                    uses.forEach(use -> use.setUsee(register));
+                    instruction.getUses().forEach(use -> use.setUsee(register));
                 }
             }
             // Record 'store' instruction

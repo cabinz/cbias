@@ -73,9 +73,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
             // Update the use states:
             // - Remove all the Use links for the User using it.
             // - Remove all the Use links corresponding to its operands.
-            @SuppressWarnings("unchecked")
-            LinkedList<Use> tmpUses = (LinkedList<Use>) inst.getUses().clone();
-            tmpUses.forEach(Use::removeSelf);
+            inst.getUses().forEach(Use::removeSelf);
             inst.getOperands().forEach(Use::removeSelf);
             // Remove the inst from the bb.
             instructions.remove(inst);
