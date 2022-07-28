@@ -92,7 +92,7 @@ public class ConstantDerivation implements IRPass {
             return phiInst.canDerive();
         }
         // Other instructions must have constant operands
-        for (Use use : expression.operands) {
+        for (Use use : expression.getOperands()) {
             if (!isConstant(use.getUsee())) return false;
         }
         return true;

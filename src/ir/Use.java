@@ -32,6 +32,7 @@ public class Use {
 
     /**
      * The position number of the value as an operand of the user.
+     * It starts from 0.
      */
     private int pos;
 
