@@ -103,8 +103,11 @@ public abstract class TerminatorInst extends Instruction {
             this.addOperandAt(0, blk);
         }
 
+        /**
+         * For Br, it's a conditional branching (jump) if having 3 operands.
+         * @return Yes or no.
+         */
         public boolean isCondJmp() {return this.getOperands().size() == 3;}
-        // TODO: ??? use tag!
 
         @Override
         public String toString() {
