@@ -102,7 +102,7 @@ public class GlobalVariable extends User {
      * Get the type of the memory referenced by the GlobalVariable.
      * @return The type of the memory.
      */
-    public Type getConstType() {
+    public Type getVariableType() {
         return this.getType().getPointeeType();
     }
 

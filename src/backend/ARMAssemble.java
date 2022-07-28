@@ -3,7 +3,6 @@ package backend;
 import backend.armCode.MCFunction;
 import backend.operand.Label;
 import ir.types.ArrayType;
-import ir.types.PointerType;
 import ir.values.Constant;
 import ir.values.Function;
 import ir.values.GlobalVariable;
@@ -76,7 +75,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
             ArrayList<Integer> initial = new ArrayList<>();
             /* When global variable is not initialized, the getInitVal() will return null */
             if (gv.getInitVal() == null) {
-                int size = ((ArrayType) gv.getConstType()).getSize();
+                int size = ((ArrayType) gv.getVariableType()).getSize();
                 while ((size--) != 0) initial.add(0);
             }
             else
@@ -88,7 +87,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
         else {
             ArrayList<Float> initial = new ArrayList<>();
             if (gv.getInitVal() == null) {
-                int size = ((ArrayType) gv.getConstType()).getSize();
+                int size = ((ArrayType) gv.getVariableType()).getSize();
                 while ((size--) != 0) initial.add(0.0f);
             }
             else
