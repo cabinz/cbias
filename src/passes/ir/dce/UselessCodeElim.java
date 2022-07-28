@@ -97,7 +97,7 @@ public class UselessCodeElim implements IRPass {
         while (!queue.isEmpty()) {
             Instruction instruction = queue.remove();
             @SuppressWarnings("unchecked")
-            List<Use> operandList = (List<Use>) instruction.operands.clone();
+            List<Use> operandList = (List<Use>) instruction.getOperands().clone();
             instruction.removeSelf();
             operandList.forEach(use -> {
                 var usee = use.getUsee();
