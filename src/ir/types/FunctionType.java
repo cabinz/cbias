@@ -50,7 +50,7 @@ public class FunctionType extends Type {
      * instances in Type system.
      * @param retType Type of the value returned by the function.
      * @param argTypes List of types of function arguments.
-     * @return
+     * @return The prototype of the Function.
      */
     public static FunctionType getType(Type retType, ArrayList<Type> argTypes) {
         return new FunctionType(retType, argTypes);

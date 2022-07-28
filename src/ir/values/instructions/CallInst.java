@@ -25,7 +25,7 @@ public class CallInst extends Instruction {
      */
     public CallInst(Function func, ArrayList<Value> args) {
         // Operands of Call is the Function invoked and all argument Values passed
-        super(((FunctionType)func.getType()).getRetType(), InstCategory.CALL);
+        super(func.getType().getRetType(), InstCategory.CALL);
 
         // Call instruction will yield a result if the function has non-void return type.
         this.hasResult = !this.getType().isVoidType();

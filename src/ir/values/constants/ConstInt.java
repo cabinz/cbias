@@ -72,4 +72,14 @@ public class ConstInt extends Constant {
     public String toString() {
         return this.getType() + " " + this.getName();
     }
+
+
+    /**
+     * Retrieve the IntegerType of the ConstInt.
+     * @return IntegerType of the ConstInt
+     */
+    @Override
+    public IntegerType getType() {
+        return (IntegerType) super.getType();
+    }
 }

@@ -81,4 +81,13 @@ public class ConstArray extends Constant {
         strBuilder.append("]");
         return strBuilder.toString();
     }
+
+    /**
+     * Retrieve the ArrayType of the array.
+     * @return ArrayType of the array.
+     */
+    @Override
+    public ArrayType getType() {
+        return (ArrayType) super.getType();
+    }
 }
