@@ -284,10 +284,10 @@ public class ConstantDerivation implements IRPass {
         br.removeOperandAt(1);
         br.removeOperandAt(2);
         if (cond.getVal() == 1) {
-            br.addOperandAt(bTrue, 0);
+            br.addOperandAt(0, bTrue);
             removeEntry(bFalse, br.getBB(), deriveQueue);
         } else {
-            br.addOperandAt(bFalse, 0);
+            br.addOperandAt(0, bFalse);
             removeEntry(bTrue, br.getBB(), deriveQueue);
         }
     }

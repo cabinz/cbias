@@ -1,7 +1,6 @@
 package ir.values.instructions;
 
 import ir.Value;
-import ir.types.FunctionType;
 import ir.values.Function;
 import ir.values.Instruction;
 
@@ -31,10 +30,10 @@ public class CallInst extends Instruction {
         this.hasResult = !this.getType().isVoidType();
 
         // The function Value is the 1st operand of the Call instruction.
-        this.addOperandAt(func, 0);
+        this.addOperandAt(0, func);
         // All arguments as operands.
         for (int i = 0; i < args.size(); i++) {
-            this.addOperandAt(args.get(i), i+1);
+            this.addOperandAt(i+1, args.get(i));
         }
     }
 

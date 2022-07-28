@@ -2012,10 +2012,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // Pop the back-patching layer out.
         for (TerminatorInst.Br br : bpStk.pop()) {
             if (br.getOperandAt(0) == BREAK) {
-                br.setOperandAt(exitBlk, 0);
+                br.setOperandAt(0, exitBlk);
             }
             else if (br.getOperandAt(0) == CONTINUE) {
-                br.setOperandAt(condEntryBlk, 0);
+                br.setOperandAt(0, condEntryBlk);
             }
             else {
                 throw new RuntimeException("Invalid block placeholder occurs in the stack.");

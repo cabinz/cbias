@@ -54,10 +54,10 @@ public class GetElemPtrInst extends Instruction {
     public GetElemPtrInst(Value ptr, ArrayList<Value> indices) {
         super(PointerType.getType(getGEPElemType(ptr, indices)), InstCategory.GEP);
         // The 1st operand of a GEP is the ptr (the address of the array) applied on.
-        this.addOperandAt(ptr, 0);
+        this.addOperandAt(0, ptr);
         // The following operands are the Values serving as indices.
         for (int i = 0; i < indices.size(); i++) {
-            this.addOperandAt(indices.get(i), i + 1);
+            this.addOperandAt(i + 1, indices.get(i));
         }
     }
 

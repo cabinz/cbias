@@ -39,8 +39,8 @@ public abstract class MemoryInst extends Instruction {
          */
         public Store(Value val, Value addr, BasicBlock bb) {
             super(VoidType.getType(), InstCategory.STORE);
-            this.addOperandAt(val, 0);
-            this.addOperandAt(addr, 1);
+            this.addOperandAt(0, val);
+            this.addOperandAt(1, addr);
             this.hasResult = false;
         }
 
@@ -76,7 +76,7 @@ public abstract class MemoryInst extends Instruction {
          */
         public Load(Type loadedType, Value addr, BasicBlock bb) {
             super(loadedType, InstCategory.LOAD);
-            this.addOperandAt(addr, 0);
+            this.addOperandAt(0, addr);
         }
 
 

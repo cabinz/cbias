@@ -65,10 +65,11 @@ public abstract class User extends Value {
     /**
      * At a new operand at a given position.
      * If an existed operand has already landed on that position, an Exception will be thrown.
-     * @param val The value to be added as an operand.
+     *
      * @param pos Given operand position.
+     * @param val The value to be added as an operand.
      */
-    public void addOperandAt(Value val, int pos) {
+    public void addOperandAt(int pos, Value val) {
         // Check if there is an existing operand on the given position.
         // If there is, throw an exception.
         if (operands.containsKey(pos)) {
@@ -88,10 +89,11 @@ public abstract class User extends Value {
      * by the Use object, other than building a new Use edge aft removing the
      * old one. This means your shallow copy of Uses retrieved from User::getOperands
      * may have its content of elements changed aft calling this method.
-     * @param val The value to be set as an operand.
+     *
      * @param pos Given operand position.
+     * @param val The value to be set as an operand.
      */
-    public void setOperandAt(Value val, int pos) {
+    public void setOperandAt(int pos, Value val) {
         // Check if there is the matched operand on the given position.
         // If there is, redirect it safely.
         if (operands.containsKey(pos)) {

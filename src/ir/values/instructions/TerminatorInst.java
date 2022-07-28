@@ -43,7 +43,7 @@ public abstract class TerminatorInst extends Instruction {
          */
         public Ret(Value val, BasicBlock bb) {
             this();
-            this.addOperandAt(val, 0);
+            this.addOperandAt(0, val);
         }
 
 
@@ -88,9 +88,9 @@ public abstract class TerminatorInst extends Instruction {
         public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk) {
             super(VoidType.getType(), InstCategory.BR);
             this.hasResult = false;
-            this.addOperandAt(cond, 0);
-            this.addOperandAt(trueBlk, 1);
-            this.addOperandAt(falseBlk, 2);
+            this.addOperandAt(0, cond);
+            this.addOperandAt(1, trueBlk);
+            this.addOperandAt(2, falseBlk);
         }
 
         /**
@@ -100,7 +100,7 @@ public abstract class TerminatorInst extends Instruction {
         public Br(BasicBlock blk) {
             super(VoidType.getType(), InstCategory.BR);
             this.hasResult = false;
-            this.addOperandAt(blk, 0);
+            this.addOperandAt(0, blk);
         }
 
         public boolean isCondJmp() {return this.getOperands().size() == 3;}

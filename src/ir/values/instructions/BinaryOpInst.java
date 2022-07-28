@@ -37,8 +37,8 @@ public class BinaryOpInst extends Instruction {
     public BinaryOpInst(Type type, InstCategory tag, Value lOp, Value rOp) {
         super(type, tag);
         // Add left and right operands.
-        this.addOperandAt(lOp, 0);
-        this.addOperandAt(rOp, 1);
+        this.addOperandAt(0, lOp);
+        this.addOperandAt(1, rOp);
     }
     //</editor-fold>
 

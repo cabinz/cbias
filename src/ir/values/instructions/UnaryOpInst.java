@@ -15,7 +15,7 @@ public class UnaryOpInst extends Instruction {
     public UnaryOpInst (Type type, InstCategory tag, Value opd) {
         super(type, tag);
         // Add left and right operands.
-        this.addOperandAt(opd, 0);
+        this.addOperandAt(0, opd);
     }
 
     @Override

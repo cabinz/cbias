@@ -3,7 +3,6 @@ package ir.values.instructions;
 import ir.Type;
 import ir.Value;
 import ir.values.BasicBlock;
-import ir.values.Constant;
 import ir.values.Instruction;
 
 import java.util.HashMap;
@@ -34,8 +33,8 @@ public class PhiInst extends Instruction {
     }
 
     public void addMapping(BasicBlock basicBlock, Value value){
-        this.addOperandAt(value,nextMappingId);
-        this.addOperandAt(basicBlock,nextMappingId+1);
+        this.addOperandAt(nextMappingId, value);
+        this.addOperandAt(nextMappingId+1, basicBlock);
         operandMapping.put(basicBlock, nextMappingId);
         nextMappingId += 2;
     }

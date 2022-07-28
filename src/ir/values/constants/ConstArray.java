@@ -27,7 +27,7 @@ public class ConstArray extends Constant {
     private ConstArray(ArrayType arrType, ArrayList<Constant> initList) {
         super(arrType);
         for (int i = 0; i < initList.size(); i++) {
-            addOperandAt(initList.get(i), i);
+            addOperandAt(i, initList.get(i));
         }
     }
 

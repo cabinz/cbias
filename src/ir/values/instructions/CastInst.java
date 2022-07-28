@@ -37,7 +37,7 @@ public abstract class CastInst extends Instruction {
          */
         public ZExt(Value opd) {
             super(IntegerType.getI32(), InstCategory.ZEXT);
-            this.addOperandAt(opd, 0);
+            this.addOperandAt(0, opd);
         }
 
         @Override
@@ -64,7 +64,7 @@ public abstract class CastInst extends Instruction {
          */
         public Fptosi(Value opd, IntegerType destType) {
             super(destType, InstCategory.FPTOSI);
-            this.addOperandAt(opd, 0);
+            this.addOperandAt(0, opd);
         }
 
         @Override
@@ -91,7 +91,7 @@ public abstract class CastInst extends Instruction {
          */
         public Sitofp(Value opd) {
             super(FloatType.getType(), InstCategory.SITOFP);
-            this.addOperandAt(opd, 0);
+            this.addOperandAt(0, opd);
         }
 
         @Override
