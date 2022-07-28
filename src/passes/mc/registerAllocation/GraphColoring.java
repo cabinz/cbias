@@ -2,6 +2,7 @@ package passes.mc.registerAllocation;
 
 import backend.ARMAssemble;
 import backend.MCBuilder;
+import backend.PrintInfo;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
@@ -169,6 +170,7 @@ public class GraphColoring {
             //<editor-fold desc="Register Allocation">
             ReplaceRegisters();
 
+            if (!PrintInfo.printIR)
             RemoveCoalesced();
 
             /* Fix function stack */
