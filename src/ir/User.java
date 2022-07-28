@@ -51,8 +51,9 @@ public abstract class User extends Value {
 
     /**
      * Retrieve a value used at a specified position.
+     * An exception will be thrown if no operand exists on the given position.
      * @param pos The position of the target operands.
-     * @return Reference of the target operand at the given position. Null if it doesn't exist.
+     * @return Reference of the target operand at the given position.
      */
     public Value getOperandAt(int pos) {
         if (!operands.containsKey(pos)) {
