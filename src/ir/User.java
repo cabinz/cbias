@@ -82,6 +82,11 @@ public abstract class User extends Value {
     /**
      * Set an operand at the specified position to be another Value given.
      * If there's no existing operand matched, an Exception will be thrown.
+     * <br>
+     * NOTICE: This method uses Use::setUsee to change the operand referred
+     * by the Use object, other than building a new Use edge aft removing the
+     * old one. This means your shallow copy of Uses retrieved from User::getOperands
+     * may have its content of elements changed aft calling this method.
      * @param val The value to be set as an operand.
      * @param pos Given operand position.
      */
