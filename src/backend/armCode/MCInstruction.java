@@ -4,6 +4,7 @@ package backend.armCode;
 import backend.operand.Immediate;
 import backend.operand.MCOperand;
 import backend.operand.Register;
+import ir.Value;
 
 import java.util.HashSet;
 
@@ -13,6 +14,8 @@ import java.util.HashSet;
  * The relational info need to be set using setter.
  */
 public abstract class MCInstruction {
+
+    public Value val;
 
     /**
      * The type of Machine Code instruction, which will be emitted directly!

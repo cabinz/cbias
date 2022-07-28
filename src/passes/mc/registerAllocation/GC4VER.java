@@ -2,6 +2,7 @@ package passes.mc.registerAllocation;
 
 import backend.ARMAssemble;
 import backend.MCBuilder;
+import backend.PrintInfo;
 import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFPInstruction;
 import backend.armCode.MCFunction;
@@ -163,6 +164,7 @@ public class GC4VER {
             //<editor-fold desc="Register Allocation">
             ReplaceRegisters();
 
+            if (!PrintInfo.printIR)
             RemoveCoalesced();
 
             /* Fix function stack */

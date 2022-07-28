@@ -51,8 +51,9 @@ public abstract class User extends Value {
 
     /**
      * Retrieve a value used at a specified position.
+     * An exception will be thrown if no operand exists on the given position.
      * @param pos The position of the target operands.
-     * @return Reference of the target operand at the given position. Null if it doesn't exist.
+     * @return Reference of the target operand at the given position.
      */
     public Value getOperandAt(int pos) {
         if (!operands.containsKey(pos)) {
@@ -105,13 +106,26 @@ public abstract class User extends Value {
     /**
      * Remove an operand at the specified position
      * If there's no existing operand matched, an Exception will be thrown.
-     * <br>
-     * NOTICE: This is a unilateral removal. To safely delete a
-     * user-usee relation, use Use::removeSelf instead.
      * @param pos Given operand position.
      */
     public void removeOperandAt(int pos) {
-        if (operands.remove(pos) == null) { // from User
+        if (!operands.containsKey(pos)) {
+            throw new RuntimeException("Try to remove a non-existent operand.");
+        }
+        else {
+            operands.get(pos).removeSelf(); // from both User and Usee
+        }
+    }
+
+    /**
+     * Remove an operand use of the specified position from User's operand field.
+     * <br>
+     * NOTICE: This is a unilateral removal. To safely delete a
+     * user-usee relation, use User::removeOperandAt instead.
+     * @param pos Given operand position.
+     */
+    public void removeOperandRaw(int pos) {
+        if (operands.remove(pos) == null) { // from User only
             throw new RuntimeException("Try to remove a non-existent operand.");
         }
     }

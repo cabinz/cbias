@@ -213,6 +213,9 @@ public class MCBuilder {
             case FPTOSI -> translateConvert((CastInst) IRinst, true);
             case SITOFP -> translateConvert((CastInst) IRinst, false);
         }
+        if (PrintInfo.printIR && !IRinst.isAlloca() && !(IRinst instanceof PhiInst) && !IRinst.isIcmp() && !IRinst.isFcmp()) {
+            curMCBB.getLastInst().val = IRinst;
+        }
     }
 
 
@@ -263,6 +266,7 @@ public class MCBuilder {
         else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
+        /* Should I do the move from ExtReg to CoreReg? Or make it the user's stuff and I just provide a container? */
         else if (floatValueMap.containsKey(value)) {
             var vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
@@ -294,12 +298,16 @@ public class MCBuilder {
             if (curFunc.getAPVCR().contains(value)) {
                 entry.prependInst(new MCMove(vr, RealRegister.get(curFunc.getAPVCR().indexOf(value))));
             }
+            else if (curFunc.getAPVER().contains(value)) {
+                entry.prependInst(new MCFPmove(vr, RealExtRegister.get(curFunc.getAPVER().indexOf(value))));
+            }
             else {
                 int offsetVal = curFunc.getACTM().indexOf(value)*4;
                 var offset = curFunc.createVirReg(offsetVal);
                 entry.prependInst(new MCload(vr, RealRegister.get(13), offset));
                 var move = new MCMove(offset, new Immediate(offsetVal), !canEncodeImm(offsetVal));
                 entry.prependInst(move);
+                move.val = value;
                 curFunc.addParamCal(move);
             }
 
@@ -377,6 +385,9 @@ public class MCBuilder {
 
             if (curFunc.getAPVER().contains(value)) {
                 entry.prependInst(new MCFPmove(extVr, RealExtRegister.get(curFunc.getAPVER().indexOf(value))));
+            }
+            else if (curFunc.getAPVCR().contains(value)) {
+                entry.prependInst(new MCFPmove(extVr, RealRegister.get(curFunc.getAPVCR().indexOf(value))));
             }
             else {
                 int offsetVal = curFunc.getACTM().indexOf(value)*4;
@@ -709,6 +720,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), null, reverseCond(armCond)));
         }
 
+        curMCBB.getLastInst().val = icmp;
+
         return armCond;
     }
 
@@ -740,6 +753,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove((Register) findContainer(fcmp), createConstInt(1), null, armCond));
             curMCBB.appendInst(new MCMove((Register) findContainer(fcmp), createConstInt(0), null, reverseCond(armCond)));
         }
+
+        curMCBB.getLastInst().val = fcmp;
 
         return armCond;
     }
@@ -886,6 +901,9 @@ public class MCBuilder {
                 (ExtensionRegister) findFloatContainer(IRinst),
                 (ExtensionRegister) findFloatContainer(IRinst.getOperandAt(0))
         ));
+        /* Move it back to core register */
+        if (f2i)
+            findContainer(IRinst);
     }
 
     /**
@@ -972,10 +990,19 @@ public class MCBuilder {
                 var phiMap = new HashMap<MCOperand, MCOperand>();
 
                 phis.forEach(phi -> {
-                    if (phi.getType().isFloatType())
-                        phiMap.put(findFloatContainer(phi), findFloatContainer(phi.findValue(preIRBB)));
-                    else // FIXME: 可能导致立即数报错
-                        phiMap.put(findContainer(phi), findFloatContainer(phi.findValue(preIRBB)));
+                    var operand = phi.findValue(preIRBB);
+                    if (operand instanceof Constant) {
+                        if (operand instanceof ConstInt)
+                            phiMap.put(findContainer(phi), new Immediate(((ConstInt) operand).getVal()));
+                        else if (operand instanceof ConstFloat)
+                            phiMap.put(findFloatContainer(phi), new FPImmediate(((ConstFloat) operand).getVal()));
+                    }
+                    else {
+                        if (phi.getType().isFloatType())
+                            phiMap.put(findFloatContainer(phi), findFloatContainer(operand));
+                        else
+                            phiMap.put(findContainer(phi), findContainer(operand));
+                    }
                 });
 
                 /* Generate code */
@@ -988,6 +1015,7 @@ public class MCBuilder {
                     /* Build the use stack */
                     var useStack = new Stack<MCOperand>();
                     var dealing = k;
+                    var isInt = dealing.isVirtualReg() || dealing.isImmediate();
                     while (true) {
                         if (!phiMap.containsKey(dealing))
                             break;
@@ -999,26 +1027,46 @@ public class MCBuilder {
                         }
                     }
 
-                    /* Dealing phi in a loop */
+                    /* Dealing phi in a loop, in which all the operands are registers, NOT immediate */
                     if (phiMap.containsKey(dealing)) {
-                        VirtualRegister tmp = curFunc.createVirReg(null);
+                        MCOperand tmp = isInt ?curFunc.createVirReg(null) :curFunc.createExtVirReg(null);
                         MCOperand dst = tmp;
                         MCOperand src;
                         while (useStack.contains(dealing)) {
                             src = useStack.pop();
-                            moves.addFirst(new MCMove((Register) dst, src));
+                            var  mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
+                            moves.addLast(mov);
                             dst = src;
                             phiMap.remove(src);
                         }
-                        moves.addFirst(new MCMove((Register) dealing, tmp));
-
+                        var mov = isInt ?new MCMove((Register) dealing, tmp) :new MCFPmove(dealing, tmp);;
+                        mov.val = ((VirtualRegister) dealing).getValue();
+                        moves.addLast(mov);
                     }
-                    /* Dealing nested phi */
+                    /* Dealing nested phi, the ONLY immediate can be here is dealing itself */
                     MCOperand dst;
                     MCOperand src = dealing;
                     while (!useStack.isEmpty()) {
                         dst = useStack.pop();
-                        moves.addFirst(new MCMove((Register) dst, src));
+                        MCInstruction  mov;
+                        if (src.isImmediate()) {
+                            mov = new MCMove((Register) dst, src, !canEncodeImm(((Immediate) src).getIntValue()));
+                        }
+                        else if (src.isFPImm()) {
+                            if (canEncodeFloat(((FPImmediate) src).getFloatValue())) {
+                                mov = new MCFPmove((ExtensionRegister) dst,(FPImmediate) src);
+                            }
+                            else {
+                                var tmpVr = curFunc.createVirReg(null);
+                                moves.addLast(new MCMove(tmpVr, src, true));
+                                mov = new MCFPmove((ExtensionRegister) dst, tmpVr);
+                            }
+                        }
+                        else
+                            mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
+                        if (dst.isVirtualReg())
+                            mov.val = ((VirtualRegister) dst).getValue();
+                        moves.addLast(mov);
                         src = dst;
                         phiMap.remove(dst);
                     }
@@ -1026,15 +1074,10 @@ public class MCBuilder {
 
                 /* Insert */
                 var preList = curFunc.findMCBB(preIRBB).getInstructionList();
-                for (int i=preList.size(); i-->0; ) {
-                    var inst = preList.get(i);
-                    if (inst instanceof MCbranch)
-                        continue;
-                    else {
-                        moves.forEach(inst::insertAfter);
-                        break;
-                    }
-                }
+                var inst = preList.getLast();
+                if (preList.size() > 1 && preList.get(preList.size()-2) instanceof MCbranch)
+                    inst = preList.get(preList.size() - 2);
+                moves.forEach(inst::insertBefore);
             }
         }
     }
