@@ -53,4 +53,13 @@ public class ConstFloat extends Constant {
     public String toString() {
         return this.getType() + " " + this.getName();
     }
+
+    /**
+     * Retrieve the FloatType of the ConstFloat.
+     * @return the FloatType of the ConstFloat
+     */
+    @Override
+    public FloatType getType() {
+        return (FloatType) super.getType();
+    }
 }

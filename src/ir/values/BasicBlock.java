@@ -130,4 +130,13 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     public Iterator<Instruction> iterator() {
         return instructions.iterator();
     }
+
+    /**
+     * Get LabelType for a BB.
+     * @return A LabelType.
+     */
+    @Override
+    public LabelType getType() {
+        return (LabelType) super.getType();
+    }
 }

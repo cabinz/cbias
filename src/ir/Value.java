@@ -71,11 +71,17 @@ public abstract class Value {
     }
 
     /**
-     * Remove a Use from the use-list of the Value (IF EXISTS).
+     * Remove a Use from the use-list of the Value.
+     * If there's no existing use matched, an Exception will be thrown.
+     * <br>
+     * NOTICE: This is a unilateral removal. To safely delete a
+     * user-usee relation, use Use::removeSelf instead.
      * @param u The Use to be matched and removed.
      * @return Return true if any Use in the list has been removed. Otherwise, false.
      */
-    public boolean removeUse(Use u) {
-        return this.uses.removeIf(x -> x.equals(u));
+    public void removeUse(Use u) {
+        if(!this.uses.removeIf(x -> x.equals(u))) { // from Usee
+            throw new RuntimeException("Try to remove a Use that doesn't exist from Value's use-list.");
+        }
     }
 }

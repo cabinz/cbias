@@ -82,6 +82,11 @@ public abstract class User extends Value {
     /**
      * Set an operand at the specified position to be another Value given.
      * If there's no existing operand matched, an Exception will be thrown.
+     * <br>
+     * NOTICE: This method uses Use::setUsee to change the operand referred
+     * by the Use object, other than building a new Use edge aft removing the
+     * old one. This means your shallow copy of Uses retrieved from User::getOperands
+     * may have its content of elements changed aft calling this method.
      * @param val The value to be set as an operand.
      * @param pos Given operand position.
      */
@@ -100,16 +105,13 @@ public abstract class User extends Value {
     /**
      * Remove an operand at the specified position
      * If there's no existing operand matched, an Exception will be thrown.
+     * <br>
+     * NOTICE: This is a unilateral removal. To safely delete a
+     * user-usee relation, use Use::removeSelf instead.
      * @param pos Given operand position.
      */
     public void removeOperandAt(int pos) {
-        // If there is, remove it from the fields of the User AND USEE.
-        if (operands.containsKey(pos)) {
-            Use use = operands.remove(pos); // from User
-            use.getUsee().removeUse(use); // from Usee
-        }
-        // If not, throw an exception.
-        else {
+        if (operands.remove(pos) == null) { // from User
             throw new RuntimeException("Try to remove a non-existent operand.");
         }
     }

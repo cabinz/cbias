@@ -109,11 +109,9 @@ public class IREmitter {
                     .append(" {\n");
             // Body of a function: basic blocks in it.
             for (BasicBlock bb : func) {
-                // Emit label of the block if it's not the first block. [Intended x1]
-                if (!func.getEntryBB().equals(bb)) {
-                    strBuilder.append(bb.getName()).append(":\n");
-                }
-                // Content (instructions) in the block. [Intended x2]
+                // Label of the block.
+                strBuilder.append(bb.getName()).append(":\n");
+                // Content (instructions) in the block. [Intended \t x 1]
                 for (Instruction inst : bb) {
                     strBuilder.append("\t")
                             .append(inst.toString()).append("\n");

@@ -1867,7 +1867,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayList<Value> args = new ArrayList<>();
         if (ctx.funcRParams() != null) {
             var argCtxs = ctx.funcRParams().funcRParam();
-            ArrayList<Type> argTypes = ((FunctionType)func.getType()).getArgTypes();
+            ArrayList<Type> argTypes = func.getType().getArgTypes();
             // Loop through both the lists of context and type simultaneously.
             for (int i = 0; i < argCtxs.size(); i++) {
                 var argCtx = argCtxs.get(i);
