@@ -61,7 +61,7 @@ public class MCMove extends MCInstruction {
             if (MCBuilder.canEncodeImm(value))
                 return "MOV" + emitCond() + ' ' + dst.emit() + ", #" + value;
             else if (MCBuilder.canEncodeImm(~value))
-                return "MVN" + emitCond() + ' ' + dst.emit() + ", #" + -value;
+                return "MVN" + emitCond() + ' ' + dst.emit() + ", #" + ~value;
             else {
                 int high16 = value >>> 16;
                 int low16 = value & 0xFFFF;
