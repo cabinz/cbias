@@ -45,7 +45,7 @@ public class ConstantDerivation implements IRPass {
 
     static void deriveConstantGV(Module module) {
         @SuppressWarnings("unchecked")
-        var globalVariableList = (List<GlobalVariable>) module.globalVariables.clone();
+        var globalVariableList = (List<GlobalVariable>) module.getGlobalVariables().clone();
         globalVariableList.forEach(globalVariable -> {
             if (isGlobalConstant(globalVariable)) {
                 var constant = globalVariable.getInitVal();
@@ -53,7 +53,7 @@ public class ConstantDerivation implements IRPass {
                     var loadInst = (MemoryInst.Load) loadUse.getUser();
                     loadInst.replaceSelfTo(constant);
                 });
-                module.globalVariables.remove(globalVariable);
+                module.getGlobalVariables().remove(globalVariable);
             }
         });
     }
@@ -298,7 +298,7 @@ public class ConstantDerivation implements IRPass {
      * @param entry      The entry to be removed.
      */
     static void removeEntry(BasicBlock basicBlock, BasicBlock entry, Queue<Instruction> deriveQueue) {
-        for (Instruction instruction : basicBlock.instructions) {
+        for (Instruction instruction : basicBlock.getInstructions()) {
             if (instruction instanceof PhiInst) {
                 var phiInst = (PhiInst) instruction;
                 phiInst.removeMapping(entry);

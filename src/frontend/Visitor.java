@@ -1974,7 +1974,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // If being currently in an empty block, treat it as the check
         // entry directly.
         BasicBlock condEntryBlk;
-        if(!entryBlk.instructions.isEmpty()) {
+        if(!entryBlk.getInstructions().isEmpty()) {
             condEntryBlk = builder.buildBB("_WHILE_COND");
             builder.setCurBB(entryBlk);
             builder.buildBr(condEntryBlk);
@@ -1997,7 +1997,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         BasicBlock bodyExitBlk = builder.getCurBB();
         // If the loop body doesn't end with Ret,
         // add a Br jumping back to the conditional statement.
-        if (bodyExitBlk.instructions.isEmpty()
+        if (bodyExitBlk.getInstructions().isEmpty()
                 || !bodyExitBlk.getLastInst().getTag().isTerminator()) {
             builder.setCurBB(bodyExitBlk);
             builder.buildBr(condEntryBlk);

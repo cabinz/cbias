@@ -58,6 +58,15 @@ public class Function extends Value implements Iterable<BasicBlock>{
     private final ArrayList<FuncArg> args = new ArrayList<>();
 
     /**
+     * Retrieve a list of formal arguments of the function.
+     * The indices of the FArgs in the list returned are their positions in the argument list.
+     * @return An ArrayList of formal arguments.
+     */
+    public ArrayList<FuncArg> getArgs() {
+        return args;
+    }
+
+    /**
      * Basic blocks in the function.
      */
     private final LinkedList<BasicBlock> bbs = new LinkedList<>();
@@ -69,6 +78,10 @@ public class Function extends Value implements Iterable<BasicBlock>{
      * the SysY runtime lib.
      */
     private boolean isExternal = false;
+
+    public boolean isExternal() {
+        return isExternal;
+    }
 
 
     /**
@@ -89,19 +102,6 @@ public class Function extends Value implements Iterable<BasicBlock>{
         }
     }
 
-
-    /**
-     * Retrieve a list of formal arguments of the function.
-     * The indices of the FArgs in the list returned are their positions in the argument list.
-     * @return An ArrayList of formal arguments.
-     */
-    public ArrayList<FuncArg> getArgs() {
-        return args;
-    }
-
-    public boolean isExternal() {
-        return isExternal;
-    }
 
     /**
      * Get the entry basic block of the function.
@@ -185,6 +185,4 @@ public class Function extends Value implements Iterable<BasicBlock>{
     public Iterator<BasicBlock> iterator() {
         return bbs.iterator();
     }
-
-
 }

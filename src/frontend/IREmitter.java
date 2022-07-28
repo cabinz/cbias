@@ -60,7 +60,7 @@ public class IREmitter {
                 // and each instruction yielding results (%x) in basic blocks.
                 for (BasicBlock bb : func) {
                     bb.setName(getNewName());
-                    for (Instruction inst : bb.instructions) {
+                    for (Instruction inst : bb.getInstructions()) {
                         if (inst.hasResult) {
                             inst.setName("%" + getNewName());
                         }
@@ -94,10 +94,10 @@ public class IREmitter {
         }
 
         // Emit global variable declarations.
-        for (GlobalVariable glbVar : m.globalVariables) {
+        for (GlobalVariable glbVar : m.getGlobalVariables()) {
             strBuilder.append(glbVar).append("\n");
         }
-        if (m.globalVariables.size() > 0) {
+        if (m.getGlobalVariables().size() > 0) {
             strBuilder.append("\n\n");
         }
 

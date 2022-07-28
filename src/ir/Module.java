@@ -17,9 +17,13 @@ public class Module {
 
     public final ArrayList<Function> externFunctions = new ArrayList<>();
 
-    public final LinkedList<GlobalVariable> globalVariables = new LinkedList<>();
+    private final LinkedList<GlobalVariable> globalVariables = new LinkedList<>();
 
-    public void addGlbVar(GlobalVariable glbVar) {
+    public void addGlobalVariable(GlobalVariable glbVar) {
         globalVariables.add(glbVar);
+    }
+
+    public LinkedList<GlobalVariable> getGlobalVariables() {
+        return globalVariables;
     }
 }

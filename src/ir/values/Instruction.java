@@ -5,8 +5,6 @@ import ir.User;
 import ir.Type;
 import ir.Value;
 
-import java.util.List;
-
 /**
  * Instruction class is the base class for all the IR instructions.
  * Various kinds of instruction inherit it and are tagged with an
@@ -157,7 +155,7 @@ public abstract class Instruction extends User {
      * @param inst The instruction to be inserted.
      */
     public void insertBefore(Instruction inst) {
-        var instList = this.getBB().instructions;
+        var instList = this.getBB().getInstructions();
         instList.add(instList.indexOf(this), inst);
         inst.setBB(this.getBB());
     }
@@ -167,7 +165,7 @@ public abstract class Instruction extends User {
      * @param inst The instruction to be inserted.
      */
     public void insertAfter(Instruction inst) {
-        var instList = this.getBB().instructions;
+        var instList = this.getBB().getInstructions();
         instList.add(instList.indexOf(this) + 1, inst);
         inst.setBB(this.getBB());
     }

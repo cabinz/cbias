@@ -126,7 +126,7 @@ public class MCBuilder {
     }
 
     private void mapGlobalVariable(Module IRModule, ARMAssemble target) {
-        for (GlobalVariable gv : IRModule.globalVariables)
+        for (GlobalVariable gv : IRModule.getGlobalVariables())
             target.addGlobalVariable(gv);
     }
 

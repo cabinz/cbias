@@ -563,7 +563,7 @@ public class IRBuilder {
      */
     public GlobalVariable buildGlbVar(String name, Type type) {
         GlobalVariable glbVar = new GlobalVariable(name, type);
-        getCurModule().addGlbVar(glbVar);
+        getCurModule().addGlobalVariable(glbVar);
         return glbVar;
     }
 
@@ -574,7 +574,7 @@ public class IRBuilder {
      */
     public GlobalVariable buildGlbVar(String name, Constant init) {
         GlobalVariable glbVar = new GlobalVariable(name, init);
-        getCurModule().addGlbVar(glbVar);
+        getCurModule().addGlobalVariable(glbVar);
         return glbVar;
     }
 
