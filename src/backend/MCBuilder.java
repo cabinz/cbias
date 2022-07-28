@@ -1007,6 +1007,7 @@ public class MCBuilder {
                     /* Build the use stack */
                     var useStack = new Stack<MCOperand>();
                     var dealing = k;
+                    var isInt = dealing.isVirtualReg() || dealing.isImmediate();
                     while (true) {
                         if (!phiMap.containsKey(dealing))
                             break;
@@ -1018,26 +1019,46 @@ public class MCBuilder {
                         }
                     }
 
-                    /* Dealing phi in a loop */
+                    /* Dealing phi in a loop, in which all the operands are registers, NOT immediate */
                     if (phiMap.containsKey(dealing)) {
-                        VirtualRegister tmp = curFunc.createVirReg(null);
+                        MCOperand tmp = isInt ?curFunc.createVirReg(null) :curFunc.createExtVirReg(null);
                         MCOperand dst = tmp;
                         MCOperand src;
                         while (useStack.contains(dealing)) {
                             src = useStack.pop();
-                            moves.addFirst(new MCMove((Register) dst, src));
+                            var  mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
+                            moves.addLast(mov);
                             dst = src;
                             phiMap.remove(src);
                         }
-                        moves.addFirst(new MCMove((Register) dealing, tmp));
-
+                        var mov = isInt ?new MCMove((Register) dealing, tmp) :new MCFPmove(dealing, tmp);;
+                        mov.val = ((VirtualRegister) dealing).getValue();
+                        moves.addLast(mov);
                     }
-                    /* Dealing nested phi */
+                    /* Dealing nested phi, the ONLY immediate can be here is dealing itself */
                     MCOperand dst;
                     MCOperand src = dealing;
                     while (!useStack.isEmpty()) {
                         dst = useStack.pop();
-                        moves.addFirst(new MCMove((Register) dst, src));
+                        MCInstruction  mov;
+                        if (src.isImmediate()) {
+                            mov = new MCMove((Register) dst, src, !canEncodeImm(((Immediate) src).getIntValue()));
+                        }
+                        else if (src.isFPImm()) {
+                            if (canEncodeFloat(((FPImmediate) src).getFloatValue())) {
+                                mov = new MCFPmove((ExtensionRegister) dst,(FPImmediate) src);
+                            }
+                            else {
+                                var tmpVr = curFunc.createVirReg(null);
+                                moves.addLast(new MCMove(tmpVr, src, true));
+                                mov = new MCFPmove((ExtensionRegister) dst, tmpVr);
+                            }
+                        }
+                        else
+                            mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
+                        if (dst.isVirtualReg())
+                            mov.val = ((VirtualRegister) dst).getValue();
+                        moves.addLast(mov);
                         src = dst;
                         phiMap.remove(dst);
                     }
