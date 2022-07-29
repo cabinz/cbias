@@ -821,7 +821,27 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
         scope.scopeOut();
 
+        /*
+        Check the function just built.
+         */
+        checkFunc(builder.getCurFunc());
+
         return null;
+    }
+
+    /**
+     * Check if anything wrong in the Function generated.
+     * @param func The function to be checked.
+     */
+    private void checkFunc(Function func) {
+        for (BasicBlock bb : func) {
+            if (bb.isEmpty()) {
+                throw new RuntimeException("There is an empty BasicBlock in the function generated.");
+            }
+            else if (!bb.getLastInst().getTag().isTerminator()) {
+                throw new RuntimeException("There is a BasicBlock with non-terminator at the end.");
+            }
+        }
     }
 
     /**
@@ -2033,6 +2053,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitBreakStmt(SysYParser.BreakStmtContext ctx) {
         bpStk.peek().add(builder.buildBr(BREAK));
+        // Add a dead block for possible remaining dead code.
         builder.buildBB("_FOLLOWING_BLK");
         return null;
     }
@@ -2043,6 +2064,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     @Override
     public Void visitContStmt(SysYParser.ContStmtContext ctx) {
         bpStk.peek().add(builder.buildBr(CONTINUE));
+        // Add a dead block for possible remaining dead code.
         builder.buildBB("_FOLLOWING_BLK");
         return null;
     }

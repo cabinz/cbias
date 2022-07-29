@@ -13,6 +13,9 @@ import java.util.LinkedList;
  * A well-formed basic block is formed of a list of non-terminating instructions followed
  * by a single terminator instruction.
  * <br>
+ * To ensure BasicBlocks are always well-defined, the last Inst of a BasicBlock should always
+ * be a Terminator. And a terminator instruction can only be the last instruction of a block.
+ * <br>
  * Type for a BasicBlock is Type.LabelType because the basic block represents a label
  * to which a branch can jump.
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/BasicBlock.h#L58">
