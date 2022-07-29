@@ -4,12 +4,12 @@ import java.util.Iterator;
 
 /**
  * Intrusive doubly linked list,
- * with which insertion and removal in O(1) time can be achieved.
+ * with which insertion and removal from the container in O(1) time can be achieved.
  * @param <T> Type (T) of elements in the list (i.e. data object holding nodes).
  * @param <P> Type of the parent (P) object holding the list.
  *
- * @see <a href="">
- *     </a>
+ * @see <a href="https://github.com/torvalds/linux/blob/v5.18/include/linux/list.h">
+ *     Linux Intrusive List Implementation</a>
  */
 public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
 
@@ -48,6 +48,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
             return dataElem == null;
         }
 
+
         /**
          * Intrusive list object (parent).
          */
@@ -56,6 +57,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
         public IntrusiveList<T, P> getParentList() {
             return parentList;
         }
+
 
         /**
          * Previous Node.
@@ -249,7 +251,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
         node.insertBefore(this.tail);
     }
 
-    class IntrusiveListIterator implements Iterator<Node<T, P>> {
+    public class IntrusiveListIterator implements Iterator<Node<T, P>> {
         /**
          * Dummy head.
          */
@@ -289,7 +291,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
     }
 
     @Override
-    public Iterator<Node<T, P>> iterator() {
+    public IntrusiveListIterator iterator() {
         return new IntrusiveListIterator(head, tail);
     }
 
