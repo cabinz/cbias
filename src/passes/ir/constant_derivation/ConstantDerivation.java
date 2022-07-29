@@ -10,9 +10,7 @@ import ir.values.instructions.*;
 import passes.ir.IRPass;
 import passes.ir.RelationAnalysis;
 
-import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * This optimization includes the following passes: <br />
@@ -68,7 +66,7 @@ public class ConstantDerivation implements IRPass {
      * - Function <br>
      */
     static boolean isConstant(Value value) {
-        if (value instanceof BasicBlock) return true;
+        if (value instanceof ir.values.BasicBlock) return true;
         if (value instanceof Constant) return true;
         if (value instanceof Function) return true;
         return false;
@@ -226,8 +224,14 @@ public class ConstantDerivation implements IRPass {
     }
 
     static void deriveConstantExpression(Function function) {
+        Map<ir.values.BasicBlock, BasicBlock> basicBlockMap = new HashMap<>();
+        for (ir.values.BasicBlock basicBlock : function) {
+            basicBlockMap.put(basicBlock, new BasicBlock(basicBlock));
+        }
+        RelationAnalysis.analysisBasicBlocks(basicBlockMap);
+
         Queue<Instruction> queue = new ArrayDeque<>();
-        for (BasicBlock basicBlock : function) {
+        for (ir.values.BasicBlock basicBlock : function) {
             for (Instruction instruction : basicBlock) {
                 if (canDeriveExpression(instruction)) {
                     queue.add(instruction);
@@ -237,17 +241,13 @@ public class ConstantDerivation implements IRPass {
         while (!queue.isEmpty()) {
             Instruction expression = queue.remove();
 
-            // Expression maybe push into the queue twice
-            if (expression.getBB() == null) continue;
-
-            // Such PHI should be deleted instead of derive
-            if (expression instanceof PhiInst && !((PhiInst) expression).hasEntry()) continue;
+            if(!canDeriveExpression(expression)) continue;
 
             if (expression.getType().isVoidType()) {
                 // Br, Load, Store, etc.
                 if (expression instanceof TerminatorInst.Br) {
                     var br = (TerminatorInst.Br) expression;
-                    optimizeBr(br, queue);
+                    optimizeBr(basicBlockMap, queue, br);
                 }
             } else {
                 Value value = calculateExpressionValue(expression);
@@ -265,27 +265,22 @@ public class ConstantDerivation implements IRPass {
         }
     }
 
-    /**
-     * Optimize a Br instruction. <br>
-     *
-     * @param br The instruction to be optimized.
-     */
-    private static void optimizeBr(TerminatorInst.Br br, Queue<Instruction> deriveQueue) {
+    private static void optimizeBr(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap, Queue<Instruction> deriveQueue, TerminatorInst.Br br) {
         if (!br.isCondJmp()) return;
         var cond_ = br.getOperandAt(0);
         if (!(cond_ instanceof ConstInt)) return;
         var cond = (ConstInt) cond_;
-        var bTrue = (BasicBlock) br.getOperandAt(1);
-        var bFalse = (BasicBlock) br.getOperandAt(2);
+        var bTrue = (ir.values.BasicBlock) br.getOperandAt(1);
+        var bFalse = (ir.values.BasicBlock) br.getOperandAt(2);
         br.removeOperandAt(0);
         br.removeOperandAt(1);
         br.removeOperandAt(2);
         if (cond.getVal() == 1) {
             br.addOperandAt(0, bTrue);
-            removeEntry(bFalse, br.getBB(), deriveQueue);
+            removeEntry(basicBlockMap.get(bFalse), basicBlockMap.get(br.getBB()), deriveQueue);
         } else {
             br.addOperandAt(0, bFalse);
-            removeEntry(bTrue, br.getBB(), deriveQueue);
+            removeEntry(basicBlockMap.get(bTrue), basicBlockMap.get(br.getBB()), deriveQueue);
         }
     }
 
@@ -298,10 +293,10 @@ public class ConstantDerivation implements IRPass {
      * @param entry      The entry to be removed.
      */
     static void removeEntry(BasicBlock basicBlock, BasicBlock entry, Queue<Instruction> deriveQueue) {
-        for (Instruction instruction : basicBlock.getInstructions()) {
+        for (Instruction instruction : basicBlock.getRawBasicBlock().getInstructions()) {
             if (instruction instanceof PhiInst) {
                 var phiInst = (PhiInst) instruction;
-                phiInst.removeMapping(entry);
+                phiInst.removeMapping(entry.getRawBasicBlock());
                 if (phiInst.canDerive()) {
                     deriveQueue.add(phiInst);
                 }
@@ -309,22 +304,13 @@ public class ConstantDerivation implements IRPass {
                 break; // PHI must be in the front of a bb
             }
         }
-        if (!isBlockIsolated(basicBlock)) return;
-        basicBlock.removeSelf(); // Firstly remove self, otherwise isBlockIsolated may get a wrong result
-        var followingBBs = RelationAnalysis.getFollowingBB(basicBlock);
+        if (basicBlock.prevBlocks.size()>0) return;
+        basicBlock.getRawBasicBlock().removeSelf();
+        var followingBBs = basicBlock.followingBlocks;
         for (BasicBlock followingBlock : followingBBs) {
+            followingBlock.prevBlocks.remove(basicBlock);
             removeEntry(followingBlock, basicBlock, deriveQueue);
         }
-    }
-
-    // This function shouldn't be here, too
-    static boolean isBlockIsolated(BasicBlock basicBlock) {
-        for (BasicBlock otherBlock : basicBlock.getFunc()) {
-            for (BasicBlock followingBlock : RelationAnalysis.getFollowingBB(otherBlock)) {
-                if (basicBlock == followingBlock) return false;
-            }
-        }
-        return true;
     }
 
 }
