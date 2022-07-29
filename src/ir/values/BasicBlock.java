@@ -44,7 +44,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     final IntrusiveList.Node<BasicBlock, Function> node = new IntrusiveList.Node<>(this);
 
     public Function getFunc() {
-        return (node.getParentList() == null) ? null : node.getParentList().getParent();
+        return node.isDangling() ? null : node.getParentList().getParent();
     }
 
 

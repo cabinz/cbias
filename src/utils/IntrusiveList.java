@@ -41,7 +41,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
         }
 
         /**
-         * If the Node is a dummy sentinel with no data referring it.
+         * Whether the Node is a dummy sentinel with no data referring it.
          * @return Yes or no.
          */
         private boolean isDummy() {
@@ -56,6 +56,14 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
 
         public IntrusiveList<T, P> getParentList() {
             return parentList;
+        }
+
+        /**
+         * Whether the Node belongs to no intrusive list.
+         * @return True if it has no parent list. Otherwise, return false.
+         */
+        public boolean isDangling() {
+            return this.getParentList() == null;
         }
 
 
