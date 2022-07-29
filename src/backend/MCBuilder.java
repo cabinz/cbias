@@ -888,6 +888,8 @@ public class MCBuilder {
         Value v2 = IRinst.getOperandAt(1);
 
         Register dst = (Register) findContainer(IRinst);
+        Register operand1 = (Register) findContainer(v1, true);
+        Register operand2 = (Register) findContainer(v2, true);
 
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, operand1, operand2));
     }
