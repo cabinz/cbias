@@ -10,10 +10,7 @@ import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.*;
 import backend.operand.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -353,8 +350,9 @@ public class GC4VER {
      * Random select now, be to optimized later ...
      */
     private void SelectSpill() {
-        // TODO: BETTER WAY
-        var m = spillWorklist.iterator().next();
+        var m = spillWorklist.stream()
+                .max(Comparator.comparingInt(a -> degree.get(a)))
+                .get();
         spillWorklist.remove(m);
         simplifyWorklist.add(m);
         FreezeMoves(m);

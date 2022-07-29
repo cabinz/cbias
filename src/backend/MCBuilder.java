@@ -307,7 +307,8 @@ public class MCBuilder {
                 entry.prependInst(new MCload(vr, RealRegister.get(13), offset));
                 var move = new MCMove(offset, new Immediate(offsetVal), !canEncodeImm(offsetVal));
                 entry.prependInst(move);
-                move.val = value;
+                if (PrintInfo.printIR)
+                    move.val = value;
                 curFunc.addParamCal(move);
             }
 
@@ -729,7 +730,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), null, reverseCond(armCond)));
         }
 
-        curMCBB.getLastInst().val = icmp;
+        if (PrintInfo.printIR)
+            curMCBB.getLastInst().val = icmp;
 
         return armCond;
     }
@@ -763,7 +765,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove((Register) findContainer(fcmp), createConstInt(0), null, reverseCond(armCond)));
         }
 
-        curMCBB.getLastInst().val = fcmp;
+        if (PrintInfo.printIR)
+            curMCBB.getLastInst().val = fcmp;
 
         return armCond;
     }
@@ -881,8 +884,9 @@ public class MCBuilder {
 
     private void translateSDiv(BinaryOpInst IRinst) {
         // TODO: 常量除数转乘法
-        Register operand1 = (Register) findContainer(IRinst.getOperandAt(0), true);
-        Register operand2 = (Register) findContainer(IRinst.getOperandAt(1), true);
+        Value v1 = IRinst.getOperandAt(0);
+        Value v2 = IRinst.getOperandAt(1);
+
         Register dst = (Register) findContainer(IRinst);
 
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, operand1, operand2));
@@ -1050,8 +1054,9 @@ public class MCBuilder {
                             dst = src;
                             phiMap.remove(src);
                         }
-                        var mov = isInt ?new MCMove((Register) dealing, tmp) :new MCFPmove(dealing, tmp);;
-                        mov.val = ((VirtualRegister) dealing).getValue();
+                        var mov = isInt ?new MCMove((Register) dealing, tmp) :new MCFPmove(dealing, tmp);
+                        if (PrintInfo.printIR && dealing.isVirtualReg())
+                            mov.val = ((VirtualRegister) dealing).getValue();
                         moves.addLast(mov);
                     }
                     /* Dealing nested phi, the ONLY immediate can be here is dealing itself */
@@ -1075,7 +1080,7 @@ public class MCBuilder {
                         }
                         else
                             mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
-                        if (dst.isVirtualReg())
+                        if (PrintInfo.printIR && dst.isVirtualReg())
                             mov.val = ((VirtualRegister) dst).getValue();
                         moves.addLast(mov);
                         src = dst;
