@@ -41,10 +41,10 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * Intrusive node for the BasicBlock list held by its parent Function.
      * This field is package-private (accessible to other IR classes).
      */
-    IntrusiveList.Node<BasicBlock, Function> node = null;
+    final IntrusiveList.Node<BasicBlock, Function> node = new IntrusiveList.Node<>(this);
 
     public Function getFunc() {
-        return (node == null) ? null : node.getParentList().getParent();
+        return (node.getParentList() == null) ? null : node.getParentList().getParent();
     }
 
 
@@ -106,9 +106,8 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         if (this.instructions.size() != 0 && this.getLastInst().getTag().isTerminator()) {
             throw new RuntimeException("Try to insert an Inst to a BB which has already ended with a Terminator.");
         }
-
         // Insertion.
-        this.instructions.insertAtEnd(new IntrusiveList.Node<>(inst));
+        this.instructions.insertAtEnd(inst.node);
     }
 
     /**
@@ -120,8 +119,8 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         if (inst.getBB() != null) {
             throw new RuntimeException("Try to insert an Inst that has already belonged to another BB.");
         }
-
-        this.instructions.insertAtFront(new IntrusiveList.Node<>(inst));
+        // Insertion
+        this.instructions.insertAtFront(inst.node);
     }
 
     /**

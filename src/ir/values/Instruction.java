@@ -110,14 +110,14 @@ public abstract class Instruction extends User {
      * Intrusive node for the instruction list held by its parent BasicBlock.
      * This field is package-private (accessible to other IR classes).
      */
-    IntrusiveList.Node<Instruction, BasicBlock> node = null;
+    final IntrusiveList.Node<Instruction, BasicBlock> node = new IntrusiveList.Node<>(this);
 
     /**
      * Retrieve the BasicBlock holding this Inst.
      * @return The parent BasicBlock.
      */
     public BasicBlock getBB() {
-        return (node == null) ? null : node.getParentList().getParent();
+        return (node.getParentList() == null) ? null : node.getParentList().getParent();
     }
 
     public Instruction(Type type, InstCategory tag) {
@@ -177,26 +177,22 @@ public abstract class Instruction extends User {
     }
 
     /**
-     * Insert a new one at the front of the instruction.
-     * @param inst The instruction to be inserted.
+     * Insert this Instruction in front of the given one.
+     * <br>
+     * e.g. A.insertBefore(B) => ... A - B ...
+     * @param inst The target instruction.
      */
     public void insertBefore(Instruction inst) {
-        if (inst.getBB() == null) {
-            throw new RuntimeException("The target Instruction doesn't belong to any BasicBlock");
-        }
-
         inst.node.insertBefore(new IntrusiveList.Node<>(inst));
     }
 
     /**
      * Insert a new instruction as the next one of the current.
-     * @param inst The instruction to be inserted.
+     * <br>
+     * e.g. A.insertAfter(B) => ... B - A ...
+     * @param inst The target instruction.
      */
     public void insertAfter(Instruction inst) {
-        if (inst.getBB() == null) {
-            throw new RuntimeException("The target Instruction doesn't belong to any BasicBlock");
-        }
-
         inst.node.insertAfter(new IntrusiveList.Node<>(inst));
     }
 

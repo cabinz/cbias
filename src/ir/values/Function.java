@@ -121,7 +121,7 @@ public class Function extends Value implements Iterable<BasicBlock>{
             throw new RuntimeException("Try to add a BB that has already belonged to another Function.");
         }
 
-        bbs.insertAtEnd(new IntrusiveList.Node<>(bb));
+        this.bbs.insertAtEnd(bb.node);
     }
 
     /**
