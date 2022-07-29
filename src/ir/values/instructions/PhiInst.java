@@ -89,8 +89,8 @@ public class PhiInst extends Instruction {
     }
 
     @Override
-    public void removeSelf() {
-        super.removeSelf();
+    public void markWasted() {
+        super.markWasted();
         operandMapping.clear();
     }
 
