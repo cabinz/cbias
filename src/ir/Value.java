@@ -77,7 +77,7 @@ public abstract class Value {
      * If there's no existing use matched, an Exception will be thrown.
      * <br>
      * NOTICE: This is a unilateral removal. To safely delete a
-     * user-usee relation, try Use::removeSelf or User::removeOperandAt instead.
+     * user-usee relation, try Use::markWasted or User::removeOperandAt instead.
      * @param u The Use to be matched and removed.
      */
     public void removeUseRaw(Use u) {
