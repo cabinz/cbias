@@ -1,6 +1,5 @@
 package ir.values;
 
-import ir.Use;
 import ir.Value;
 import ir.types.LabelType;
 import utils.IntrusiveList;
@@ -42,14 +41,10 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * Intrusive node for the BasicBlock list held by its parent Function.
      * This field is package-private (accessible to other IR classes).
      */
-    IntrusiveList.Node<BasicBlock, Function> func = null;
+    IntrusiveList.Node<BasicBlock, Function> node = null;
 
     public Function getFunc() {
-        return func;
-    }
-
-    public void setFunc(Function func) {
-        this.func = func;
+        return (node == null) ? null : node.getData().getFunc();
     }
 
 
@@ -71,7 +66,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * Remove the BB from the Function holding it.
      */
     public void removeSelf() {
-        this.getFunc().removeBB(this);
+        this.node.removeSelf();
     }
 
     /**
