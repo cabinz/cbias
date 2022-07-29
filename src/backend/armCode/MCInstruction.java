@@ -27,6 +27,7 @@ public abstract class MCInstruction {
         RSB,
         MUL,
         SDIV,
+        SMULL,
         AND,
         ORR,
         MLA,
