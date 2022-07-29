@@ -177,13 +177,13 @@ public class Mem2reg implements IRPass {
             if(instruction instanceof MemoryInst.Load){
                 var address = instruction.getOperandAt(0);
                 if(address instanceof MemoryInst.Alloca && variables.contains(address)){
-                    instruction.removeSelf();
+                    instruction.markWasted();
                 }
             }
             if(instruction instanceof MemoryInst.Store){
                 var address = instruction.getOperandAt(1);
                 if(address instanceof MemoryInst.Alloca && variables.contains(address)){
-                    instruction.removeSelf();
+                    instruction.markWasted();
                 }
             }
         });
@@ -195,7 +195,7 @@ public class Mem2reg implements IRPass {
         var instructions = (List<Instruction>) entryBlock.getInstructions().clone();
         instructions.forEach(instruction -> {
             if(instruction instanceof MemoryInst.Alloca && variables.contains(instruction)){
-                instruction.removeSelf();
+                instruction.markWasted();
             }
         });
     }

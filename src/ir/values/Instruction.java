@@ -143,13 +143,33 @@ public abstract class Instruction extends User {
     public boolean isPhi   () {return this.getTag() == InstCategory.PHI;}
 
     /**
-     * Remove the instruction from the BasicBlock holding it.
-     * All related Use links will also be removed.
+     * Drop the Inst entirely from the process, including
+     * <ul>
+     *     <li>Remove the instruction from the BasicBlock holding it.</li>
+     *     <li>All related Use links of the Inst will be removed.</li>
+     * </ul>
      */
-    public void removeSelf() {
-        this.getBB().removeInst(this);
+    public void markWasted() {
+        // Remove the inst from the bb.
+        this.removeSelf();
+
+        // Update the use states:
+        // - Remove all the Use links for the User using it.
+        // - Remove all the Use links corresponding to its operands.
+        this.getUses().forEach(Use::removeSelf);
+        this.getOperands().forEach(Use::removeSelf);
     }
 
+    /**
+     * Remove the instruction from the BasicBlock holding it.
+     * <br>
+     * NOTICE: The Use links of the Inst will NOT be wiped out.
+     * To drop an Inst entirely from the process, use Inst::markWasted.
+     */
+    public void removeSelf() {
+        // Remove the inst from the bb.
+        this.getBB().removeInst(this);
+    }
 
     /**
      * Insert a new one at the front of the instruction.
@@ -175,6 +195,6 @@ public abstract class Instruction extends User {
         for (Use use : this.getUses()) {
             use.setUsee(value);
         }
-        removeSelf();
+        markWasted();
     }
 }
