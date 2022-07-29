@@ -213,7 +213,7 @@ public class MCBuilder {
             case FPTOSI -> translateConvert((CastInst) IRinst, true);
             case SITOFP -> translateConvert((CastInst) IRinst, false);
         }
-        if (PrintInfo.printIR && !IRinst.isAlloca() && !(IRinst instanceof PhiInst) && !IRinst.isIcmp() && !IRinst.isFcmp()) {
+        if (PrintInfo.printIR && !IRinst.isAlloca() && !IRinst.isPhi() && !IRinst.isIcmp() && !IRinst.isFcmp() && !IRinst.isZext()) {
             curMCBB.getLastInst().val = IRinst;
         }
     }
@@ -307,7 +307,8 @@ public class MCBuilder {
                 entry.prependInst(new MCload(vr, RealRegister.get(13), offset));
                 var move = new MCMove(offset, new Immediate(offsetVal), !canEncodeImm(offsetVal));
                 entry.prependInst(move);
-                move.val = value;
+                if (PrintInfo.printIR)
+                    move.val = value;
                 curFunc.addParamCal(move);
             }
 
@@ -374,9 +375,18 @@ public class MCBuilder {
         }
         else if (value instanceof Instruction) {
             var inst = ((Instruction) value);
-            var vr = curFunc.createExtVirReg(inst);
-            floatValueMap.put(value, vr);
-            return vr;
+            var extVr = curFunc.createExtVirReg(inst);
+            floatValueMap.put(value, extVr);
+            /* If a phi value is going to be converted, the condition below will be true */
+            /* At the moment, there is NOT a corresponding core register container for phi. */
+            /* And then every thing is going wrong! */
+            /* Create a core register for phi and then VMOV to solve */
+            if (inst.isPhi() && !inst.getType().isFloatType()) {
+                var vr = curFunc.createVirReg(inst);
+                valueMap.put(inst, vr);
+                curMCBB.appendInst(new MCFPmove(extVr, vr));
+            }
+            return extVr;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
             VirtualExtRegister extVr = curFunc.createExtVirReg(value);
@@ -720,7 +730,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove((Register) findContainer(icmp), createConstInt(0), null, reverseCond(armCond)));
         }
 
-        curMCBB.getLastInst().val = icmp;
+        if (PrintInfo.printIR)
+            curMCBB.getLastInst().val = icmp;
 
         return armCond;
     }
@@ -754,7 +765,8 @@ public class MCBuilder {
             curMCBB.appendInst(new MCMove((Register) findContainer(fcmp), createConstInt(0), null, reverseCond(armCond)));
         }
 
-        curMCBB.getLastInst().val = fcmp;
+        if (PrintInfo.printIR)
+            curMCBB.getLastInst().val = fcmp;
 
         return armCond;
     }
@@ -872,8 +884,9 @@ public class MCBuilder {
 
     private void translateSDiv(BinaryOpInst IRinst) {
         // TODO: 常量除数转乘法
-        Register operand1 = (Register) findContainer(IRinst.getOperandAt(0), true);
-        Register operand2 = (Register) findContainer(IRinst.getOperandAt(1), true);
+        Value v1 = IRinst.getOperandAt(0);
+        Value v2 = IRinst.getOperandAt(1);
+
         Register dst = (Register) findContainer(IRinst);
 
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, operand1, operand2));
@@ -975,14 +988,16 @@ public class MCBuilder {
     private void translatePhi() {
         for (BasicBlock IRBB : curIRFunc) {
             var info = blockInfo.get(IRBB);
-            if (info.predecessors.size() <= 1) continue;
+            if (info.predecessors.size() == 0) continue;
 
             var phis = new ArrayList<PhiInst>();
             for (Instruction inst : IRBB)
-                if (inst instanceof PhiInst)
+                if (inst.isPhi())
                     phis.add((PhiInst) inst);
                 else
                     break;
+
+            if (phis.isEmpty()) continue;
 
             for (var pre : info.predecessors) {
                 /* Build the map between phi operands */
@@ -1039,8 +1054,9 @@ public class MCBuilder {
                             dst = src;
                             phiMap.remove(src);
                         }
-                        var mov = isInt ?new MCMove((Register) dealing, tmp) :new MCFPmove(dealing, tmp);;
-                        mov.val = ((VirtualRegister) dealing).getValue();
+                        var mov = isInt ?new MCMove((Register) dealing, tmp) :new MCFPmove(dealing, tmp);
+                        if (PrintInfo.printIR && dealing.isVirtualReg())
+                            mov.val = ((VirtualRegister) dealing).getValue();
                         moves.addLast(mov);
                     }
                     /* Dealing nested phi, the ONLY immediate can be here is dealing itself */
@@ -1064,7 +1080,7 @@ public class MCBuilder {
                         }
                         else
                             mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
-                        if (dst.isVirtualReg())
+                        if (PrintInfo.printIR && dst.isVirtualReg())
                             mov.val = ((VirtualRegister) dst).getValue();
                         moves.addLast(mov);
                         src = dst;

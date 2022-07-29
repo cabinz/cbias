@@ -13,10 +13,7 @@ import backend.operand.Register;
 import backend.operand.VirtualRegister;
 import passes.mc.MCPass;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -342,8 +339,9 @@ public class GraphColoring {
      * Random select now, be to optimized later ...
      */
     private void SelectSpill() {
-        // TODO: BETTER WAY
-        var m = spillWorklist.iterator().next();
+        var m = spillWorklist.stream()
+                        .max(Comparator.comparingInt(a -> degree.get(a)))
+                        .get();
         spillWorklist.remove(m);
         simplifyWorklist.add(m);
         FreezeMoves(m);
