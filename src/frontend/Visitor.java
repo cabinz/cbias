@@ -924,6 +924,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
         else {
             builder.buildRet();
         }
+        // Add a dead block for possible remaining dead code.
+        builder.buildBB("_FOLLOWING_BLK");
         return null;
     }
 
