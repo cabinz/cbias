@@ -62,6 +62,7 @@ public class PhiInst extends Instruction {
         Value stdValue = null;
         for (Integer id : operandMapping.values()) {
             var value = getOperandAt(id);
+            if(value==this) continue;
             if(stdValue==null){
                 stdValue = value;
             }else{
@@ -75,6 +76,7 @@ public class PhiInst extends Instruction {
         Value stdValue = null;
         for (Integer id : operandMapping.values()) {
             var value = getOperandAt(id);
+            if(value==this) continue;
             if(stdValue==null){
                 stdValue = value;
             }else{
