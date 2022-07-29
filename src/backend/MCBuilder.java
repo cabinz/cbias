@@ -213,7 +213,7 @@ public class MCBuilder {
             case FPTOSI -> translateConvert((CastInst) IRinst, true);
             case SITOFP -> translateConvert((CastInst) IRinst, false);
         }
-        if (PrintInfo.printIR && !IRinst.isAlloca() && !(IRinst instanceof PhiInst) && !IRinst.isIcmp() && !IRinst.isFcmp()) {
+        if (PrintInfo.printIR && !IRinst.isAlloca() && !IRinst.isPhi() && !IRinst.isIcmp() && !IRinst.isFcmp() && !IRinst.isZext()) {
             curMCBB.getLastInst().val = IRinst;
         }
     }
@@ -374,9 +374,18 @@ public class MCBuilder {
         }
         else if (value instanceof Instruction) {
             var inst = ((Instruction) value);
-            var vr = curFunc.createExtVirReg(inst);
-            floatValueMap.put(value, vr);
-            return vr;
+            var extVr = curFunc.createExtVirReg(inst);
+            floatValueMap.put(value, extVr);
+            /* If a phi value is going to be converted, the condition below will be true */
+            /* At the moment, there is NOT a corresponding core register container for phi. */
+            /* And then every thing is going wrong! */
+            /* Create a core register for phi and then VMOV to solve */
+            if (inst.isPhi() && !inst.getType().isFloatType()) {
+                var vr = curFunc.createVirReg(inst);
+                valueMap.put(inst, vr);
+                curMCBB.appendInst(new MCFPmove(extVr, vr));
+            }
+            return extVr;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
             VirtualExtRegister extVr = curFunc.createExtVirReg(value);
@@ -975,14 +984,16 @@ public class MCBuilder {
     private void translatePhi() {
         for (BasicBlock IRBB : curIRFunc) {
             var info = blockInfo.get(IRBB);
-            if (info.predecessors.size() <= 1) continue;
+            if (info.predecessors.size() == 0) continue;
 
             var phis = new ArrayList<PhiInst>();
             for (Instruction inst : IRBB)
-                if (inst instanceof PhiInst)
+                if (inst.isPhi())
                     phis.add((PhiInst) inst);
                 else
                     break;
+
+            if (phis.isEmpty()) continue;
 
             for (var pre : info.predecessors) {
                 /* Build the map between phi operands */
