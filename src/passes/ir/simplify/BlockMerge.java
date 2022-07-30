@@ -3,8 +3,10 @@ package passes.ir.simplify;
 import ir.Module;
 import ir.values.Function;
 import ir.values.Instruction;
+import passes.PassManager;
 import passes.ir.IRPass;
 import passes.ir.RelationAnalysis;
+import passes.ir.constant_derivation.ConstantDerivation;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -14,6 +16,8 @@ import java.util.Queue;
 public class BlockMerge implements IRPass {
     @Override
     public void runOnModule(Module module) {
+        // Call ConstantDerivation to clear single phi
+        PassManager.getInstance().run(ConstantDerivation.class, module);
         optimize(module);
     }
 
@@ -57,7 +61,7 @@ public class BlockMerge implements IRPass {
 
     private static void combine(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap, BasicBlock prevBB, BasicBlock followingBB){
         // Move instructions
-        prevBB.getRawBasicBlock().getLastInst().removeSelf();
+        prevBB.getRawBasicBlock().getLastInst().markWasted();
         for (Instruction instruction : followingBB.getRawBasicBlock().getInstructions()) {
             instruction.removeSelf();
             prevBB.getRawBasicBlock().insertAtEnd(instruction);
@@ -71,7 +75,6 @@ public class BlockMerge implements IRPass {
         }
         basicBlockMap.remove(followingBB.getRawBasicBlock());
         // Remove from function
-        followingBB.getRawBasicBlock().replaceSelfTo(prevBB.getRawBasicBlock());
         followingBB.getRawBasicBlock().markWasted(); //Mark wasted
     }
 

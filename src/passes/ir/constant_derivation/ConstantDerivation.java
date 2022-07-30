@@ -89,19 +89,23 @@ public class ConstantDerivation implements IRPass {
          * only derive in this way.
          */
         if (expression instanceof MemoryInst.Load){
+            var retType = expression.getType();
+            if(!(retType.isIntegerType()|| retType.isFloatType())) return false;
             if(!(expression.getOperandAt(0) instanceof GetElemPtrInst)) return false;
             var gep = (GetElemPtrInst) expression.getOperandAt(0);
-            if(!(gep.getOperandAt(2) instanceof ConstInt)) return false;
-            var retType = (PointerType) gep.getType();
-            if(!(retType.getPointeeType().isIntegerType()|| retType.getPointeeType().isFloatType())) return false;
+            for(int i=1;i<gep.getNumOperands();i++){
+                if(!(gep.getOperandAt(i) instanceof ConstInt)) return false;
+            }
             while (gep.getOperandAt(0) instanceof GetElemPtrInst){
                 gep = (GetElemPtrInst) gep.getOperandAt(0);
-                if(!(gep.getOperandAt(2) instanceof ConstInt)) return false;
+                for(int i=1;i<gep.getNumOperands();i++){
+                    if(!(gep.getOperandAt(i) instanceof ConstInt)) return false;
+                }
             }
             var target = gep.getOperandAt(0);
             if(target instanceof GlobalVariable){
                 var gv = (GlobalVariable) target;
-                //if(gv.isConstant()) return true;
+                if(gv.isConstant()) return true;
             }
             return false;
         }
