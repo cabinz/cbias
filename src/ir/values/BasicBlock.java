@@ -28,6 +28,14 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      */
     private final IntrusiveList<Instruction, BasicBlock> instructions = new IntrusiveList<>(this);
 
+    /**
+     * Retrieve a LinkedList of Instructions contained by the BasicBlock.
+     * <br>
+     * NOTICE: This method cost O(n) time to conduct traversal and shallow copying.
+     * To simply loop through the block without removal/adding of Instructions,
+     * use BasicBlock::iterator instead.
+     * @return A LinkedList with all Instruction current in the block.
+     */
     public LinkedList<Instruction> getInstructions() {
         LinkedList<Instruction> list = new LinkedList<>();
         for (IntrusiveList.Node<Instruction, BasicBlock> node : instructions) {
@@ -43,6 +51,10 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      */
     final IntrusiveList.Node<BasicBlock, Function> node = new IntrusiveList.Node<>(this);
 
+    /**
+     * Retrieve the Function holding this BB.
+     * @return The parent Function. Null if the BB belongs to no Function.
+     */
     public Function getFunc() {
         return node.isDangling() ? null : node.getParentList().getParent();
     }
