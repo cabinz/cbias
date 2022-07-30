@@ -56,18 +56,22 @@ public class BlockMerge implements IRPass {
     }
 
     private static void combine(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap, BasicBlock prevBB, BasicBlock followingBB){
-        System.out.println(prevBB.getRawBasicBlock() + " " + prevBB.getRawBasicBlock().getInstructions());
+        // Move instructions
         prevBB.getRawBasicBlock().getLastInst().removeSelf();
         for (Instruction instruction : followingBB.getRawBasicBlock().getInstructions()) {
             instruction.removeSelf();
             prevBB.getRawBasicBlock().insertAtEnd(instruction);
         }
+        // Maintain CFG
         prevBB.followingBlocks = followingBB.followingBlocks;
         for (BasicBlock f2block : prevBB.followingBlocks) {
             f2block.prevBlocks.remove(followingBB);
             f2block.prevBlocks.add(prevBB);
         }
         basicBlockMap.remove(followingBB.getRawBasicBlock());
+        // Remove from function
+        followingBB.getRawBasicBlock().replaceSelfTo(prevBB.getRawBasicBlock());
+        followingBB.getRawBasicBlock().removeSelf();
     }
 
 }

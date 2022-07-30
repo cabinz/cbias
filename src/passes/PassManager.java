@@ -7,6 +7,7 @@ import passes.ir.constant_derivation.ConstantDerivation;
 import passes.ir.dce.UnreachableCodeElim;
 import passes.ir.dce.UselessCodeElim;
 import passes.ir.hoist.Hoist;
+import passes.ir.simplify.BlockMerge;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
 import passes.mc.MCPass;
@@ -35,6 +36,7 @@ public class PassManager {
         run(ConstantDerivation.class, module);
         run(UselessCodeElim.class, module);
         run(Hoist.class, module);
+        run(BlockMerge.class, module);
     }
 
     /**
@@ -91,6 +93,7 @@ public class PassManager {
             IRPasses.add(new UnreachableCodeElim());
             IRPasses.add(new UselessCodeElim());
             IRPasses.add(new Hoist());
+            IRPasses.add(new BlockMerge());
             registerIRPasses(IRPasses);
 
             // MC Passes

@@ -305,12 +305,15 @@ public class ConstantDerivation implements IRPass {
             }
         }
         basicBlock.prevBlocks.remove(entry);
+        entry.followingBlocks.remove(basicBlock);
         if (basicBlock.prevBlocks.size()==0){
-            basicBlock.getRawBasicBlock().removeSelf();
-            var followingBBs = basicBlock.followingBlocks;
-            for (BasicBlock followingBlock : followingBBs) {
+            var iterator = basicBlock.followingBlocks.iterator();
+            while (iterator.hasNext()){
+                var followingBlock = iterator.next();
+                iterator.remove();
                 removeEntry(followingBlock, basicBlock, deriveQueue);
             }
+            basicBlock.getRawBasicBlock().removeSelf(); //markWasted
         }
     }
 
