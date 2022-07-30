@@ -48,6 +48,7 @@ public abstract class Value {
      * The "use list" keeping track of Values using it.
      */
     private LinkedList<Use> uses = new LinkedList<>();
+    // TODO: refactor using intrusive list as container.
 
     /**
      * Retrieve all Use links in the use-list of the Value in a LinkedList.
@@ -76,11 +77,11 @@ public abstract class Value {
      * Remove a Use from the use-list of the Value.
      * If there's no existing use matched, an Exception will be thrown.
      * <br>
-     * NOTICE: This is a unilateral removal. To safely delete a
+     * NOTICE: This is a unilateral removal (package-private for Use only). To safely delete a
      * user-usee relation, try Use::markWasted or User::removeOperandAt instead.
      * @param u The Use to be matched and removed.
      */
-    public void removeUseRaw(Use u) {
+    void removeUseRaw(Use u) {
         if(!this.uses.removeIf(x -> x.equals(u))) { // from Usee only
             throw new RuntimeException("Try to remove a Use that doesn't exist from Value's use-list.");
         }

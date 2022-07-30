@@ -79,7 +79,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * Remove the BB from the Function holding it.
      * <br>
      * NOTICE:
-     * This method is for simply remove the BB from the Function,
+     * This method is for simply removing the BB from the Function,
      * while all Instructions in the block are still activated.
      * To drop the BB entirely from the process (i.e. mark all
      * Instructions inside as wasted), use BB::markWasted.
@@ -96,6 +96,19 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * </ul>
      */
     public void markWasted() {
+        /*
+        Security check:
+        Usee is not allowed to remove Use relations proactively.
+        i.e. If a Value is still a usee in any User-Usee relations, it cannot call
+        markWasted to drop itself from the process.
+         */
+        if (!this.getUses().isEmpty()) {
+            throw new RuntimeException("Try to mark as wasted an Inst still being used.");
+        }
+
+        /*
+        Completely drop the BB.
+         */
         // Remove the bb from the function.
         this.removeSelf();
 

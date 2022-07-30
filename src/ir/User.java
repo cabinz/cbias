@@ -122,11 +122,11 @@ public abstract class User extends Value {
     /**
      * Remove an operand use of the specified position from User's operand field.
      * <br>
-     * NOTICE: This is a unilateral removal. To safely delete a
-     * user-usee relation, use User::removeOperandAt instead.
+     * NOTICE: This is a unilateral removal (package-private for Use only). To safely
+     * delete a user-usee relation, use User::removeOperandAt instead.
      * @param pos Given operand position.
      */
-    public void removeOperandRaw(int pos) {
+    void removeOperandRaw(int pos) {
         if (operands.remove(pos) == null) { // from User only
             throw new RuntimeException("Try to remove a non-existent operand.");
         }

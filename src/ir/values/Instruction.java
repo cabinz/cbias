@@ -165,9 +165,21 @@ public abstract class Instruction extends User {
      * </ul>
      */
     public void markWasted() {
+        /*
+        Security check:
+        Usee is not allowed to remove Use relations proactively.
+        i.e. If a Value is still a usee in any User-Usee relations, it cannot call
+        markWasted to drop itself from the process.
+         */
+        if (!this.getUses().isEmpty()) {
+            throw new RuntimeException("Try to mark as wasted an Inst still being used.");
+        }
+
+        /*
+        Completely drop the Inst.
+         */
         // Remove the inst from the bb.
         this.removeSelf();
-
         // Update the use states:
         // - Remove all the Use links for the User using it.
         // - Remove all the Use links corresponding to its operands.
