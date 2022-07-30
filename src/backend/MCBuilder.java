@@ -898,7 +898,10 @@ public class MCBuilder {
                 curMCBB.appendInst(new MCMove(dst, dividend, shift, null));
             }
             else {
-                // TODO
+                var operand2 = findContainer(v2, true);
+
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, operand2));
+                return;
             }
             if (divisor < 0)
                 curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
@@ -906,7 +909,7 @@ public class MCBuilder {
         else {
             var operand2 = findContainer(v2, true);
 
-            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend , operand2));
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, operand2));
         }
     }
 
