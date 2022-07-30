@@ -68,6 +68,14 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     }
 
     /**
+     * Retrieve the size of the BB.
+     * @return Number of Instructions in the BB.
+     */
+    public int size() {
+        return instructions.size();
+    }
+
+    /**
      * Returns true if the BasicBlock contains no Instruction.
      * @return true if the BasicBlock contains no Instruction.
      */
