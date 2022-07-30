@@ -20,11 +20,36 @@ import ir.values.constants.ConstInt;
  */
 public class GlobalVariable extends User {
 
-    //<editor-fold desc="Description">
+
+    /**
+     * An anonymous glb var can be recognized
+     * and assigned a valid name before emitted.
+     */
+    private boolean isAnonymous = false;
+
+    public boolean isAnonymous() {
+        return isAnonymous;
+    }
+
     /**
      * If it is a global constant.
      */
     private boolean isGlbConst = false;
+
+    /**
+     * If it is a global constant.
+     * @return True if it is. Otherwise, false.
+     */
+    public boolean isConstant() {
+        return isGlbConst;
+    }
+
+    /**
+     * Set the GlbVar to be a Constant.
+     */
+    public void setConstant() {
+        this.isGlbConst = true;
+    }
 
     /**
      * Represent the initial value specified in the statement.
@@ -37,8 +62,20 @@ public class GlobalVariable extends User {
      * sense to this Value no more.
      */
     private Constant initVal;
-    //</editor-fold>
 
+    public Constant getInitVal() {
+        return initVal;
+    }
+
+
+    private void setGvName(String name) {
+        if (name == null) {
+            this.isAnonymous = true;
+        }
+        else {
+            this.setName("@" + name);
+        }
+    }
 
     /**
      * Construct a GlbVar w/o initialization.
@@ -49,7 +86,8 @@ public class GlobalVariable extends User {
      */
     public GlobalVariable(String name, Type type) {
         super(PointerType.getType(type));
-        this.setName("@" + name);
+        this.setGvName(name);
+
         if(type.isIntegerType()) {
             this.initVal = ConstInt.getI32(0);
         }
@@ -71,31 +109,16 @@ public class GlobalVariable extends User {
      */
     public GlobalVariable(String name, Constant init) {
         super(PointerType.getType(init.getType()));
-        this.setName("@" + name);
+        this.setGvName(name);
         this.initVal = init;
     }
 
-    public Constant getInitVal() {
-        return initVal;
-    }
-
+    /**
+     * Check if the Glb Var is an array.
+     * @return Yes or no.
+     */
     public boolean isArray() {
         return this.getType().getPointeeType().isArrayType();
-    }
-
-    /**
-     * If it is a global constant.
-     * @return True if it is. Otherwise, false.
-     */
-    public boolean isConstant() {
-        return isGlbConst;
-    }
-
-    /**
-     * Set the GlbVar to be a Constant.
-     */
-    public void setConstant() {
-        this.isGlbConst = true;
     }
 
     /**

@@ -80,9 +80,7 @@ public class Scope {
                     "Try to add an declaration with an existing name into current symbol table.");
         }
         // If it's a new name.
-        else {
-            curTab().put(name, val);
-        }
+        curTab().put(name, val);
     }
 
     /**

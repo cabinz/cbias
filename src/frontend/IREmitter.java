@@ -46,6 +46,19 @@ public class IREmitter {
      * @param m The module object to be named through.
      */
     private void nameModule(Module m) {
+        /*
+        Give names to global variables.
+         */
+        for (GlobalVariable gv : m.getGlobalVariables()) {
+            System.out.println(gv.getName());
+            if (gv.isAnonymous()) {
+                gv.setName("@" + this.getNewName());
+            }
+        }
+
+        /*
+        Gives names to local variables and blocks.
+         */
         for (Function func : m.functions) {
             nextName = 0; // Reset the counter for a new environment.
             // Only functions defined in compile unit need to be named through,
