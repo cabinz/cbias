@@ -173,9 +173,9 @@ public class IRBuilder {
         }
         else {
             getCurModule().functions.add(func);
+            // Set the pointer.
+            this.setCurFunc(func);
         }
-        // Set the pointer.
-        this.setCurFunc(func);
         return func;
     }
 
