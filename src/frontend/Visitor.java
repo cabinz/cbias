@@ -1696,41 +1696,60 @@ public class Visitor extends SysYBaseVisitor<Void> {
             throw new RuntimeException("Undefined value: " + name);
         }
 
-        /*
-        Retrieve the array element.
-         */
-        Type valType = ((PointerType) val.getType()).getPointeeType();
-        // An array.
-        if (valType.isArrayType()) {
-            for (SysYParser.ExprContext exprContext : ctx.expr()) {
+
+        if (this.inConstFolding()) {
+            // All const arrays should be promoted as global in this::visitArrConstInitVal.
+            if (!(val instanceof GlobalVariable)
+                    || !((GlobalVariable) val).isConstant()
+                    || !((GlobalVariable) val).isArray()) {
+                throw new RuntimeException("Try to fold a non-constant value.");
+            }
+
+            ConstArray arr = ((ConstArray) ((GlobalVariable) val).getInitVal());
+            ArrayList<Integer> indices = new ArrayList<>();
+            for (var exprContext : ctx.expr()) {
                 visit(exprContext);
-                val = builder.buildGEP(val, new ArrayList<>() {{
-                    add(builder.buildConstant(0));
-                    add(retVal_);
-                }});
+                indices.add(retInt_);
             }
+            retVal_ = arr.getElemByIndex(indices);
         }
-        // A pointer (An array passed into as an argument in a function)
         else {
-            MemoryInst.Load load = builder.buildLoad(
-                    ((PointerType) val.getType()).getPointeeType(),
-                    val
-            );
-            visit(ctx.expr(0));
-            val = builder.buildGEP(load, new ArrayList<>() {{
-                add(retVal_);
-            }});
-
-            for (int i = 1; i < ctx.expr().size(); i++) {
-                visit(ctx.expr(i));
-                val = builder.buildGEP(val, new ArrayList<>() {{
-                    add(builder.buildConstant(0));
+            /*
+            Retrieve the array element.
+             */
+            Type valType = ((PointerType) val.getType()).getPointeeType();
+            // An array.
+            if (valType.isArrayType()) {
+                for (SysYParser.ExprContext exprContext : ctx.expr()) {
+                    visit(exprContext);
+                    val = builder.buildGEP(val, new ArrayList<>() {{
+                        add(builder.buildConstant(0));
+                        add(retVal_);
+                    }});
+                }
+            }
+            // A pointer (An array passed into as an argument in a function / A glb var)
+            else {
+                MemoryInst.Load load = builder.buildLoad(
+                        ((PointerType) val.getType()).getPointeeType(),
+                        val
+                );
+                visit(ctx.expr(0));
+                val = builder.buildGEP(load, new ArrayList<>() {{
                     add(retVal_);
                 }});
-            }
-        }
 
-        retVal_ = val;
+                for (int i = 1; i < ctx.expr().size(); i++) {
+                    visit(ctx.expr(i));
+                    val = builder.buildGEP(val, new ArrayList<>() {{
+                        add(builder.buildConstant(0));
+                        add(retVal_);
+                    }});
+                }
+            }
+
+            retVal_ = val;
+        }
 
         return null;
     }
@@ -1768,9 +1787,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 retInt_ = ((ConstInt) retVal_).getVal();
                 setConveyedType(DataType.INT);
             }
-            else {
+            else if (retVal_.getType().isFloatType()) {
                 retFloat_ = ((ConstFloat) retVal_).getVal();
                 setConveyedType(DataType.FLT);
+            }
+            else {
+                throw new RuntimeException("Unsupported folding type: " + retVal_.getType());
             }
         }
         /*
