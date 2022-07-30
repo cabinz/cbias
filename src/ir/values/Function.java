@@ -127,6 +127,9 @@ public class Function extends Value implements Iterable<BasicBlock>{
     /**
      * Removes a specified BasicBlock from the Function.
      * If the given bb doesn't exit in the Function, an exception will be thrown.
+     * <br>
+     * NOTICE: This method does NOT mark the BB as wasted. To completely remove a BB
+     * from the process, use BB:markWasted instead.
      * @param bb The BB to be removed.
      */
     public void removeBB(BasicBlock bb) {

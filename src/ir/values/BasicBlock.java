@@ -1,5 +1,6 @@
 package ir.values;
 
+import ir.Use;
 import ir.Value;
 import ir.types.LabelType;
 import utils.IntrusiveList;
@@ -76,9 +77,32 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
 
     /**
      * Remove the BB from the Function holding it.
+     * <br>
+     * NOTICE:
+     * This method is for simply remove the BB from the Function,
+     * while all Instructions in the block are still activated.
+     * To drop the BB entirely from the process (i.e. mark all
+     * Instructions inside as wasted), use BB::markWasted.
      */
     public void removeSelf() {
         this.node.removeSelf();
+    }
+
+    /**
+     * Drop the BB entirely from the process, including
+     * <ul>
+     *     <li>Remove the BB from the Function holding it.</li>
+     *     <li>All Instructions inside will be marked as wasted.</li>
+     * </ul>
+     */
+    public void markWasted() {
+        // Remove the bb from the function.
+        this.removeSelf();
+
+        // Mark all instructions inside as wasted.
+        for (Instruction inst : this.getInstructions()) {
+            inst.markWasted();
+        }
     }
 
     /**

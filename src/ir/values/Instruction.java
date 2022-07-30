@@ -146,6 +146,16 @@ public abstract class Instruction extends User {
     public boolean isPhi   () {return this.getTag() == InstCategory.PHI;}
     //</editor-fold>
 
+    /**
+     * Remove the instruction from the BasicBlock holding it.
+     * <br>
+     * NOTICE: The Use links of the Inst will NOT be wiped out.
+     * To drop an Inst entirely from the process, use Inst::markWasted.
+     */
+    public void removeSelf() {
+        // Remove the inst from the intrusive list.
+        this.node.removeSelf();
+    }
 
     /**
      * Drop the Inst entirely from the process, including
@@ -163,17 +173,6 @@ public abstract class Instruction extends User {
         // - Remove all the Use links corresponding to its operands.
         this.getUses().forEach(Use::removeSelf);
         this.getOperands().forEach(Use::removeSelf);
-    }
-
-    /**
-     * Remove the instruction from the BasicBlock holding it.
-     * <br>
-     * NOTICE: The Use links of the Inst will NOT be wiped out.
-     * To drop an Inst entirely from the process, use Inst::markWasted.
-     */
-    public void removeSelf() {
-        // Remove the inst from the intrusive list.
-        this.node.removeSelf();
     }
 
     /**
