@@ -1,5 +1,8 @@
 package passes.ir;
 
+import ir.Use;
+import ir.values.Instruction;
+import ir.values.instructions.PhiInst;
 import ir.values.instructions.TerminatorInst;
 
 import java.util.ArrayList;
@@ -41,4 +44,22 @@ public class RelationAnalysis {
         return ret;
     }
 
+    public static void removeEntry(ir.values.BasicBlock basicBlock, ir.values.BasicBlock entry) {
+        for (Instruction instruction : basicBlock) {
+            if (instruction instanceof PhiInst) {
+                var phiInst = (PhiInst) instruction;
+                phiInst.removeMapping(entry);
+            } else {
+                break; // PHI must be in the front of a bb
+            }
+        }
+    }
+
+    public static void freeBlock(ir.values.BasicBlock basicBlock){
+        for (Instruction instruction : basicBlock.getInstructions()) {
+            for (Use use : instruction.getOperands()) {
+                instruction.removeOperandAt(use.getOperandPos());
+            }
+        }
+    }
 }

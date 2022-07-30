@@ -71,7 +71,8 @@ public class BlockMerge implements IRPass {
         basicBlockMap.remove(followingBB.getRawBasicBlock());
         // Remove from function
         followingBB.getRawBasicBlock().replaceSelfTo(prevBB.getRawBasicBlock());
-        followingBB.getRawBasicBlock().removeSelf();
+        // Don't call remove entry here, since the entry is just replaced.
+        followingBB.getRawBasicBlock().markWasted(); //Mark wasted
     }
 
 }

@@ -16,6 +16,7 @@ public class UnreachableCodeElim implements IRPass {
     }
 
     private static void optimize(Function function){
+        // Maybe we should use RelationAnalysis here.
         Map<BasicBlock, Set<BasicBlock>> entryMap = new HashMap<>();
         function.forEach(basicBlock -> entryMap.put(basicBlock, new HashSet<>()));
         function.forEach(basicBlock -> {
@@ -32,13 +33,15 @@ public class UnreachableCodeElim implements IRPass {
             var basicBlock = removeQueue.remove();
             var followingBBs = RelationAnalysis.getFollowingBB(basicBlock);
             entryMap.remove(basicBlock);
-            basicBlock.removeSelf();
+            RelationAnalysis.freeBlock(basicBlock); // Free operands
             for (BasicBlock followingBB : followingBBs) {
                 entryMap.get(followingBB).remove(basicBlock);
+                RelationAnalysis.removeEntry(followingBB, basicBlock);
                 if(entryMap.get(followingBB).isEmpty()){
                     removeQueue.add(followingBB);
                 }
             }
+            basicBlock.markWasted(); // Mark wasted
         }
     }
 

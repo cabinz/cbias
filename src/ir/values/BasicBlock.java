@@ -106,6 +106,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         markWasted to drop itself from the process.
          */
         if (!this.getUses().isEmpty()) {
+            System.out.println(this+" "+this.getUses().get(0).getUser()+" in "+((Instruction)this.getUses().get(0).getUser()).getBB());
             throw new RuntimeException("Try to mark as wasted an Inst still being used.");
         }
 
