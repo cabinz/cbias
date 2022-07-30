@@ -146,25 +146,6 @@ public abstract class Instruction extends User {
     public boolean isPhi   () {return this.getTag() == InstCategory.PHI;}
     //</editor-fold>
 
-
-    /**
-     * Drop the Inst entirely from the process, including
-     * <ul>
-     *     <li>Remove the instruction from the BasicBlock holding it.</li>
-     *     <li>All related Use links of the Inst will be removed.</li>
-     * </ul>
-     */
-    public void markWasted() {
-        // Remove the inst from the bb.
-        this.removeSelf();
-
-        // Update the use states:
-        // - Remove all the Use links for the User using it.
-        // - Remove all the Use links corresponding to its operands.
-        this.getUses().forEach(Use::removeSelf);
-        this.getOperands().forEach(Use::removeSelf);
-    }
-
     /**
      * Remove the instruction from the BasicBlock holding it.
      * <br>
@@ -174,6 +155,36 @@ public abstract class Instruction extends User {
     public void removeSelf() {
         // Remove the inst from the intrusive list.
         this.node.removeSelf();
+    }
+
+    /**
+     * Drop the Inst entirely from the process, including
+     * <ul>
+     *     <li>Remove the instruction from the BasicBlock holding it.</li>
+     *     <li>All related Use links of the Inst will be removed.</li>
+     * </ul>
+     */
+    public void markWasted() {
+        /*
+        Security check:
+        Usee is not allowed to remove Use relations proactively.
+        i.e. If a Value is still a usee in any User-Usee relations, it cannot call
+        markWasted to drop itself from the process.
+         */
+        if (!this.getUses().isEmpty()) {
+            throw new RuntimeException("Try to mark as wasted an Inst still being used.");
+        }
+
+        /*
+        Completely drop the Inst.
+         */
+        // Remove the inst from the bb.
+        this.removeSelf();
+        // Update the use states:
+        // - Remove all the Use links for the User using it.
+        // - Remove all the Use links corresponding to its operands.
+        this.getUses().forEach(Use::removeSelf);
+        this.getOperands().forEach(Use::removeSelf);
     }
 
     /**
