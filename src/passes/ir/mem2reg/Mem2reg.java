@@ -171,8 +171,7 @@ public class Mem2reg implements IRPass {
 
     static void removeLoadStoreInst(BasicBlock basicBlock, Collection<MemoryInst.Alloca> variables){
         // 'instructions' is changed during the following 'forEach', so we must clone one.
-        @SuppressWarnings("unchecked")
-        var instructions = (List<Instruction>) basicBlock.getRawBasicBlock().getInstructions().clone();
+        var instructions = basicBlock.getRawBasicBlock().getInstructions();
         instructions.forEach(instruction -> {
             if(instruction instanceof MemoryInst.Load){
                 var address = instruction.getOperandAt(0);
@@ -191,8 +190,7 @@ public class Mem2reg implements IRPass {
 
     static void removeAllocaInst(Function function, Collection<MemoryInst.Alloca> variables){
         var entryBlock = function.getRawFunction().getEntryBB();
-        @SuppressWarnings("unchecked")
-        var instructions = (List<Instruction>) entryBlock.getInstructions().clone();
+        var instructions = entryBlock.getInstructions();
         instructions.forEach(instruction -> {
             if(instruction instanceof MemoryInst.Alloca && variables.contains(instruction)){
                 instruction.markWasted();
