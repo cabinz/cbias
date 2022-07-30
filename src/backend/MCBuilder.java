@@ -890,27 +890,27 @@ public class MCBuilder {
         Register dst = (Register) findContainer(IRinst);
         Register dividend  = (Register) findContainer(v1, true);
 
-        if (v2 instanceof ConstInt) {
-            int divisor = ((ConstInt) v2).getVal();
-            int abs = divisor>0 ?divisor :-divisor;
-            if (isPowerOfTwo(abs)) {
-                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, log2(abs));
-                curMCBB.appendInst(new MCMove(dst, dividend, shift, null));
-            }
-            else {
-                var operand2 = findContainer(v2, true);
-
-                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, operand2));
-                return;
-            }
-            if (divisor < 0)
-                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
-        }
-        else {
+//        if (v2 instanceof ConstInt) {
+//            int divisor = ((ConstInt) v2).getVal();
+//            int abs = divisor>0 ?divisor :-divisor;
+//            if (isPowerOfTwo(abs)) {
+//                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, log2(abs));
+//                curMCBB.appendInst(new MCMove(dst, dividend, shift, null));
+//            }
+//            else {
+//                var operand2 = findContainer(v2, true);
+//
+//                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, operand2));
+//                return;
+//            }
+//            if (divisor < 0)
+//                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
+//        }
+//        else {
             var operand2 = findContainer(v2, true);
 
             curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, operand2));
-        }
+//        }
     }
 
     private void translateFloatBinary(BinaryOpInst IRinst, MCInstruction.TYPE type) {
