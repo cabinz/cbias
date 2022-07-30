@@ -85,4 +85,10 @@ public abstract class Value {
             throw new RuntimeException("Try to remove a Use that doesn't exist from Value's use-list.");
         }
     }
+
+    public void replaceSelfTo(Value value){
+        for (Use use : this.getUses()) {
+            use.setUsee(value);
+        }
+    }
 }

@@ -196,10 +196,9 @@ public abstract class Instruction extends User {
         inst.node.insertAfter(new IntrusiveList.Node<>(inst));
     }
 
+    @Override
     public void replaceSelfTo(Value value){
-        for (Use use : this.getUses()) {
-            use.setUsee(value);
-        }
+        super.replaceSelfTo(value);
         markWasted();
     }
 }

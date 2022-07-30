@@ -293,7 +293,7 @@ public class ConstantDerivation implements IRPass {
      * @param entry      The entry to be removed.
      */
     static void removeEntry(BasicBlock basicBlock, BasicBlock entry, Queue<Instruction> deriveQueue) {
-        for (Instruction instruction : basicBlock.getRawBasicBlock().getInstructions()) {
+        for (Instruction instruction : basicBlock.getRawBasicBlock()) {
             if (instruction instanceof PhiInst) {
                 var phiInst = (PhiInst) instruction;
                 phiInst.removeMapping(entry.getRawBasicBlock());
@@ -304,12 +304,13 @@ public class ConstantDerivation implements IRPass {
                 break; // PHI must be in the front of a bb
             }
         }
-        if (basicBlock.prevBlocks.size()>0) return;
-        basicBlock.getRawBasicBlock().removeSelf();
-        var followingBBs = basicBlock.followingBlocks;
-        for (BasicBlock followingBlock : followingBBs) {
-            followingBlock.prevBlocks.remove(basicBlock);
-            removeEntry(followingBlock, basicBlock, deriveQueue);
+        basicBlock.prevBlocks.remove(entry);
+        if (basicBlock.prevBlocks.size()==0){
+            basicBlock.getRawBasicBlock().removeSelf();
+            var followingBBs = basicBlock.followingBlocks;
+            for (BasicBlock followingBlock : followingBBs) {
+                removeEntry(followingBlock, basicBlock, deriveQueue);
+            }
         }
     }
 
