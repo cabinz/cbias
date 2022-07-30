@@ -69,6 +69,7 @@ public class PhiInst extends Instruction {
                 if(!Objects.equals(stdValue,value)) return false;
             }
         }
+        if(stdValue==null) return false;
         return true;
     }
 

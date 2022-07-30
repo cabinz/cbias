@@ -67,11 +67,11 @@ public class BlockMerge implements IRPass {
         for (BasicBlock f2block : prevBB.followingBlocks) {
             f2block.prevBlocks.remove(followingBB);
             f2block.prevBlocks.add(prevBB);
+            RelationAnalysis.replaceEntry(f2block.getRawBasicBlock(), followingBB.getRawBasicBlock(), prevBB.getRawBasicBlock());
         }
         basicBlockMap.remove(followingBB.getRawBasicBlock());
         // Remove from function
         followingBB.getRawBasicBlock().replaceSelfTo(prevBB.getRawBasicBlock());
-        // Don't call remove entry here, since the entry is just replaced.
         followingBB.getRawBasicBlock().markWasted(); //Mark wasted
     }
 

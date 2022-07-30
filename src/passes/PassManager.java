@@ -36,6 +36,7 @@ public class PassManager {
         run(ConstantDerivation.class, module);
         run(UselessCodeElim.class, module);
         run(Hoist.class, module);
+        run(UnreachableCodeElim.class, module);
         run(BlockMerge.class, module);
     }
 

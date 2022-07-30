@@ -1,6 +1,7 @@
 package passes.ir;
 
 import ir.Use;
+import ir.Value;
 import ir.values.Instruction;
 import ir.values.instructions.PhiInst;
 import ir.values.instructions.TerminatorInst;
@@ -49,6 +50,19 @@ public class RelationAnalysis {
             if (instruction instanceof PhiInst) {
                 var phiInst = (PhiInst) instruction;
                 phiInst.removeMapping(entry);
+            } else {
+                break; // PHI must be in the front of a bb
+            }
+        }
+    }
+
+    public static void replaceEntry(ir.values.BasicBlock basicBlock, ir.values.BasicBlock oldBlock, ir.values.BasicBlock newBlock){
+        for (Instruction instruction : basicBlock) {
+            if (instruction instanceof PhiInst) {
+                var phiInst = (PhiInst) instruction;
+                Value value = phiInst.findValue(oldBlock);
+                phiInst.removeMapping(oldBlock);
+                phiInst.addMapping(newBlock, value);
             } else {
                 break; // PHI must be in the front of a bb
             }

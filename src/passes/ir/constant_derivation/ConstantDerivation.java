@@ -3,7 +3,9 @@ package passes.ir.constant_derivation;
 import ir.Module;
 import ir.Use;
 import ir.Value;
+import ir.types.PointerType;
 import ir.values.*;
+import ir.values.constants.ConstArray;
 import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
@@ -82,6 +84,27 @@ public class ConstantDerivation implements IRPass {
         if(expression.getBB()==null){
             return false;
         }
+        // Derive const array
+        /* Actually, we should do this by creating 'const pointer', but there is no such thing in our code. So we can
+         * only derive in this way.
+         */
+        if (expression instanceof MemoryInst.Load){
+            if(!(expression.getOperandAt(0) instanceof GetElemPtrInst)) return false;
+            var gep = (GetElemPtrInst) expression.getOperandAt(0);
+            if(!(gep.getOperandAt(2) instanceof ConstInt)) return false;
+            var retType = (PointerType) gep.getType();
+            if(!(retType.getPointeeType().isIntegerType()|| retType.getPointeeType().isFloatType())) return false;
+            while (gep.getOperandAt(0) instanceof GetElemPtrInst){
+                gep = (GetElemPtrInst) gep.getOperandAt(0);
+                if(!(gep.getOperandAt(2) instanceof ConstInt)) return false;
+            }
+            var target = gep.getOperandAt(0);
+            if(target instanceof GlobalVariable){
+                var gv = (GlobalVariable) target;
+                //if(gv.isConstant()) return true;
+            }
+            return false;
+        }
         // Call and MemoryInst returns void
         if (expression instanceof CallInst || expression instanceof MemoryInst) {
             return false;
@@ -96,6 +119,36 @@ public class ConstantDerivation implements IRPass {
             if (!isConstant(use.getUsee())) return false;
         }
         return true;
+    }
+
+    static Value runGep(ConstArray array, GetElemPtrInst gep){
+        if(array==null){
+            var retType = ((PointerType) gep.getType()).getPointeeType();
+            if(retType.isArrayType()) return null;
+            if(retType.isIntegerType()) return ConstInt.getI32(0);
+            if(retType.isFloatType()) return ConstFloat.get(0);
+            throw new RuntimeException("Unknown return type "+gep.getType());
+        }
+        Value result = array;
+        for(int i=2;i<gep.getNumOperands();i++){ // I don't know why it starts from 2
+            var index = ((ConstInt)gep.getOperandAt(i)).getVal();
+            result = ((ConstArray)result).getOperandAt(index);
+        }
+        return result;
+    }
+
+    static Value deriveGepValue(GetElemPtrInst gep){
+        var target = gep.getOperandAt(0);
+        if(target instanceof GetElemPtrInst){
+            return runGep((ConstArray) deriveGepValue((GetElemPtrInst) target), gep);
+        }
+        if(target instanceof GlobalVariable){
+            var gv = (GlobalVariable) target;
+            if(gv.isConstant()){
+                return runGep((ConstArray) gv.getInitVal(), gep);
+            }
+        }
+        throw new RuntimeException("Cannot derive gep with operand[0]="+target);
     }
 
     static Value calculateExpressionValue(Instruction expression) {
@@ -219,6 +272,13 @@ public class ConstantDerivation implements IRPass {
             case PHI -> {
                 return ((PhiInst) expression).deriveConstant();
             }
+            case LOAD -> {
+                var o0 = expression.getOperandAt(0);
+                if(!(o0 instanceof GetElemPtrInst)){
+                    throw new RuntimeException("Cannot derive with o0="+o0);
+                }
+                return deriveGepValue((GetElemPtrInst)o0);
+            }
         }
         throw new RuntimeException("Unable to derive expression of type " + expression.getTag());
     }
@@ -244,7 +304,7 @@ public class ConstantDerivation implements IRPass {
             if(!canDeriveExpression(expression)) continue;
 
             if (expression.getType().isVoidType()) {
-                // Br, Load, Store, etc.
+                // Br, Store, etc.
                 if (expression instanceof TerminatorInst.Br) {
                     var br = (TerminatorInst.Br) expression;
                     optimizeBr(basicBlockMap, queue, br);
