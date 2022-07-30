@@ -580,7 +580,7 @@ public class MCBuilder {
         /* Save result */
         if (callee.getType().getRetType().isFloatType())
             curMCBB.appendInst(new MCFPmove((VirtualExtRegister) findFloatContainer(IRinst), RealExtRegister.get(0)));
-        else
+        else if (!callee.getType().getRetType().isVoidType())
             curMCBB.appendInst(new MCMove((Register) findContainer(IRinst), RealRegister.get(0)));
 
         curFunc.setUseLR();
@@ -1025,10 +1025,10 @@ public class MCBuilder {
                 phis.forEach(phi -> {
                     var operand = phi.findValue(preIRBB);
                     if (operand instanceof Constant) {
-                        if (operand instanceof ConstInt)
-                            phiMap.put(findContainer(phi), new Immediate(((ConstInt) operand).getVal()));
-                        else if (operand instanceof ConstFloat)
+                        if (operand instanceof ConstFloat)
                             phiMap.put(findFloatContainer(phi), new FPImmediate(((ConstFloat) operand).getVal()));
+                        else
+                            phiMap.put(findContainer(phi), new Immediate(((ConstInt) operand).getVal()));
                     }
                     else {
                         if (phi.getType().isFloatType())
@@ -1092,7 +1092,7 @@ public class MCBuilder {
                             }
                             else {
                                 var tmpVr = curFunc.createVirReg(null);
-                                moves.addLast(new MCMove(tmpVr, src, true));
+                                moves.addFirst(new MCMove(tmpVr, src, true));
                                 mov = new MCFPmove((ExtensionRegister) dst, tmpVr);
                             }
                         }
@@ -1100,7 +1100,7 @@ public class MCBuilder {
                             mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
                         if (PrintInfo.printIR && dst.isVirtualReg())
                             mov.val = ((VirtualRegister) dst).getValue();
-                        moves.addLast(mov);
+                        moves.addFirst(mov);
                         src = dst;
                         phiMap.remove(dst);
                     }
