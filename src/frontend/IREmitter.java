@@ -60,7 +60,7 @@ public class IREmitter {
                 // and each instruction yielding results (%x) in basic blocks.
                 for (BasicBlock bb : func) {
                     bb.setName(getNewName());
-                    for (Instruction inst : bb.getInstructions()) {
+                    for (Instruction inst : bb) {
                         if (inst.hasResult) {
                             inst.setName("%" + getNewName());
                         }
