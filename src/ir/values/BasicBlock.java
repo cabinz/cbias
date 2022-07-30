@@ -1,8 +1,8 @@
 package ir.values;
 
-import ir.Use;
 import ir.Value;
 import ir.types.LabelType;
+import utils.IntrusiveList;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -26,24 +26,25 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     /**
      * All the Instructions in the BB.
      */
-    private final LinkedList<Instruction> instructions = new LinkedList<>();
+    private final IntrusiveList<Instruction, BasicBlock> instructions = new IntrusiveList<>(this);
 
     public LinkedList<Instruction> getInstructions() {
-        return instructions;
+        LinkedList<Instruction> list = new LinkedList<>();
+        for (IntrusiveList.Node<Instruction, BasicBlock> node : instructions) {
+            list.add(node.getData());
+        }
+        return list;
     }
+
 
     /**
-     * Reference of the Function where the BasicBlock lands.
-     * Null if the BB has never been inserted to any Function.
+     * Intrusive node for the BasicBlock list held by its parent Function.
+     * This field is package-private (accessible to other IR classes).
      */
-    private Function func = null;
+    final IntrusiveList.Node<BasicBlock, Function> node = new IntrusiveList.Node<>(this);
 
     public Function getFunc() {
-        return func;
-    }
-
-    public void setFunc(Function func) {
-        this.func = func;
+        return node.isDangling() ? null : node.getParentList().getParent();
     }
 
 
@@ -65,7 +66,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * Remove the BB from the Function holding it.
      */
     public void removeSelf() {
-        this.getFunc().removeBB(this);
+        this.node.removeSelf();
     }
 
     /**
@@ -77,13 +78,11 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * @param inst The Instruction to be removed.
      */
     public void removeInst(Instruction inst) {
-        if (this.instructions.contains(inst)) {
-            instructions.remove(inst);
-            inst.setBB(null);
-        }
-        else {
+        if (inst.getBB() != this) {
             throw new RuntimeException("Try to remove an Instruction that doesn't reside on the BasicBlock.");
         }
+
+        inst.removeSelf();
     }
 
     /**
@@ -91,7 +90,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * @return The last instruction. Null if it's an empty block.
      */
     public Instruction getLastInst() {
-        return this.instructions.isEmpty() ? null : this.instructions.getLast();
+        return this.instructions.isEmpty() ? null : this.instructions.getLast().getData();
     }
 
     /**
@@ -107,10 +106,8 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         if (this.instructions.size() != 0 && this.getLastInst().getTag().isTerminator()) {
             throw new RuntimeException("Try to insert an Inst to a BB which has already ended with a Terminator.");
         }
-
         // Insertion.
-        inst.setBB(this);
-        this.instructions.addLast(inst);
+        this.instructions.insertAtEnd(inst.node);
     }
 
     /**
@@ -122,13 +119,41 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         if (inst.getBB() != null) {
             throw new RuntimeException("Try to insert an Inst that has already belonged to another BB.");
         }
-        inst.setBB(this);
-        this.instructions.addFirst(inst);
+        // Insertion
+        this.instructions.insertAtFront(inst.node);
+    }
+
+    /**
+     * Wrapper of IntrusiveListIterator for iterating through Instructions
+     * on a BasicBlock.
+     */
+    private static class BasicBlockIterator implements Iterator<Instruction> {
+
+        IntrusiveList<Instruction, BasicBlock>.IntrusiveListIterator iList;
+
+        BasicBlockIterator(BasicBlock bb) {
+            iList = bb.instructions.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iList.hasNext();
+        }
+
+        @Override
+        public Instruction next() {
+            return iList.next().getData();
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     @Override
     public Iterator<Instruction> iterator() {
-        return instructions.iterator();
+        return new BasicBlockIterator(this);
     }
 
     /**

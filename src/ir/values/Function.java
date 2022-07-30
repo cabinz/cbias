@@ -3,6 +3,7 @@ package ir.values;
 import ir.Value;
 import ir.types.FunctionType;
 import ir.Type;
+import utils.IntrusiveList;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -69,7 +70,7 @@ public class Function extends Value implements Iterable<BasicBlock>{
     /**
      * Basic blocks in the function.
      */
-    private final LinkedList<BasicBlock> bbs = new LinkedList<>();
+    private final IntrusiveList<BasicBlock, Function> bbs = new IntrusiveList<>(this);
 
     /**
      * If it's an extern function whose prototype (declaration) is given
@@ -102,13 +103,12 @@ public class Function extends Value implements Iterable<BasicBlock>{
         }
     }
 
-
     /**
      * Get the entry basic block of the function.
      * @return Reference to the entry block.
      */
     public BasicBlock getEntryBB() {
-        return bbs.getFirst();
+        return bbs.getFirst().getData();
     }
 
     /**
@@ -120,8 +120,8 @@ public class Function extends Value implements Iterable<BasicBlock>{
         if (bb.getFunc() != null) {
             throw new RuntimeException("Try to add a BB that has already belonged to another Function.");
         }
-        bb.setFunc(this);
-        bbs.add(bb);
+
+        this.bbs.insertAtEnd(bb.node);
     }
 
     /**
@@ -130,13 +130,11 @@ public class Function extends Value implements Iterable<BasicBlock>{
      * @param bb The BB to be removed.
      */
     public void removeBB(BasicBlock bb) {
-        if (this.bbs.contains(bb)) {
-            bbs.remove(bb);
-            bb.setFunc(null);
-        }
-        else {
+        if (bb.getFunc() != this) {
             throw new RuntimeException("Try to remove a BB that doesn't reside on the Function.");
         }
+
+        bb.removeSelf();
     }
 
     @Override
@@ -181,8 +179,36 @@ public class Function extends Value implements Iterable<BasicBlock>{
         return (FunctionType) super.getType();
     }
 
+    /**
+     * Wrapper of IntrusiveListIterator for iterating through BasicBlocks
+     * on a Function.
+     */
+    private static class FunctionIterator implements Iterator<BasicBlock> {
+
+        IntrusiveList<BasicBlock, Function>.IntrusiveListIterator iList;
+
+        FunctionIterator(Function f) {
+            iList = f.bbs.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iList.hasNext();
+        }
+
+        @Override
+        public BasicBlock next() {
+            return iList.next().getData();
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
     @Override
     public Iterator<BasicBlock> iterator() {
-        return bbs.iterator();
+        return new FunctionIterator(this);
     }
 }

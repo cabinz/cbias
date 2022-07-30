@@ -4,6 +4,7 @@ import ir.Use;
 import ir.User;
 import ir.Type;
 import ir.Value;
+import utils.IntrusiveList;
 
 /**
  * Instruction class is the base class for all the IR instructions.
@@ -106,16 +107,17 @@ public abstract class Instruction extends User {
     public boolean hasResult = true;
 
     /**
-     * Reference of the basic block where the instruction lands.
+     * Intrusive node for the instruction list held by its parent BasicBlock.
+     * This field is package-private (accessible to other IR classes).
      */
-    private BasicBlock bb = null;
+    final IntrusiveList.Node<Instruction, BasicBlock> node = new IntrusiveList.Node<>(this);
 
+    /**
+     * Retrieve the BasicBlock holding this Inst.
+     * @return The parent BasicBlock.
+     */
     public BasicBlock getBB() {
-        return this.bb;
-    }
-
-    public void setBB(BasicBlock bb) {
-        this.bb = bb;
+        return node.isDangling() ? null : node.getParentList().getParent();
     }
 
     public Instruction(Type type, InstCategory tag) {
@@ -124,6 +126,7 @@ public abstract class Instruction extends User {
     }
 
 
+    //<editor-fold desc="Instruction Type Checks">
     public boolean isAdd   () {return this.getTag() == InstCategory.ADD;}
     public boolean isSub   () {return this.getTag() == InstCategory.SUB;}
     public boolean isMul   () {return this.getTag() == InstCategory.MUL;}
@@ -141,6 +144,8 @@ public abstract class Instruction extends User {
     public boolean isFcmp  () {return this.getTag().isFloatRelationalBinary();}
     public boolean isZext  () {return this.getTag() == InstCategory.ZEXT;}
     public boolean isPhi   () {return this.getTag() == InstCategory.PHI;}
+    //</editor-fold>
+
 
     /**
      * Drop the Inst entirely from the process, including
@@ -167,28 +172,28 @@ public abstract class Instruction extends User {
      * To drop an Inst entirely from the process, use Inst::markWasted.
      */
     public void removeSelf() {
-        // Remove the inst from the bb.
-        this.getBB().removeInst(this);
+        // Remove the inst from the intrusive list.
+        this.node.removeSelf();
     }
 
     /**
-     * Insert a new one at the front of the instruction.
-     * @param inst The instruction to be inserted.
+     * Insert this Instruction in front of the given one.
+     * <br>
+     * e.g. A.insertBefore(B) => ... A - B ...
+     * @param inst The target instruction.
      */
     public void insertBefore(Instruction inst) {
-        var instList = this.getBB().getInstructions();
-        instList.add(instList.indexOf(this), inst);
-        inst.setBB(this.getBB());
+        inst.node.insertBefore(new IntrusiveList.Node<>(inst));
     }
 
     /**
      * Insert a new instruction as the next one of the current.
-     * @param inst The instruction to be inserted.
+     * <br>
+     * e.g. A.insertAfter(B) => ... B - A ...
+     * @param inst The target instruction.
      */
     public void insertAfter(Instruction inst) {
-        var instList = this.getBB().getInstructions();
-        instList.add(instList.indexOf(this) + 1, inst);
-        inst.setBB(this.getBB());
+        inst.node.insertAfter(new IntrusiveList.Node<>(inst));
     }
 
     public void replaceSelfTo(Value value){
