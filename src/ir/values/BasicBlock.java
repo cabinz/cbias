@@ -94,6 +94,9 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      *     <li>Remove the BB from the Function holding it.</li>
      *     <li>All Instructions inside will be marked as wasted.</li>
      * </ul>
+     * Notice that only when a BB is not used by other Values, as well as each
+     * instruction in the block is not used by any Values outside the block,
+     * the BB is valid to be marked as wasted.
      */
     public void markWasted() {
         /*
@@ -109,11 +112,22 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         /*
         Completely drop the BB.
          */
+        var instList = this.getInstructions();
+
+        // Remove all operands of each Instruction in the block,
+        // to destruct possible internal user-usee relations inside the block.
+        for (Instruction inst : instList) {
+            for (Use opdUse : inst.getOperands()) { // Clear all operands of each instruction.
+                inst.removeOperandAt(opdUse.getOperandPos());
+            }
+        }
+
         // Remove the bb from the function.
         this.removeSelf();
-
         // Mark all instructions inside as wasted.
-        for (Instruction inst : this.getInstructions()) {
+        // If any Instruction is still used by other Values outside the block, this block
+        // is not supposed to be marked wasted, in which inst.markWasted will throw an exception.
+        for (Instruction inst : instList) {
             inst.markWasted();
         }
     }
