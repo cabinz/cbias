@@ -163,6 +163,8 @@ public abstract class Instruction extends User {
      *     <li>Remove the instruction from the BasicBlock holding it.</li>
      *     <li>All related Use links of the Inst will be removed.</li>
      * </ul>
+     * Notice that only when an Instruction is not used by other Values,
+     * it is valid to be marked as wasted.
      */
     public void markWasted() {
         /*
