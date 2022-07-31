@@ -200,7 +200,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
                         voidTy, new ArrayList<>() {{add(i32Ty); add(ptrFloatTy);}}
                 ), true)
         );
-
         // void starttime() -> _sysy_starttime(i32)
         // See special case in visitFcall.
         scope.addDecl("starttime",
@@ -209,7 +208,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 ), true)
         );
         // void stoptime() -> _sysy_stoptime(i32)
-        //        // See special case in visitFcall.
+        // See special case in visitFcall.
         scope.addDecl("stoptime",
                 builder.buildFunction("_sysy_stoptime", FunctionType.getType(
                         voidTy, intArgTypeList
@@ -331,80 +330,51 @@ public class Visitor extends SysYBaseVisitor<Void> {
         ArrayType arrType = (ArrayType) tmpType;
 
         /*
-        Global array.
+        In SysY, no explicit addresses or pointers is allowed, because of which
+        all const local arrays can be directly promoted to be located in global space.
+        (no one cares whether its address is on stack or global segment).
+
+        Thus, all const arrays are treated as global arrays.
+        But promoted local arrays needs to be reassigned a name before emitted to prevent
+        conflicts with variables having the same names in the outer scopes.
          */
-        if (scope.isGlobal()) {
-            // With Initialization.
-            if (ctx.constInitVal() != null) {
-                // Pass down the lengths of each dimension.
-                // Visit constInitVal (ArrConstInitVal) to generate the initial list for the array
-                // which will be filled with 0 by visitArrConstInitVal if the number of given initial
-                // values is not enough.
-                ctx.constInitVal().dimLens = dimLens;
 
-                this.setConstFolding(ON);
-                visit(ctx.constInitVal());
-                this.setConstFolding(OFF);
+        String gvName = scope.isGlobal() ? ctx.Identifier().getText() : null;
+        GlobalVariable arr = null;
 
-                // ArrConstInitVal will generate an array of Values,
-                // convert them into Constants and build a ConstArray.
-                ArrayList<Constant> initList = new ArrayList<>();
-                for (Value val : retValList_) {
-                    initList.add((ConstInt) val);
-                }
-                ConstArray initArr = builder.buildConstArr(arrType, initList);
-                // Build the ConstArray a global variable.
-                GlobalVariable arr = builder.buildGlbVar(ctx.Identifier().getText(), initArr);
-                arr.setConstant();
-                // Add the array into the symbol table.
-                scope.addDecl(ctx.Identifier().getText(), arr);
+        // With Initialization.
+        if (ctx.constInitVal() != null) {
+            // Pass down the lengths of each dimension.
+            // Visit constInitVal (ArrConstInitVal) to generate the initial list for the array
+            // which will be filled with 0 by visitArrConstInitVal if the number of given initial
+            // values is not enough.
+            ctx.constInitVal().dimLens = dimLens;
+
+            this.setConstFolding(ON);
+            visit(ctx.constInitVal());
+            this.setConstFolding(OFF);
+
+            // ArrConstInitVal will generate an array of Values,
+            // convert them into Constants and build a ConstArray.
+            ArrayList<Constant> initList = new ArrayList<>();
+            for (Value val : retValList_) {
+                initList.add((ConstInt) val);
             }
-            // W/o initialization.
-            else {
-                GlobalVariable arr = builder.buildGlbVar(ctx.Identifier().getText(), arrType);
-                scope.addDecl(ctx.Identifier().getText(), arr);
-            }
+            ConstArray initArr = builder.buildConstArr(arrType, initList);
+            // Build the ConstArray a global variable.
+            arr = builder.buildGlbVar(gvName, initArr);
         }
-
-        /*
-        Local array.
-         */
+        // W/o initialization.
         else {
-            MemoryInst.Alloca alloca = builder.buildAlloca(arrType);
-            scope.addDecl(ctx.Identifier().getText(), alloca);
-
-            // If there's an initialization vector, each element will be
-            // generated as a Store with a GEP instruction.
-            if (ctx.constInitVal() != null) {
-                // Pass down dimensional info, visit child to generate initialization assignments.
-                ctx.constInitVal().dimLens = dimLens;
-                visit(ctx.constInitVal());
-
-                /*
-                Indexing array with any number of dimensions with GEP in 1-d array fashion.
-                 */
-                // Dereference the pointer returned by Alloca to be an 1-d array address.
-                ArrayList<Value> zeroIndices = new ArrayList<>() {{
-                    add(builder.buildConstant(0));
-                    add(builder.buildConstant(0));
-                }};
-                GetElemPtrInst ptr1d = builder.buildGEP(alloca, zeroIndices);
-                for (int i = 1; i < dimLens.size(); i++) {
-                    ptr1d = builder.buildGEP(ptr1d, zeroIndices);
-                }
-                // Initialize linearly using the 1d pointer and offset.
-                GetElemPtrInst gep = ptr1d;
-                for (int i = 0; i < retValList_.size(); i++) {
-                    if (i > 0) {
-                        int finalI = i;
-                        gep = builder.buildGEP(ptr1d, new ArrayList<>() {{
-                            add(builder.buildConstant(finalI));
-                        }});
-                    }
-                    builder.buildStore(retValList_.get(i), gep);
-                }
-            }
+            arr = builder.buildGlbVar(gvName, arrType);
         }
+
+        // This line will also check if a glb var is successfully built.
+        // A java exception will be thrown if arr == null.
+        arr.setConstant();
+        // Add the array into the symbol table.
+        scope.addDecl(ctx.Identifier().getText(), arr);
+
         return null;
     }
 
