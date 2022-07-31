@@ -280,8 +280,10 @@ public class MCBuilder {
             /* Considering that all data used in competition is 32 bits, */
             /* ignore the ZExt instruction */
             /* and use the origin instruction's container */
-            if (inst instanceof CastInst.ZExt)
+            if (inst.isZext())
                 vr = ((VirtualRegister) findContainer(inst.getOperandAt(0)));
+            else if (inst.isBitcast())
+                vr = (VirtualRegister) findContainer(inst.getOperandAt(0));
             else
                 vr = curFunc.createVirReg(inst);
 
