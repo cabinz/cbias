@@ -90,4 +90,9 @@ public class GetElemPtrInst extends Instruction {
         }
         return strBuilder.toString();
     }
+
+    @Override
+    public PointerType getType() {
+        return (PointerType) super.getType();
+    }
 }
