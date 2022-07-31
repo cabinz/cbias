@@ -25,10 +25,8 @@ import ir.values.Instruction;
  */
 public class BinaryOpInst extends Instruction {
 
-    //<editor-fold desc="Constructors">
     /**
-     * User (Builder) needs to guarantee parameters passed correct.
-     *
+     * User needs to guarantee parameters passed correct.
      * @param type Type of operation result.
      * @param tag  Instruction category.
      * @param lOp  Left operand.

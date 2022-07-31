@@ -106,7 +106,6 @@ public abstract class MemoryInst extends Instruction {
          * The type of memory space allocated.
          */
         private final Type allocatedType;
-//        private boolean isInit = false;
 
         public Type getAllocatedType() {
             return allocatedType;
