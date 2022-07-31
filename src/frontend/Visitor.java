@@ -134,6 +134,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Type voidTy = VoidType.getType();
         Type ptrI32Ty = PointerType.getType(i32Ty);
         Type ptrFloatTy = PointerType.getType(floatTy);
+        Type ptrVoidTy = PointerType.getType(voidTy);
         // Argument type lists.
         ArrayList<Type> emptyArgTypeList = new ArrayList<>();
         ArrayList<Type> intArgTypeList = new ArrayList<>() {{add(i32Ty);}};
@@ -214,6 +215,16 @@ public class Visitor extends SysYBaseVisitor<Void> {
                         voidTy, intArgTypeList
                 ), true)
         );
+        // void* memset(void* str, int c, size_t n)
+        scope.addDecl("memset",
+                builder.buildFunction("memset", FunctionType.getType(
+                        voidTy,  new ArrayList<>() {{add(ptrI32Ty); add(i32Ty); add(i32Ty);}}
+                ), true));
+//        // void* memcpy(void* dest, const void* src, size_t num)
+//        scope.addDecl("memcpy",
+//                builder.buildFunction("memcpy", FunctionType.getType(
+//                        ptrVoidTy,  new ArrayList<>() {{add(ptrVoidTy); add(ptrVoidTy); add(i32Ty);}}
+//                ), true));
     }
 
 
@@ -302,6 +313,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     }
 
     /**
+     * constDef : Identifier ('[' constExp ']')+ '=' constInitVal   # arrConstDef
      * constInitVal : '{' (constInitVal (',' constInitVal)* )? '}'  # arrConstInitVal
      */
     @Override
