@@ -1112,7 +1112,7 @@ public class MCBuilder {
                 /* Insert */
                 var preList = curFunc.findMCBB(preIRBB).getInstructionList();
                 var inst = preList.getLast();
-                if (preList.size() > 1 && preList.get(preList.size()-2) instanceof MCbranch)
+                if (preList.size() > 1 && preList.get(preList.size()-2) instanceof MCbranch && ((MCbranch) preList.get(preList.size() - 2)).isBranch())
                     inst = preList.get(preList.size() - 2);
                 moves.forEach(inst::insertBefore);
             }

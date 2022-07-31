@@ -50,7 +50,6 @@ public class ARMAssemble implements Iterable<MCFunction>{
      */
     public void useExternalFunction(Function IRFunc){
         var MCFunc = new MCFunction(IRFunc, true);
-        functionList.add(MCFunc);
         functionMap.put(IRFunc, MCFunc);
     }
 
