@@ -362,6 +362,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // which will be filled with 0 by visitArrConstInitVal if the number of given initial
             // values is not enough.
             ctx.constInitVal().dimLens = dimLens;
+            ctx.constInitVal().numInitNeeded = getProductOf(dimLens);
 
             this.setConstFolding(ON);
             visit(ctx.constInitVal());
@@ -399,11 +400,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // For arr[3][2] with initialization { {1,2}, {3,4}, {5,6} },
         // the dimLen = 3 and sizSublistInitNeeded = 2.
         int dimLen = ctx.dimLens.get(0);
-        // Compute the size of each element of current dimension.
-        int sizCurLayerNeeded = 1;
-        for (int i = 1; i < ctx.dimLens.size(); i++) {
-            sizCurLayerNeeded *= ctx.dimLens.get(i);
-        }
 
         ArrayList<Value> initArr = new ArrayList<>();
         for (SysYParser.ConstInitValContext constInitValContext : ctx.constInitVal()) {
@@ -411,6 +407,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (constInitValContext instanceof SysYParser.ArrConstInitValContext) {
                 constInitValContext.dimLens = new ArrayList<>(
                         ctx.dimLens.subList(1, ctx.dimLens.size()));
+                constInitValContext.numInitNeeded = ctx.numInitNeeded / dimLen;
                 visit(constInitValContext);
                 initArr.addAll(retValList_);
             }
@@ -421,7 +418,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
         // Fill the initialized list with enough 0.
-        for (int i = initArr.size(); i < dimLen * sizCurLayerNeeded; i++) {
+        for (int i = initArr.size(); i < ctx.numInitNeeded; i++) {
             initArr.add(builder.buildConstant(0));
         }
         retValList_ = initArr;
@@ -564,6 +561,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (initValContext instanceof SysYParser.ArrInitvalContext) {
                 initValContext.dimLens = new ArrayList<>(
                         ctx.dimLens.subList(1, ctx.dimLens.size()));
+                initValContext.sizInitNeeded = ctx.sizInitNeeded / dimLen;
+
                 visit(initValContext);
                 initArr.addAll(retValList_);
             }
@@ -623,6 +622,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Pass down dim info.
                 // Visit child to retrieve the initialized Value list (stored in retValList_).
                 ctx.initVal().dimLens = dimLens;
+                ctx.initVal().sizInitNeeded = getProductOf(dimLens);
 
                 this.setConstFolding(ON);
                 visit(ctx.initVal());
@@ -653,8 +653,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
             // If there's initialization, translate it as several GEP & Store combos.
             if (ctx.initVal() != null) {
-                // Pass down dimensional info, visit child to generate initialization assignments.
+                // Compute and pass down dimensional info, visit child to generate initialization assignments.
                 ctx.initVal().dimLens = dimLens;
+                ctx.initVal().sizInitNeeded = getProductOf(dimLens);
+
                 visit(ctx.initVal());
                 int zeroTail = getZeroTailLen(retValList_);
 
@@ -724,6 +726,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
         return null;
+    }
+
+    private int getProductOf(List<Integer> list) {
+        int prod = 1;
+        for (Integer i : list) {
+            prod *= i;
+        }
+        return prod;
     }
 
     /**
