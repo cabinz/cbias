@@ -44,10 +44,11 @@ public class ArrayType extends Type {
     }
 
     /**
-     * This method calculates the sum of all elements of the array.
+     * This method calculates the sum of all atom elements of the array.
      * @return the size of array
      */
     public int getSize() {
+        // TODO: rename getAtomNum
         int size = 1;
         for (Type tmp=this; tmp.isArrayType(); tmp=((ArrayType) tmp).getElemType())
             size *= ((ArrayType) tmp).getLen();
@@ -58,9 +59,12 @@ public class ArrayType extends Type {
      * Return the primitive type of this array.
      * In SysY no pointer is supported, thus ultimate elements in arrays can only
      * be in primitive type (in no case be in pointer type or others).
+     * <br>
+     * e.g. AtomType of [3 x [2 x i32]] is i32
      * @return The ultimate element type on the nesting chain.
      */
     public PrimitiveType getPrimitiveType() {
+        // TODO: rename as getAtomType
         Type tmp = this;
         while (tmp.isArrayType())
             tmp = ((ArrayType) tmp).getElemType();

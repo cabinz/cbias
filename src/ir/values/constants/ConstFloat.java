@@ -18,9 +18,12 @@ public class ConstFloat extends Constant {
         return val;
     }
 
+    public boolean isZero() {
+        return val == .0f;
+    }
+
 
     //<editor-fold desc="Singleton">
-
     private ConstFloat(float val) {
         super(FloatType.getType());
         this.val = val;

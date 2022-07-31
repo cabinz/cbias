@@ -19,6 +19,10 @@ public class ConstInt extends Constant {
         return val;
     }
 
+    public boolean isZero() {
+        return val == 0;
+    }
+
 
     //<editor-fold desc="Singleton">
 
