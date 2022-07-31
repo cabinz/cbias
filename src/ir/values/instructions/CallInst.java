@@ -19,6 +19,7 @@ import java.util.ArrayList;
 public class CallInst extends Instruction {
 
     /**
+     * A call instruction in IR.
      * @param func Function Value carrying information about return type and FORMAL arguments.
      * @param args The ACTUAL arguments to be referenced by the Call.
      */

@@ -41,7 +41,7 @@ public abstract class TerminatorInst extends Instruction {
          * Construct a Ret terminator returning a Value.
          * @param val The return value.
          */
-        public Ret(Value val, BasicBlock bb) {
+        public Ret(Value val) {
             this();
             this.addOperandAt(0, val);
         }

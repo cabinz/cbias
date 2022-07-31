@@ -456,6 +456,7 @@ public class SysYParser extends Parser {
 
 	public static class ConstInitValContext extends ParserRuleContext {
 		public ArrayList<Integer> dimLens;
+		public int numInitNeeded;
 
 		public ConstInitValContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -755,6 +756,7 @@ public class SysYParser extends Parser {
 
 	public static class InitValContext extends ParserRuleContext {
 		public ArrayList<Integer> dimLens;
+		public int sizInitNeeded;
 
 		public InitValContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);

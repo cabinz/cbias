@@ -222,7 +222,7 @@ public class IRBuilder {
                     "The type of retVal doesn't match with the return type defined in the function prototype.");
         }
         // Construct, insert, and return.
-        TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal, curBB);
+        TerminatorInst.Ret ret = new TerminatorInst.Ret(retVal);
         getCurBB().insertAtEnd(ret);
         return ret;
     }
@@ -283,7 +283,7 @@ public class IRBuilder {
      * @return The Load instruction inserted.
      */
     public MemoryInst.Load buildLoad(Type loadedType, Value addr) {
-        MemoryInst.Load inst = new MemoryInst.Load(loadedType, addr, curBB);
+        MemoryInst.Load inst = new MemoryInst.Load(loadedType, addr);
         getCurBB().insertAtEnd(inst);
         return inst;
     }
@@ -295,7 +295,7 @@ public class IRBuilder {
      * @return The Store instruction inserted.
      */
     public MemoryInst.Store buildStore(Value val, Value addr) {
-        MemoryInst.Store inst = new MemoryInst.Store(val, addr, curBB);
+        MemoryInst.Store inst = new MemoryInst.Store(val, addr);
         getCurBB().insertAtEnd(inst);
         return inst;
     }
@@ -307,7 +307,7 @@ public class IRBuilder {
      */
     public MemoryInst.Alloca buildAlloca(Type allocatedType) {
         var entryBlk = getCurFunc().getEntryBB();
-        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType, entryBlk);
+        MemoryInst.Alloca inst = new MemoryInst.Alloca(allocatedType);
         entryBlk.insertAtFront(inst);
         return inst;
     }

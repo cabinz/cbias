@@ -27,7 +27,7 @@ public class UnaryOpInst extends Instruction {
                 // Operation code
                 + switch (this.getTag()) {
                     case FNEG -> "fneg ";
-                    default -> "";
+                    default -> throw new RuntimeException("Unsupported type.");
                 }
                 // The operand
                 + opd.getType() + " " + opd.getName(); // "float %3"

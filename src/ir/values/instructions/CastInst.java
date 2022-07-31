@@ -116,8 +116,9 @@ public abstract class CastInst extends Instruction {
         /**
          * Construct an addrspacecast instruction.
          * @param opd The operand Value to be cast.
+         * @param dstType The target type to be cast to.
          */
-        public Bitcast(Value opd, PointerType dstType) {
+        public Bitcast(Value opd, Type dstType) {
             super(dstType, InstCategory.PTRCAST);
             this.addOperandAt(0, opd);
         }

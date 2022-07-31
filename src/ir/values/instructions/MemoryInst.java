@@ -37,7 +37,7 @@ public abstract class MemoryInst extends Instruction {
          * @param val The Value to be stored (written) back to memory.
          * @param addr The address where the content to be written.
          */
-        public Store(Value val, Value addr, BasicBlock bb) {
+        public Store(Value val, Value addr) {
             super(VoidType.getType(), InstCategory.STORE);
             this.addOperandAt(0, val);
             this.addOperandAt(1, addr);
@@ -74,7 +74,7 @@ public abstract class MemoryInst extends Instruction {
          * @param loadedType  The type of the memory block loaded in.
          * @param addr Value specifying the memory address from which to load. (loadedType*)
          */
-        public Load(Type loadedType, Value addr, BasicBlock bb) {
+        public Load(Type loadedType, Value addr) {
             super(loadedType, InstCategory.LOAD);
             this.addOperandAt(0, addr);
         }
@@ -106,7 +106,6 @@ public abstract class MemoryInst extends Instruction {
          * The type of memory space allocated.
          */
         private final Type allocatedType;
-//        private boolean isInit = false;
 
         public Type getAllocatedType() {
             return allocatedType;
@@ -117,7 +116,7 @@ public abstract class MemoryInst extends Instruction {
         /**
          * @param allocatedType The type of memory space allocated.
          */
-        public Alloca(Type allocatedType, BasicBlock bb) {
+        public Alloca(Type allocatedType) {
             super(PointerType.getType(allocatedType), InstCategory.ALLOCA);
             this.allocatedType = allocatedType;
         }

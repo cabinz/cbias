@@ -47,7 +47,6 @@ public class GetElemPtrInst extends Instruction {
      * Construct a GEP instruction.
      * The 1st operand of a GEP is the ptr (first address of the array) applied on.
      * The following operands are the Values serving as indices.
-     *
      * @param ptr     The Value in PointerType (the first address of an array).
      * @param indices The indices for dereference.
      */

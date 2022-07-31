@@ -362,6 +362,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // which will be filled with 0 by visitArrConstInitVal if the number of given initial
             // values is not enough.
             ctx.constInitVal().dimLens = dimLens;
+            ctx.constInitVal().numInitNeeded = getProductOf(dimLens);
 
             this.setConstFolding(ON);
             visit(ctx.constInitVal());
@@ -399,26 +400,16 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // For arr[3][2] with initialization { {1,2}, {3,4}, {5,6} },
         // the dimLen = 3 and sizSublistInitNeeded = 2.
         int dimLen = ctx.dimLens.get(0);
-        // Compute the size of each element of current dimension.
-        int sizSublistInitNeeded = 1;
-        for (int i = 1; i < ctx.dimLens.size(); i++) {
-            sizSublistInitNeeded *= ctx.dimLens.get(i);
-        }
 
         ArrayList<Value> initArr = new ArrayList<>();
         for (SysYParser.ConstInitValContext constInitValContext : ctx.constInitVal()) {
             // If the one step lower level still isn't the atom element layer.
-            if (!(constInitValContext instanceof SysYParser.ScalarConstInitValContext)) {
+            if (constInitValContext instanceof SysYParser.ArrConstInitValContext) {
                 constInitValContext.dimLens = new ArrayList<>(
                         ctx.dimLens.subList(1, ctx.dimLens.size()));
+                constInitValContext.numInitNeeded = ctx.numInitNeeded / dimLen;
                 visit(constInitValContext);
                 initArr.addAll(retValList_);
-                // Fill the initialized sub-list with enough 0.
-                int curInitSiz = initArr.size();
-                int sizToBeFilled = (sizSublistInitNeeded - (curInitSiz % sizSublistInitNeeded)) % sizSublistInitNeeded;
-                for (int i = 0; i < sizToBeFilled; i++) {
-                    initArr.add(builder.buildConstant(0));
-                }
             }
             // If it is the lowest layer.
             else {
@@ -426,8 +417,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 initArr.add(retVal_);
             }
         }
-        // Again, fill the initialized list with enough 0.
-        for (int i = initArr.size(); i < dimLen * sizSublistInitNeeded; i++) {
+        // Fill the initialized list with enough 0.
+        for (int i = initArr.size(); i < ctx.numInitNeeded; i++) {
             initArr.add(builder.buildConstant(0));
         }
         retValList_ = initArr;
@@ -559,36 +550,33 @@ public class Visitor extends SysYBaseVisitor<Void> {
         // the dimLen = 3 and sizSublistInitNeeded = 2.
         int dimLen = ctx.dimLens.get(0);
         // Compute the size of each element of current dimension.
-        int sizSublistInitNeeded = 1;
+        int sizCurLayerNeeded = 1;
         for (int i = 1; i < ctx.dimLens.size(); i++) {
-            sizSublistInitNeeded *= ctx.dimLens.get(i);
+            sizCurLayerNeeded *= ctx.dimLens.get(i);
         }
 
         ArrayList<Value> initArr = new ArrayList<>();
         for (SysYParser.InitValContext initValContext : ctx.initVal()) {
             // If the one step lower level still isn't the atom element layer.
-            if (!(initValContext instanceof SysYParser.ScalarInitValContext)) {
+            if (initValContext instanceof SysYParser.ArrInitvalContext) {
                 initValContext.dimLens = new ArrayList<>(
                         ctx.dimLens.subList(1, ctx.dimLens.size()));
+                initValContext.sizInitNeeded = ctx.sizInitNeeded / dimLen;
+
                 visit(initValContext);
                 initArr.addAll(retValList_);
-                // Fill the initialized sub-list with enough 0.
-                int curInitSiz = initArr.size();
-                int sizToBeFilled = (sizSublistInitNeeded - (curInitSiz % sizSublistInitNeeded)) % sizSublistInitNeeded;
-                for (int i = 0; i < sizToBeFilled; i++) {
-                    initArr.add(builder.buildConstant(0));
-                }
             }
-            // If it is the lowest layer.
+            // If it is the lowest layer of an atom element.
             else {
                 visit(initValContext);
                 initArr.add(retVal_);
             }
         }
-        // Again, fill the initialized list with enough 0.
+
+        // Fill the initialized list of current layer with enough 0.
         // NOTICE: This step is necessary for dealing with the "{}" initializer in SysY.
-        // TODO: But this can be a performance bottle neck with big "{}".
-        for (int i = initArr.size(); i < dimLen * sizSublistInitNeeded; i++) {
+        // TODO: But this can be a performance bottle neck with big "{}". same as visitArrConstInitVal
+        for (int i = initArr.size(); i < dimLen * sizCurLayerNeeded; i++) {
             initArr.add(builder.buildConstant(0));
         }
         retValList_ = initArr;
@@ -634,6 +622,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Pass down dim info.
                 // Visit child to retrieve the initialized Value list (stored in retValList_).
                 ctx.initVal().dimLens = dimLens;
+                ctx.initVal().sizInitNeeded = getProductOf(dimLens);
 
                 this.setConstFolding(ON);
                 visit(ctx.initVal());
@@ -664,8 +653,10 @@ public class Visitor extends SysYBaseVisitor<Void> {
 
             // If there's initialization, translate it as several GEP & Store combos.
             if (ctx.initVal() != null) {
-                // Pass down dimensional info, visit child to generate initialization assignments.
+                // Compute and pass down dimensional info, visit child to generate initialization assignments.
                 ctx.initVal().dimLens = dimLens;
+                ctx.initVal().sizInitNeeded = getProductOf(dimLens);
+
                 visit(ctx.initVal());
                 int zeroTail = getZeroTailLen(retValList_);
 
@@ -735,6 +726,14 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
         return null;
+    }
+
+    private int getProductOf(List<Integer> list) {
+        int prod = 1;
+        for (Integer i : list) {
+            prod *= i;
+        }
+        return prod;
     }
 
     /**
