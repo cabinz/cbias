@@ -56,13 +56,15 @@ public class ArrayType extends Type {
 
     /**
      * Return the primitive type of this array.
+     * In SysY no pointer is supported, thus ultimate elements in arrays can only
+     * be in primitive type (in no case be in pointer type or others).
      * @return The ultimate element type on the nesting chain.
      */
-    public Type getPrimitiveType() {
+    public PrimitiveType getPrimitiveType() {
         Type tmp = this;
         while (tmp.isArrayType())
             tmp = ((ArrayType) tmp).getElemType();
-        return tmp;
+        return (PrimitiveType) tmp;
     }
 
 

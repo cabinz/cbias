@@ -66,6 +66,5 @@ public class PointerType extends Type {
     public String toString() {
         // e.g. "i32*" and "i1*"
         return pointeeType.toString() + "*";
-     }
-
+    }
 }

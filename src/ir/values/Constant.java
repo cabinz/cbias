@@ -2,11 +2,6 @@ package ir.values;
 
 import ir.User;
 import ir.Type;
-import ir.types.ArrayType;
-import ir.types.FloatType;
-import ir.types.IntegerType;
-
-import java.util.ArrayList;
 
 /**
  * A constant is a value that is immutable at runtime. Except ConstArray, all Constants are

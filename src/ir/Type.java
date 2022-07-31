@@ -62,4 +62,8 @@ public abstract class Type {
         return (this instanceof ArrayType);
     }
 
+    public boolean isPrimitiveType() {
+        return (this instanceof PrimitiveType);
+    }
+
 }

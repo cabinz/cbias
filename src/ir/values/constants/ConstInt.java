@@ -4,8 +4,6 @@ import ir.Type;
 import ir.types.IntegerType;
 import ir.values.Constant;
 
-import java.util.Objects;
-
 import java.util.HashMap;
 
 /**
