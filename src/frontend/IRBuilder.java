@@ -352,6 +352,7 @@ public class IRBuilder {
      */
     public CastInst.Sitofp buildSitofp(Value srcVal) {
         // Security checks.
+        // TODO: move all this security checks to ir constructors?
         if (!srcVal.getType().isIntegerType()) {
             throw new RuntimeException("A non-integer src Value is given.");
         }
@@ -359,6 +360,22 @@ public class IRBuilder {
         CastInst.Sitofp sitofp = new CastInst.Sitofp(srcVal);
         getCurBB().insertAtEnd(sitofp);
         return sitofp;
+    }
+
+    /**
+     * Insert a Sitofp instruction at current position of basic block.
+     * @param srcVal The Value to be converted.
+     * @return The sitofp instruction inserted.
+     */
+    public CastInst.Bitcast buildAddrspacecast(Value srcVal, PointerType dstType) {
+        // Security checks.
+        if (!srcVal.getType().isPointerType()) {
+            throw new RuntimeException("A non-pointer src Value is given.");
+        }
+        // Construct, insert, and return.
+        CastInst.Bitcast bitcast = new CastInst.Bitcast(srcVal, dstType);
+        getCurBB().insertAtEnd(bitcast);
+        return bitcast;
     }
 
 

@@ -49,7 +49,7 @@ public abstract class Instruction extends User {
         // Memory operations
         ALLOCA, LOAD, STORE,
         // Casting operations
-        ZEXT, FPTOSI, SITOFP,
+        ZEXT, FPTOSI, SITOFP, PTRCAST,
         // Others
         GEP, PHI;
 
@@ -144,6 +144,9 @@ public abstract class Instruction extends User {
     public boolean isFcmp  () {return this.getTag().isFloatRelationalBinary();}
     public boolean isZext  () {return this.getTag() == InstCategory.ZEXT;}
     public boolean isPhi   () {return this.getTag() == InstCategory.PHI;}
+    public boolean isBitcast() {
+        return this.getTag() == InstCategory.PTRCAST;
+    }
     //</editor-fold>
 
     /**
