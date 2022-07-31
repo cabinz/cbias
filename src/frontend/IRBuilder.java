@@ -102,20 +102,21 @@ public class IRBuilder {
 
     /**
      * Retrieve a Constant.ConstArray Value.
+     * If the initial list is shorter than needed by ArrayType, zeros will be used to filled in.
      * @param arrType The ArrayType carrying necessary info.
      * @param initList An linear (no-nested) array of (integer/float) Constants for initialization the array.
      * @return The ConstArray.
      */
     public ConstArray buildConstArr(ArrayType arrType, ArrayList<Constant> initList) {
         /*
-        Retrieve number of total elements in the array to be generated.
+        If the initialization list is shorter than needed,
+        filled the blanks with 0 (or .0f).
          */
-        int numTotElem = 1;
-        Type type = arrType;
-        while (type.isArrayType()) {
-            numTotElem *= ((ArrayType) type).getLen();
-            type = ((ArrayType) type).getElemType();
+        PrimitiveType primType = arrType.getPrimitiveType();
+        while (arrType.getSize() > initList.size()) {
+           initList.add(primType.getZero());
         }
+
 
         if (arrType.getElemType().isArrayType()) {
             /*
@@ -123,7 +124,7 @@ public class IRBuilder {
              */
             ArrayList<Constant> nestedInitList = new ArrayList<>();
             int j = 0;
-            int step = numTotElem / arrType.getLen();
+            int step = arrType.getSize() / arrType.getLen();
             while(j < initList.size()) {
                 nestedInitList.add(
                         buildConstArr(
