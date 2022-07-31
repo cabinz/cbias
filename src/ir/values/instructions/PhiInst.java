@@ -98,6 +98,12 @@ public class PhiInst extends Instruction {
     }
 
     @Override
+    public void clearOperands() {
+        super.clearOperands();
+        operandMapping.clear();
+    }
+
+    @Override
     public String toString() {
         var builder = new StringBuilder();
         builder.append(this.getName());

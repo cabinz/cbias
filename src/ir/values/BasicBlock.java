@@ -125,9 +125,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         // Remove all operands of each Instruction in the block,
         // to destruct possible internal user-usee relations inside the block.
         for (Instruction inst : instList) {
-            for (Use opdUse : inst.getOperands()) { // Clear all operands of each instruction.
-                inst.removeOperandAt(opdUse.getOperandPos());
-            }
+            inst.clearOperands();
         }
 
         // Remove the bb from the function.

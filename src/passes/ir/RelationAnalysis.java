@@ -71,9 +71,7 @@ public class RelationAnalysis {
 
     public static void freeBlock(ir.values.BasicBlock basicBlock){
         for (Instruction instruction : basicBlock.getInstructions()) {
-            for (Use use : instruction.getOperands()) {
-                instruction.removeOperandAt(use.getOperandPos());
-            }
+            instruction.clearOperands();
         }
     }
 }

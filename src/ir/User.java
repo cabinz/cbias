@@ -49,6 +49,12 @@ public abstract class User extends Value {
         return new LinkedList<>(operands.values());
     }
 
+    public void clearOperands(){
+        for (Use use : getOperands()) {
+            use.removeSelf();
+        }
+    }
+
     /**
      * Retrieve a value used at a specified position.
      * An exception will be thrown if no operand exists on the given position.
