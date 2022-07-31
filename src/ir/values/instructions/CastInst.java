@@ -4,6 +4,7 @@ import ir.Type;
 import ir.Value;
 import ir.types.FloatType;
 import ir.types.IntegerType;
+import ir.types.PointerType;
 import ir.values.Instruction;
 
 /**
@@ -59,7 +60,7 @@ public abstract class CastInst extends Instruction {
 
         /**
          * Construct a fptosi instruction.
-         * @param opd      The operand Value to be casted.
+         * @param opd      The operand Value to be cast.
          * @param destType The target IntegerType (maybe i32 or i1)
          */
         public Fptosi(Value opd, IntegerType destType) {
@@ -87,7 +88,7 @@ public abstract class CastInst extends Instruction {
 
         /**
          * Construct a sitofp instruction.
-         * @param opd The operand Value to be casted.
+         * @param opd The operand Value to be cast.
          */
         public Sitofp(Value opd) {
             super(FloatType.getType(), InstCategory.SITOFP);
@@ -99,6 +100,33 @@ public abstract class CastInst extends Instruction {
             // e.g. "%6 = sitofp i32 %5 to float"
             Value opd = this.getOperandAt(0);
             return this.getName() + " = sitofp "// "%6 = sitofp "
+                    + opd.getType() + " " + opd.getName() // "i32 %5"
+                    + " to " + this.getType(); // " to float"
+        }
+    }
+
+    /**
+     * Converts value to type ty2 without changing any bits.
+     * In SysY, this instruction is only for convert float* to i32*.
+     * @see <a href="https://llvm.org/docs/LangRef.html#bitcast-to-instruction">
+     *     LLVM LangRef: ‘bitcast .. to’ Instruction</a>
+     */
+    public static class Bitcast extends CastInst {
+
+        /**
+         * Construct an addrspacecast instruction.
+         * @param opd The operand Value to be cast.
+         */
+        public Bitcast(Value opd, PointerType dstType) {
+            super(dstType, InstCategory.PTRCAST);
+            this.addOperandAt(0, opd);
+        }
+
+        @Override
+        public String toString() {
+            // e.g. "%6 = sitofp i32 %5 to float"
+            Value opd = this.getOperandAt(0);
+            return this.getName() + " = bitcast "// "%6 = sitofp "
                     + opd.getType() + " " + opd.getName() // "i32 %5"
                     + " to " + this.getType(); // " to float"
         }

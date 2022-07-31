@@ -16,6 +16,7 @@ import ir.values.instructions.TerminatorInst;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -134,6 +135,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         Type voidTy = VoidType.getType();
         Type ptrI32Ty = PointerType.getType(i32Ty);
         Type ptrFloatTy = PointerType.getType(floatTy);
+        Type ptrVoidTy = PointerType.getType(voidTy);
         // Argument type lists.
         ArrayList<Type> emptyArgTypeList = new ArrayList<>();
         ArrayList<Type> intArgTypeList = new ArrayList<>() {{add(i32Ty);}};
@@ -214,6 +216,16 @@ public class Visitor extends SysYBaseVisitor<Void> {
                         voidTy, intArgTypeList
                 ), true)
         );
+        // void* memset(void* str, int c, size_t n)
+        scope.addDecl("memset",
+                builder.buildFunction("memset", FunctionType.getType(
+                        voidTy,  new ArrayList<>() {{add(ptrI32Ty); add(i32Ty); add(i32Ty);}}
+                ), true));
+//        // void* memcpy(void* dest, const void* src, size_t num)
+//        scope.addDecl("memcpy",
+//                builder.buildFunction("memcpy", FunctionType.getType(
+//                        ptrVoidTy,  new ArrayList<>() {{add(ptrVoidTy); add(ptrVoidTy); add(i32Ty);}}
+//                ), true));
     }
 
 
@@ -302,6 +314,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     }
 
     /**
+     * constDef : Identifier ('[' constExp ']')+ '=' constInitVal   # arrConstDef
      * constInitVal : '{' (constInitVal (',' constInitVal)* )? '}'  # arrConstInitVal
      */
     @Override
@@ -573,6 +586,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
         // Again, fill the initialized list with enough 0.
+        // NOTICE: This step is necessary for dealing with the "{}" initializer in SysY.
+        // TODO: But this can be a performance bottle neck with big "{}".
         for (int i = initArr.size(); i < dimLen * sizSublistInitNeeded; i++) {
             initArr.add(builder.buildConstant(0));
         }
@@ -652,6 +667,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Pass down dimensional info, visit child to generate initialization assignments.
                 ctx.initVal().dimLens = dimLens;
                 visit(ctx.initVal());
+                int zeroTail = getZeroTailLen(retValList_);
 
                 /*
                 Indexing array with any number of dimensions with GEP in 1-d array fashion.
@@ -667,7 +683,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
                 // Initialize linearly using the 1d pointer and offset.
                 GetElemPtrInst gep = ptr1d;
-                for (int i = 0; i < retValList_.size(); i++) {
+                for (int i = 0; i < retValList_.size() - zeroTail; i++) {
                     if (i > 0) {
                         int finalI = i;
                         gep = builder.buildGEP(ptr1d, new ArrayList<>() {{
@@ -687,9 +703,60 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     // Assign the initial value with a Store.
                     builder.buildStore(initVal, gep);
                 }
+
+                /*
+                Fill the rest blanks with zero using memset.
+                 */
+
+                if (zeroTail != 0) {
+                    // Args of memset.
+                    // For arg str: Cast float* to i32* if needed.
+                    GetElemPtrInst startPoint = builder.buildGEP(gep, new ArrayList<>() {{
+                                add(builder.buildConstant(1));
+                            }});
+                    Value str;
+                    if (startPoint.getType().getPointeeType().isI32()) {
+                        str = startPoint;
+                    }
+                    else {
+                        str = builder.buildAddrspacecast(startPoint, PointerType.getType(IntegerType.getI32()));
+                    }
+                    ConstInt c = builder.buildConstant(0);
+                    // For arg n: In SysY, both supported data types (int/float) are 4 bytes.
+                    ConstInt n = builder.buildConstant(4 * (zeroTail));
+
+                    //Call memset.
+                    builder.buildCall((Function) scope.getValByName("memset"), new ArrayList<>(){{
+                        add(str);
+                        add(c);
+                        add(n);
+                    }});
+                }
             }
         }
         return null;
+    }
+
+    /**
+     * Get number of zeros at the end of the list.
+     * @param list A list containing Values.
+     * @return The length of the zero tail.
+     */
+    private int getZeroTailLen(List<Value> list) {
+        int len = 0;
+        for (int i = list.size() - 1; i > 0; i--) {
+            var elem = list.get(i);
+            if (!(elem instanceof Constant)) {
+                break;
+            }
+            var constElem = (Constant) elem;
+            if (constElem.getType().isFloatType() && !((ConstFloat) constElem).isZero()
+                    || constElem.getType().isIntegerType() && !((ConstInt) constElem).isZero() ) {
+                break;
+            }
+            len++;
+        }
+        return len;
     }
 
     /**
@@ -1696,41 +1763,60 @@ public class Visitor extends SysYBaseVisitor<Void> {
             throw new RuntimeException("Undefined value: " + name);
         }
 
-        /*
-        Retrieve the array element.
-         */
-        Type valType = ((PointerType) val.getType()).getPointeeType();
-        // An array.
-        if (valType.isArrayType()) {
-            for (SysYParser.ExprContext exprContext : ctx.expr()) {
+
+        if (this.inConstFolding()) {
+            // All const arrays should be promoted as global in this::visitArrConstInitVal.
+            if (!(val instanceof GlobalVariable)
+                    || !((GlobalVariable) val).isConstant()
+                    || !((GlobalVariable) val).isArray()) {
+                throw new RuntimeException("Try to fold a non-constant value.");
+            }
+
+            ConstArray arr = ((ConstArray) ((GlobalVariable) val).getInitVal());
+            ArrayList<Integer> indices = new ArrayList<>();
+            for (var exprContext : ctx.expr()) {
                 visit(exprContext);
-                val = builder.buildGEP(val, new ArrayList<>() {{
-                    add(builder.buildConstant(0));
-                    add(retVal_);
-                }});
+                indices.add(retInt_);
             }
+            retVal_ = arr.getElemByIndex(indices);
         }
-        // A pointer (An array passed into as an argument in a function)
         else {
-            MemoryInst.Load load = builder.buildLoad(
-                    ((PointerType) val.getType()).getPointeeType(),
-                    val
-            );
-            visit(ctx.expr(0));
-            val = builder.buildGEP(load, new ArrayList<>() {{
-                add(retVal_);
-            }});
-
-            for (int i = 1; i < ctx.expr().size(); i++) {
-                visit(ctx.expr(i));
-                val = builder.buildGEP(val, new ArrayList<>() {{
-                    add(builder.buildConstant(0));
+            /*
+            Retrieve the array element.
+             */
+            Type valType = ((PointerType) val.getType()).getPointeeType();
+            // An array.
+            if (valType.isArrayType()) {
+                for (SysYParser.ExprContext exprContext : ctx.expr()) {
+                    visit(exprContext);
+                    val = builder.buildGEP(val, new ArrayList<>() {{
+                        add(builder.buildConstant(0));
+                        add(retVal_);
+                    }});
+                }
+            }
+            // A pointer (An array passed into as an argument in a function / A glb var)
+            else {
+                MemoryInst.Load load = builder.buildLoad(
+                        ((PointerType) val.getType()).getPointeeType(),
+                        val
+                );
+                visit(ctx.expr(0));
+                val = builder.buildGEP(load, new ArrayList<>() {{
                     add(retVal_);
                 }});
-            }
-        }
 
-        retVal_ = val;
+                for (int i = 1; i < ctx.expr().size(); i++) {
+                    visit(ctx.expr(i));
+                    val = builder.buildGEP(val, new ArrayList<>() {{
+                        add(builder.buildConstant(0));
+                        add(retVal_);
+                    }});
+                }
+            }
+
+            retVal_ = val;
+        }
 
         return null;
     }
@@ -1768,9 +1854,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 retInt_ = ((ConstInt) retVal_).getVal();
                 setConveyedType(DataType.INT);
             }
-            else {
+            else if (retVal_.getType().isFloatType()) {
                 retFloat_ = ((ConstFloat) retVal_).getVal();
                 setConveyedType(DataType.FLT);
+            }
+            else {
+                throw new RuntimeException("Unsupported folding type: " + retVal_.getType());
             }
         }
         /*

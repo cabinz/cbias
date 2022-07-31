@@ -4,8 +4,6 @@ import ir.Type;
 import ir.types.IntegerType;
 import ir.values.Constant;
 
-import java.util.Objects;
-
 import java.util.HashMap;
 
 /**
@@ -19,6 +17,10 @@ public class ConstInt extends Constant {
 
     public int getVal() {
         return val;
+    }
+
+    public boolean isZero() {
+        return val == 0;
     }
 
 

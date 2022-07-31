@@ -1,9 +1,11 @@
 package ir.values.constants;
 
+import ir.Value;
 import ir.types.ArrayType;
 import ir.values.Constant;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Class for (integer/float) constant array in initialization.
@@ -67,6 +69,24 @@ public class ConstArray extends Constant {
         return new ConstArray(arrType, initList);
     }
     //</editor-fold>
+
+    /**
+     * Return an element in the ConstArray with given indices.
+     * @param indices Indices indicating the position of the element.
+     * @return The element retrieved, which can be Value object at any level of the array.
+     */
+    public Value getElemByIndex(Iterable<Integer> indices) {
+        Value elem = this;
+        for (Integer idx : indices) {
+            if (elem.getType().isArrayType()) {
+                elem = ((ConstArray) elem).getOperandAt(idx);
+            }
+            else {
+                throw new RuntimeException("Depth of indies given is to large.");
+            }
+        }
+        return elem;
+    }
 
     @Override
     public String toString() {

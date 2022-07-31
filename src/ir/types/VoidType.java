@@ -1,6 +1,7 @@
 package ir.types;
 
 import ir.Type;
+import ir.values.Constant;
 
 /**
  * Nested Class: The void type does not represent any value and has no size.
@@ -10,7 +11,7 @@ import ir.Type;
  * @see <a href="https://llvm.org/docs/LangRef.html#void-type">
  * LLVM LangRef: Void Type</a>
  */
-public class VoidType extends Type {
+public class VoidType extends PrimitiveType {
     private static ir.types.VoidType type = new ir.types.VoidType();
 
     private VoidType() {
@@ -23,5 +24,10 @@ public class VoidType extends Type {
     @Override
     public String toString() {
         return "void";
+    }
+
+    @Override
+    public Constant getZero() {
+        return null;
     }
 }

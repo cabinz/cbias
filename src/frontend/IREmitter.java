@@ -50,7 +50,6 @@ public class IREmitter {
         Give names to global variables.
          */
         for (GlobalVariable gv : m.getGlobalVariables()) {
-            System.out.println(gv.getName());
             if (gv.isAnonymous()) {
                 gv.setName("@" + this.getNewName());
             }
