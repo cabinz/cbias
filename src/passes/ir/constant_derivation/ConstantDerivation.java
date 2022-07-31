@@ -9,8 +9,10 @@ import ir.values.constants.ConstArray;
 import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
+import passes.PassManager;
 import passes.ir.IRPass;
 import passes.ir.RelationAnalysis;
+import passes.ir.dce.UnreachableCodeElim;
 
 import java.util.*;
 
@@ -22,9 +24,19 @@ import java.util.*;
  */
 public class ConstantDerivation implements IRPass {
 
+    static boolean hasNonEntryBlock = false;
+
     @Override
-    public void runOnModule(Module module) {
-        optimize(module);
+    public synchronized void runOnModule(Module module) {
+        while (true){
+            optimize(module);
+            if(hasNonEntryBlock){
+                PassManager.getInstance().run(UnreachableCodeElim.class, module);
+                hasNonEntryBlock = false;
+            }else{
+                break;
+            }
+        }
     }
 
     static void optimize(Module module) {
@@ -371,17 +383,7 @@ public class ConstantDerivation implements IRPass {
         basicBlock.prevBlocks.remove(entry);
         entry.followingBlocks.remove(basicBlock);
         if (basicBlock.prevBlocks.size()==0){
-            // Free operands to avoid deadlock
-            RelationAnalysis.freeBlock(basicBlock.getRawBasicBlock());
-            // Cascade remove other block
-            var iterator = basicBlock.followingBlocks.iterator();
-            while (iterator.hasNext()){
-                var followingBlock = iterator.next();
-                iterator.remove();
-                removeEntry(followingBlock, basicBlock, deriveQueue);
-            }
-            // Totally clear self
-            basicBlock.getRawBasicBlock().markWasted(); //markWasted
+            hasNonEntryBlock = true;
         }
     }
 
