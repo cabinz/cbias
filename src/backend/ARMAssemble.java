@@ -75,7 +75,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
             ArrayList<Integer> initial = new ArrayList<>();
             /* When global variable is not initialized, the getInitVal() will return null */
             if (gv.getInitVal() == null) {
-                int size = ((ArrayType) gv.getVariableType()).getSize();
+                int size = ((ArrayType) gv.getVariableType()).getAtomLen();
                 while ((size--) != 0) initial.add(0);
             }
             else
@@ -87,7 +87,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
         else {
             ArrayList<Float> initial = new ArrayList<>();
             if (gv.getInitVal() == null) {
-                int size = ((ArrayType) gv.getVariableType()).getSize();
+                int size = ((ArrayType) gv.getVariableType()).getAtomLen();
                 while ((size--) != 0) initial.add(0.0f);
             }
             else

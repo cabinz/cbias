@@ -615,7 +615,7 @@ public class MCBuilder {
             offset = 4;
         }
         else if (allocated.isArrayType()) {
-            offset = ((ArrayType) allocated).getSize() * 4;
+            offset = ((ArrayType) allocated).getAtomLen() * 4;
         }
         curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, (Register) findContainer(IRinst), RealRegister.get(13), createConstInt(curFunc.getLocalVariable())));
 
@@ -952,7 +952,7 @@ public class MCBuilder {
         /* The length of each dimension */
         List<Integer> lengths = null;
         if (elemetType.isArrayType())
-            lengths = ((ArrayType) elemetType).getDimSize();
+            lengths = ((ArrayType) elemetType).getDimLens();
 
         /* Prepare, dst = baseAddr + totalOffset */
         Register baseAddr = (Register) findContainer(IRinst.getOperandAt(0));

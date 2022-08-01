@@ -113,7 +113,7 @@ public class IRBuilder {
         filled the blanks with 0 (or .0f).
          */
         PrimitiveType primType = arrType.getAtomType();
-        while (arrType.getSize() > initList.size()) {
+        while (arrType.getAtomLen() > initList.size()) {
            initList.add(primType.getZero());
         }
 
@@ -124,7 +124,7 @@ public class IRBuilder {
              */
             ArrayList<Constant> nestedInitList = new ArrayList<>();
             int j = 0;
-            int step = arrType.getSize() / arrType.getLen();
+            int step = arrType.getAtomLen() / arrType.getLen();
             while(j < initList.size()) {
                 nestedInitList.add(
                         buildConstArr(

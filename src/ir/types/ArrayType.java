@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class ArrayType extends Type {
 
     /**
-     * The length of the array.
+     * The length of the array (in the immediately accessible layer).
      * <br>
      * e.g. Length of [3 x [2 x i32]] is 3.
      */
@@ -36,19 +36,18 @@ public class ArrayType extends Type {
      * This method calculates the sizes of each dimension of this array.
      * @return A list containing each dimension size, starting from the first dimension
      */
-    public ArrayList<Integer> getDimSize() {
+    public ArrayList<Integer> getDimLens() {
         ArrayList<Integer> ret = new ArrayList<>();
-        for (Type tmp=this; tmp.isArrayType(); tmp=((ArrayType) tmp).getElemType())
+        for (Type tmp = this; tmp.isArrayType(); tmp = ((ArrayType) tmp).getElemType())
             ret.add(((ArrayType) tmp).getLen());
         return ret;
     }
 
     /**
      * This method calculates the sum of all atom elements of the array.
-     * @return the size of array
+     * @return the number of atom elements in the array
      */
-    public int getSize() {
-        // TODO: rename getAtomNum
+    public int getAtomLen() {
         int size = 1;
         for (Type tmp=this; tmp.isArrayType(); tmp=((ArrayType) tmp).getElemType())
             size *= ((ArrayType) tmp).getLen();
