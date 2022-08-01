@@ -419,6 +419,9 @@ public class GraphColoring {
                             inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), tmp));
                             i++;
                         }
+                        /* This will replace the ALL reference of v, including the def, which may cause error */
+                        /* The way to deal NOW is do NOT def & use the same VirtualRegister in an instruction */
+                        /* A better way maybe redefine an interface named "replaceUse"? */
                         inst.replaceRegister(v, v_tmp);
                         i++;
                     }
