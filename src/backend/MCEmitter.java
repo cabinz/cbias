@@ -46,17 +46,19 @@ public class MCEmitter {
             if (f.isExternal()) continue;
             strBd.append("\t.global " + f.emit() + '\n');
             strBd.append(f.emit() + ":\n");
+            if (PrintInfo.printIR)
+                strBd.append("\t\t\t\t\t\t\t\t@spilled: " + f.getSpilledNode() + '\n');
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
                 strBd.append(bb.emit() + ":\n");
                 if (PrintInfo.printCFG) {
-                    strBd.append("\t\t\t\t\t\t\t\t\t@predecessors: ");
+                    strBd.append("\t\t\t\t\t\t\t\t@predecessors: ");
                     bb.getPredecessors().forEach(pre -> strBd.append(pre.emit() + ", "));
                     strBd.append("\n");
                     if (bb.getTrueSuccessor() != null)
-                    strBd.append("\t\t\t\t\t\t\t\t\t@trueSuccessor: " + bb.getTrueSuccessor().emit() + "\n");
+                    strBd.append("\t\t\t\t\t\t\t\t@trueSuccessor: " + bb.getTrueSuccessor().emit() + "\n");
                     if(bb.getFalseSuccessor() != null)
-                    strBd.append("\t\t\t\t\t\t\t\t\t@falseSuccessor: " + bb.getFalseSuccessor().emit() + "\n");
+                    strBd.append("\t\t\t\t\t\t\t\t@falseSuccessor: " + bb.getFalseSuccessor().emit() + "\n");
                 }
                 /* handle each instruction */
                 for (MCInstruction mcInstruction : bb) {
