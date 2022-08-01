@@ -113,8 +113,11 @@ public class PhiInst extends Instruction {
 
         boolean isFirstBranch = true;
         for (Integer id : operandMapping.values()) {
-            builder.append(isFirstBranch ?' ':',');
-            builder.append(String.format("[%s,%s]",getOperandAt(id).getName(),"%"+getOperandAt(id+1).getName()));
+            builder.append(isFirstBranch ? " " : ", ");
+            builder.append(String.format("[%s, %s]",
+                    getOperandAt(id).getName(),
+                    "%"+getOperandAt(id+1).getName()
+                    ));
             isFirstBranch = false;
         }
 

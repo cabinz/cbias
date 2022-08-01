@@ -38,7 +38,6 @@ public class BinaryOpInst extends Instruction {
         this.addOperandAt(0, lOp);
         this.addOperandAt(1, rOp);
     }
-    //</editor-fold>
 
     @Override
     public String toString() {
