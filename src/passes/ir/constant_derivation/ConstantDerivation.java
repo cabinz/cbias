@@ -125,6 +125,10 @@ public class ConstantDerivation implements IRPass {
         if (expression instanceof CallInst || expression instanceof MemoryInst) {
             return false;
         }
+        // Block Bitcast
+        if (expression instanceof CastInst.Bitcast){
+            return false;
+        }
         // PHI can be derived without constant operands
         if (expression instanceof PhiInst) {
             var phiInst = (PhiInst) expression;

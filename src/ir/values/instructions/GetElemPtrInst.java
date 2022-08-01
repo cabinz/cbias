@@ -51,7 +51,11 @@ public class GetElemPtrInst extends Instruction {
      * @param indices The indices for dereference.
      */
     public GetElemPtrInst(Value ptr, ArrayList<Value> indices) {
-        super(PointerType.getType(getGEPElemType(ptr, indices)), InstCategory.GEP);
+        this(PointerType.getType(getGEPElemType(ptr, indices)), ptr, indices);
+    }
+
+    public GetElemPtrInst(Type retType, Value ptr, ArrayList<Value> indices){
+        super(retType, InstCategory.GEP);
         // The 1st operand of a GEP is the ptr (the address of the array) applied on.
         this.addOperandAt(0, ptr);
         // The following operands are the Values serving as indices.
