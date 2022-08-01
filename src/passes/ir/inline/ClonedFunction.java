@@ -101,7 +101,7 @@ public class ClonedFunction {
             for(int i=1;i<=indexNum;i++){
                 indices.add(ops.get(i));
             }
-            return new GetElemPtrInst(type, ops.get(0),indices);
+            return new GetElemPtrInst(ops.get(0),indices);
         }
         if(source instanceof MemoryInst){
             if(source instanceof MemoryInst.Store){

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 public class GetElemPtrInst extends Instruction {
 
     /**
-     * A private method for GEP constructor to get the Type after dereference of the indices.
+     * A private helper method for GEP constructor to get the Type after dereference of the indices.
      * @param ptr The Value in PointerType (the first address of an array).
      * @param indices The indices for dereference.
      * @return Element Type retrieved by the indices applying on the ptr.
@@ -51,11 +51,7 @@ public class GetElemPtrInst extends Instruction {
      * @param indices The indices for dereference.
      */
     public GetElemPtrInst(Value ptr, ArrayList<Value> indices) {
-        this(PointerType.getType(getGEPElemType(ptr, indices)), ptr, indices);
-    }
-
-    public GetElemPtrInst(Type retType, Value ptr, ArrayList<Value> indices){
-        super(retType, InstCategory.GEP);
+        super(PointerType.getType(getGEPElemType(ptr, indices)), InstCategory.GEP);
         // The 1st operand of a GEP is the ptr (the address of the array) applied on.
         this.addOperandAt(0, ptr);
         // The following operands are the Values serving as indices.
@@ -63,7 +59,6 @@ public class GetElemPtrInst extends Instruction {
             this.addOperandAt(i + 1, indices.get(i));
         }
     }
-
 
     @Override
     public String toString() {
