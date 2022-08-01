@@ -42,6 +42,11 @@ public class MCSmull extends MCInstruction {
                 + ", " + Rm.emit() + ", " + Rn.emit();
     }
 
+    public Register getLow() {return low;}
+    public Register getHigh() {return high;}
+    public Register getRm() {return Rm;}
+    public Register getRn() {return Rn;}
+
     public MCSmull(Register low, Register high, Register rm, Register rn) {
         super(TYPE.SMULL);
         this.high = high;

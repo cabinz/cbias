@@ -463,7 +463,7 @@ public class MCBuilder {
     }
 
     /**
-     * Calculate the result of log_2 n
+     * Calculate the ceil result of log_2 n
      * @param n the integer power of 2
      * @return the result
      */
@@ -483,14 +483,18 @@ public class MCBuilder {
      * @return the created container, maybe register or immediate.
      * @see backend.MCBuilder#canEncodeImm(int)
      */
-    private MCOperand createConstInt(int value){
-        if (canEncodeImm(value))
+    private MCOperand createConstInt(int value, boolean forceAllocReg){
+        if (!forceAllocReg && canEncodeImm(value))
             return new Immediate(value);
         else{
             VirtualRegister vr = curFunc.createVirReg(value);
             curMCBB.appendInst(new MCMove(vr, new Immediate(value), true));
             return vr;
         }
+    }
+
+    private MCOperand createConstInt(int value) {
+        return createConstInt(value, false);
     }
 
     /**
@@ -884,35 +888,76 @@ public class MCBuilder {
         }
     }
 
+    /**
+     * Translate SDIV <br/>
+     * If divisor is constant int, use integer division
+     * @see <a href='https://ridiculousfish.com/blog/posts/labor-of-division-episode-i.html'>Labor of Division (Episode I)</a> <br/>
+     * <a href='https://gmplib.org/~tege/divcnst-pldi94.pdf'>Division by Invariant Integers using Multiplication</a>
+     */
     private void translateSDiv(BinaryOpInst IRinst) {
-        // TODO: 常量除数转乘法
         Value v1 = IRinst.getOperandAt(0);
         Value v2 = IRinst.getOperandAt(1);
 
         Register dst = (Register) findContainer(IRinst);
         Register dividend  = (Register) findContainer(v1, true);
 
-//        if (v2 instanceof ConstInt) {
-//            int divisor = ((ConstInt) v2).getVal();
-//            int abs = divisor>0 ?divisor :-divisor;
-//            if (isPowerOfTwo(abs)) {
-//                MCInstruction.Shift shift = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, log2(abs));
-//                curMCBB.appendInst(new MCMove(dst, dividend, shift, null));
-//            }
-//            else {
-//                var operand2 = findContainer(v2, true);
-//
-//                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, operand2));
-//                return;
-//            }
-//            if (divisor < 0)
-//                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
-//        }
-//        else {
-            var operand2 = findContainer(v2, true);
+        if (v2 instanceof ConstInt) {
+            int divisor = ((ConstInt) v2).getVal();
+            int abs = divisor>0 ?divisor :-divisor;
+            if (isPowerOfTwo(abs)) {
+                int x = log2(abs);
+                var tmp = curFunc.createVirReg(0);
 
-            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, operand2));
-//        }
+                MCInstruction.Shift shift1 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, x-1);
+                curMCBB.appendInst(new MCMove(tmp, dividend, shift1, null));
+
+                MCInstruction.Shift shift2 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.LSR, 32-x);
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, tmp, dividend, tmp, shift2, null));
+
+                MCInstruction.Shift shift3 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, x);
+                curMCBB.appendInst(new MCMove(dst, tmp, shift3, null));
+            }
+            else if (abs == 1) {
+                curMCBB.appendInst(new MCMove(dst, dividend));
+            }
+            /* Integer division */
+            else {
+                int l = log2(divisor) + 1;
+                int sh = l;
+                long low = ((1L << (32+l)) / divisor);
+                long high = (((1L << (32+l)) + (1L << (l+1))) / divisor);
+                while (((low/2) < (high/2)) && sh > 0) {
+                    low = low / 2;
+                    high = high / 2;
+                    sh--;
+                }
+
+                // TODO: better!
+                if (high < (1L << 31)) {
+                    var tmp = curFunc.createVirReg(0);
+                    curMCBB.appendInst(new MCSmull(dst, tmp, (Register) createConstInt((int) high, true), dividend));
+                    MCInstruction.Shift shift1 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh);
+                    curMCBB.appendInst(new MCMove(tmp, tmp, shift1, null));
+                    MCInstruction.Shift shift2 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31);
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp, dividend, shift2, null));
+                }
+                else {
+                    high = high - (1L << 32);
+                    var tmp = curFunc.createVirReg(0);
+                    curMCBB.appendInst(new MCSmull(dst, tmp, (Register) createConstInt((int) high, true), dividend));
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, tmp, tmp, dividend));
+                    curMCBB.appendInst(new MCMove(tmp, tmp, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh), null));
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp, dividend, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31), null));
+                }
+            }
+            if (divisor < 0)
+                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));
+        }
+        else {
+            var divisor = findContainer(v2, true);
+
+            curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, divisor));
+        }
     }
 
     private void translateFloatBinary(BinaryOpInst IRinst, MCInstruction.TYPE type) {

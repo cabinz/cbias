@@ -704,6 +704,17 @@ public class GraphColoring {
                 replace(bi, ((VirtualRegister) shift));
             replace(bi, dst);
         }
+        if (inst instanceof MCSmull) {
+            var smull = (MCSmull) inst;
+            var low = smull.getLow();
+            var high = smull.getHigh();
+            var Rm = smull.getRm();
+            var Rn = smull.getRn();
+            replace(smull, low);
+            replace(smull, high);
+            replace(smull, Rm);
+            replace(smull, Rn);
+        }
         else if (inst instanceof MCcmp) {
             var cmp = ((MCcmp) inst);
             var op1 = cmp.getOperand1();
