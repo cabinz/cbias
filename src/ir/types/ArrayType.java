@@ -23,7 +23,7 @@ public class ArrayType extends Type {
      * <br>
      * e.g. ElemType of [3 x [2 x i32]] is [2 x i32]
      * <br>
-     * If you want to retrieve the ultimate type of the array, use getPrimitiveType().
+     * If you want to retrieve the ultimate type of the array, use getAtomType().
      */
     private Type elemType;
 
@@ -56,15 +56,14 @@ public class ArrayType extends Type {
     }
 
     /**
-     * Return the primitive type of this array.
+     * Return the type of the atom element of the array.
      * In SysY no pointer is supported, thus ultimate elements in arrays can only
      * be in primitive type (in no case be in pointer type or others).
      * <br>
      * e.g. AtomType of [3 x [2 x i32]] is i32
      * @return The ultimate element type on the nesting chain.
      */
-    public PrimitiveType getPrimitiveType() {
-        // TODO: rename as getAtomType
+    public PrimitiveType getAtomType() {
         Type tmp = this;
         while (tmp.isArrayType())
             tmp = ((ArrayType) tmp).getElemType();

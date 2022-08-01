@@ -71,7 +71,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
         Label label;
 
         var type = gv.getType().getRootType();
-        if (type.isIntegerType() || (type.isArrayType() && ((ArrayType) type).getPrimitiveType().isIntegerType())) {
+        if (type.isIntegerType() || (type.isArrayType() && ((ArrayType) type).getAtomType().isIntegerType())) {
             ArrayList<Integer> initial = new ArrayList<>();
             /* When global variable is not initialized, the getInitVal() will return null */
             if (gv.getInitVal() == null) {
