@@ -7,10 +7,7 @@ import backend.armCode.MCBasicBlock;
 import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.*;
-import backend.operand.Immediate;
-import backend.operand.RealRegister;
-import backend.operand.Register;
-import backend.operand.VirtualRegister;
+import backend.operand.*;
 import passes.mc.MCPass;
 
 import java.util.*;
@@ -132,6 +129,7 @@ public class GraphColoring {
     //<editor-fold desc="Tools">
     private MCFunction curFunc;
     private HashMap<MCBasicBlock, LiveInfo> liveInfo;
+    private HashMap<MCOperand, Integer> liveRange;
     private final int INF = 0x3F3F3F3F;
     private HashSet<Integer> usedColor;
     //</editor-fold>
@@ -148,6 +146,7 @@ public class GraphColoring {
             while (true) {
                 Initialize();
                 liveInfo = LivenessAnalysis.run(func);
+                liveRange = LivenessAnalysis.liveRangeAnalysis(func);
                 Build();
                 MakeWorklist();
                 do {
@@ -340,7 +339,7 @@ public class GraphColoring {
      */
     private void SelectSpill() {
         var m = spillWorklist.stream()
-                        .max(Comparator.comparingInt(a -> degree.get(a)))
+                        .max(Comparator.comparingInt(liveRange::get))
                         .get();
         spillWorklist.remove(m);
         simplifyWorklist.add(m);
