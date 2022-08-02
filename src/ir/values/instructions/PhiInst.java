@@ -1,6 +1,7 @@
 package ir.values.instructions;
 
 import ir.Type;
+import ir.Use;
 import ir.Value;
 import ir.values.BasicBlock;
 import ir.values.Instruction;
@@ -104,6 +105,26 @@ public class PhiInst extends Instruction {
     }
 
     @Override
+    public void addOperandAt(int pos, Value val) {
+        if(val instanceof BasicBlock){
+            var use = new Use(val, this, pos){
+                @Override
+                public void setUsee(Value newVal) {
+                    var oldBlock = (BasicBlock) this.getUsee();
+                    var newBlock = (BasicBlock) newVal;
+                    Integer pos = operandMapping.get(oldBlock);
+                    operandMapping.remove(oldBlock);
+                    super.setUsee(newBlock);
+                    operandMapping.put(newBlock, pos);
+                }
+            };
+            super.addUseAt(pos, use);
+        }else{
+            super.addOperandAt(pos,val);
+        }
+    }
+
+    @Override
     public String toString() {
         var builder = new StringBuilder();
         builder.append(this.getName());
@@ -113,8 +134,11 @@ public class PhiInst extends Instruction {
 
         boolean isFirstBranch = true;
         for (Integer id : operandMapping.values()) {
-            builder.append(isFirstBranch ?' ':',');
-            builder.append(String.format("[%s,%s]",getOperandAt(id).getName(),"%"+getOperandAt(id+1).getName()));
+            builder.append(isFirstBranch ? " " : ", ");
+            builder.append(String.format("[%s, %s]",
+                    getOperandAt(id).getName(),
+                    "%"+getOperandAt(id+1).getName()
+                    ));
             isFirstBranch = false;
         }
 

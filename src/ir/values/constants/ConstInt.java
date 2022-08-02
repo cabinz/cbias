@@ -19,6 +19,7 @@ public class ConstInt extends Constant {
         return val;
     }
 
+    @Override
     public boolean isZero() {
         return val == 0;
     }

@@ -49,10 +49,22 @@ public abstract class User extends Value {
         return new LinkedList<>(operands.values());
     }
 
+    /**
+     * Clear all operand use relations from the User.
+     */
     public void clearOperands(){
         for (Use use : getOperands()) {
             use.removeSelf();
         }
+    }
+
+    /**
+     * Returns true if this User contains an operand on the given position.
+     * @param pos The position.
+     * @return Yes or no.
+     */
+    public boolean containsOperandAt(int pos) {
+        return operands.containsKey(pos);
     }
 
     /**
@@ -76,15 +88,20 @@ public abstract class User extends Value {
      * @param val The value to be added as an operand.
      */
     public void addOperandAt(int pos, Value val) {
+        // If not, add the given Value as a new use.
+        var use = new Use(val, this, pos);
+        addUseAt(pos, use);
+    }
+
+
+    protected void addUseAt(int pos, Use use) {
         // Check if there is an existing operand on the given position.
         // If there is, throw an exception.
         if (operands.containsKey(pos)) {
             throw new RuntimeException("Try to add an operand at an occupied position.");
         }
-        // If not, add the given Value as a new use.
-        var use = new Use(val, this, pos);
         this.operands.put(pos, use);
-        val.addUse(use);
+        use.getUsee().addUse(use);
     }
 
     /**

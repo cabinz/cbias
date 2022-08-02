@@ -97,10 +97,7 @@ public class FunctionInlineRaw {
         }
         prevBlock.getUses().forEach(use -> {
             if(use.getUser() instanceof PhiInst){
-                var phiInst = (PhiInst) use.getUser();
-                var value = phiInst.findValue(prevBlock);
-                phiInst.removeMapping(prevBlock);
-                phiInst.addMapping(followingBlock,value);
+                use.setUsee(followingBlock);
             }
         });
         return followingBlock;

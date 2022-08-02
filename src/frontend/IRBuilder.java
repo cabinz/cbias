@@ -112,8 +112,8 @@ public class IRBuilder {
         If the initialization list is shorter than needed,
         filled the blanks with 0 (or .0f).
          */
-        PrimitiveType primType = arrType.getPrimitiveType();
-        while (arrType.getSize() > initList.size()) {
+        Type primType = arrType.getAtomType();
+        while (arrType.getAtomLen() > initList.size()) {
            initList.add(primType.getZero());
         }
 
@@ -124,7 +124,7 @@ public class IRBuilder {
              */
             ArrayList<Constant> nestedInitList = new ArrayList<>();
             int j = 0;
-            int step = arrType.getSize() / arrType.getLen();
+            int step = arrType.getAtomLen() / arrType.getLen();
             while(j < initList.size()) {
                 nestedInitList.add(
                         buildConstArr(

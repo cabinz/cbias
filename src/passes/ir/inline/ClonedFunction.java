@@ -8,7 +8,6 @@ import ir.types.VoidType;
 import ir.values.BasicBlock;
 import ir.values.Function;
 import ir.values.Instruction;
-import ir.values.UndefValue;
 import ir.values.instructions.*;
 
 import java.util.*;
@@ -151,7 +150,7 @@ public class ClonedFunction {
         // value map, basic block map
         for (BasicBlock basicBlock : function) {
             for (Instruction instruction : basicBlock) {
-                valueMap.put(instruction, new UndefValue(VoidType.getType()));
+                valueMap.put(instruction, new DummyValue(VoidType.getType()));
             }
             basicBlockMap.put(basicBlock, new BasicBlock("INLINED_BLOCK"));
         }

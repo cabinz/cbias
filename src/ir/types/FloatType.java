@@ -1,5 +1,6 @@
 package ir.types;
 
+import ir.Type;
 import ir.values.constants.ConstFloat;
 
 /**
@@ -12,7 +13,7 @@ import ir.values.constants.ConstFloat;
  * @see <a href="https://llvm.org/docs/LangRef.html#floating-point-types">
  * LLVM LangRef: Floating Point Type</a>
  */
-public class FloatType extends PrimitiveType {
+public class FloatType extends Type {
 
     //<editor-fold desc="Singleton">
     private FloatType() {

@@ -14,10 +14,12 @@ public class ConstFloat extends Constant {
      */
     private float val;
 
+
     public float getVal() {
         return val;
     }
 
+    @Override
     public boolean isZero() {
         return val == .0f;
     }

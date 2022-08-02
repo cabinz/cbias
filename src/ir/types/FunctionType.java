@@ -1,8 +1,13 @@
 package ir.types;
 
 import ir.Type;
+import ir.values.Constant;
+import ir.values.constants.ConstArray;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Class to represent function types, containing the prototype of a function
@@ -37,23 +42,56 @@ public class FunctionType extends Type {
     }
 
 
-
+    //<editor-fold desc="Singleton">
     private FunctionType(Type retType, ArrayList<Type> argTypes) {
         this.retType = retType;
         this.argTypes = argTypes;
     }
 
+    private static class PrototypeKey {
+        public final ArrayList<Type> types = new ArrayList<>();
+
+        public PrototypeKey(Type retType, List<Type> argTypes) {
+            this.types.add(retType);
+            this.types.addAll(argTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(types);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PrototypeKey that = (PrototypeKey) o;
+            return Objects.equals(types, that.types);
+        }
+    }
+
+    private static HashMap<PrototypeKey, FunctionType> pool = new HashMap<>();
 
     /**
-     * Just a wrapper of the private constructor of FunctionType,
-     * for the sake of interface consistency of retrieving type
-     * instances in Type system.
+     * Retrieve a function signature.
      * @param retType Type of the value returned by the function.
      * @param argTypes List of types of function arguments.
      * @return The prototype of the Function.
      */
     public static FunctionType getType(Type retType, ArrayList<Type> argTypes) {
-        return new FunctionType(retType, argTypes);
+        var key = new PrototypeKey(retType, argTypes);
+        if (pool.containsKey(key)) {
+            return pool.get(key);
+        }
+
+        var newType = new FunctionType(retType, argTypes);
+        pool.put(key, newType);
+        return newType;
     }
 
+    @Override
+    public Constant getZero() {
+        throw new UnsupportedOperationException();
+    }
+    //</editor-fold>
 }
