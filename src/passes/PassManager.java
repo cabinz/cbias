@@ -11,8 +11,8 @@ import passes.ir.inline.FunctionInline;
 import passes.ir.simplify.BlockMerge;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
-import passes.mc.MCPass;
 import passes.mc.buildCFG.BuildCFG;
+import passes.mc.mergeBlock.MergeBlock;
 import passes.mc.registerAllocation.RegisterAllocation;
 
 import java.util.ArrayList;
@@ -59,6 +59,7 @@ public class PassManager {
     public void runPasses(ARMAssemble module){
         run(BuildCFG.class, module);
         run(RegisterAllocation.class, module);
+        run(MergeBlock.class, module);
     }
 
     public void run(Class<?> passClass, Module module){
@@ -113,6 +114,7 @@ public class PassManager {
             ArrayList<MCPass> MCPasses = new ArrayList<>();
             MCPasses.add(new BuildCFG());
             MCPasses.add(new RegisterAllocation());
+            MCPasses.add(new MergeBlock());
             registerMCPasses(MCPasses);
         }
         return instance;
