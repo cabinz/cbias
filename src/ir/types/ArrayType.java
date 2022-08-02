@@ -131,10 +131,6 @@ public class ArrayType extends PrimitiveType {
 
     @Override
     public Constant getZero() {
-        ArrayList<Constant> initList = new ArrayList<>();
-        for (int i = 0; i < this.getLen(); i++) {
-            initList.add(((PrimitiveType) this.getElemType()).getZero());
-        }
-        return ConstArray.get(this, initList);
+        return ConstArray.get(this, new ArrayList<Constant>());
     }
 }

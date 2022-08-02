@@ -11,14 +11,23 @@ import java.util.*;
 /**
  * Class for (integer/float) constant array in initialization.
  * All the Constants in the array will be the operands of it.
+ * <br>
+ * In our cases, zero elements in the array will not be in the
+ * operand list for the sake of memory saving. Thus, those entries
+ * will be null (User::containsOperandAt -> false). Factually, since
+ * ConstArray is already a Constant, opt like constant derivation will
+ * no longer attempt to track down the using chain. So operands are just
+ * use as a container for the elements with no actually use-def semantics.
  */
 public class ConstArray extends Constant {
 
     //<editor-fold desc="Singleton">
     /**
-     * Construct a constant array.
+     * Construct a constant array. The blanks that are not initialized with
+     * Values in initList will be filled with corresponding zero Values.
      * @param arrType  ArrayType for the array.
      * @param initList ArrayList of Constants for initializing the ConstArray.
+     *                 The list needs to have no zero elements at its end.
      */
     private ConstArray(ArrayType arrType, ArrayList<Constant> initList) {
         super(arrType);
@@ -27,7 +36,7 @@ public class ConstArray extends Constant {
         for (int i = 0; i < initList.size(); i++) {
             Constant elem = initList.get(i);
             if (!elem.isZero()) {
-                addOperandAt(i, elem);
+                super.addOperandAt(i, elem);
             }
         }
     }
@@ -59,24 +68,22 @@ public class ConstArray extends Constant {
 
     /**
      * Retrieve a constant array with a list of initial values (Constants).
-     * A Singleton fashion interface, but work with a normal class constructor without
-     * instance pooling.
-     *
+     * The blanks that are not initialized with Values in initList will be
+     * filled with corresponding zero Values.
      * @param arrType  The ArrayType.
      * @param initList ArrayList of Constants in a same Type.
-     *                 The length of it needs to match with the arrType.
      * @return The ConstArray instance required.
      */
     public static ConstArray get(ArrayType arrType, ArrayList<Constant> initList) {
         //<editor-fold desc="Security checks">
 
-        // Check length.
-        if (initList.size() == 0) {
-            throw new RuntimeException("Try to retrieve a ConstArray with length of 0.");
-        }
-        if (initList.size() != arrType.getLen()) {
-            throw new RuntimeException("Array Type length doesn't match the length of the init list.");
-        }
+//        // Check length.
+//        if (initList.size() == 0) {
+//            throw new RuntimeException("Try to retrieve a ConstArray with length of 0.");
+//        }
+//        if (initList.size() != arrType.getLen()) {
+//            throw new RuntimeException("Array Type length doesn't match the length of the init list.");
+//        }
         // Check type.
         for (Constant elem : initList) {
             if (arrType.getElemType() != elem.getType()) {
@@ -88,9 +95,18 @@ public class ConstArray extends Constant {
 
         //</editor-fold>
 
-        /*
-        Retrieve the instance and return it.
-         */
+        // Process initList: remove all zero values at the end.
+        for (int i = initList.size() - 1; i > 0; i--) {
+            Constant elem = initList.get(i);
+            if (elem.isZero()) {
+                initList.remove(i);
+            }
+            else {
+                break;
+            }
+        }
+
+        // Retrieve the instance and return it.
         var key = new ConstArrKey(arrType, initList);
         if (pool.containsKey(key)) {
             return pool.get(key);
@@ -135,6 +151,18 @@ public class ConstArray extends Constant {
     }
 
     /**
+     * Retrieve a list of all array's elements.
+     * @return The list containing all elements in the array.
+     */
+    public Iterable<Constant> getElements() {
+        LinkedList<Constant> list = new LinkedList<>();
+        for (int i = 0; i < this.getNumOperands(); i++) {
+            list.add((Constant) this.getOperandAt(i));
+        }
+        return list;
+    }
+
+    /**
      * Retrieve the ArrayType of the array.
      * @return ArrayType of the array.
      */
@@ -145,8 +173,8 @@ public class ConstArray extends Constant {
 
     @Override
     public boolean isZero() {
-        for (Use use : this.getOperands()) {
-            if (!((Constant) use.getUsee()).isZero()) {
+        for (int i = 0; i < this.getNumOperands(); i++) {
+            if (!this.getOperandAt(i).isZero()) {
                 return false;
             }
         }
@@ -154,22 +182,27 @@ public class ConstArray extends Constant {
     }
 
     @Override
-    public Value getOperandAt(int pos) {
+    public Constant getOperandAt(int pos) {
         if (pos < 0 || pos >= this.getType().getLen()) {
             throw new RuntimeException("Index out of range of the array.");
         }
 
         if (!this.containsOperandAt(pos)) {
-            return this.getType().getZero();
+            return ((PrimitiveType) this.getType().getElemType()).getZero();
         }
         else {
-            return super.getOperandAt(pos);
+            return (Constant) super.getOperandAt(pos);
         }
     }
 
     @Override
     public int getNumOperands() {
         return this.getType().getLen();
+    }
+
+    @Override
+    public LinkedList<Use> getOperands() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
