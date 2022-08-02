@@ -56,6 +56,15 @@ public abstract class User extends Value {
     }
 
     /**
+     * Returns true if this User contains an operand on the given position.
+     * @param pos The position.
+     * @return Yes or no.
+     */
+    public boolean containsOperandAt(int pos) {
+        return operands.containsKey(pos);
+    }
+
+    /**
      * Retrieve a value used at a specified position.
      * An exception will be thrown if no operand exists on the given position.
      * @param pos The position of the target operands.

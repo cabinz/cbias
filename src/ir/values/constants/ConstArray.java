@@ -23,9 +23,12 @@ public class ConstArray extends Constant {
     private ConstArray(ArrayType arrType, ArrayList<Constant> initList) {
         super(arrType);
 
-        // Add all none zero operands.
+        // To save memory spaces, add only none zero operands into the container.
         for (int i = 0; i < initList.size(); i++) {
-            addOperandAt(i, initList.get(i));
+            Constant elem = initList.get(i);
+            if (!elem.isZero()) {
+                addOperandAt(i, elem);
+            }
         }
     }
 
@@ -148,5 +151,39 @@ public class ConstArray extends Constant {
             }
         }
         return true;
+    }
+
+    @Override
+    public Value getOperandAt(int pos) {
+        if (pos < 0 || pos >= this.getType().getLen()) {
+            throw new RuntimeException("Index out of range of the array.");
+        }
+
+        if (!this.containsOperandAt(pos)) {
+            return this.getType().getZero();
+        }
+        else {
+            return super.getOperandAt(pos);
+        }
+    }
+
+    @Override
+    public int getNumOperands() {
+        return this.getType().getLen();
+    }
+
+    @Override
+    public void setOperandAt(int pos, Value val) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeOperandAt(int pos) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addOperandAt(int pos, Value val) {
+        throw new UnsupportedOperationException();
     }
 }
