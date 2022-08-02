@@ -112,7 +112,7 @@ public class IRBuilder {
         If the initialization list is shorter than needed,
         filled the blanks with 0 (or .0f).
          */
-        PrimitiveType primType = arrType.getAtomType();
+        Type primType = arrType.getAtomType();
         while (arrType.getAtomLen() > initList.size()) {
            initList.add(primType.getZero());
         }

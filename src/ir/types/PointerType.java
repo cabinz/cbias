@@ -1,6 +1,7 @@
 package ir.types;
 
 import ir.Type;
+import ir.values.Constant;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -104,5 +105,10 @@ public class PointerType extends Type {
     public String toString() {
         // e.g. "i32*" and "i1*"
         return pointeeType.toString() + "*";
+    }
+
+    @Override
+    public Constant getZero() {
+        throw new UnsupportedOperationException();
     }
 }

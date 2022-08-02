@@ -1,5 +1,6 @@
 package ir.types;
 
+import ir.Type;
 import ir.values.constants.ConstInt;
 
 /**
@@ -8,7 +9,7 @@ import ir.values.constants.ConstInt;
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/DerivedTypes.h#L40">
  * LLVM LangRef: Integer Type</a>
  */
-public class IntegerType extends PrimitiveType {
+public class IntegerType extends Type {
 
     /**
      * Field to represent the bit width of the integer type (1 or 32).

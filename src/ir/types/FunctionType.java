@@ -1,6 +1,8 @@
 package ir.types;
 
 import ir.Type;
+import ir.values.Constant;
+import ir.values.constants.ConstArray;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -85,6 +87,11 @@ public class FunctionType extends Type {
         var newType = new FunctionType(retType, argTypes);
         pool.put(key, newType);
         return newType;
+    }
+
+    @Override
+    public Constant getZero() {
+        throw new UnsupportedOperationException();
     }
     //</editor-fold>
 }

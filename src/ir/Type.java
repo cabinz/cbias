@@ -1,6 +1,7 @@
 package ir;
 
 import ir.types.*;
+import ir.values.Constant;
 
 /**
  * Each Value instance has a type field containing type information related to it as an IR component.
@@ -62,8 +63,5 @@ public abstract class Type {
         return (this instanceof ArrayType);
     }
 
-    public boolean isPrimitiveType() {
-        return (this instanceof PrimitiveType);
-    }
-
+    public abstract Constant getZero();
 }

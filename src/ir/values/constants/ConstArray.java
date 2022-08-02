@@ -3,7 +3,6 @@ package ir.values.constants;
 import ir.Use;
 import ir.Value;
 import ir.types.ArrayType;
-import ir.types.PrimitiveType;
 import ir.values.Constant;
 
 import java.util.*;
@@ -188,7 +187,7 @@ public class ConstArray extends Constant {
         }
 
         if (!this.containsOperandAt(pos)) {
-            return ((PrimitiveType) this.getType().getElemType()).getZero();
+            return this.getType().getElemType().getZero();
         }
         else {
             return (Constant) super.getOperandAt(pos);

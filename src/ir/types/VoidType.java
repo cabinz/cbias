@@ -11,7 +11,7 @@ import ir.values.Constant;
  * @see <a href="https://llvm.org/docs/LangRef.html#void-type">
  * LLVM LangRef: Void Type</a>
  */
-public class VoidType extends PrimitiveType {
+public class VoidType extends Type {
     private static ir.types.VoidType type = new ir.types.VoidType();
 
     private VoidType() {

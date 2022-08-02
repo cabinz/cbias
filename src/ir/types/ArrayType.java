@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Objects;
 
 
-public class ArrayType extends PrimitiveType {
+public class ArrayType extends Type {
 
     /**
      * The length of the array (in the immediately accessible layer).
@@ -66,11 +66,12 @@ public class ArrayType extends PrimitiveType {
      * e.g. AtomType of [3 x [2 x i32]] is i32
      * @return The ultimate element type on the nesting chain.
      */
-    public PrimitiveType getAtomType() {
+    public Type getAtomType() {
         Type tmp = this;
-        while (tmp.isArrayType())
+        while (tmp.isArrayType()) {
             tmp = ((ArrayType) tmp).getElemType();
-        return (PrimitiveType) tmp;
+        }
+        return tmp;
     }
 
 
