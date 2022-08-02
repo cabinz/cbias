@@ -1,8 +1,10 @@
 package passes.ir.simplify;
 
 import ir.Module;
+import ir.Use;
 import ir.values.Function;
 import ir.values.Instruction;
+import ir.values.instructions.TerminatorInst;
 import passes.PassManager;
 import passes.ir.IRPass;
 import passes.ir.RelationAnalysis;
@@ -45,6 +47,25 @@ public class BlockMerge implements IRPass {
             var prevBB = (BasicBlock) basicBlock.prevBlocks.toArray()[0];
             combine(basicBlockMap, prevBB, basicBlock);
         }
+
+        /*
+        // Single br block elimination
+        for (BasicBlock basicBlock : basicBlockMap.values()) {
+            if(basicBlock.getRawBasicBlock().size()==1&&basicBlock.followingBlocks.size()==1){
+                queue.add(basicBlock);
+            }
+        }
+        while (!queue.isEmpty()){
+            BasicBlock basicBlock = queue.remove();
+            var followingBlock = (BasicBlock) basicBlock.followingBlocks.toArray()[0];
+            for (Use use : basicBlock.getRawBasicBlock().getUses()) {
+                var user = use.getUser();
+                if(user instanceof TerminatorInst.Br){
+                    use.setUsee(followingBlock.getRawBasicBlock());
+                }
+            }
+        }
+        */
     }
 
     /**

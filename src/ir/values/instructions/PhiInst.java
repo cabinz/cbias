@@ -110,10 +110,12 @@ public class PhiInst extends Instruction {
             var use = new Use(val, this, pos){
                 @Override
                 public void setUsee(Value newVal) {
-                    var oldVal = (BasicBlock) this.getUsee();
-                    Integer pos = operandMapping.get(oldVal);
-                    super.setUsee(newVal);
-                    operandMapping.put((BasicBlock) newVal, pos);
+                    var oldBlock = (BasicBlock) this.getUsee();
+                    var newBlock = (BasicBlock) newVal;
+                    Integer pos = operandMapping.get(oldBlock);
+                    operandMapping.remove(oldBlock);
+                    super.setUsee(newBlock);
+                    operandMapping.put(newBlock, pos);
                 }
             };
             super.addUseAt(pos, use);
