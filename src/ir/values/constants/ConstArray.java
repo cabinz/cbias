@@ -97,12 +97,10 @@ public class ConstArray extends Constant {
         // Process initList: remove all zero values at the end.
         for (int i = initList.size() - 1; i > 0; i--) {
             Constant elem = initList.get(i);
-            if (elem.isZero()) {
-                initList.remove(i);
-            }
-            else {
+            if (!elem.isZero()) {
                 break;
             }
+            initList.remove(i);
         }
 
         // Retrieve the instance and return it.

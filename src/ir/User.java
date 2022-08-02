@@ -49,6 +49,9 @@ public abstract class User extends Value {
         return new LinkedList<>(operands.values());
     }
 
+    /**
+     * Clear all operand use relations from the User.
+     */
     public void clearOperands(){
         for (Use use : getOperands()) {
             use.removeSelf();
@@ -89,6 +92,7 @@ public abstract class User extends Value {
         var use = new Use(val, this, pos);
         addUseAt(pos, use);
     }
+
 
     protected void addUseAt(int pos, Use use) {
         // Check if there is an existing operand on the given position.
