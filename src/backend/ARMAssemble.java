@@ -71,29 +71,27 @@ public class ARMAssemble implements Iterable<MCFunction>{
 
         var type = gv.getType().getRootType();
         if (type.isIntegerType() || (type.isArrayType() && ((ArrayType) type).getAtomType().isIntegerType())) {
-            ArrayList<Integer> initial = new ArrayList<>();
-            /* When global variable is not initialized, the getInitVal() will return null */
+            /* When global array variable is not initialized, the getInitVal() will return null */
             if (gv.getInitVal() == null) {
-                int size = ((ArrayType) gv.getVariableType()).getAtomLen();
-                while ((size--) != 0) initial.add(0);
+                label = new Label(gv.getName().substring(1), Label.TAG.Int, ((ArrayType) type).getAtomLen());
             }
-            else
+            else {
+                ArrayList<Integer> initial = new ArrayList<>();
                 genInitial(gv.getInitVal(), initial);
-
-            /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
-            label = new Label(gv.getName().substring(1), Label.TAG.Int, initial);
+                /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
+                label = new Label(gv.getName().substring(1), Label.TAG.Int, initial);
+            }
         }
         else {
-            ArrayList<Float> initial = new ArrayList<>();
             if (gv.getInitVal() == null) {
-                int size = ((ArrayType) gv.getVariableType()).getAtomLen();
-                while ((size--) != 0) initial.add(0.0f);
+                label = new Label(gv.getName().substring(1), Label.TAG.Float, ((ArrayType) type).getAtomLen());
             }
-            else
+            else {
+                ArrayList<Float> initial = new ArrayList<>();
                 genInitial(gv.getInitVal(), initial);
-
-            /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
-            label = new Label(gv.getName().substring(1), Label.TAG.Float, initial);
+                /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
+                label = new Label(gv.getName().substring(1), Label.TAG.Float, initial);
+            }
         }
 
         globalVars.add(label);

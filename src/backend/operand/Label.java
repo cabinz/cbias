@@ -15,8 +15,11 @@ public class Label extends MCOperand {
     private final String name;
     private final TAG tag;
     private final ArrayList initial;
+    private final int size;
 
-    public boolean isArray() {return initial.size() != 1;}
+    public boolean isArray() {return size != 1;}
+
+    public int getSize() {return size;}
 
     public ArrayList getInitial() {return initial;}
 
@@ -32,5 +35,14 @@ public class Label extends MCOperand {
         this.name = name;
         this.tag = tag;
         this.initial = initial;
+        this.size = initial.size();
+    }
+
+    public Label(String name, TAG tag, int size) {
+        super(TYPE.GBV);
+        this.name = name;
+        this.tag = tag;
+        this.initial = null;
+        this.size = size;
     }
 }
