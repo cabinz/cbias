@@ -1,6 +1,7 @@
 package ir.values.instructions;
 
 import ir.Type;
+import ir.Use;
 import ir.Value;
 import ir.values.BasicBlock;
 import ir.values.Instruction;
@@ -101,6 +102,24 @@ public class PhiInst extends Instruction {
     public void clearOperands() {
         super.clearOperands();
         operandMapping.clear();
+    }
+
+    @Override
+    public void addOperandAt(int pos, Value val) {
+        if(val instanceof BasicBlock){
+            var use = new Use(val, this, pos){
+                @Override
+                public void setUsee(Value newVal) {
+                    var oldVal = (BasicBlock) this.getUsee();
+                    Integer pos = operandMapping.get(oldVal);
+                    super.setUsee(newVal);
+                    operandMapping.put((BasicBlock) newVal, pos);
+                }
+            };
+            super.addUseAt(pos, use);
+        }else{
+            super.addOperandAt(pos,val);
+        }
     }
 
     @Override
