@@ -7,8 +7,8 @@ import ir.types.*;
  * <br>
  * The instances of the Type class are immutable: once they are created, they are never changed.
  * Only one instance of a particular type is ever created. To enforce this, all most all Type instances
- * exist in singleton fashion. (There are also exceptions like FunctionType and PointerType for
- * the sake of implementation convenience)
+ * exist in singleton fashion. Thus, "==" or Object::equals (address comparison by default) can be directly
+ * used for comparing two Types (checking if two Value are in the same Type).
  * <br>
  * In the case of SysY needed only a subset of LLVM IR type system, we categorize Types as below:
  * <ul>
