@@ -22,7 +22,7 @@ import java.util.ArrayList;
 public class GetElemPtrInst extends Instruction {
 
     /**
-     * A private method for GEP constructor to get the Type after dereference of the indices.
+     * A private helper method for GEP constructor to get the Type after dereference of the indices.
      * @param ptr The Value in PointerType (the first address of an array).
      * @param indices The indices for dereference.
      * @return Element Type retrieved by the indices applying on the ptr.
@@ -31,9 +31,8 @@ public class GetElemPtrInst extends Instruction {
         if(!ptr.getType().isPointerType()) {
             throw new RuntimeException("getElemType/GEP gets a non-pointer Value argument.");
         }
-        Type pointeeType = ((PointerType) ptr.getType()).getPointeeType();
 
-        Type retType = pointeeType;
+        Type retType = ((PointerType) ptr.getType()).getPointeeType();
         for (int i = 1; i < indices.size(); i++) {
             if (!retType.isArrayType()) {
                 throw new RuntimeException("getElemType gets indices exceeding the nesting depth of the pointer.");
@@ -54,6 +53,14 @@ public class GetElemPtrInst extends Instruction {
         this(PointerType.getType(getGEPElemType(ptr, indices)), ptr, indices);
     }
 
+
+    /**
+     * This is a raw constructor of GEP allowing user to specify return type of it,
+     * because ptr can be a DummyValue from which the return type cannot be inferred.
+     * @param retType Return type specified manually.
+     * @param ptr     The Value for GEP (can be a DummyValue).
+     * @param indices The indices for dereference.
+     */
     public GetElemPtrInst(Type retType, Value ptr, ArrayList<Value> indices){
         super(retType, InstCategory.GEP);
         // The 1st operand of a GEP is the ptr (the address of the array) applied on.
