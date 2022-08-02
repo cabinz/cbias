@@ -1,8 +1,6 @@
 package backend.armCode;
 
 
-import ir.values.BasicBlock;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -28,6 +26,7 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
 
 
     //<editor-fold desc="Useful methods">
+    //<editor-fold desc="Instructions">
     public void prependInst(MCInstruction inst) {
         instructionList.addFirst(inst);
         inst.setBelongBB(this);
@@ -52,15 +51,21 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
 
     public int getIndex(MCInstruction inst) {return instructionList.indexOf(inst);}
 
-    public void addPredecessor(MCBasicBlock BB) {predecessors.add(BB);}
-
-    public MCBasicBlock findMCBB(BasicBlock IRBB) {return belongFunc.findMCBB(IRBB);}
-
     public MCInstruction getFirstInst() {return instructionList.getFirst();}
 
     public MCInstruction getLastInst() {return instructionList.getLast();}
 
     public Iterator<MCInstruction> iterator() {return instructionList.iterator();}
+    //</editor-fold>
+
+    public void addPredecessor(MCBasicBlock BB) {predecessors.add(BB);}
+
+    public void removeSelf() {belongFunc.removeBB(this);}
+
+    public void appendAndRemove(MCBasicBlock bb) {
+        instructionList.addAll(bb.getInstructionList());
+        bb.removeSelf();
+    }
     //</editor-fold>
 
     public String emit() {
@@ -77,7 +82,6 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     public void setBelongFunc(MCFunction belongFunc) {this.belongFunc = belongFunc;}
 
     public ArrayList<MCBasicBlock> getPredecessors() {return predecessors;}
-    public void setPredecessors(ArrayList<MCBasicBlock> predecessors) {this.predecessors = predecessors;}
 
     public MCBasicBlock getFalseSuccessor() {return falseSuccessor;}
     public void setFalseSuccessor(MCBasicBlock falseSuccessor) {this.falseSuccessor = falseSuccessor;}

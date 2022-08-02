@@ -665,9 +665,9 @@ public class MCBuilder {
             if (IRinst.getOperandAt(0) instanceof ConstInt) {
                 int cond = ((ConstInt) IRinst.getOperandAt(0)).getVal();
                 if (cond == 0)
-                    curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(2))));
+                    curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(2))));
                 else
-                    curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(1))));
+                    curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(1))));
             }
             else {
                 MCInstruction.ConditionField cond = dealCmpOpr((BinaryOpInst) IRinst.getOperandAt(0), false);
@@ -676,7 +676,7 @@ public class MCBuilder {
             }
         }
         else {
-            curMCBB.appendInst(new MCbranch(curMCBB.findMCBB((BasicBlock) IRinst.getOperandAt(0))));
+            curMCBB.appendInst(new MCbranch(curFunc.findMCBB((BasicBlock) IRinst.getOperandAt(0))));
         }
     }
 

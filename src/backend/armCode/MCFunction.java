@@ -212,6 +212,10 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     }
     //</editor-fold>
 
+    public void removeBB(MCBasicBlock bb) {
+        BasicBlockList.remove(bb);
+    }
+
     /**
      * Iterable implement
      * @return Iterator<MCBasicBlock>
