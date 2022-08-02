@@ -3,6 +3,8 @@ package ir.types;
 import ir.Type;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 
 
 public class ArrayType extends Type {
@@ -70,6 +72,7 @@ public class ArrayType extends Type {
     }
 
 
+    //<editor-fold desc="Singleton">
     private ArrayType(Type elemType, int len) {
         if (len <= 0) {
             throw new RuntimeException("Try to build a ArrayType with a non-positive length.\n");
@@ -79,10 +82,44 @@ public class ArrayType extends Type {
         this.len = len;
     }
 
-    
-    public static ArrayType getType(Type elemType, int len) {
-        return new ArrayType(elemType, len);
+    private static class DimLensKey {
+        public final ArrayList<Integer> dimLens = new ArrayList<>();
+
+        public DimLensKey(Type elemType, int len) {
+            this.dimLens.add(len);
+            if (elemType.isArrayType()) {
+                this.dimLens.addAll(((ArrayType) elemType).getDimLens());
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dimLens);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DimLensKey that = (DimLensKey) o;
+            return Objects.equals(dimLens, that.dimLens);
+        }
     }
+
+    private final static HashMap<DimLensKey, ArrayType> pool = new HashMap<>();
+
+    public static ArrayType getType(Type elemType, int len) {
+        var key = new DimLensKey(elemType, len);
+        if (pool.containsKey(key)) {
+            return pool.get(key);
+        }
+
+        var newType = new ArrayType(elemType, len);
+        pool.put(key, newType);
+        return newType;
+    }
+    //</editor-fold>
+
 
     @Override
     public String toString() {

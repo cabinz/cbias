@@ -4,7 +4,7 @@ import ir.Type;
 import ir.values.Constant;
 
 /**
- * Nested Class: The void type does not represent any value and has no size.
+ * The void type does not represent any value and has no size.
  * e.g. Functions returning void has VoidType,
  * Instructions yielding no result has VoidType.
  *
