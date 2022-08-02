@@ -6,15 +6,76 @@ import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.MCbranch;
 import backend.operand.ExtensionRegister;
+import backend.operand.MCOperand;
 import backend.operand.Register;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 /**
  * Liveness analyze
  */
 public class LivenessAnalysis {
+
+    public static HashMap<MCOperand, Integer> liveRangeAnalysis(MCFunction func) {
+        var liveRange = new HashMap<MCOperand, Integer>();
+        var first = new HashMap<MCOperand, Integer>();
+        var last = new HashMap<MCOperand, Integer>();
+        int pc = 0;
+
+        var q = new LinkedList<MCBasicBlock>();
+        var visited = new HashSet<MCBasicBlock>();
+        q.addLast(func.getEntryBlock());
+
+        /* BFS */
+        while (!q.isEmpty()) {
+            var dealing = q.getFirst();
+            q.removeFirst();
+            visited.add(dealing);
+
+            var next = dealing.getTrueSuccessor();
+            if (next != null && !visited.contains(next)) {
+                q.addLast(next);
+                visited.add(next);
+            }
+            next = dealing.getFalseSuccessor();
+            if (next != null && !visited.contains(next)) {
+                q.addLast(next);
+                visited.add(next);
+            }
+
+            for (MCInstruction inst : dealing) {
+                pc++;
+                for (var def : inst.getDef()) {
+                    if (!first.containsKey(def)) {
+                        first.put(def, pc);
+                    }
+                }
+                for (var use : inst.getUse()) {
+                    last.put(use, pc);
+                }
+
+                if (inst instanceof MCFPInstruction) {
+                    var vfpInst = ((MCFPInstruction) inst);
+                    for (var def : vfpInst.getExtDef()) {
+                        if (!first.containsKey(def)) {
+                            first.put(def, pc);
+                        }
+                    }
+                    for (var use : vfpInst.getExtUse()) {
+                        last.put(use, pc);
+                    }
+                }
+            }
+        }
+
+        for (var x : last.keySet()) {
+            liveRange.put(x, last.get(x)-first.getOrDefault(x, pc));
+        }
+
+        return liveRange;
+    }
 
     public static HashMap<MCBasicBlock, LiveInfo> run(MCFunction func){
         var liveMap = new HashMap<MCBasicBlock, LiveInfo>();

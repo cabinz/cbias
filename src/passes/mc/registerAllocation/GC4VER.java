@@ -126,6 +126,7 @@ public class GC4VER {
     //<editor-fold desc="Tools">
     private MCFunction curFunc;
     private HashMap<MCBasicBlock, LiveInfo> liveInfo;
+    private HashMap<MCOperand, Integer> liveRange;
     private final int INF = 0x3F3F3F3F;
     private HashSet<Integer> usedColor;
     //</editor-fold>
@@ -142,6 +143,7 @@ public class GC4VER {
             while (true) {
                 Initialize();
                 liveInfo = LivenessAnalysis.run(func);
+                liveRange = LivenessAnalysis.liveRangeAnalysis(func);
                 Build();
                 MakeWorklist();
                 do {
@@ -351,7 +353,7 @@ public class GC4VER {
      */
     private void SelectSpill() {
         var m = spillWorklist.stream()
-                .max(Comparator.comparingInt(a -> degree.get(a)))
+                .max(Comparator.comparingInt(liveRange::get))
                 .get();
         spillWorklist.remove(m);
         simplifyWorklist.add(m);
