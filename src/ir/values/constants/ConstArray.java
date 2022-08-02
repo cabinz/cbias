@@ -154,7 +154,7 @@ public class ConstArray extends Constant {
     public Iterable<Constant> getElements() {
         LinkedList<Constant> list = new LinkedList<>();
         for (int i = 0; i < this.getNumOperands(); i++) {
-            list.add((Constant) this.getOperandAt(i));
+            list.add(this.getOperandAt(i));
         }
         return list;
     }
@@ -170,12 +170,7 @@ public class ConstArray extends Constant {
 
     @Override
     public boolean isZero() {
-        for (int i = 0; i < this.getNumOperands(); i++) {
-            if (!this.getOperandAt(i).isZero()) {
-                return false;
-            }
-        }
-        return true;
+        return this == this.getType().getZero();
     }
 
     @Override
