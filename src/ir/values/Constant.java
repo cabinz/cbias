@@ -24,4 +24,5 @@ public abstract class Constant extends User {
         super(type);
     }
 
+    public abstract boolean isZero();
 }
