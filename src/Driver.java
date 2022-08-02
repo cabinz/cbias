@@ -38,7 +38,7 @@ public class Driver{
         visitor.visit(ast);
 
         /* Intermediate code optimization */
-        PassManager.getInstance().runPasses(module);
+//        PassManager.getInstance().runPasses(module);
 
         /* Emit the IR text to an output file for testing. */
         if (config.llOut != null) {

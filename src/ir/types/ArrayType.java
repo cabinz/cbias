@@ -82,34 +82,35 @@ public class ArrayType extends Type {
         this.len = len;
     }
 
-    private static class DimLensKey {
-        public final ArrayList<Integer> dimLens = new ArrayList<>();
+    private static class DimInfoKey {
+        public final Type elemType;
+        public final int len;
 
-        public DimLensKey(Type elemType, int len) {
-            this.dimLens.add(len);
-            if (elemType.isArrayType()) {
-                this.dimLens.addAll(((ArrayType) elemType).getDimLens());
-            }
+
+        public DimInfoKey(Type elemType, int len) {
+            this.elemType = elemType;
+            this.len = len;
         }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(dimLens);
-        }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            DimLensKey that = (DimLensKey) o;
-            return Objects.equals(dimLens, that.dimLens);
+            DimInfoKey that = (DimInfoKey) o;
+            return len == that.len && Objects.equals(elemType, that.elemType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(elemType, len);
         }
     }
 
-    private final static HashMap<DimLensKey, ArrayType> pool = new HashMap<>();
+    private final static HashMap<DimInfoKey, ArrayType> pool = new HashMap<>();
 
     public static ArrayType getType(Type elemType, int len) {
-        var key = new DimLensKey(elemType, len);
+        var key = new DimInfoKey(elemType, len);
         if (pool.containsKey(key)) {
             return pool.get(key);
         }
