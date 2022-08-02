@@ -71,8 +71,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
 
         var type = gv.getType().getRootType();
         if (type.isIntegerType() || (type.isArrayType() && ((ArrayType) type).getAtomType().isIntegerType())) {
-            /* When global array variable is not initialized, the getInitVal() will return null */
-            if (gv.getInitVal() == null) {
+            if (gv.getInitVal().isZero()) {
                 label = new Label(gv.getName().substring(1), Label.TAG.Int, ((ArrayType) type).getAtomLen());
             }
             else {
@@ -83,7 +82,7 @@ public class ARMAssemble implements Iterable<MCFunction>{
             }
         }
         else {
-            if (gv.getInitVal() == null) {
+            if (gv.getInitVal().isZero()) {
                 label = new Label(gv.getName().substring(1), Label.TAG.Float, ((ArrayType) type).getAtomLen());
             }
             else {
