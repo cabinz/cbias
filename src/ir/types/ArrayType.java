@@ -1,13 +1,15 @@
 package ir.types;
 
 import ir.Type;
+import ir.values.Constant;
+import ir.values.constants.ConstArray;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
 
-public class ArrayType extends Type {
+public class ArrayType extends PrimitiveType {
 
     /**
      * The length of the array (in the immediately accessible layer).
@@ -125,5 +127,14 @@ public class ArrayType extends Type {
     @Override
     public String toString() {
         return "[" + len + " x " + elemType.toString() + "]";
+    }
+
+    @Override
+    public Constant getZero() {
+        ArrayList<Constant> initList = new ArrayList<>();
+        for (int i = 0; i < this.getLen(); i++) {
+            initList.add(((PrimitiveType) this.getElemType()).getZero());
+        }
+        return ConstArray.get(this, initList);
     }
 }
