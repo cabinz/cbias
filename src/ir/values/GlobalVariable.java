@@ -3,8 +3,7 @@ package ir.values;
 import ir.Type;
 import ir.User;
 import ir.types.PointerType;
-import ir.values.constants.ConstFloat;
-import ir.values.constants.ConstInt;
+import ir.types.PrimitiveType;
 
 /**
  * A GlobalVariable refers to a block of memory that can be determined at compilation time.
@@ -54,9 +53,6 @@ public class GlobalVariable extends User {
     /**
      * Represent the initial value specified in the statement.
      * <br>
-     * Only for uninitialized global arrays, initVal will be null
-     * (emitting "zeroinitializer" correspondingly in LLVM IR)
-     * <br>
      * The actual value of a non-constant glb var can be change
      * by other instructions, after which the initVal makes no
      * sense to this Value no more.
@@ -88,15 +84,7 @@ public class GlobalVariable extends User {
         super(PointerType.getType(type));
         this.setGvName(name);
 
-        if(type.isIntegerType()) {
-            this.initVal = ConstInt.getI32(0);
-        }
-        else if (type.isFloatType()) {
-            this.initVal = ConstFloat.get(.0f);
-        }
-        else if (type.isArrayType()) {
-            this.initVal = null;
-        }
+        this.initVal = ((PrimitiveType) type).getZero();
     }
 
     /**
@@ -137,7 +125,7 @@ public class GlobalVariable extends User {
                 .append(this.isConstant() ? "constant " : "global "); // "[global | constant] "
 
         // uninitialized array
-        if (initVal == null) {
+        if (initVal.isZero()) {
             Type arrType = this.getType().getPointeeType();
             strBuilder.append(arrType)
                     .append(" zeroinitializer");
