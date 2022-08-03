@@ -169,11 +169,6 @@ public class ConstArray extends Constant {
     }
 
     @Override
-    public boolean isZero() {
-        return this == this.getType().getZero();
-    }
-
-    @Override
     public Constant getOperandAt(int pos) {
         if (pos < 0 || pos >= this.getType().getLen()) {
             throw new RuntimeException("Index out of range of the array.");

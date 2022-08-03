@@ -13,17 +13,11 @@ public class ConstInt extends Constant {
     /**
      * The arithmetic value of the constant integer.
      */
-    private int val;
+    private final int val;
 
     public int getVal() {
         return val;
     }
-
-    @Override
-    public boolean isZero() {
-        return val == 0;
-    }
-
 
     //<editor-fold desc="Singleton">
 
@@ -34,7 +28,7 @@ public class ConstInt extends Constant {
     }
 
     // Instance pools.
-    private static HashMap<Integer, ConstInt> pool = new HashMap<>();
+    private static final HashMap<Integer, ConstInt> pool = new HashMap<>();
     private static final ConstInt i1One = new ConstInt(IntegerType.getI1(), 1);
     private static final ConstInt i1Zero = new ConstInt(IntegerType.getI1(), 0);
 

@@ -47,7 +47,7 @@ public abstract class Value {
     /**
      * The "use list" keeping track of Values using it.
      */
-    private LinkedList<Use> uses = new LinkedList<>();
+    private final LinkedList<Use> uses = new LinkedList<>();
     // TODO: refactor using intrusive list as container.
 
     /**
@@ -57,6 +57,14 @@ public abstract class Value {
     @SuppressWarnings("unchecked")
     public LinkedList<Use> getUses() {
         return (LinkedList<Use>) uses.clone();
+    }
+
+    /**
+     * Retrieve the number of Users using this Value.
+     * @return The number Values in its use-list.
+     */
+    public int getNumUses() {
+        return uses.size();
     }
 
 
@@ -87,6 +95,11 @@ public abstract class Value {
         }
     }
 
+    /**
+     * Redirect all Use relations referring this Value as usee to
+     * use the given new Value instead.
+     * @param value The new value to be used.
+     */
     public void replaceSelfTo(Value value){
         for (Use use : this.getUses()) {
             use.setUsee(value);
