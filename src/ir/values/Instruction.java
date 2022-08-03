@@ -90,23 +90,6 @@ public abstract class Instruction extends User {
     }
 
     /**
-     * If an instruction has result, a name (register) should be
-     * assigned for the result yielded when naming a Module.
-     * Namely, hasResult = true means an instruction needs a name.
-     * <br>
-     * Most of the instructions have results (by default this field
-     * is initialized as true), e.g.
-     * <ul>
-     *     <li>Binary instructions yield results.</li>
-     *     <li>Alloca instruction yield an addresses as results.</li>
-     *     <li>ZExt instruction yield extended results.</li>
-     * </ul>
-     * Terminators and Store instructions have no results, which need
-     * to be manually set as false by their constructors.
-     */
-    public boolean hasResult = true;
-
-    /**
      * Intrusive node for the instruction list held by its parent BasicBlock.
      * This field is package-private (accessible to other IR classes).
      */
@@ -147,6 +130,23 @@ public abstract class Instruction extends User {
         return this.getTag() == InstCategory.PTRCAST;
     }
     //</editor-fold>
+
+    /**
+     * If an instruction has result, a name (register) should be
+     * assigned for the result yielded when naming a Module.
+     * Namely, hasResult() == true means an instruction needs a name.
+     * <br>
+     * Most of the instructions have results, e.g.
+     * <ul>
+     *     <li>Binary instructions yield results.</li>
+     *     <li>Alloca instruction yield an addresses as results.</li>
+     *     <li>ZExt instruction yield extended results.</li>
+     * </ul>
+     * In contrast, Terminators and Store instructions have no results.
+     */
+    public boolean hasResult() {
+        return !this.getType().isVoidType();
+    }
 
     /**
      * Remove the instruction from the BasicBlock holding it.
@@ -218,7 +218,7 @@ public abstract class Instruction extends User {
      */
     @Override
     public void replaceSelfTo(Value value){
-        if (!hasResult) {
+        if (!this.hasResult()) {
             throw new RuntimeException("Try replace uses pointing to an Inst yielding no result.");
         }
 

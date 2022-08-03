@@ -73,7 +73,7 @@ public class IREmitter {
                 for (BasicBlock bb : func) {
                     bb.setName(getNewName());
                     for (Instruction inst : bb) {
-                        if (inst.hasResult) {
+                        if (inst.hasResult()) {
                             inst.setName("%" + getNewName());
                         }
                     }
@@ -85,7 +85,7 @@ public class IREmitter {
     /**
      * Emit a module (compile unit) as LLVM-IR in plain-text form.
      * @param m The module to be emitted.
-     * @throws IOException
+     * @throws IOException Exception when reading/writing the output .ll file.
      */
     public void emit(Module m) throws IOException {
 

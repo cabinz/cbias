@@ -34,7 +34,6 @@ public abstract class TerminatorInst extends Instruction {
          */
         public Ret() {
             super(VoidType.getType(), InstCategory.RET);
-            this.hasResult = false;
         }
 
         /**
@@ -87,7 +86,6 @@ public abstract class TerminatorInst extends Instruction {
          */
         public Br(Value cond, BasicBlock trueBlk, BasicBlock falseBlk) {
             super(VoidType.getType(), InstCategory.BR);
-            this.hasResult = false;
             this.addOperandAt(0, cond);
             this.addOperandAt(1, trueBlk);
             this.addOperandAt(2, falseBlk);
@@ -99,7 +97,6 @@ public abstract class TerminatorInst extends Instruction {
          */
         public Br(BasicBlock blk) {
             super(VoidType.getType(), InstCategory.BR);
-            this.hasResult = false;
             this.addOperandAt(0, blk);
         }
 

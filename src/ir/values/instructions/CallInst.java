@@ -27,9 +27,6 @@ public class CallInst extends Instruction {
         // Operands of Call is the Function invoked and all argument Values passed
         super(func.getType().getRetType(), InstCategory.CALL);
 
-        // Call instruction will yield a result if the function has non-void return type.
-        this.hasResult = !this.getType().isVoidType();
-
         // The function Value is the 1st operand of the Call instruction.
         this.addOperandAt(0, func);
         // All arguments as operands.
@@ -45,7 +42,7 @@ public class CallInst extends Instruction {
         StringBuilder strBuilder = new StringBuilder();
 
         // "%res = " if the function call yields a result.
-        if (this.hasResult) {
+        if (this.hasResult()) {
             strBuilder.append(this.getName()).append(" = ");
         }
         // "call i32 " or "call void"

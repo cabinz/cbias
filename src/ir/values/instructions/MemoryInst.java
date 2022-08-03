@@ -41,7 +41,6 @@ public abstract class MemoryInst extends Instruction {
             super(VoidType.getType(), InstCategory.STORE);
             this.addOperandAt(0, val);
             this.addOperandAt(1, addr);
-            this.hasResult = false;
         }
 
 
