@@ -4,9 +4,9 @@ import ir.User;
 import ir.Type;
 
 /**
- * A constant is a value that is immutable at runtime. Except ConstArray, all Constants are
- * implemented with Singleton mechanisms, guaranteeing each Constant in a numeric value has
- * only one existence (for the convenience of comparison using addresses).
+ * A constant is a value that is immutable at runtime. All Constants are implemented
+ * in Singleton fashions, guaranteeing each Constant in the same numeric value has
+ * at most one existing instance (for the convenience of comparison using addresses).
  * <ul>
  *     <li>Integer and floating point values </li>
  *     <li>Arrays </li>
@@ -24,5 +24,11 @@ public abstract class Constant extends User {
         super(type);
     }
 
-    public abstract boolean isZero();
+    /**
+     * Return true if the Constant has zero value of its corresponding type.
+     * @return Yes or no.
+     */
+    public boolean isZero() {
+        return this == this.getType().getZero();
+    }
 }

@@ -12,24 +12,18 @@ public class ConstFloat extends Constant {
     /**
      * The arithmetic value of the constant float.
      */
-    private float val;
+    private final float val;
 
 
     public float getVal() {
         return val;
     }
 
-    @Override
-    public boolean isZero() {
-        return val == .0f;
-    }
-
-
     //<editor-fold desc="Singleton">
     private ConstFloat(float val) {
         super(FloatType.getType());
         this.val = val;
-        this.setName("0x" + Long.toHexString(Double.doubleToLongBits((double) val)));
+        this.setName("0x" + Long.toHexString(Double.doubleToLongBits(val)));
     }
 
     // Instance pools.
