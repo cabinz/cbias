@@ -59,6 +59,14 @@ public abstract class Value {
         return (LinkedList<Use>) uses.clone();
     }
 
+    /**
+     * Retrieve the number of Users using this Value.
+     * @return The number Values in its use-list.
+     */
+    public int getNumUses() {
+        return uses.size();
+    }
+
 
     public Value(Type type) {
         this.type = type;

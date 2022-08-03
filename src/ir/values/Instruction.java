@@ -12,15 +12,16 @@ import utils.IntrusiveList;
  * InstCategory in cat field for distinction.
  * <br>
  * Type for an Instruction depends on its category.
+ *
  * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instruction.h">
- *     LLVM IR Source</a>
+ * LLVM IR Source</a>
  * @see <a href="https://llvm.org/docs/LangRef.html#instruction-reference">
- *     LLVM LangRef: Instruction</a>
+ * LLVM LangRef: Instruction</a>
  */
 public abstract class Instruction extends User {
 
     /**
-     * Each instruction instance has a field "cat" containing a InstCategory instance
+     * Each instruction instance has a field "tag" containing a InstCategory instance
      * as a tag distinguishing different instruction types.
      * <br>
      * NOTICE: The ordinal of each enum will be use for distinguishing different types
@@ -89,6 +90,80 @@ public abstract class Instruction extends User {
         return tag;
     }
 
+    //<editor-fold desc="Instruction Type Checks">
+    public boolean isAdd() {
+        return this.getTag() == InstCategory.ADD;
+    }
+
+    public boolean isSub() {
+        return this.getTag() == InstCategory.SUB;
+    }
+
+    public boolean isMul() {
+        return this.getTag() == InstCategory.MUL;
+    }
+
+    public boolean isDiv() {
+        return this.getTag() == InstCategory.DIV;
+    }
+
+    public boolean isAnd() {
+        return this.getTag() == InstCategory.AND;
+    }
+
+    public boolean isOr() {
+        return this.getTag() == InstCategory.OR;
+    }
+
+    public boolean isRet() {
+        return this.getTag() == InstCategory.RET;
+    }
+
+    public boolean isBr() {
+        return this.getTag() == InstCategory.BR;
+    }
+
+    public boolean isCall() {
+        return this.getTag() == InstCategory.CALL;
+    }
+
+    public boolean isAlloca() {
+        return this.getTag() == InstCategory.ALLOCA;
+    }
+
+    public boolean isLoad() {
+        return this.getTag() == InstCategory.LOAD;
+    }
+
+    public boolean isStore() {
+        return this.getTag() == InstCategory.STORE;
+    }
+
+    public boolean isIcmp() {
+        return this.getTag().isIntRelationalBinary();
+    }
+
+    public boolean isGEP() {
+        return this.getTag() == InstCategory.GEP;
+    }
+
+    public boolean isFcmp() {
+        return this.getTag().isFloatRelationalBinary();
+    }
+
+    public boolean isZext() {
+        return this.getTag() == InstCategory.ZEXT;
+    }
+
+    public boolean isPhi() {
+        return this.getTag() == InstCategory.PHI;
+    }
+
+    public boolean isBitcast() {
+        return this.getTag() == InstCategory.PTRCAST;
+    }
+    //</editor-fold>
+
     /**
      * Intrusive node for the instruction list held by its parent BasicBlock.
      * This field is package-private (accessible to other IR classes).
@@ -97,6 +172,7 @@ public abstract class Instruction extends User {
 
     /**
      * Retrieve the BasicBlock holding this Inst.
+     *
      * @return The parent BasicBlock. Null if the Inst belongs to no BB.
      */
     public BasicBlock getBB() {
@@ -107,29 +183,6 @@ public abstract class Instruction extends User {
         super(type);
         this.tag = tag;
     }
-
-    //<editor-fold desc="Instruction Type Checks">
-    public boolean isAdd   () {return this.getTag() == InstCategory.ADD;}
-    public boolean isSub   () {return this.getTag() == InstCategory.SUB;}
-    public boolean isMul   () {return this.getTag() == InstCategory.MUL;}
-    public boolean isDiv   () {return this.getTag() == InstCategory.DIV;}
-    public boolean isAnd   () {return this.getTag() == InstCategory.AND;}
-    public boolean isOr    () {return this.getTag() == InstCategory.OR;}
-    public boolean isRet   () {return this.getTag() == InstCategory.RET;}
-    public boolean isBr    () {return this.getTag() == InstCategory.BR;}
-    public boolean isCall  () {return this.getTag() == InstCategory.CALL;}
-    public boolean isAlloca() {return this.getTag() == InstCategory.ALLOCA;}
-    public boolean isLoad  () {return this.getTag() == InstCategory.LOAD;}
-    public boolean isStore () {return this.getTag() == InstCategory.STORE;}
-    public boolean isIcmp  () {return this.getTag().isIntRelationalBinary();}
-    public boolean isGEP   () {return this.getTag() == InstCategory.GEP;}
-    public boolean isFcmp  () {return this.getTag().isFloatRelationalBinary();}
-    public boolean isZext  () {return this.getTag() == InstCategory.ZEXT;}
-    public boolean isPhi   () {return this.getTag() == InstCategory.PHI;}
-    public boolean isBitcast() {
-        return this.getTag() == InstCategory.PTRCAST;
-    }
-    //</editor-fold>
 
     /**
      * If an instruction has result, a name (register) should be
@@ -195,6 +248,7 @@ public abstract class Instruction extends User {
      * Insert this Instruction in front of the given one.
      * <br>
      * e.g. A.insertBefore(B) => ... A - B ...
+     *
      * @param inst The target instruction.
      */
     public void insertBefore(Instruction inst) {
@@ -205,6 +259,7 @@ public abstract class Instruction extends User {
      * Insert a new instruction as the next one of the current.
      * <br>
      * e.g. A.insertAfter(B) => ... B - A ...
+     *
      * @param inst The target instruction.
      */
     public void insertAfter(Instruction inst) {
@@ -214,14 +269,11 @@ public abstract class Instruction extends User {
     /**
      * Redirect all Use relations referring the result of this Inst as usee
      * to another given Value. Then mark the current Inst wasted.
+     *
      * @param value The new value to be used.
      */
     @Override
-    public void replaceSelfTo(Value value){
-        if (!this.hasResult()) {
-            throw new RuntimeException("Try replace uses pointing to an Inst yielding no result.");
-        }
-
+    public void replaceSelfTo(Value value) {
         super.replaceSelfTo(value);
         markWasted();
     }
