@@ -257,7 +257,6 @@ public class MCBuilder {
             }
         }
         else if (value instanceof GlobalVariable) {
-            // TODO: 采用控制流分析，是否能访问到之前的地址
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
@@ -292,7 +291,6 @@ public class MCBuilder {
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
             // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别
-            // TODO: 使用到传参的时候才计算load
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             MCBasicBlock entry = curFunc.getEntryBlock();
@@ -366,14 +364,13 @@ public class MCBuilder {
                 return extVr;
             }
         }
-        else if (floatValueMap.containsKey(value)) {
-            return floatValueMap.get(value);
-        }
         else if (valueMap.containsKey(value)) {
             var extVr = curFunc.createExtVirReg(value);
-            floatValueMap.put(value, extVr);
             curMCBB.appendInst(new MCFPmove(extVr, valueMap.get(value)));
             return extVr;
+        }
+        else if (floatValueMap.containsKey(value)) {
+            return floatValueMap.get(value);
         }
         else if (value instanceof Instruction) {
             var inst = ((Instruction) value);
