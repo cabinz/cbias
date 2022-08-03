@@ -125,7 +125,6 @@ public abstract class Instruction extends User {
         this.tag = tag;
     }
 
-
     //<editor-fold desc="Instruction Type Checks">
     public boolean isAdd   () {return this.getTag() == InstCategory.ADD;}
     public boolean isSub   () {return this.getTag() == InstCategory.SUB;}
@@ -189,7 +188,7 @@ public abstract class Instruction extends User {
         // - Remove all the Use links for the User using it.
         // - Remove all the Use links corresponding to its operands.
         this.getUses().forEach(Use::removeSelf);
-        this.getOperands().forEach(Use::removeSelf);
+        this.clearOperands();
     }
 
     /**
@@ -212,8 +211,17 @@ public abstract class Instruction extends User {
         inst.node.insertAfter(new IntrusiveList.Node<>(inst));
     }
 
+    /**
+     * Redirect all Use relations referring the result of this Inst as usee
+     * to another given Value. Then mark the current Inst wasted.
+     * @param value The new value to be used.
+     */
     @Override
     public void replaceSelfTo(Value value){
+        if (!hasResult) {
+            throw new RuntimeException("Try replace uses pointing to an Inst yielding no result.");
+        }
+
         super.replaceSelfTo(value);
         markWasted();
     }
