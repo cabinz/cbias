@@ -27,9 +27,28 @@ public class MCEmitter {
 
 
     /**
-     * Emit a prepared ARM assemble file from memory to a '.s' file
+     * Emit a prepared ARM assemble file from memory to a '.s' file <br/><br/>
+     *
+     * The assembler file consists of
+     * <ul>
+     *     <li>File description section: include '.cpu', '.fpu', '.arch'</li>
+     *     <li>
+     *         Text section: include all assembler code
+     *         <ul>
+     *             <li>Function starts with '.global' directive to define</li>
+     *         </ul>
+     *     </li>
+     *     <li>
+     *         Data section: include all global variable
+     *         <ul>
+     *             <li>Uninitialized variable uses '.comm' directive telling the linker to allocate memory in BSS section, which can be move to '.bss', but I'm lazy</li>
+     *             <li>Initialized variable uses '.word', '.zero' directive to initialized a memory in DATA section</li>
+     *         </ul>
+     *     </li>
+     * </ul>
      * @param target target assemble object
      * @param outputPath '.s' file path
+     * @see <a href='http://microelectronics.esa.int/erc32/doc/as.pdf'>GNU Assembler Manual</a>
      */
     public void emitTo(ARMAssemble target, String outputPath) throws IOException {
         /* header */
@@ -76,15 +95,14 @@ public class MCEmitter {
             strBd.append("\t.data\n");
             strBd.append("\t.align 4\n");
             for (Label label : globalVars) {
-                strBd.append("\t.global " + label.emit() + '\n');
-                strBd.append(label.emit() + ":\n");
-
-                int count = 0;
-                /* If not initialized, fill with zero */
                 if (label.getInitial() == null) {
-                    strBd.append("\t.zero\t" + label.getSize() * 4 + '\n');
+                    strBd.append("\t.comm\t" + label.emit() + ", " + label.getSize() * 4 + ", 4\n");
                 }
                 else {
+                    strBd.append("\t.global " + label.emit() + '\n');
+                    strBd.append(label.emit() + ":\n");
+
+                    int count = 0;
                     if (label.isInt()) {
                         for (Object ini : label.getInitial()) {
                             var tmp = ((Integer) ini);
