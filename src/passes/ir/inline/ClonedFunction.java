@@ -9,6 +9,7 @@ import ir.values.BasicBlock;
 import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.instructions.*;
+import passes.ir.DummyValue;
 
 import java.util.*;
 
