@@ -73,7 +73,7 @@ public class ConstantDerivation implements IRPass {
     }
 
     /**
-     * Judge weather the value is a constant.
+     * Judge whether the value is a constant.
      *
      * @param value The value to be judged.
      * @return True if value is instance of: <br>
@@ -89,7 +89,7 @@ public class ConstantDerivation implements IRPass {
     }
 
     /**
-     * Judge weather an expression can be derived.
+     * Judge whether an expression can be derived.
      *
      * @param expression The expression to be judged.
      */
