@@ -1,4 +1,4 @@
-package passes.ir.inline;
+package passes.ir;
 
 import ir.Type;
 import ir.Value;

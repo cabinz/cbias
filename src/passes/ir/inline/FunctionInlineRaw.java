@@ -45,14 +45,14 @@ public class FunctionInlineRaw {
     }
 
     /**
-     * Check weather a function can be inlined.
+     * Check whether a function can be inlined.
      * @param function The function to be checked.
      * @return True if the function is not recursive.
      */
     private static boolean canBeInlined(Function function){
         // Main cannot be inlined
         if(Objects.equals(function.getName(), "main")) return false;
-        // Check weather it is recursive
+        // Check whether it is recursive
         for (BasicBlock basicBlock : function) {
             for (Instruction instruction : basicBlock) {
                 if(instruction instanceof CallInst){

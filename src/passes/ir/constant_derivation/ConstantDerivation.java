@@ -4,12 +4,14 @@ import ir.Module;
 import ir.Use;
 import ir.Value;
 import ir.types.PointerType;
+import ir.types.VoidType;
 import ir.values.*;
 import ir.values.constants.ConstArray;
 import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
 import passes.PassManager;
+import passes.ir.DummyValue;
 import passes.ir.IRPass;
 import passes.ir.RelationAnalysis;
 import passes.ir.dce.UnreachableCodeElim;
@@ -28,12 +30,12 @@ public class ConstantDerivation implements IRPass {
 
     @Override
     public synchronized void runOnModule(Module module) {
-        while (true){
+        while (true) {
             optimize(module);
-            if(hasNonEntryBlock){
+            if (hasNonEntryBlock) {
                 PassManager.getInstance().run(UnreachableCodeElim.class, module);
                 hasNonEntryBlock = false;
-            }else{
+            } else {
                 break;
             }
         }
@@ -71,7 +73,7 @@ public class ConstantDerivation implements IRPass {
     }
 
     /**
-     * Judge weather the value is a constant.
+     * Judge whether the value is a constant.
      *
      * @param value The value to be judged.
      * @return True if value is instance of: <br>
@@ -87,217 +89,355 @@ public class ConstantDerivation implements IRPass {
     }
 
     /**
-     * Judge weather an expression can be derived.
+     * Judge whether an expression can be derived.
      *
      * @param expression The expression to be judged.
      */
     static boolean canDeriveExpression(Instruction expression) {
-        // Removed expression doesn't need to be derived.
-        if(expression.getBB()==null){
-            return false;
-        }
-        // Derive const array
-        /* Actually, we should do this by creating 'const pointer', but there is no such thing in our code. So we can
-         * only derive in this way.
-         */
-        if (expression instanceof MemoryInst.Load){
-            var retType = expression.getType();
-            if(!(retType.isIntegerType()|| retType.isFloatType())) return false;
-            if(!(expression.getOperandAt(0) instanceof GetElemPtrInst)) return false;
-            var gep = (GetElemPtrInst) expression.getOperandAt(0);
-            for(int i=1;i<gep.getNumOperands();i++){
-                if(!(gep.getOperandAt(i) instanceof ConstInt)) return false;
-            }
-            while (gep.getOperandAt(0) instanceof GetElemPtrInst){
-                gep = (GetElemPtrInst) gep.getOperandAt(0);
-                for(int i=1;i<gep.getNumOperands();i++){
-                    if(!(gep.getOperandAt(i) instanceof ConstInt)) return false;
-                }
-            }
-            var target = gep.getOperandAt(0);
-            if(target instanceof GlobalVariable){
-                var gv = (GlobalVariable) target;
-                if(gv.isConstant()) return true;
-            }
-            return false;
-        }
-        // Call and MemoryInst returns void
-        if (expression instanceof CallInst || expression instanceof MemoryInst) {
-            return false;
-        }
-        // Block Bitcast
-        if (expression instanceof CastInst.Bitcast){
-            return false;
-        }
-        // PHI can be derived without constant operands
-        if (expression instanceof PhiInst) {
-            var phiInst = (PhiInst) expression;
-            return phiInst.canDerive();
-        }
-        // Other instructions must have constant operands
-        for (Use use : expression.getOperands()) {
-            if (!isConstant(use.getUsee())) return false;
-        }
-        return true;
+        return calculateExpressionValue(expression)!=expression;
     }
 
-    static Value runGep(ConstArray array, GetElemPtrInst gep){
-        if(array==null){
-            var retType = ((PointerType) gep.getType()).getPointeeType();
-            if(retType.isArrayType()) return null;
-            if(retType.isIntegerType()) return ConstInt.getI32(0);
-            if(retType.isFloatType()) return ConstFloat.get(0);
-            throw new RuntimeException("Unknown return type "+gep.getType());
+    private static boolean canDeriveGep(GetElemPtrInst gep) {
+        for (int i = 1; i < gep.getNumOperands(); i++) {
+            if (!(gep.getOperandAt(i) instanceof ConstInt)) return false;
+        }
+        while (gep.getOperandAt(0) instanceof GetElemPtrInst) {
+            gep = (GetElemPtrInst) gep.getOperandAt(0);
+            for (int i = 1; i < gep.getNumOperands(); i++) {
+                if (!(gep.getOperandAt(i) instanceof ConstInt)) return false;
+            }
+        }
+        var target = gep.getOperandAt(0);
+        if (target instanceof GlobalVariable) {
+            var gv = (GlobalVariable) target;
+            if (gv.isConstant()) return true;
+        }
+        return false;
+    }
+
+    static Value runGep(ConstArray array, GetElemPtrInst gep) {
+        if (array == null) {
+            var retType = gep.getType().getPointeeType();
+            if (retType.isArrayType()) return null;
+            if (retType.isIntegerType()) return ConstInt.getI32(0);
+            if (retType.isFloatType()) return ConstFloat.get(0);
+            throw new RuntimeException("Unknown return type " + gep.getType());
         }
         Value result = array;
-        for(int i=2;i<gep.getNumOperands();i++){ // I don't know why it starts from 2
-            var index = ((ConstInt)gep.getOperandAt(i)).getVal();
-            result = ((ConstArray)result).getOperandAt(index);
+        for (int i = 2; i < gep.getNumOperands(); i++) { // I don't know why it starts from 2
+            var index = ((ConstInt) gep.getOperandAt(i)).getVal();
+            result = ((ConstArray) result).getOperandAt(index);
         }
         return result;
     }
 
-    static Value deriveGepValue(GetElemPtrInst gep){
+    static Value deriveGepValue(GetElemPtrInst gep) {
         var target = gep.getOperandAt(0);
-        if(target instanceof GetElemPtrInst){
+        if (target instanceof GetElemPtrInst) {
             return runGep((ConstArray) deriveGepValue((GetElemPtrInst) target), gep);
         }
-        if(target instanceof GlobalVariable){
+        if (target instanceof GlobalVariable) {
             var gv = (GlobalVariable) target;
-            if(gv.isConstant()){
+            if (gv.isConstant()) {
                 return runGep((ConstArray) gv.getInitVal(), gep);
             }
         }
-        throw new RuntimeException("Cannot derive gep with operand[0]="+target);
+        throw new RuntimeException("Cannot derive gep with operand[0]=" + target);
     }
 
     static Value calculateExpressionValue(Instruction expression) {
+        // Refuse to derive value outside bb, because they may be invalid instructions.
+        // Actually, valid check should be inside switch below while necessity to derive should be checked in deriveConstantExpression
+        if(expression.getBB()==null) return expression;
         switch (expression.getTag()) {
             case ADD, SUB, MUL, DIV -> {
-                var c1 = (ConstInt) expression.getOperandAt(0);
-                var c2 = (ConstInt) expression.getOperandAt(1);
+                var c1 = expression.getOperandAt(0);
+                var c2 = expression.getOperandAt(1);
                 switch (expression.getTag()) {
                     case ADD -> {
-                        return ConstInt.getI32(c1.getVal() + c2.getVal());
+                        // 1+2 = 3
+                        if (c1 instanceof ConstInt && c2 instanceof ConstInt) {
+                            return ConstInt.getI32(((ConstInt) c1).getVal() + ((ConstInt) c2).getVal());
+                        }
+                        // 0+x = x
+                        if (c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 0) {
+                            return c2;
+                        }
+                        // x+0 = x
+                        if (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 0) {
+                            return c1;
+                        }
+                        return expression;
                     }
                     case SUB -> {
-                        return ConstInt.getI32(c1.getVal() - c2.getVal());
+                        // 3-2 = 1
+                        if (c1 instanceof ConstInt && c2 instanceof ConstInt) {
+                            return ConstInt.getI32(((ConstInt) c1).getVal() - ((ConstInt) c2).getVal());
+                        }
+                        // x-0 = x
+                        if (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 0) {
+                            return c1;
+                        }
+                        return expression;
                     }
                     case MUL -> {
-                        return ConstInt.getI32(c1.getVal() * c2.getVal());
+                        // 2*3 = 6
+                        if (c1 instanceof ConstInt && c2 instanceof ConstInt) {
+                            return ConstInt.getI32(((ConstInt) c1).getVal() * ((ConstInt) c2).getVal());
+                        }
+                        // 1*x = x
+                        if (c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 1) {
+                            return c2;
+                        }
+                        // x*1 = x
+                        if (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 1) {
+                            return c1;
+                        }
+                        // Todo: consider x*(-1) here?
+                        // 0*x = 0, x*0 = 0
+                        if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 0) || (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 0)) {
+                            return ConstInt.getI32(0);
+                        }
+                        return expression;
                     }
                     case DIV -> {
-                        return ConstInt.getI32(c1.getVal() / c2.getVal());
+                        // 6/2 = 3
+                        if (c1 instanceof ConstInt && c2 instanceof ConstInt) {
+                            return ConstInt.getI32(((ConstInt) c1).getVal() / ((ConstInt) c2).getVal());
+                        }
+                        // x/1 = x
+                        if (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 1) {
+                            return c1;
+                        }
+                        // Todo: consider x/(-1) here?
+                        return expression;
                     }
                 }
             }
             case FADD, FSUB, FMUL, FDIV -> {
-                var c1 = (ConstFloat) expression.getOperandAt(0);
-                var c2 = (ConstFloat) expression.getOperandAt(1);
+                var c1 = expression.getOperandAt(0);
+                var c2 = expression.getOperandAt(1);
                 switch (expression.getTag()) {
                     case FADD -> {
-                        return ConstFloat.get(c1.getVal() + c2.getVal());
+                        // 1+2 = 3
+                        if (c1 instanceof ConstFloat && c2 instanceof ConstFloat) {
+                            return ConstFloat.get(((ConstFloat) c1).getVal() + ((ConstFloat) c2).getVal());
+                        }
+                        // 0+x = x
+                        if (c1 instanceof ConstFloat && ((ConstFloat) c1).getVal() == 0) {
+                            return c2;
+                        }
+                        // x+0 = x
+                        if (c2 instanceof ConstFloat && ((ConstFloat) c2).getVal() == 0) {
+                            return c1;
+                        }
+                        return expression;
                     }
                     case FSUB -> {
-                        return ConstFloat.get(c1.getVal() - c2.getVal());
+                        // 3-2 = 1
+                        if (c1 instanceof ConstFloat && c2 instanceof ConstFloat) {
+                            return ConstFloat.get(((ConstFloat) c1).getVal() - ((ConstFloat) c2).getVal());
+                        }
+                        // x-0 = x
+                        if (c2 instanceof ConstFloat && ((ConstFloat) c2).getVal() == 0) {
+                            return c1;
+                        }
+                        return expression;
                     }
                     case FMUL -> {
-                        return ConstFloat.get(c1.getVal() * c2.getVal());
+                        // 2*3 = 6
+                        if (c1 instanceof ConstFloat && c2 instanceof ConstFloat) {
+                            return ConstFloat.get(((ConstFloat) c1).getVal() * ((ConstFloat) c2).getVal());
+                        }
+                        // 1*x = x
+                        if (c1 instanceof ConstFloat && ((ConstFloat) c1).getVal() == 1) {
+                            return c2;
+                        }
+                        // x*1 = x
+                        if (c2 instanceof ConstFloat && ((ConstFloat) c2).getVal() == 1) {
+                            return c1;
+                        }
+                        // Todo: consider x*(-1) here?
+                        // 0*x = 0, x*0 = 0
+                        if ((c1 instanceof ConstFloat && ((ConstFloat) c1).getVal() == 0) || (c2 instanceof ConstFloat && ((ConstFloat) c2).getVal() == 0)) {
+                            return ConstFloat.get(0);
+                        }
+                        return expression;
                     }
                     case FDIV -> {
-                        return ConstFloat.get(c1.getVal() / c2.getVal());
+                        // 6/2 = 3
+                        if (c1 instanceof ConstFloat && c2 instanceof ConstFloat) {
+                            return ConstFloat.get(((ConstFloat) c1).getVal() / ((ConstFloat) c2).getVal());
+                        }
+                        // x/1 = x
+                        if (c2 instanceof ConstFloat && ((ConstFloat) c2).getVal() == 1) {
+                            return c1;
+                        }
+                        // Todo: consider x/(-1) here?
+                        return expression;
                     }
                 }
             }
             case FNEG -> {
-                var c1 = (ConstFloat) expression.getOperandAt(0);
-                return ConstFloat.get(-c1.getVal());
+                var c1 = expression.getOperandAt(0);
+                if (c1 instanceof ConstFloat) {
+                    return ConstFloat.get(-((ConstFloat) c1).getVal());
+                }
+                return expression;
             }
             case LT, GT, EQ, NE, LE, GE -> {
-                var c1 = (ConstInt) expression.getOperandAt(0);
-                var c2 = (ConstInt) expression.getOperandAt(1);
-                switch (expression.getTag()) {
-                    case LT -> {
-                        return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
-                    }
-                    case GT -> {
-                        return ConstInt.getI1(c1.getVal() > c2.getVal() ? 1 : 0);
-                    }
-                    case EQ -> {
-                        return ConstInt.getI1(c1.getVal() == c2.getVal() ? 1 : 0);
-                    }
-                    case NE -> {
-                        return ConstInt.getI1(c1.getVal() != c2.getVal() ? 1 : 0);
-                    }
-                    case LE -> {
-                        return ConstInt.getI1(c1.getVal() <= c2.getVal() ? 1 : 0);
-                    }
-                    case GE -> {
-                        return ConstInt.getI1(c1.getVal() >= c2.getVal() ? 1 : 0);
+                var rc1 = expression.getOperandAt(0);
+                var rc2 = expression.getOperandAt(1);
+                if (rc1 instanceof ConstInt && rc2 instanceof ConstInt) {
+                    var c1 = (ConstInt) rc1;
+                    var c2 = (ConstInt) rc2;
+                    switch (expression.getTag()) {
+                        case LT -> {
+                            return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
+                        }
+                        case GT -> {
+                            return ConstInt.getI1(c1.getVal() > c2.getVal() ? 1 : 0);
+                        }
+                        case EQ -> {
+                            return ConstInt.getI1(c1.getVal() == c2.getVal() ? 1 : 0);
+                        }
+                        case NE -> {
+                            return ConstInt.getI1(c1.getVal() != c2.getVal() ? 1 : 0);
+                        }
+                        case LE -> {
+                            return ConstInt.getI1(c1.getVal() <= c2.getVal() ? 1 : 0);
+                        }
+                        case GE -> {
+                            return ConstInt.getI1(c1.getVal() >= c2.getVal() ? 1 : 0);
+                        }
                     }
                 }
+                return expression;
             }
             case FLT, FGT, FEQ, FNE, FLE, FGE -> {
-                var c1 = (ConstFloat) expression.getOperandAt(0);
-                var c2 = (ConstFloat) expression.getOperandAt(1);
-                switch (expression.getTag()) {
-                    case FLT -> {
-                        return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
-                    }
-                    case FGT -> {
-                        return ConstInt.getI1(c1.getVal() > c2.getVal() ? 1 : 0);
-                    }
-                    case FEQ -> {
-                        return ConstInt.getI1(c1.getVal() == c2.getVal() ? 1 : 0);
-                    }
-                    case FNE -> {
-                        return ConstInt.getI1(c1.getVal() != c2.getVal() ? 1 : 0);
-                    }
-                    case FLE -> {
-                        return ConstInt.getI1(c1.getVal() <= c2.getVal() ? 1 : 0);
-                    }
-                    case FGE -> {
-                        return ConstInt.getI1(c1.getVal() >= c2.getVal() ? 1 : 0);
+                var rc1 = expression.getOperandAt(0);
+                var rc2 = expression.getOperandAt(1);
+                if (rc1 instanceof ConstFloat && rc2 instanceof ConstFloat) {
+                    var c1 = (ConstFloat) rc1;
+                    var c2 = (ConstFloat) rc2;
+                    switch (expression.getTag()) {
+                        case LT -> {
+                            return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
+                        }
+                        case GT -> {
+                            return ConstInt.getI1(c1.getVal() > c2.getVal() ? 1 : 0);
+                        }
+                        case EQ -> {
+                            return ConstInt.getI1(c1.getVal() == c2.getVal() ? 1 : 0);
+                        }
+                        case NE -> {
+                            return ConstInt.getI1(c1.getVal() != c2.getVal() ? 1 : 0);
+                        }
+                        case LE -> {
+                            return ConstInt.getI1(c1.getVal() <= c2.getVal() ? 1 : 0);
+                        }
+                        case GE -> {
+                            return ConstInt.getI1(c1.getVal() >= c2.getVal() ? 1 : 0);
+                        }
                     }
                 }
+                return expression;
             }
             case AND, OR -> {
-                var c1 = (ConstInt) expression.getOperandAt(0);
-                var c2 = (ConstInt) expression.getOperandAt(0);
+                var c1 = expression.getOperandAt(0);
+                var c2 = expression.getOperandAt(0);
                 switch (expression.getTag()) {
                     case AND -> {
-                        return ConstInt.getI1(c1.getVal() & c2.getVal());
+                        if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 0) || (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 0)) {
+                            return ConstInt.getI1(0);
+                        }
+                        if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 1) && (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 1)) {
+                            return ConstInt.getI1(1);
+                        }
+                        return expression;
                     }
                     case OR -> {
-                        return ConstInt.getI1(c1.getVal() | c2.getVal());
+                        if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 1) || (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 1)) {
+                            return ConstInt.getI1(1);
+                        }
+                        if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 0) && (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 0)) {
+                            return ConstInt.getI1(0);
+                        }
+                        return expression;
                     }
                 }
             }
-            case ZEXT, FPTOSI, SITOFP -> {
+            case ZEXT, FPTOSI, SITOFP, PTRCAST -> {
                 switch (expression.getTag()) {
                     case ZEXT -> {
-                        var c1 = (ConstInt) expression.getOperandAt(0);
-                        return ConstInt.getI32(c1.getVal());
+                        var rc1 = expression.getOperandAt(0);
+                        if (rc1 instanceof ConstInt) {
+                            var c1 = (ConstInt) rc1;
+                            return ConstInt.getI32(c1.getVal());
+                        }
+                        return expression;
                     }
                     case FPTOSI -> {
-                        var c1 = (ConstFloat) expression.getOperandAt(0);
-                        return ConstInt.getI32((int) c1.getVal());
+                        var rc1 = expression.getOperandAt(0);
+                        if (rc1 instanceof ConstFloat) {
+                            var c1 = (ConstFloat) rc1;
+                            return ConstInt.getI32((int) c1.getVal());
+                        }
+                        return expression;
                     }
                     case SITOFP -> {
-                        var c1 = (ConstInt) expression.getOperandAt(0);
-                        return ConstFloat.get((float) c1.getVal());
+                        var rc1 = expression.getOperandAt(0);
+                        if (rc1 instanceof ConstInt) {
+                            var c1 = (ConstInt) expression.getOperandAt(0);
+                            return ConstFloat.get((float) c1.getVal());
+                        }
+                        return expression;
+                    }
+                    case PTRCAST -> {
+                        return expression;
                     }
                 }
             }
             case PHI -> {
-                return ((PhiInst) expression).deriveConstant();
-            }
-            case LOAD -> {
-                var o0 = expression.getOperandAt(0);
-                if(!(o0 instanceof GetElemPtrInst)){
-                    throw new RuntimeException("Cannot derive with o0="+o0);
+                var phiInst = (PhiInst) expression;
+                if(phiInst.canDerive()){
+                    return ((PhiInst) expression).deriveConstant();
                 }
-                return deriveGepValue((GetElemPtrInst)o0);
+                return expression;
+            }
+            case LOAD,STORE,ALLOCA,CALL -> {
+                switch (expression.getTag()){
+                    case LOAD -> {
+                        var retType = expression.getType();
+                        if((expression.getOperandAt(0) instanceof GetElemPtrInst)&&(retType.isIntegerType() || retType.isFloatType())){
+                            var gep = (GetElemPtrInst) expression.getOperandAt(0);
+                            if(canDeriveGep(gep)){
+                                return deriveGepValue(gep);
+                            }
+                        }
+                        return expression;
+                    }
+                    default -> {
+                        return expression;
+                    }
+                }
+            }
+            case BR, RET -> {
+                switch (expression.getTag()){
+                    case BR -> {
+                        var rc1 = expression.getOperandAt(0);
+                        if(rc1 instanceof ConstInt){
+                            return new DummyValue(VoidType.getType()); // Return something different to itself.
+                        }
+                        return expression;
+                    }
+                    case RET -> {
+                        return expression;
+                    }
+                }
+            }
+            case GEP -> {
+                return expression;
             }
         }
         throw new RuntimeException("Unable to derive expression of type " + expression.getTag());
@@ -321,7 +461,7 @@ public class ConstantDerivation implements IRPass {
         while (!queue.isEmpty()) {
             Instruction expression = queue.remove();
 
-            if(!canDeriveExpression(expression)) continue;
+            if (!canDeriveExpression(expression)) continue;
 
             if (expression.getType().isVoidType()) {
                 // Br, Store, etc.
@@ -337,7 +477,7 @@ public class ConstantDerivation implements IRPass {
                     var user = use.getUser();
                     if (!(user instanceof Instruction)) continue;
                     var inst = (Instruction) user;
-                    if(canDeriveExpression(inst)){
+                    if (canDeriveExpression(inst)) {
                         queue.add(inst);
                     }
                 }
@@ -386,7 +526,7 @@ public class ConstantDerivation implements IRPass {
         }
         basicBlock.prevBlocks.remove(entry);
         entry.followingBlocks.remove(basicBlock);
-        if (basicBlock.prevBlocks.size()==0){
+        if (basicBlock.prevBlocks.size() == 0) {
             hasNonEntryBlock = true;
         }
     }
