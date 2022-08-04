@@ -1161,8 +1161,8 @@ public class MCBuilder {
                             }
                             else {
                                 var tmpVr = curFunc.createVirReg(null);
-                                moves.addFirst(new MCMove(tmpVr, src, true));
-                                mov = new MCFPmove((ExtensionRegister) dst, tmpVr);
+                                moves.addFirst(new MCFPmove((ExtensionRegister) dst, tmpVr));
+                                mov = new MCMove(tmpVr, src, true);
                             }
                         }
                         else
