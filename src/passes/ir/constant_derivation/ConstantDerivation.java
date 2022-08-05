@@ -321,22 +321,22 @@ public class ConstantDerivation implements IRPass {
                     var c1 = (ConstFloat) rc1;
                     var c2 = (ConstFloat) rc2;
                     switch (expression.getTag()) {
-                        case LT -> {
+                        case FLT -> {
                             return ConstInt.getI1(c1.getVal() < c2.getVal() ? 1 : 0);
                         }
-                        case GT -> {
+                        case FGT -> {
                             return ConstInt.getI1(c1.getVal() > c2.getVal() ? 1 : 0);
                         }
-                        case EQ -> {
+                        case FEQ -> {
                             return ConstInt.getI1(c1.getVal() == c2.getVal() ? 1 : 0);
                         }
-                        case NE -> {
+                        case FNE -> {
                             return ConstInt.getI1(c1.getVal() != c2.getVal() ? 1 : 0);
                         }
-                        case LE -> {
+                        case FLE -> {
                             return ConstInt.getI1(c1.getVal() <= c2.getVal() ? 1 : 0);
                         }
-                        case GE -> {
+                        case FGE -> {
                             return ConstInt.getI1(c1.getVal() >= c2.getVal() ? 1 : 0);
                         }
                     }

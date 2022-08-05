@@ -30,7 +30,11 @@ public class FunctionInlineRaw {
 
         @Override
         public int compareTo(FunctionElement rhs) {
-            return Integer.compare(size, rhs.size);
+            if(size!=rhs.size){
+                return Integer.compare(size, rhs.size);
+            }else{
+                return Integer.compare(this.hashCode(),rhs.hashCode());
+            }
         }
 
         private static int evaluateSize(Function function){
@@ -65,6 +69,12 @@ public class FunctionInlineRaw {
         return true;
     }
 
+    private static boolean isUpdated(FunctionElement functionElement){
+        var oldSize = functionElement.size;
+        functionElement.reevaluate();
+        return oldSize != functionElement.size;
+    }
+
     public void optimize(Module module){
 
         // Main process
@@ -77,7 +87,15 @@ public class FunctionInlineRaw {
         while (!functionSet.isEmpty()){
             var element = functionSet.pollFirst();
             assert element != null; // Stupid JDK
-            element.function.getUses().forEach(use -> extractCaller((CallInst) use.getUser()));
+            if(!canBeInlined(element.function)) continue;
+            if(isUpdated(element)){
+                functionSet.add(element);
+                continue;
+            }
+            element.function.getUses().forEach(use -> {
+                var callInst = (CallInst) use.getUser();
+                extractCaller(callInst);
+            });
             module.functions.remove(element.function);
         }
     }
