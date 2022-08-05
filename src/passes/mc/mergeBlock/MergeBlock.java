@@ -76,6 +76,12 @@ public class MergeBlock implements MCPass {
         }
     }
 
+    /**
+     * Delete the last branch and order the successor behind the block if possible <br/>
+     * Resort the BasicBlock list in the order of DFS, which may cause the block index discontinuous
+     * @param list the list to be worked
+     * @return the sorted list
+     */
     private LinkedList<MCBasicBlock> serialize(LinkedList<MCBasicBlock> list) {
         var serializedList = new LinkedList<MCBasicBlock>();
         while (!list.isEmpty()) {
