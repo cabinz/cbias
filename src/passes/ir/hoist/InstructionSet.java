@@ -25,22 +25,22 @@ public class InstructionSet {
 
     public void add(Instruction instruction){
         if(contains(instruction)) return;
-        int hashCode = hash(instruction);
+        int hashCode = hash(instruction, true);
         map.put(hashCode, new Node<>(instruction, map.get(hashCode)));
     }
 
     public boolean contains(Instruction instruction){
-        int hashCode = hash(instruction);
+        int hashCode = hash(instruction, true);
         for(Node<Instruction> it=map.get(hashCode);it!=null;it=it.next){
-            if(isEqual(it.value, instruction)) return true;
+            if(areInstEqual(it.value, instruction)) return true;
         }
         return false;
     }
 
     public Instruction get(Instruction instruction){
-        int hashCode = hash(instruction);
+        int hashCode = hash(instruction, true);
         for(Node<Instruction> it=map.get(hashCode);it!=null;it=it.next){
-            if(isEqual(it.value, instruction)) return it.value;
+            if(areInstEqual(it.value, instruction)) return it.value;
         }
         return null;
     }
@@ -53,16 +53,16 @@ public class InstructionSet {
         return ret;
     }
 
-    private static boolean isEqual(Instruction a, Instruction b){
-        return Objects.equals(getFeatures(a),getFeatures(b));
+    public static boolean areInstEqual(Instruction a, Instruction b){
+        return Objects.equals(getFeatures(a, true),getFeatures(b, true));
     }
 
-    private static int hash(Instruction instruction){
-        ArrayList<Object> features = getFeatures(instruction);
+    public static int hash(Instruction instruction, boolean isBBSensitive){
+        ArrayList<Object> features = getFeatures(instruction, isBBSensitive);
         return Arrays.hashCode(features.toArray());
     }
 
-    private static ArrayList<Object> getFeatures(Instruction instruction) {
+    private static ArrayList<Object> getFeatures(Instruction instruction, boolean isBBSensitive) {
         ArrayList<Object> features = new ArrayList<>();
         var instTag = instruction.getTag();
         switch (instTag) {
@@ -112,7 +112,9 @@ public class InstructionSet {
                 features.add(phiMapping);
             }
         }
-        features.add(instruction.getBB());
+        if(isBBSensitive){
+            features.add(instruction.getBB());
+        }
         return features;
     }
 
