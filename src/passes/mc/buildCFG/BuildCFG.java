@@ -19,7 +19,6 @@ public class BuildCFG implements MCPass {
                 MCInstruction lastInst = block.getLastInst();
                 /* End with branch */
                 if (lastInst instanceof MCbranch && ((MCbranch) lastInst).isBranch()) {
-                    var instList = block.getInstructionList();
                     var branch1 = ((MCbranch) lastInst);
                     var target1 = branch1.getTargetBB();
                     target1.addPredecessor(block);
@@ -28,7 +27,7 @@ public class BuildCFG implements MCPass {
                     }
                     else {
                         block.setFalseSuccessor(target1);
-                        var branch2 = ((MCbranch) instList.get(instList.size() - 2));
+                        var branch2 = ((MCbranch) block.getSecondLastInst());
                         block.setTrueSuccessor(branch2.getTargetBB());
                         branch2.getTargetBB().addPredecessor(block);
                     }

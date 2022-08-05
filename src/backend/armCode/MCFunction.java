@@ -19,7 +19,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     //<editor-fold desc="Fields">
 
     //<editor-fold desc="Basic info">
-    private final LinkedList<MCBasicBlock> BasicBlockList;
+    private LinkedList<MCBasicBlock> BasicBlockList;
     private final Function IRFunction;
     /* Arguments passed via core register */
     private final ArrayList<Function.FuncArg> APVCR;
@@ -52,12 +52,12 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * This field is used to record the callee-saved registers
      * that need to be saved in this function.
      */
-    private HashSet<RealRegister> context;
+    private final HashSet<RealRegister> context;
     /**
      * This field is used to record the callee-saved registers
      * that need to be saved in this function.
      */
-    private HashSet<RealExtRegister> extContext;
+    private final HashSet<RealExtRegister> extContext;
     /**
      * This field is used to record the sizes of
      * local variables.
@@ -73,7 +73,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * function's parameter address, <br/>
      * which need to be adjusted after {@link passes.mc.registerAllocation.GraphColoring}.
      */
-    private HashSet<MCMove> paramCal;
+    private final HashSet<MCMove> paramCal;
     //</editor-fold>
 
     //<editor-fold desc="Other info">
@@ -243,6 +243,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public HashSet<MCMove> getParamCal() {return paramCal;}
 
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
+    public void setBasicBlockList(LinkedList<MCBasicBlock> basicBlockList) {BasicBlockList = basicBlockList;}
     public ArrayList<VirtualRegister> getVirtualRegisters() {return VirtualRegisters;}
     public ArrayList<VirtualExtRegister> getVirtualExtRegisters() {return virtualExtRegisters;}
 
