@@ -34,6 +34,13 @@ public class PhiInst extends Instruction {
     }
 
     public void addMapping(BasicBlock basicBlock, Value value){
+        if(operandMapping.containsKey(basicBlock)){
+            var currentValue = getOperandAt(operandMapping.get(basicBlock));
+            if(!Objects.equals(currentValue,value)){
+                throw new RuntimeException("Trying to assign a different value to an entry block already exists in PHI.");
+            }
+            return;
+        }
         this.addOperandAt(nextMappingId, value);
         this.addOperandAt(nextMappingId+1, basicBlock);
         operandMapping.put(basicBlock, nextMappingId);

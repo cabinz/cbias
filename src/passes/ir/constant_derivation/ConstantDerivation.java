@@ -425,8 +425,12 @@ public class ConstantDerivation implements IRPass {
             case BR, RET -> {
                 switch (expression.getTag()){
                     case BR -> {
+                        var brInst = (TerminatorInst.Br) expression;
                         var rc1 = expression.getOperandAt(0);
                         if(rc1 instanceof ConstInt){
+                            return new DummyValue(VoidType.getType()); // Return something different to itself.
+                        }
+                        if(brInst.isCondJmp()&&Objects.equals(expression.getOperandAt(1),expression.getOperandAt(2))){
                             return new DummyValue(VoidType.getType()); // Return something different to itself.
                         }
                         return expression;
@@ -487,20 +491,30 @@ public class ConstantDerivation implements IRPass {
 
     private static void optimizeBr(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap, Queue<Instruction> deriveQueue, TerminatorInst.Br br) {
         if (!br.isCondJmp()) return;
-        var cond_ = br.getOperandAt(0);
-        if (!(cond_ instanceof ConstInt)) return;
-        var cond = (ConstInt) cond_;
-        var bTrue = (ir.values.BasicBlock) br.getOperandAt(1);
-        var bFalse = (ir.values.BasicBlock) br.getOperandAt(2);
-        br.removeOperandAt(0);
-        br.removeOperandAt(1);
-        br.removeOperandAt(2);
-        if (cond.getVal() == 1) {
-            br.addOperandAt(0, bTrue);
-            removeEntry(basicBlockMap.get(bFalse), basicBlockMap.get(br.getBB()), deriveQueue);
-        } else {
-            br.addOperandAt(0, bFalse);
-            removeEntry(basicBlockMap.get(bTrue), basicBlockMap.get(br.getBB()), deriveQueue);
+        var o0 = br.getOperandAt(0);
+        if (o0 instanceof ConstInt){
+            var cond = (ConstInt) o0;
+            var bTrue = (ir.values.BasicBlock) br.getOperandAt(1);
+            var bFalse = (ir.values.BasicBlock) br.getOperandAt(2);
+            br.removeOperandAt(0);
+            br.removeOperandAt(1);
+            br.removeOperandAt(2);
+            if (cond.getVal() == 1) {
+                br.addOperandAt(0, bTrue);
+                removeEntry(basicBlockMap.get(bFalse), basicBlockMap.get(br.getBB()), deriveQueue);
+            } else {
+                br.addOperandAt(0, bFalse);
+                removeEntry(basicBlockMap.get(bTrue), basicBlockMap.get(br.getBB()), deriveQueue);
+            }
+            return;
+        }
+        if(Objects.equals(br.getOperandAt(1),br.getOperandAt(2))){
+            var b = (ir.values.BasicBlock) br.getOperandAt(1);
+            br.removeOperandAt(0);
+            br.removeOperandAt(1);
+            br.removeOperandAt(2);
+            br.addOperandAt(0, b);
+            // Do not need to remove entry since the same entry will only be logged once.
         }
     }
 
