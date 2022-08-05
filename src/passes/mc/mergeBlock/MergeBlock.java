@@ -7,6 +7,7 @@ import backend.armCode.MCInstructions.MCReturn;
 import backend.armCode.MCInstructions.MCbranch;
 import passes.mc.MCPass;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 
 public class MergeBlock implements MCPass {
@@ -21,7 +22,8 @@ public class MergeBlock implements MCPass {
     }
 
     private void mergeBlock(MCBasicBlock dealing, LinkedList<MCBasicBlock> new_list) {
-        mergeBlock(dealing, dealing, new_list);
+        var visited = new HashSet<MCBasicBlock>();
+        mergeBlock(dealing, dealing, new_list, visited);
     }
 
     /**
@@ -29,11 +31,14 @@ public class MergeBlock implements MCPass {
      * @param dealing the basic block to be analysed
      * @param insert the block which merged block will be inserted to
      * @param new_list the reordered list by DFS
+     * @param visited the visited block
      */
-    private void mergeBlock(MCBasicBlock dealing, MCBasicBlock insert, LinkedList<MCBasicBlock> new_list) {
-        if (new_list.contains(dealing))
+    private void mergeBlock(MCBasicBlock dealing, MCBasicBlock insert, LinkedList<MCBasicBlock> new_list, HashSet<MCBasicBlock> visited) {
+        if (visited.contains(dealing))
             return;
-        new_list.add(dealing);
+        visited.add(dealing);
+        if (!new_list.contains(insert))
+            new_list.add(insert);
 
         /* Meaning it's a return block */
         if (dealing.getTrueSuccessor() == null)
@@ -47,10 +52,10 @@ public class MergeBlock implements MCPass {
                 insert.appendAndRemove(onlySucc);
                 insert.setTrueSuccessor(onlySucc.getTrueSuccessor());
                 insert.setFalseSuccessor(onlySucc.getFalseSuccessor());
-                mergeBlock(insert, insert, new_list);
+                mergeBlock(insert, insert, new_list, visited);
             }
             else
-                mergeBlock(onlySucc, onlySucc, new_list);
+                mergeBlock(onlySucc, onlySucc, new_list, visited);
         }
         else {
             var trueSucc = dealing.getTrueSuccessor();
@@ -59,19 +64,19 @@ public class MergeBlock implements MCPass {
                 insert.removeSecondLast();
                 insert.appendAndRemove(trueSucc);
                 insert.setTrueSuccessor(trueSucc.getTrueSuccessor());
-                mergeBlock(trueSucc, insert, new_list);
-                mergeBlock(falseSucc, falseSucc, new_list);
+                mergeBlock(trueSucc, insert, new_list, visited);
+                mergeBlock(falseSucc, falseSucc, new_list, visited);
             }
             else if (falseSucc.getPredecessors().size() == 1){
                 insert.removeLast();
                 insert.appendAndRemove(falseSucc);
                 insert.setTrueSuccessor(trueSucc.getTrueSuccessor());
-                mergeBlock(falseSucc, insert, new_list);
-                mergeBlock(trueSucc, trueSucc, new_list);
+                mergeBlock(falseSucc, insert, new_list, visited);
+                mergeBlock(trueSucc, trueSucc, new_list, visited);
             }
             else {
-                mergeBlock(trueSucc, trueSucc, new_list);
-                mergeBlock(falseSucc, falseSucc, new_list);
+                mergeBlock(trueSucc, trueSucc, new_list, visited);
+                mergeBlock(falseSucc, falseSucc, new_list, visited);
             }
         }
     }
