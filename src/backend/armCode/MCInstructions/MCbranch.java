@@ -8,6 +8,7 @@ import backend.operand.RealExtRegister;
 import backend.operand.RealRegister;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.stream.IntStream;
 
@@ -54,7 +55,10 @@ public class MCbranch extends MCInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {}
+    public void replaceUse(HashMap<Register, Register> map) {}
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {}
 
     public HashSet<ExtensionRegister> getExtUse() {
         var set = new HashSet<ExtensionRegister>();

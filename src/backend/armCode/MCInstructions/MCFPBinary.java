@@ -4,6 +4,7 @@ import backend.armCode.MCFPInstruction;
 import backend.operand.ExtensionRegister;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -31,8 +32,10 @@ public class MCFPBinary extends MCFPInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-    }
+    public void replaceUse(HashMap<Register, Register> map) {}
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {}
 
     @Override
     public HashSet<ExtensionRegister> getExtUse() {

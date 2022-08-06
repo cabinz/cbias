@@ -4,6 +4,7 @@ import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class MCload extends MCInstruction {
@@ -41,10 +42,17 @@ public class MCload extends MCInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (dst == old) dst = tmp;
-        if (addr == old) addr = tmp;
-        if (offset == old) offset = tmp;
+    public void replaceUse(HashMap<Register, Register> map) {
+        addr = map.getOrDefault(addr, addr);
+        if (offset !=null && offset.isVirtualReg())
+            offset = map.getOrDefault(offset, (Register) offset);
+    }
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {
+        dst = map.getOrDefault(dst, dst);
+        if (write)
+            addr = map.getOrDefault(addr, addr);
     }
 
     public String emit(){

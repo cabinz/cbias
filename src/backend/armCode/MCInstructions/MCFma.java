@@ -3,6 +3,7 @@ package backend.armCode.MCInstructions;
 import backend.armCode.MCInstruction;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -37,11 +38,15 @@ public class MCFma extends MCInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (accumulate == old) accumulate = tmp;
-        if (multiple_1 == old) multiple_1 = tmp;
-        if (multiple_2 == old) multiple_2 = tmp;
-        if (dst == old) dst = tmp;
+    public void replaceUse(HashMap<Register, Register> map) {
+        multiple_1 = map.getOrDefault(multiple_1, multiple_1);
+        multiple_2 = map.getOrDefault(multiple_2, multiple_2);
+        accumulate = map.getOrDefault(accumulate, accumulate);
+    }
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {
+        dst = map.getOrDefault(dst, dst);
     }
 
     @Override
