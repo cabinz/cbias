@@ -32,6 +32,8 @@ public abstract class MCInstruction {
         ORR,
         MLA,
         MLS,
+        SMMLA,
+        SMMLS,
         MOV,
         RET,
         BRANCH,

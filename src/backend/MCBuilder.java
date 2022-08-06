@@ -17,6 +17,7 @@ import ir.values.instructions.*;
 import passes.ir.IBBRelationship;
 import passes.ir.RelationAnalysis;
 
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -932,40 +933,43 @@ public class MCBuilder {
             }
             /* Integer division */
             else {
-                var divisorR = findContainer(v2, true);
-
-                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, divisorR));
-
-//                int l = log2(divisor) + 1;
-//                int sh = l;
-//                long low = ((1L << (32+l)) / divisor);
-//                long high = (((1L << (32+l)) + (1L << (l+1))) / divisor);
-//                while (((low/2) < (high/2)) && sh > 0) {
-//                    low = low / 2;
-//                    high = high / 2;
-//                    sh--;
-//                }
+//                var divisorR = findContainer(v2, true);
 //
-//                // TODO: better!
-//                if (high < (1L << 31)) {
-//                    var tmp1 = curFunc.createVirReg(0);
-//                    var tmp2 = curFunc.createVirReg(0);
-//                    curMCBB.appendInst(new MCSmull(dst, tmp1, (Register) createConstInt((int) high, true), dividend));
-//                    MCInstruction.Shift shift1 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh);
-//                    curMCBB.appendInst(new MCMove(tmp2, tmp1, shift1, null));
-//                    MCInstruction.Shift shift2 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31);
-//                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp2, dividend, shift2, null));
-//                }
-//                else {
-//                    high = high - (1L << 32);
-//                    assert high < 0;
-//                    var tmp = curFunc.createVirReg(0);
-//                    var tmp1 = curFunc.createVirReg(0);
+//                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, divisorR));
+
+                int l = log2(abs) + 1;
+                int sh = l;
+                var tmpInt = new BigInteger("1");
+                /* (1 << (32+l)) / abs */
+                long low = tmpInt.shiftLeft(32+l).divide(BigInteger.valueOf(abs)).longValue();
+                /* ((1L << (32+l)) + (1L << (l+1))) / abs */
+                long high = tmpInt.shiftLeft(32+l).add(tmpInt.shiftLeft(l+1)).divide(BigInteger.valueOf(abs)).longValue();
+                while (((low/2) < (high/2)) && sh > 0) {
+                    low = low / 2;
+                    high = high / 2;
+                    sh--;
+                }
+
+                if (high < (1L << 31)) {
+                    var tmp1 = curFunc.createVirReg(0);
+                    var tmp2 = curFunc.createVirReg(0);
+                    curMCBB.appendInst(new MCSmull(dst, tmp1, (Register) createConstInt((int) high, true), dividend));
+                    MCInstruction.Shift shift1 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh);
+                    curMCBB.appendInst(new MCMove(tmp2, tmp1, shift1, null));
+                    MCInstruction.Shift shift2 = new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31);
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp2, dividend, shift2, null));
+                }
+                else {
+                    high = high - (1L << 32);
+                    assert high < 0;
+                    var tmp = curFunc.createVirReg(0);
+                    var tmp1 = curFunc.createVirReg(0);
+                    curMCBB.appendInst(new MCFma(MCInstruction.TYPE.SMMLA, tmp, (Register) createConstInt((int) high, true), dividend, dividend));
 //                    curMCBB.appendInst(new MCSmull(dst, tmp, (Register) createConstInt((int) high, true), dividend));
 //                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, tmp1, tmp, dividend));
-//                    curMCBB.appendInst(new MCMove(tmp, tmp1, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh), null));
-//                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp, dividend, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31), null));
-//                }
+                    curMCBB.appendInst(new MCMove(tmp, tmp1, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh), null));
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp, dividend, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31), null));
+                }
             }
             if (divisor < 0)
                 curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.RSB, dst, dst, createConstInt(0)));

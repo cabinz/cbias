@@ -8,6 +8,7 @@ import java.util.HashSet;
 /**
  * This class is an aggregation of MLA, MLS. <br/>
  * &emsp; - MLA/MLS Rd, Rm, Rs, Rn     @ Rd := low32(Rn +/- Rm * Rs) <br/>
+ * &emsp; - SMMLA/SMMLS Rd, Rm, Rs, Rn     @ Rd := Rn +/- high32(Rm * Rs) <br/>
  * @see <a href="https://developer.arm.com/documentation/ddi0406/latest/">
  *     ARM Architecture Reference Manual ARMv7 edition </a> <br/>
  *     A8.6.94 MLA, A8.6.95 MLS
