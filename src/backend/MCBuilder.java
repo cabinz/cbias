@@ -967,8 +967,8 @@ public class MCBuilder {
                     curMCBB.appendInst(new MCFma(MCInstruction.TYPE.SMMLA, tmp, (Register) createConstInt((int) high, true), dividend, dividend));
 //                    curMCBB.appendInst(new MCSmull(dst, tmp, (Register) createConstInt((int) high, true), dividend));
 //                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, tmp1, tmp, dividend));
-                    curMCBB.appendInst(new MCMove(tmp, tmp1, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh), null));
-                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp, dividend, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31), null));
+                    curMCBB.appendInst(new MCMove(tmp1, tmp, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh), null));
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp1, dividend, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31), null));
                 }
             }
             if (divisor < 0)
