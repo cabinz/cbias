@@ -15,7 +15,7 @@ import java.util.*;
 
 public class FunctionInline implements IRPass {
 
-    static class FunctionElement implements Comparable<FunctionElement>{
+    static class FunctionElement{
         private final Function function;
 
         private int size;
@@ -27,15 +27,6 @@ public class FunctionInline implements IRPass {
 
         public void reevaluate(){
             this.size = evaluateSize(this.function);
-        }
-
-        @Override
-        public int compareTo(FunctionElement rhs) {
-            if(size!=rhs.size){
-                return Integer.compare(size, rhs.size);
-            }else{
-                return Integer.compare(this.hashCode(),rhs.hashCode());
-            }
         }
 
         private static int evaluateSize(Function function){
@@ -83,7 +74,13 @@ public class FunctionInline implements IRPass {
     private static void optimize(Module module){
 
         // Main process
-        TreeSet<FunctionElement> functionSet = new TreeSet<>();
+        TreeSet<FunctionElement> functionSet = new TreeSet<>((lhs,rhs)->{
+            if(lhs.size!=rhs.size){
+                return Integer.compare(lhs.size, rhs.size);
+            }else{
+                return Integer.compare(lhs.hashCode(),rhs.hashCode());
+            }
+        });
         for (Function function : module.functions) {
             if(canBeInlined(function)){
                 functionSet.add(new FunctionElement(function));
