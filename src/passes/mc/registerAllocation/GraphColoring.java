@@ -426,7 +426,7 @@ public class GraphColoring {
                 }
             }
 
-            curFunc.addSpilledNode();
+            curFunc.addSpilledNode(v);
         }
     }
 
@@ -454,7 +454,7 @@ public class GraphColoring {
             int new_offset =
                     ((Immediate) move.getSrc()).getIntValue()
                     + curFunc.getContext().size() * 4
-                    + curFunc.getSpilledNode() * 4;
+                    + curFunc.getSpilledNode().size() * 4;
             move.setSrc(new Immediate(new_offset));
             if (!MCBuilder.canEncodeImm(new_offset))
                 move.setExceededLimit();
@@ -471,7 +471,7 @@ public class GraphColoring {
         int new_offset = curFunc.getStackSize();
         /* Public interface stack must align to 8, @see AAPCS 5.2.1.2 */
         if (curFunc.getFullStackSize() % 8 != 0) {
-            curFunc.addSpilledNode();
+            curFunc.addSpilledNode(null);
             new_offset = new_offset + 4;
         }
 

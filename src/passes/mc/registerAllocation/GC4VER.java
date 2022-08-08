@@ -442,7 +442,7 @@ public class GC4VER {
                 }
             }
 
-            curFunc.addSpilledNode();
+            curFunc.addSpilledNode(v);
         }
     }
 

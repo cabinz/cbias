@@ -1,10 +1,7 @@
 package backend.armCode;
 
 import backend.armCode.MCInstructions.MCMove;
-import backend.operand.RealExtRegister;
-import backend.operand.RealRegister;
-import backend.operand.VirtualExtRegister;
-import backend.operand.VirtualRegister;
+import backend.operand.*;
 import ir.Value;
 import ir.values.BasicBlock;
 import ir.values.Function;
@@ -67,7 +64,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * This field is used to record the number of
      * spilled virtual registers.
      */
-    private int spilledNode;
+    private HashSet<MCOperand> spilledNode;
     /**
      * This set holds all the load related to the
      * function's parameter address, <br/>
@@ -191,7 +188,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
             extContext.add(RealExtRegister.get(index));
     }
 
-    public void addSpilledNode() {spilledNode++;}
+    public void addSpilledNode(MCOperand r) {spilledNode.add(r);}
 
     /**
      * Add a parameter load instruction into function
@@ -203,12 +200,12 @@ public class MCFunction implements Iterable<MCBasicBlock> {
      * stackSize = localVariable + spilledNode*4
      */
     public int getStackSize() {
-        stackSize = localVariable + spilledNode*4;
+        stackSize = localVariable + spilledNode.size()*4;
         return stackSize;
     }
 
     public int getFullStackSize() {
-        return context.size()*4 + extContext.size()*4 + localVariable + spilledNode*4;
+        return context.size()*4 + extContext.size()*4 + localVariable + spilledNode.size()*4;
     }
     //</editor-fold>
 
@@ -239,7 +236,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public HashSet<RealRegister> getContext() {return context;}
     public HashSet<RealExtRegister> getExtContext() {return extContext;}
     public Integer getLocalVariable() {return localVariable;}
-    public int getSpilledNode() {return spilledNode;}
+    public HashSet<MCOperand> getSpilledNode() {return spilledNode;}
     public HashSet<MCMove> getParamCal() {return paramCal;}
 
     public LinkedList<MCBasicBlock> getBasicBlockList() {return BasicBlockList;}
@@ -262,7 +259,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         context = new HashSet<>();
         extContext = new HashSet<>();
         localVariable = 0;
-        spilledNode = 0;
+        spilledNode = new HashSet<>();
         paramCal = new HashSet<>();
         BasicBlockList = new LinkedList<>();
         ACTM = new ArrayList<>();
