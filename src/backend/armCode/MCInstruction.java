@@ -137,6 +137,7 @@ public abstract class MCInstruction {
     //<editor-fold desc="Getter & Setter">
     public MCBasicBlock getBelongBB() {return belongBasicBlock;}
     public MCFunction getBelongFunc() {return belongFunc;}
+    public TYPE getType() {return type;}
     public Shift getShift() {return shift;}
     public ConditionField getCond() {return cond;}
 

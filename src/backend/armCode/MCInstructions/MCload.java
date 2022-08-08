@@ -70,8 +70,8 @@ public class MCload extends MCInstruction {
     //</editor-fold>
 
     //<editor-fold desc="Constructor">
-    public MCload(Register dst, Register addr) {super(TYPE.MOV); this.dst = dst; this.addr = addr;}
-    public MCload(Register dst, Register addr, MCOperand offset) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset; this.write=false;}
-    public MCload(Register dst, Register addr, MCOperand offset, boolean write) {super(TYPE.MOV); this.dst = dst; this.addr = addr; this.offset=offset; this.write=write;}
+    public MCload(Register dst, Register addr) {super(TYPE.LOAD); this.dst = dst; this.addr = addr;}
+    public MCload(Register dst, Register addr, MCOperand offset) {super(TYPE.LOAD); this.dst = dst; this.addr = addr; this.offset=offset; this.write=false;}
+    public MCload(Register dst, Register addr, MCOperand offset, boolean write) {super(TYPE.LOAD); this.dst = dst; this.addr = addr; this.offset=offset; this.write=write;}
     //</editor-fold>
 }
