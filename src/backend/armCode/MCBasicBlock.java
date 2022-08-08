@@ -65,6 +65,8 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
 
     public void appendAndRemove(MCBasicBlock bb) {
         instructionList.addAll(bb.getInstructionList());
+        for (var inst : bb)
+            inst.setBelongBB(this);
         bb.removeSelf();
     }
     //</editor-fold>
