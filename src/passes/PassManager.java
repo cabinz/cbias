@@ -13,6 +13,7 @@ import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
 import passes.mc.buildCFG.BuildCFG;
 import passes.mc.mergeBlock.MergeBlock;
+import passes.mc.peepHole.PeepHole;
 import passes.mc.registerAllocation.RegisterAllocation;
 
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ public class PassManager {
     public void runPasses(ARMAssemble module){
         run(BuildCFG.class, module);
         run(RegisterAllocation.class, module);
+        run(PeepHole.class, module);
         run(MergeBlock.class, module);
     }
 
@@ -115,6 +117,7 @@ public class PassManager {
             MCPasses.add(new BuildCFG());
             MCPasses.add(new RegisterAllocation());
             MCPasses.add(new MergeBlock());
+            MCPasses.add(new PeepHole());
             registerMCPasses(MCPasses);
         }
         return instance;
