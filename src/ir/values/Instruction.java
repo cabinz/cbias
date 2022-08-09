@@ -252,18 +252,18 @@ public abstract class Instruction extends User {
      * @param inst The target instruction.
      */
     public void insertBefore(Instruction inst) {
-        inst.node.insertBefore(new IntrusiveList.Node<>(inst));
+        this.node.insertBefore(inst.node);
     }
 
     /**
-     * Insert a new instruction as the next one of the current.
+     * Insert this Instruction as the next of the given one.
      * <br>
      * e.g. A.insertAfter(B) => ... B - A ...
      *
      * @param inst The target instruction.
      */
     public void insertAfter(Instruction inst) {
-        inst.node.insertAfter(new IntrusiveList.Node<>(inst));
+        this.node.insertAfter(inst.node);
     }
 
     /**

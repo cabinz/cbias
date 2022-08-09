@@ -1,4 +1,4 @@
-package passes.ir.hoist;
+package passes.ir.gcm;
 
 import ir.Use;
 import ir.Value;
@@ -23,16 +23,17 @@ public class InstructionSet {
 
     private final HashMap<Integer, Node<Instruction>> map = new HashMap<>();
 
-    public void add(Instruction instruction){
-        if(contains(instruction)) return;
+    public boolean add(Instruction instruction){
+        if(contains(instruction)) return false;
         int hashCode = hash(instruction);
         map.put(hashCode, new Node<>(instruction, map.get(hashCode)));
+        return true;
     }
 
     public boolean contains(Instruction instruction){
         int hashCode = hash(instruction);
         for(Node<Instruction> it=map.get(hashCode);it!=null;it=it.next){
-            if(isEqual(it.value, instruction)) return true;
+            if(areInstEqual(it.value, instruction)) return true;
         }
         return false;
     }
@@ -40,7 +41,7 @@ public class InstructionSet {
     public Instruction get(Instruction instruction){
         int hashCode = hash(instruction);
         for(Node<Instruction> it=map.get(hashCode);it!=null;it=it.next){
-            if(isEqual(it.value, instruction)) return it.value;
+            if(areInstEqual(it.value, instruction)) return it.value;
         }
         return null;
     }
@@ -53,7 +54,7 @@ public class InstructionSet {
         return ret;
     }
 
-    private static boolean isEqual(Instruction a, Instruction b){
+    private static boolean areInstEqual(Instruction a, Instruction b){
         return Objects.equals(getFeatures(a),getFeatures(b));
     }
 
@@ -102,17 +103,17 @@ public class InstructionSet {
                 features.add(tag);
                 features.add(operandMap);
             }
-            case PHI -> {
-                var phiInst = (PhiInst) instruction;
-                Map<BasicBlock, Value> phiMapping = new HashMap<>();
-                for (BasicBlock entry : phiInst.getEntries()) {
-                    phiMapping.put(entry, phiInst.findValue(entry));
-                }
-                features.add(instruction.getTag());
-                features.add(phiMapping);
-            }
+            default -> throw new RuntimeException("Impossible branch. Tag="+instruction.getTag());
+//            case PHI -> {
+//                var phiInst = (PhiInst) instruction;
+//                Map<BasicBlock, Value> phiMapping = new HashMap<>();
+//                for (BasicBlock entry : phiInst.getEntries()) {
+//                    phiMapping.put(entry, phiInst.findValue(entry));
+//                }
+//                features.add(instruction.getTag());
+//                features.add(phiMapping);
+//            }
         }
-        features.add(instruction.getBB());
         return features;
     }
 
