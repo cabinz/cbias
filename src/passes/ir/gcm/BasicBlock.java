@@ -102,13 +102,13 @@ class BasicBlock extends passes.ir.BasicBlock implements IDomTreeNode<BasicBlock
 
     /// Instruction reschedule
 
-    private final List<Instruction> pendingInstructions = new ArrayList<>();
+    private final Set<Instruction> pendingInstructions = new HashSet<>();
 
     public void addPendingInstructions(Instruction instruction){
         pendingInstructions.add(instruction);
     }
 
-    public List<Instruction> getPendingInstructions(){
+    public Set<Instruction> getPendingInstructions(){
         return pendingInstructions;
     }
 

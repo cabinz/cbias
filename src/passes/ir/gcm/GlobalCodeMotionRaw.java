@@ -245,69 +245,44 @@ public class GlobalCodeMotionRaw {
         instructionMap.values().removeIf(instruction -> instruction.getLatePlacement()==null);
     }
 
+    private void placeBefore(ir.values.Instruction a, ir.values.Instruction b){
+        Deque<ir.values.Instruction> placeQueue = new ArrayDeque<>();
+        placeQueue.add(a);
+        while (!placeQueue.isEmpty()){
+            var nextInst = placeQueue.peek();
+            boolean canPlace = true;
+            for (Use use : nextInst.getOperands()) {
+                var usee = use.getUsee();
+                if(!(usee instanceof ir.values.Instruction)) continue;
+                var useeInst = (ir.values.Instruction) usee;
+                if(useeInst.getBB()!=null) continue;
+                placeQueue.addFirst(useeInst);
+                canPlace = false;
+                break;
+            }
+            if(canPlace){
+                nextInst.insertBefore(b);
+                placeQueue.remove();
+            }
+        }
+    }
+
     private void dfsForPlacement(BasicBlock basicBlock) {
         // Place instructions
-        Queue<ir.values.Instruction> availableInstructions = new ArrayDeque<>();
-        Map<ir.values.Instruction, Integer> pendingCountMap = new HashMap<>();
-        for (Instruction instruction : basicBlock.getPendingInstructions()) {
-            int pendingCount = 0;
-            for (Use use : instruction.getRawInstruction().getOperands()) {
+        for (ir.values.Instruction instruction : basicBlock.getRawBasicBlock()) {
+            if(instruction instanceof PhiInst) continue;
+            for (Use use : instruction.getOperands()) {
                 var usee = use.getUsee();
-                if (usee instanceof ir.values.Instruction) {
-                    var inst = (ir.values.Instruction) usee;
-                    if (inst.getBB() == null || inst.getBB() == basicBlock.getRawBasicBlock()) {
-                        pendingCount++;
-                    }
-                }
-            }
-            if (pendingCount == 0) {
-                availableInstructions.add(instruction.getRawInstruction());
-            } else {
-                pendingCountMap.put(instruction.getRawInstruction(), pendingCount);
+                if(!(usee instanceof ir.values.Instruction)) continue;
+                var useeInst = (ir.values.Instruction) usee;
+                if(useeInst.getBB()!=null) continue;
+                placeBefore(useeInst,instruction);
             }
         }
-        ir.values.Instruction lastInst = null;
-        for (ir.values.Instruction instruction : basicBlock.getRawBasicBlock().getInstructions()) {
-            if (instruction instanceof PhiInst || instruction instanceof MemoryInst.Alloca) {
-                lastInst = instruction;
-            }
-        }
-        if (lastInst == null) {
-            for (ir.values.Instruction availableInstruction : availableInstructions) {
-                basicBlock.getRawBasicBlock().insertAtFront(availableInstruction);
-            }
-            availableInstructions.clear();
-        }
-        Deque<ir.values.Instruction> queue = new ArrayDeque<>(basicBlock.getRawBasicBlock().getInstructions());
-        while (!queue.isEmpty()) {
-            var instruction = queue.remove();
-            for (Use use : instruction.getUses()) {
-                var user = (ir.values.Instruction) use.getUser();
-                if (pendingCountMap.containsKey(user)) {
-                    var newCount = pendingCountMap.get(user) - 1;
-                    if (newCount == 0) {
-                        availableInstructions.add(user);
-                        pendingCountMap.remove(user);
-                    } else {
-                        pendingCountMap.put(user, newCount);
-                    }
-                }
-            }
-            if (instruction == lastInst) {
-                lastInst = null;
-            }
-            if (lastInst == null) {
-                for (ir.values.Instruction availableInstruction : availableInstructions) {
-                    availableInstruction.insertAfter(instruction);
-                    queue.addFirst(availableInstruction);
-                }
-                availableInstructions.clear();
-            }
-        }
-
-        if(!pendingCountMap.isEmpty()){
-            System.out.println(pendingCountMap);
-            throw new RuntimeException("Unable to place the rest instructions.");
+        var lastInst = basicBlock.getRawBasicBlock().getLastInst();
+        for (Instruction pendingInstruction : basicBlock.getPendingInstructions()) {
+            if(pendingInstruction.getRawInstruction().getBB()!=null) continue;
+            placeBefore(pendingInstruction.getRawInstruction(), lastInst);
         }
 
         // Place sons
