@@ -15,11 +15,6 @@ public class GlobalCodeMotion implements IRPass {
     public void runOnModule(Module module) {
         PassManager.getInstance().run(UselessCodeElim.class, module);
         PassManager.getInstance().run(UnreachableCodeElim.class, module);
-        try {
-            (new IREmitter("debug.ll")).emit(module);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
         GlobalCodeMotionRaw.optimize(module);
     }
 
