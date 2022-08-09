@@ -12,7 +12,7 @@ class WeightedUnion<BasicBlock extends passes.ir.BasicBlock & IDomTreeNode<Basic
         public NodeAttachment(BasicBlock basicBlock, DomTree<BasicBlock>.NodeAttachment domAttachment) {
             this.domAttachment = domAttachment;
             this.unionFather = basicBlock;
-            this.value = null;
+            this.value = basicBlock;
         }
 
     }

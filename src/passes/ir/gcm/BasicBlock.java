@@ -64,6 +64,10 @@ class BasicBlock extends passes.ir.BasicBlock implements IDomTreeNode<BasicBlock
         else return loop.getDepth();
     }
 
+    public LoopAnalysis.Loop getLoop() {
+        return loop;
+    }
+
     public void setLoop(LoopAnalysis.Loop loop) {
         this.loop = loop;
     }
