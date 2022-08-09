@@ -76,8 +76,10 @@ public class Scope {
     public void addDecl(String name, Value val) {
         // Check name repetition. (Security check)
         if(this.duplicateDecl(name)) {
-            throw new RuntimeException(
-                    "Try to add an declaration with an existing name into current symbol table.");
+            throw new RuntimeException(String.format(
+                    "Try to add an declaration with an existing name \"%s\" into current symbol table.",
+                    name
+            ));
         }
         // If it's a new name.
         curTab().put(name, val);
