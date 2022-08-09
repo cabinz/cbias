@@ -89,7 +89,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
      * The enum is for indicating which data type returned from the lower layer
      * for visiting method. (INT -> read retInt_, FLT -> read retFlt_)
      */
-    private enum DataType {FLT, INT};
+    private enum DataType {FLT, INT}
 
     /**
      * Represents data type returned from the lower layer of visiting method.
@@ -353,7 +353,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
          */
 
         String gvName = scope.isGlobal() ? ctx.Identifier().getText() : null;
-        GlobalVariable arr = null;
+        GlobalVariable arr;
 
         // With Initialization.
         if (ctx.constInitVal() != null) {
@@ -672,18 +672,53 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 for (int i = 1; i < dimLens.size(); i++) {
                     ptr1d = builder.buildGEP(ptr1d, zeroIndices);
                 }
+
+                /*
+                Firstly fill the memory block with zero using memset.
+                 */
+                // Args of memset.
+                // For arg str: Cast float* to i32* if needed.
+                GetElemPtrInst startPoint = ptr1d;
+                Value str;
+                if (startPoint.getType().getPointeeType().isI32()) {
+                    str = startPoint;
+                }
+                else {
+                    str = builder.buildAddrspacecast(startPoint, PointerType.getType(IntegerType.getI32()));
+                }
+                ConstInt c = builder.buildConstant(0);
+                // For arg n: In SysY, both supported data types (int/float) are 4 bytes.
+                ConstInt n = builder.buildConstant(4 * arrType.getAtomLen());
+
+                //Call memset.
+                builder.buildCall((Function) scope.getValByName("memset"), new ArrayList<>(){{
+                    add(str);
+                    add(c);
+                    add(n);
+                }});
+
+
                 // Initialize linearly using the 1d pointer and offset.
                 GetElemPtrInst gep = ptr1d;
                 for (int i = 0; i < retValList_.size() - zeroTail; i++) {
+                    Value initVal = retValList_.get(i);
+
+                    // If the initial Value is a Constant zero (literal 0 or .0f),
+                    // skip this round to not generate any Store instruction.
+                    if (initVal instanceof ConstInt && initVal == IntegerType.getI32().getZero()
+                            || initVal instanceof ConstFloat && initVal == FloatType.getType().getZero()) {
+                        continue;
+                    }
+
+                    // Index the address of the cell to store initial data.
                     if (i > 0) {
-                        int finalI = i;
+                        int offset1d = i;
                         gep = builder.buildGEP(ptr1d, new ArrayList<>() {{
-                            add(builder.buildConstant(finalI));
+                            add(builder.buildConstant(offset1d));
                         }});
                     }
 
                     // Type matching check and conversion.
-                    Value initVal = retValList_.get(i);
                     if (initVal.getType().isIntegerType() && arrType.getElemType().isFloatType()) {
                         initVal = builder.buildSitofp(initVal);
                     }
@@ -695,34 +730,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     builder.buildStore(initVal, gep);
                 }
 
-                /*
-                Fill the rest blanks with zero using memset.
-                 */
 
-                if (zeroTail != 0) {
-                    // Args of memset.
-                    // For arg str: Cast float* to i32* if needed.
-                    GetElemPtrInst startPoint = builder.buildGEP(gep, new ArrayList<>() {{
-                                add(builder.buildConstant(1));
-                            }});
-                    Value str;
-                    if (startPoint.getType().getPointeeType().isI32()) {
-                        str = startPoint;
-                    }
-                    else {
-                        str = builder.buildAddrspacecast(startPoint, PointerType.getType(IntegerType.getI32()));
-                    }
-                    ConstInt c = builder.buildConstant(0);
-                    // For arg n: In SysY, both supported data types (int/float) are 4 bytes.
-                    ConstInt n = builder.buildConstant(4 * (zeroTail));
-
-                    //Call memset.
-                    builder.buildCall((Function) scope.getValByName("memset"), new ArrayList<>(){{
-                        add(str);
-                        add(c);
-                        add(n);
-                    }});
-                }
             }
         }
         return null;
@@ -749,8 +757,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 break;
             }
             var constElem = (Constant) elem;
-            if (constElem.getType().isFloatType() && !((ConstFloat) constElem).isZero()
-                    || constElem.getType().isIntegerType() && !((ConstInt) constElem).isZero() ) {
+            if (constElem.getType().isFloatType() && !constElem.isZero()
+                    || constElem.getType().isIntegerType() && !constElem.isZero() ) {
                 break;
             }
             len++;
@@ -926,7 +934,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         setConstFolding(OFF);
 
         // Build the ArrayType of the function argument.
-        Type arrType = null;
+        Type arrType;
         String bType = ctx.bType().getText();
         switch (bType) {
             case "int" -> arrType = IntegerType.getI32();
