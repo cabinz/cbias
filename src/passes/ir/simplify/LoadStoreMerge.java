@@ -24,6 +24,7 @@ public class LoadStoreMerge implements IRPass {
     private static void optimize(BasicBlock basicBlock){
         Map<Value, Value> lastValueMap = new HashMap<>();
         Set<Value> updatedAddress = new HashSet<>();
+        Value lastBufferedAddress = null;
         for (Instruction instruction : basicBlock) {
             if(instruction instanceof MemoryInst.Load){
                 var address = instruction.getOperandAt(0);
@@ -37,8 +38,11 @@ public class LoadStoreMerge implements IRPass {
                 var value = instruction.getOperandAt(0);
                 var address = instruction.getOperandAt(1);
                 if(!(address instanceof GlobalVariable)){
-                    flushAllStoresExceptGV(lastValueMap, updatedAddress, instruction);
+                    if(lastBufferedAddress!=null){
+                        lastValueMap.remove(lastBufferedAddress);
+                    }
                     lastValueMap.put(address,value);
+                    lastBufferedAddress = address;
                 }else{
                     lastValueMap.put(address,value);
                     updatedAddress.add(address);
@@ -49,18 +53,6 @@ public class LoadStoreMerge implements IRPass {
                 flushAllStores(lastValueMap, updatedAddress, instruction);
             }
         }
-    }
-
-    private static void flushAllStoresExceptGV(Map<Value, Value> lastValueMap, Set<Value> updatedAddress, Instruction instruction) {
-        lastValueMap.forEach((address, value)->{
-            if(address instanceof GlobalVariable) return;
-            if(updatedAddress.contains(address)){
-                var storeInst = new MemoryInst.Store(value,address);
-                storeInst.insertBefore(instruction);
-            }
-        });
-        lastValueMap.keySet().removeIf(address -> !(address instanceof GlobalVariable));
-        updatedAddress.removeIf(address -> !(address instanceof GlobalVariable));
     }
 
     private static void flushAllStores(Map<Value, Value> lastValueMap, Set<Value> updatedAddress, Instruction instruction) {
