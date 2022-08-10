@@ -386,42 +386,72 @@ public class GraphColoring {
             int offset = curFunc.getStackSize();
 
             for (var block : curFunc) {
+                MCInstruction lastDef = null;
+                boolean firstUse = true;
+                int counter = 0;
+
+                Register v_tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
+                HashMap<Register, Register> map = new HashMap<>();
+                map.put(v, v_tmp);
+
                 var list = block.getInstructionList();
                 for (int i=0; i<list.size(); i++) {
                     var inst = list.get(i);
-
-                    /* If def, store the def into memory */
-                    if (inst.getDef().contains(v)) {
-                        /* The max size can the offset can be, see {@link ARMARMv7}  A8.6.58 Page: A8-121 */
-                        if (4096 > offset && offset > -4096)
-                            inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(offset)));
-                        else {
-                            VirtualRegister tmp = curFunc.createVirReg(offset);
-                            inst.insertAfter(new MCstore(v, RealRegister.get(13), tmp));
-                            inst.insertAfter(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
-                            i++;
-                        }
-                        i++;
-                    }
+                    counter ++;
 
                     /* If use, load from memory */
                     if (inst.getUse().contains(v)) {
-                        // TODO: 更好的方法？
-                        /* Create a temporary v_tmp for the use */
-                        VirtualRegister v_tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
-                        if (4096 > offset && offset > -4096)
-                            inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), new Immediate(offset)));
-                        else {
-                            VirtualRegister tmp = curFunc.createVirReg(offset);
-                            inst.insertBefore(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
-                            inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), tmp));
+                        if (lastDef == null && firstUse) {
+                            if (4096 > offset && offset > -4096)
+                                inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                            else {
+                                VirtualRegister tmp = curFunc.createVirReg(offset);
+                                inst.insertBefore(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
+                                inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), tmp));
+                                i++;
+                            }
+
+                            firstUse = false;
                             i++;
                         }
 
-                        var map = new HashMap<Register, Register>();
-                        map.put(v, v_tmp);
                         inst.replaceUse(map);
-                        i++;
+                    }
+
+                    /* If def, store the def into memory */
+                    if (inst.getDef().contains(v)) {
+                        lastDef = inst;
+                        inst.replaceDef(map);
+                    }
+
+                    if (counter >= 30) {
+                        if (lastDef != null) {
+                            /* The max size can the offset can be, see {@link ARMARMv7}  A8.6.58 Page: A8-121 */
+                            if (4096 > offset && offset > -4096)
+                                lastDef.insertAfter(new MCstore(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                            else {
+                                VirtualRegister tmp = curFunc.createVirReg(offset);
+                                lastDef.insertAfter(new MCstore(v_tmp, RealRegister.get(13), tmp));
+                                lastDef.insertAfter(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
+                                i++;
+                            }
+                            lastDef = null;
+                            i++;
+                        }
+
+                        counter = 0;
+                        firstUse = true;
+                        v_tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
+                        map.put(v, v_tmp);
+                    }
+                }
+                if (lastDef != null) {
+                    if (4096 > offset && offset > -4096)
+                        lastDef.insertAfter(new MCstore(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                    else {
+                        VirtualRegister tmp = curFunc.createVirReg(offset);
+                        lastDef.insertAfter(new MCstore(v_tmp, RealRegister.get(13), tmp));
+                        lastDef.insertAfter(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
                     }
                 }
             }
