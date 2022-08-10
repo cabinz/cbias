@@ -10,6 +10,7 @@ import passes.ir.dce.UselessCodeElim;
 import passes.ir.gcm.GlobalCodeMotion;
 import passes.ir.inline.FunctionInline;
 import passes.ir.simplify.BlockMerge;
+import passes.ir.simplify.LoadStoreMerge;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
 import passes.mc.buildCFG.BuildCFG;
@@ -50,6 +51,7 @@ public class PassManager {
         run(ConstantDerivation.class, module);
         run(GlobalCodeMotion.class, module);
         run(BlockMerge.class, module);
+        run(LoadStoreMerge.class, module);
     }
 
     /**
@@ -110,6 +112,7 @@ public class PassManager {
             IRPasses.add(new GlobalCodeMotion());
             IRPasses.add(new BlockMerge());
             IRPasses.add(new FunctionInline());
+            IRPasses.add(new LoadStoreMerge());
             registerIRPasses(IRPasses);
 
             // MC Passes
