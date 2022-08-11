@@ -178,6 +178,10 @@ public class ConstantDerivation implements IRPass {
                         if (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 0) {
                             return c1;
                         }
+                        // x-x = 0
+                        if(Objects.equals(c1,c2)){
+                            return ConstInt.getI32(0);
+                        }
                         return expression;
                     }
                     case MUL -> {
@@ -208,6 +212,10 @@ public class ConstantDerivation implements IRPass {
                         // x/1 = x
                         if (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 1) {
                             return c1;
+                        }
+                        // x/x = 1
+                        if(Objects.equals(c1,c2)){
+                            return ConstInt.getI32(1);
                         }
                         // Todo: consider x/(-1) here?
                         return expression;
@@ -242,6 +250,10 @@ public class ConstantDerivation implements IRPass {
                         if (c2 instanceof ConstFloat && ((ConstFloat) c2).getVal() == 0) {
                             return c1;
                         }
+                        // x-x = 0
+                        if(Objects.equals(c1,c2)){
+                            return ConstFloat.get(0);
+                        }
                         return expression;
                     }
                     case FMUL -> {
@@ -272,6 +284,10 @@ public class ConstantDerivation implements IRPass {
                         // x/1 = x
                         if (c2 instanceof ConstFloat && ((ConstFloat) c2).getVal() == 1) {
                             return c1;
+                        }
+                        // x/x = 1
+                        if(Objects.equals(c1,c2)){
+                            return ConstFloat.get(1);
                         }
                         // Todo: consider x/(-1) here?
                         return expression;
