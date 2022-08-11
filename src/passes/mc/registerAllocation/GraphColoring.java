@@ -378,8 +378,8 @@ public class GraphColoring {
     }
 
     /**
-     * Spilling using store after def and load before use. <br/>
-     * That's ugly, but useful and simple.
+     * Spill the node with long live range <br/>
+     * Separate the live range into several segment with length of 30 instructions
      */
     private void RewriteProgram() {
         for (var v : spilledNodes) {
