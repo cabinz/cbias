@@ -142,13 +142,13 @@ public class IRBuilder {
             for (int i = 0; i < initList.size(); i++) {
                 Value elem = initList.get(i);
                 if (elem.getType() != elemType) {
-                    if (elemType.isFloatType()) {
-                        float numericVal = ((ConstFloat) elem).getVal();
-                        initList.set(i, buildConstant(numericVal));
-                    }
-                    else if (elemType.isIntegerType()) {
+                    if (elemType.isFloatType()) { // cast elem i32 -> float
                         int numericVal = ((ConstInt) elem).getVal();
-                        initList.set(i, buildConstant(numericVal));
+                        initList.set(i, buildConstant((float) numericVal));
+                    }
+                    else if (elemType.isIntegerType()) { // cast elem float -> i32
+                        float numericVal = ((ConstFloat) elem).getVal();
+                        initList.set(i, buildConstant((int) numericVal));
                     }
                 }
             }
