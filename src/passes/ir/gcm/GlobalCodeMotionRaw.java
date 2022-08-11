@@ -78,7 +78,7 @@ public class GlobalCodeMotionRaw {
         instruction.setEarlyPlacement(earlyPlacement);
     }
 
-    private Collection<Instruction> getEarlyTopoOrder(Collection<Instruction> instructions_){
+    private Collection<Instruction> getEarlyTopoOrder(Collection<Instruction> instructions_) {
         Set<Instruction> instructions = new HashSet<>(instructions_);
         Map<Instruction, Integer> pendingInstructions = new HashMap<>();
         Queue<Instruction> availableInstructions = new ArrayDeque<>();
@@ -86,34 +86,34 @@ public class GlobalCodeMotionRaw {
             int pendingCount = 0;
             for (Use use : instruction.getRawInstruction().getOperands()) {
                 var usee = use.getUsee();
-                if(!(usee instanceof ir.values.Instruction)) continue;
-                if(!instructions.contains(instructionMap.get(usee))) continue;
+                if (!(usee instanceof ir.values.Instruction)) continue;
+                if (!instructions.contains(instructionMap.get(usee))) continue;
                 pendingCount += 1;
             }
-            if(pendingCount==0){
+            if (pendingCount == 0) {
                 availableInstructions.add(instruction);
-            }else{
+            } else {
                 pendingInstructions.put(instruction, pendingCount);
             }
         }
         var result = new ArrayList<Instruction>();
-        while (!availableInstructions.isEmpty()){
+        while (!availableInstructions.isEmpty()) {
             var instruction = availableInstructions.remove();
             result.add(instruction);
             for (Use use : instruction.getRawInstruction().getUses()) {
                 var user = instructionMap.get((ir.values.Instruction) use.getUser());
-                if(instructions.contains(user)){
-                    var newCount = pendingInstructions.get(user)-1;
-                    if(newCount==0){
+                if (instructions.contains(user)) {
+                    var newCount = pendingInstructions.get(user) - 1;
+                    if (newCount == 0) {
                         availableInstructions.add(user);
                         pendingInstructions.remove(user);
-                    }else{
+                    } else {
                         pendingInstructions.put(user, newCount);
                     }
                 }
             }
         }
-        if(!pendingInstructions.isEmpty()){
+        if (!pendingInstructions.isEmpty()) {
             throw new RuntimeException("Unable to generate topo order. (Maybe loops in the use graph)");
         }
         return result;
@@ -155,7 +155,7 @@ public class GlobalCodeMotionRaw {
         }
         if (u == v) return u;
         for (int i = u.getFastJumps().size() - 1; i >= 0; i--) {
-            if (u.getFastJumps().get(i) != v.getFastJumps().get(i)) {
+            if (i < u.getFastJumps().size() && (u.getFastJumps().get(i) != v.getFastJumps().get(i))) {
                 u = u.getFastJumps().get(i);
                 v = v.getFastJumps().get(i);
             }
@@ -172,20 +172,20 @@ public class GlobalCodeMotionRaw {
                 var userInst = instructionMap.get(user);
                 newLimits.add(userInst.getLatePlacement());
             } else {
-                if(user instanceof PhiInst){
+                if (user instanceof PhiInst) {
                     var phiInst = (PhiInst) user;
                     for (ir.values.BasicBlock entry : phiInst.getEntries()) {
                         var value = phiInst.findValue(entry);
-                        if(value==instruction.getRawInstruction()){
+                        if (value == instruction.getRawInstruction()) {
                             newLimits.add(basicBlockMap.get(entry));
                         }
                     }
-                }else{
+                } else {
                     newLimits.add(basicBlockMap.get(user.getBB()));
                 }
             }
             for (BasicBlock newLimit : newLimits) {
-                if(newLimit==null) continue;
+                if (newLimit == null) continue;
                 if (latePlacement == null) {
                     latePlacement = newLimit;
                 } else {
@@ -196,7 +196,7 @@ public class GlobalCodeMotionRaw {
         instruction.setLatePlacement(latePlacement);
     }
 
-    private Collection<Instruction> getLateTopoOrder(Collection<Instruction> instructions_){
+    private Collection<Instruction> getLateTopoOrder(Collection<Instruction> instructions_) {
         Set<Instruction> instructions = new HashSet<>(instructions_);
         Map<Instruction, Integer> pendingInstructions = new HashMap<>();
         Queue<Instruction> availableInstructions = new ArrayDeque<>();
@@ -204,36 +204,36 @@ public class GlobalCodeMotionRaw {
             int pendingCount = 0;
             for (Use use : instruction.getRawInstruction().getUses()) {
                 var user = use.getUser();
-                if(!(user instanceof ir.values.Instruction)) continue;
-                if(!instructions.contains(instructionMap.get(user))) continue;
+                if (!(user instanceof ir.values.Instruction)) continue;
+                if (!instructions.contains(instructionMap.get(user))) continue;
                 pendingCount += 1;
             }
-            if(pendingCount==0){
+            if (pendingCount == 0) {
                 availableInstructions.add(instruction);
-            }else{
+            } else {
                 pendingInstructions.put(instruction, pendingCount);
             }
         }
         var result = new ArrayList<Instruction>();
-        while (!availableInstructions.isEmpty()){
+        while (!availableInstructions.isEmpty()) {
             var instruction = availableInstructions.remove();
             result.add(instruction);
             for (Use use : instruction.getRawInstruction().getOperands()) {
                 var usee = use.getUsee();
-                if(!(usee instanceof ir.values.Instruction)) continue;
+                if (!(usee instanceof ir.values.Instruction)) continue;
                 var useeInst = instructionMap.get(usee);
-                if(instructions.contains(useeInst)){
-                    var newCount = pendingInstructions.get(useeInst)-1;
-                    if(newCount==0){
+                if (instructions.contains(useeInst)) {
+                    var newCount = pendingInstructions.get(useeInst) - 1;
+                    if (newCount == 0) {
                         availableInstructions.add(useeInst);
                         pendingInstructions.remove(useeInst);
-                    }else{
+                    } else {
                         pendingInstructions.put(useeInst, newCount);
                     }
                 }
             }
         }
-        if(!pendingInstructions.isEmpty()){
+        if (!pendingInstructions.isEmpty()) {
             throw new RuntimeException("Unable to generate topo order. (Maybe loops in the use graph)");
         }
         return result;
@@ -242,25 +242,25 @@ public class GlobalCodeMotionRaw {
     private void scheduleLate() {
         dfsForFastJumpInfo(functionEntry);
         getLateTopoOrder(instructionMap.values()).forEach(this::generateLatePlacement);
-        instructionMap.values().removeIf(instruction -> instruction.getLatePlacement()==null);
+        instructionMap.values().removeIf(instruction -> instruction.getLatePlacement() == null);
     }
 
-    private void placeBefore(ir.values.Instruction a, ir.values.Instruction b){
+    private void placeBefore(ir.values.Instruction a, ir.values.Instruction b) {
         Deque<ir.values.Instruction> placeQueue = new ArrayDeque<>();
         placeQueue.add(a);
-        while (!placeQueue.isEmpty()){
+        while (!placeQueue.isEmpty()) {
             var nextInst = placeQueue.peek();
             boolean canPlace = true;
             for (Use use : nextInst.getOperands()) {
                 var usee = use.getUsee();
-                if(!(usee instanceof ir.values.Instruction)) continue;
+                if (!(usee instanceof ir.values.Instruction)) continue;
                 var useeInst = (ir.values.Instruction) usee;
-                if(useeInst.getBB()!=null) continue;
+                if (useeInst.getBB() != null) continue;
                 placeQueue.addFirst(useeInst);
                 canPlace = false;
                 break;
             }
-            if(canPlace){
+            if (canPlace) {
                 nextInst.insertBefore(b);
                 placeQueue.remove();
             }
@@ -270,18 +270,18 @@ public class GlobalCodeMotionRaw {
     private void dfsForPlacement(BasicBlock basicBlock) {
         // Place instructions
         for (ir.values.Instruction instruction : basicBlock.getRawBasicBlock()) {
-            if(instruction instanceof PhiInst) continue;
+            if (instruction instanceof PhiInst) continue;
             for (Use use : instruction.getOperands()) {
                 var usee = use.getUsee();
-                if(!(usee instanceof ir.values.Instruction)) continue;
+                if (!(usee instanceof ir.values.Instruction)) continue;
                 var useeInst = (ir.values.Instruction) usee;
-                if(useeInst.getBB()!=null) continue;
-                placeBefore(useeInst,instruction);
+                if (useeInst.getBB() != null) continue;
+                placeBefore(useeInst, instruction);
             }
         }
         var lastInst = basicBlock.getRawBasicBlock().getLastInst();
         for (Instruction pendingInstruction : basicBlock.getPendingInstructions()) {
-            if(pendingInstruction.getRawInstruction().getBB()!=null) continue;
+            if (pendingInstruction.getRawInstruction().getBB() != null) continue;
             placeBefore(pendingInstruction.getRawInstruction(), lastInst);
         }
 
