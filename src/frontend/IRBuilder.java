@@ -301,7 +301,7 @@ public class IRBuilder {
     }
 
     /**
-     * Insert a Alloca instruction at the FRONT of ENTRY basic block of the current Function.
+     * Insert an Alloca instruction at the FRONT of ENTRY basic block of the current Function.
      * @param allocatedType The type of memory space allocated.
      * @return The Alloca instruction inserted.
      */
@@ -395,7 +395,7 @@ public class IRBuilder {
         }
 
         // Constructor the Add instruction (for integers and floats respectively)
-        BinaryOpInst instAdd = null;
+        BinaryOpInst instAdd;
         Type type = lOp.getType();
         if (type.isI32()) {
             instAdd = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.ADD, lOp, rOp);
@@ -427,7 +427,7 @@ public class IRBuilder {
         }
 
         // Constructor the Sub instruction (for integers and floats respectively)
-        BinaryOpInst instSub = null;
+        BinaryOpInst instSub;
         Type type = lOp.getType();
         if (type.isI32()) {
             instSub = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.SUB, lOp, rOp);
@@ -459,7 +459,7 @@ public class IRBuilder {
         }
 
         // Constructor the Mul instruction (for integers and floats respectively)
-        BinaryOpInst instMul = null;
+        BinaryOpInst instMul;
         Type type = lOp.getType();
         if (type.isI32()) {
             instMul = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.MUL, lOp, rOp);
@@ -491,7 +491,7 @@ public class IRBuilder {
         }
 
         // Constructor the Div instruction (for integers and floats respectively)
-        BinaryOpInst instDiv = null;
+        BinaryOpInst instDiv;
         Type type = lOp.getType();
         if (type.isI32()) {
             instDiv = new BinaryOpInst(IntegerType.getI32(), Instruction.InstCategory.DIV, lOp, rOp);
