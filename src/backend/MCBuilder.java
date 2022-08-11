@@ -1153,6 +1153,8 @@ public class MCBuilder {
                         var mov = isInt ?new MCMove((Register) dealing, tmp) :new MCFPmove(dealing, tmp);
                         if (PrintInfo.printIR && dealing.isVirtualReg())
                             mov.val = ((VirtualRegister) dealing).getValue();
+                        else if (PrintInfo.printIR && dealing.isVirtualExtReg())
+                            mov.val = ((VirtualExtRegister) dealing).getValue();
                         moves.addLast(mov);
                     }
                     /* Dealing nested phi, the ONLY immediate can be here is dealing itself */
@@ -1178,6 +1180,8 @@ public class MCBuilder {
                             mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
                         if (PrintInfo.printIR && dst.isVirtualReg())
                             mov.val = ((VirtualRegister) dst).getValue();
+                        else if (PrintInfo.printIR && dst.isVirtualExtReg())
+                            mov.val = ((VirtualExtRegister) dst).getValue();
                         moves.addFirst(mov);
                         src = dst;
                         phiMap.remove(dst);

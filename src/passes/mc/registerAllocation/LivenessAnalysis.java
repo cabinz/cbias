@@ -137,7 +137,7 @@ public class LivenessAnalysis {
                 }
                 if (block.getFalseSuccessor() != null) {
                     out.addAll(liveMap.get(block.getFalseSuccessor()).in);
-                    extOut.addAll(liveMap.get(block.getTrueSuccessor()).extIn);
+                    extOut.addAll(liveMap.get(block.getFalseSuccessor()).extIn);
                 }
 
                 if (!out.equals(info.out)) {
