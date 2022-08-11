@@ -188,15 +188,15 @@ public class GC4VER {
 
         adjList = new HashMap<>();
         adjSet = new HashSet<>();
-        degree = new HashMap<>(IntStream.range(0, K+1)
+        degree = new HashMap<>(IntStream.range(0, K)
                 .mapToObj(RealExtRegister::get)
                 .collect(Collectors.toMap(x -> x, x -> INF)));
 
         selectStack = new Stack<>();
-        coloredNodes = IntStream.range(0, K+1)
+        coloredNodes = IntStream.range(0, K)
                 .mapToObj(RealExtRegister::get)
                 .collect(Collectors.toCollection(HashSet::new));
-        color = new HashMap<>(IntStream.range(0, K+1)
+        color = new HashMap<>(IntStream.range(0, K)
                 .mapToObj(RealExtRegister::get)
                 .collect(Collectors.toMap(x -> x, RealExtRegister::getIndex)));
         coalescedNodes = new HashSet<>();
@@ -368,7 +368,7 @@ public class GC4VER {
         while (!selectStack.isEmpty()) {
             /* Initialize */
             var n = selectStack.pop();
-            var okColor = IntStream.range(0, K+1).boxed()// TODO: 考虑使用r14 lr? 使用r12 ip
+            var okColor = IntStream.range(0, K).boxed()// TODO: 考虑使用r14 lr? 使用r12 ip
                     .collect(Collectors.toList());
 
             /* Remove unavailable color */

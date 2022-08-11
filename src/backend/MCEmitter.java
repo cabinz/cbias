@@ -71,6 +71,7 @@ public class MCEmitter {
                     if(x!=null) strBd.append(x.emit() + ", ");
                 });
                 strBd.append('\n');
+                strBd.append("\t\t\t\t\t\t\t\t@spilled number: " + f.getSpilledNode().size() + '\n');
             }
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
