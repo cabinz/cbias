@@ -74,15 +74,6 @@ public class ConstArray extends Constant {
      * @return The ConstArray instance required.
      */
     public static ConstArray get(ArrayType arrType, ArrayList<Constant> initList) {
-        //<editor-fold desc="Security checks">
-
-//        // Check length.
-//        if (initList.size() == 0) {
-//            throw new RuntimeException("Try to retrieve a ConstArray with length of 0.");
-//        }
-//        if (initList.size() != arrType.getLen()) {
-//            throw new RuntimeException("Array Type length doesn't match the length of the init list.");
-//        }
         // Check type.
         for (Constant elem : initList) {
             if (arrType.getElemType() != elem.getType()) {
@@ -92,10 +83,8 @@ public class ConstArray extends Constant {
             }
         }
 
-        //</editor-fold>
-
         // Process initList: remove all zero values at the end.
-        for (int i = initList.size() - 1; i > 0; i--) {
+        for (int i = initList.size() - 1; i >= 0; i--) {
             Constant elem = initList.get(i);
             if (!elem.isZero()) {
                 break;

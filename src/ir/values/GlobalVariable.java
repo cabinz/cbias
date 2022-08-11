@@ -55,6 +55,13 @@ public class GlobalVariable extends User {
      * The actual value of a non-constant glb var can be change
      * by other instructions, after which the initVal makes no
      * sense to this Value no more.
+     * <br>
+     * NOTICE: We use no GV::isInitialized field for indicating
+     * if a gv is initialized like in LLVM. All uninitialized gv
+     * will be assigned with a corresponding zero value.
+     * But if in the future, multi-unit compilation requires to be
+     * supported, there has to be the field to help backend to place
+     * gv on .bss or .data section.
      */
     private Constant initVal;
 
