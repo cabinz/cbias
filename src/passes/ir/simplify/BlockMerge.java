@@ -69,7 +69,7 @@ public class BlockMerge implements IRPass {
     }
 
     /**
-     * Checks weather the block can be combined with the previous block.
+     * Checks whether the block can be combined with the previous block.
      *
      * @param basicBlock The block to be checked.
      * @return True if it can be combined with the previous block.

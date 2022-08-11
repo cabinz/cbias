@@ -17,6 +17,7 @@ import ir.values.instructions.*;
 import passes.ir.IBBRelationship;
 import passes.ir.RelationAnalysis;
 
+import java.math.BigInteger;
 import java.util.*;
 
 /**
@@ -109,11 +110,9 @@ public class MCBuilder {
      * <ul>
      *     <li>Map IR global variable into target global variable list</li>
      *     <li>Map IR function into target function list and Map IR BasicBlock into target function BasicBlock</li>
-     *     <li>Calculate loop info of function ( TO BE FINISHED )(为什么不放在pass)</li>
-     *     <li>Find predecessors of a MCBasicBlock AND Calculate loop info of BasicBlock( TO BE FINISHED )(为什么不放在pass)( TO BE FINISHED )</li>
-     *     <li>BFS travel the BasicBlock and then translate into ARM instruction()</li>
+     *     <li>Travel the BasicBlock and then translate into ARM instruction</li>
      *     <li>Handle PHI instruction</li>
-     *     <li>Calculate the cost of the MCInstruction( TO BE FINISHED )(为什么不放在pass)</li>
+     *     <li>Calculate loop info of function & block ( TO BE FINISHED )</li>
      * </ul>
      * @return generated ARM assemble target
      */
@@ -189,7 +188,7 @@ public class MCBuilder {
     }
 
     /**
-     * 指令选择总模块，该函数仅会向MCBB中插入指令，块间关联和其他关系描述由指令自身完成
+     * Instruction selection, using Macro expansion
      * @param IRinst IR instruction to be translated
      */
     private void translate(Instruction IRinst) {
@@ -223,12 +222,20 @@ public class MCBuilder {
     /**
      * Allocate a container or find the virtual register for a IR value.<br/><br/>
      * What's a container? I consider a MC operand as a container. IR
-     * values are stored in the immediate position, or register.
+     * values are stored in the immediate position, or register. <br/><br/>
+     * This function is the key of the codegen, which manages and determines all the containers of all instructions. <br/><br/>
+     * The IF order in the function matters! ValueMap as the watershed,
+     * all the IF before it will generate a bunch of instructions in the front of current instruction EACH TIME when called with the same argument,
+     * while the IF after it will be executed ONLY ONCE and generate code in the front of entry block to DOM all the node! <br/><br/>
+     * Therefore, the IF before valueMap can be optimized to insert the code in first node before, which DOMs all the use of it, which may decrease the number of redundant code,
+     * while IF after valueMap can be optimized to delay the code to the last node DOMing all the use of it, which may shorten the live range of variable in code.
+     * The optimization above may need the GCM pass. <br/><br/>
      * @param value the value to handle
      * @param forceAllocReg force allocate a virtual register if true
      * @return the corresponding container (ONLY core register or integer immediate)
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
+        // TODO: GCM maybe?
         if (value instanceof Constant) {
             int val = value instanceof ConstInt
                     ? ((ConstInt) value).getVal()
@@ -242,7 +249,7 @@ public class MCBuilder {
                     /* TODO: If force to allocate a register, should we create a new one or attempt to find one hold in VR? */
                         /* Create new one: more MOV instruction is created */
                         /* Find old one: Expand the live range of one VR, may cause SPILLING, and must follow the CFG */
-                    /* For now, try to create new one */
+                    /* For now, considering the same constant may NOT be too many, try to create new one */
 //                    if (valueMap.containsKey(value))
 //                        return valueMap.get(value);
 //                    else {
@@ -257,7 +264,6 @@ public class MCBuilder {
             }
         }
         else if (value instanceof GlobalVariable) {
-            // TODO: 采用控制流分析，是否能访问到之前的地址
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
@@ -266,7 +272,6 @@ public class MCBuilder {
         else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
-        /* Should I do the move from ExtReg to CoreReg? Or make it the user's stuff and I just provide a container? */
         else if (floatValueMap.containsKey(value)) {
             var vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
@@ -292,7 +297,6 @@ public class MCBuilder {
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
             // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别
-            // TODO: 使用到传参的时候才计算load
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             MCBasicBlock entry = curFunc.getEntryBlock();
@@ -333,6 +337,7 @@ public class MCBuilder {
      * @param value the value that needs a container
      * @param forceAllocReg need to force allocate an extension register for the value
      * @return the corresponding container (ONLY extension register or float immediate)
+     * @see #findContainer(Value, boolean)
      */
     private MCOperand findFloatContainer(Value value, boolean forceAllocReg) {
         if (value instanceof Constant) {
@@ -366,14 +371,13 @@ public class MCBuilder {
                 return extVr;
             }
         }
-        else if (floatValueMap.containsKey(value)) {
-            return floatValueMap.get(value);
-        }
         else if (valueMap.containsKey(value)) {
             var extVr = curFunc.createExtVirReg(value);
-            floatValueMap.put(value, extVr);
             curMCBB.appendInst(new MCFPmove(extVr, valueMap.get(value)));
             return extVr;
+        }
+        else if (floatValueMap.containsKey(value)) {
+            return floatValueMap.get(value);
         }
         else if (value instanceof Instruction) {
             var inst = ((Instruction) value);
@@ -451,6 +455,10 @@ public class MCBuilder {
         return false;
     }
 
+    /**
+     * Float immedaite can only be +/- m * 2 ^ (-n)
+     * @see FPImmediate
+     */
     public static boolean canEncodeFloat(float n) {
         return immFloat.contains(n);
     }
@@ -823,6 +831,9 @@ public class MCBuilder {
         }
     }
 
+    /**
+     * Translate MUL in IR
+     */
     private void translateMul(BinaryOpInst IRinst) {
         Value operand1 = IRinst.getOperandAt(0);
         Value operand2 = IRinst.getOperandAt(1);
@@ -922,17 +933,23 @@ public class MCBuilder {
             }
             /* Integer division */
             else {
-                int l = log2(divisor) + 1;
+//                var divisorR = findContainer(v2, true);
+//
+//                curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SDIV, dst, dividend, divisorR));
+
+                int l = log2(abs) + 1;
                 int sh = l;
-                long low = ((1L << (32+l)) / divisor);
-                long high = (((1L << (32+l)) + (1L << (l+1))) / divisor);
+                var tmpInt = new BigInteger("1");
+                /* (1 << (32+l)) / abs */
+                long low = tmpInt.shiftLeft(32+l).divide(BigInteger.valueOf(abs)).longValue();
+                /* ((1L << (32+l)) + (1L << (l+1))) / abs */
+                long high = tmpInt.shiftLeft(32+l).add(tmpInt.shiftLeft(l+1)).divide(BigInteger.valueOf(abs)).longValue();
                 while (((low/2) < (high/2)) && sh > 0) {
                     low = low / 2;
                     high = high / 2;
                     sh--;
                 }
 
-                // TODO: better!
                 if (high < (1L << 31)) {
                     var tmp1 = curFunc.createVirReg(0);
                     var tmp2 = curFunc.createVirReg(0);
@@ -944,12 +961,14 @@ public class MCBuilder {
                 }
                 else {
                     high = high - (1L << 32);
+                    assert high < 0;
                     var tmp = curFunc.createVirReg(0);
                     var tmp1 = curFunc.createVirReg(0);
-                    curMCBB.appendInst(new MCSmull(dst, tmp, (Register) createConstInt((int) high, true), dividend));
-                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, tmp1, tmp, dividend));
-                    curMCBB.appendInst(new MCMove(tmp, tmp1, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh), null));
-                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp, dividend, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31), null));
+                    curMCBB.appendInst(new MCFma(MCInstruction.TYPE.SMMLA, tmp, (Register) createConstInt((int) high, true), dividend, dividend));
+//                    curMCBB.appendInst(new MCSmull(dst, tmp, (Register) createConstInt((int) high, true), dividend));
+//                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.ADD, tmp1, tmp, dividend));
+                    curMCBB.appendInst(new MCMove(tmp1, tmp, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, sh), null));
+                    curMCBB.appendInst(new MCBinary(MCInstruction.TYPE.SUB, dst, tmp1, dividend, new MCInstruction.Shift(MCInstruction.Shift.TYPE.ASR, 31), null));
                 }
             }
             if (divisor < 0)
@@ -978,6 +997,10 @@ public class MCBuilder {
         ));
     }
 
+    /**
+     * Translate sitofp & fptosi. <br/>
+     * sitofp needs to insert VMOV from core register, while fptosi needs to VMOV from extReg back
+     */
     private void translateConvert(CastInst IRinst, boolean f2i) {
         curMCBB.appendInst(new MCFPconvert(
                 f2i,
@@ -1055,6 +1078,9 @@ public class MCBuilder {
         }
     }
 
+    /**
+     * SSA destruction, and then inserted to the end of each predecessor
+     */
     private void translatePhi() {
         for (BasicBlock IRBB : curIRFunc) {
             var info = blockInfo.get(IRBB);
@@ -1144,8 +1170,8 @@ public class MCBuilder {
                             }
                             else {
                                 var tmpVr = curFunc.createVirReg(null);
-                                moves.addFirst(new MCMove(tmpVr, src, true));
-                                mov = new MCFPmove((ExtensionRegister) dst, tmpVr);
+                                moves.addFirst(new MCFPmove((ExtensionRegister) dst, tmpVr));
+                                mov = new MCMove(tmpVr, src, true);
                             }
                         }
                         else
@@ -1161,8 +1187,11 @@ public class MCBuilder {
                 /* Insert */
                 var preList = curFunc.findMCBB(preIRBB).getInstructionList();
                 var inst = preList.getLast();
-                if (preList.size() > 1 && preList.get(preList.size()-2) instanceof MCbranch && ((MCbranch) preList.get(preList.size() - 2)).isBranch())
-                    inst = preList.get(preList.size() - 2);
+                if (preList.size() > 1) {
+                    var secondLast = preList.get(preList.size()-2);
+                    if (secondLast instanceof MCbranch && ((MCbranch) secondLast).isBranch())
+                        inst = secondLast;
+                }
                 moves.forEach(inst::insertBefore);
             }
         }

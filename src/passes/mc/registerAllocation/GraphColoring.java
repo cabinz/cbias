@@ -8,7 +8,6 @@ import backend.armCode.MCFunction;
 import backend.armCode.MCInstruction;
 import backend.armCode.MCInstructions.*;
 import backend.operand.*;
-import passes.mc.MCPass;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -379,60 +378,98 @@ public class GraphColoring {
     }
 
     /**
-     * Spilling using store after def and load before use. <br/>
-     * That's ugly, but useful and simple.
+     * Spill the node with long live range <br/>
+     * Separate the live range into several segment with length of 30 instructions
      */
     private void RewriteProgram() {
         for (var v : spilledNodes) {
             int offset = curFunc.getStackSize();
 
             for (var block : curFunc) {
+                MCInstruction lastDef = null;
+                boolean firstUse = true;
+                int counter = 0;
+
+                Register v_tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
+                HashMap<Register, Register> map = new HashMap<>();
+                map.put(v, v_tmp);
+
                 var list = block.getInstructionList();
                 for (int i=0; i<list.size(); i++) {
                     var inst = list.get(i);
-
-                    /* If def, store the def into memory */
-                    if (inst.getDef().contains(v)) {
-                        /* The max size can the offset can be, see {@link ARMARMv7}  A8.6.58 Page: A8-121 */
-                        if (4096 > offset && offset > -4096)
-                            inst.insertAfter(new MCstore(v, RealRegister.get(13), new Immediate(offset)));
-                        else {
-                            VirtualRegister tmp = curFunc.createVirReg(offset);
-                            inst.insertAfter(new MCstore(v, RealRegister.get(13), tmp));
-                            inst.insertAfter(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
-                            i++;
-                        }
-                        i++;
-                    }
+                    counter ++;
 
                     /* If use, load from memory */
                     if (inst.getUse().contains(v)) {
-                        // TODO: 更好的方法？
-                        /* Create a temporary v_tmp for the use */
-                        VirtualRegister v_tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
-                        if (4096 > offset && offset > -4096)
-                            inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), new Immediate(offset)));
-                        else {
-                            VirtualRegister tmp = curFunc.createVirReg(offset);
-                            inst.insertBefore(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
-                            inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), tmp));
+                        if (lastDef == null && firstUse) {
+                            if (4096 > offset && offset > -4096)
+                                inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                            else {
+                                VirtualRegister tmp = curFunc.createVirReg(offset);
+                                inst.insertBefore(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
+                                inst.insertBefore(new MCload(v_tmp, RealRegister.get(13), tmp));
+                                i++;
+                            }
+
+                            firstUse = false;
                             i++;
                         }
-                        /* This will replace the ALL reference of v, including the def, which may cause error */
-                        /* The way to deal NOW is do NOT def & use the same VirtualRegister in an instruction */
-                        /* A better way maybe redefine an interface named "replaceUse"? */
-                        inst.replaceRegister(v, v_tmp);
-                        i++;
+
+                        inst.replaceUse(map);
+                    }
+
+                    /* If def, store the def into memory */
+                    if (inst.getDef().contains(v)) {
+                        lastDef = inst;
+                        inst.replaceDef(map);
+                    }
+
+                    if (counter >= 30) {
+                        if (lastDef != null) {
+                            /* The max size can the offset can be, see {@link ARMARMv7}  A8.6.58 Page: A8-121 */
+                            if (4096 > offset && offset > -4096)
+                                lastDef.insertAfter(new MCstore(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                            else {
+                                VirtualRegister tmp = curFunc.createVirReg(offset);
+                                lastDef.insertAfter(new MCstore(v_tmp, RealRegister.get(13), tmp));
+                                lastDef.insertAfter(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
+                                i++;
+                            }
+                            lastDef = null;
+                            i++;
+                        }
+
+                        counter = 0;
+                        firstUse = true;
+                        v_tmp = curFunc.createVirReg(((VirtualRegister) v).getValue());
+                        map.put(v, v_tmp);
+                    }
+                }
+                if (lastDef != null) {
+                    if (4096 > offset && offset > -4096)
+                        lastDef.insertAfter(new MCstore(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                    else {
+                        VirtualRegister tmp = curFunc.createVirReg(offset);
+                        lastDef.insertAfter(new MCstore(v_tmp, RealRegister.get(13), tmp));
+                        lastDef.insertAfter(new MCMove(tmp, new Immediate(offset), !MCBuilder.canEncodeImm(offset)));
                     }
                 }
             }
 
-            curFunc.addSpilledNode();
+            curFunc.addSpilledNode(v);
         }
     }
 
     private void ReplaceRegisters() {
-        curFunc.forEach(block -> block.forEach(this::assignRealRegister));
+        var map = new HashMap<Register, Register>();
+        /* This will new a lot of Entry object, can be optimized */
+        color.forEach((register, index) -> map.put(register, RealRegister.get(index)));
+        for (var block : curFunc) {
+            for (var inst : block) {
+                inst.replaceUse(map);
+                inst.replaceDef(map);
+            }
+        }
     }
 
     private void RemoveCoalesced() {
@@ -447,7 +484,7 @@ public class GraphColoring {
             int new_offset =
                     ((Immediate) move.getSrc()).getIntValue()
                     + curFunc.getContext().size() * 4
-                    + curFunc.getSpilledNode() * 4;
+                    + curFunc.getSpilledNode().size() * 4;
             move.setSrc(new Immediate(new_offset));
             if (!MCBuilder.canEncodeImm(new_offset))
                 move.setExceededLimit();
@@ -464,7 +501,7 @@ public class GraphColoring {
         int new_offset = curFunc.getStackSize();
         /* Public interface stack must align to 8, @see AAPCS 5.2.1.2 */
         if (curFunc.getFullStackSize() % 8 != 0) {
-            curFunc.addSpilledNode();
+            curFunc.addSpilledNode(null);
             new_offset = new_offset + 4;
         }
 
@@ -684,113 +721,6 @@ public class GraphColoring {
 
     private boolean isPrecolored(Register r) {
         return r instanceof RealRegister;
-    }
-
-    /**
-     * Replace the register in the MCInstruction. <br/>
-     * This is ugly, but I have no way, with the bad definition of ARM assemble. <br/>
-     * It should be like IR using the user to hold operands, using constructor <br/>
-     * to restrict the operand.
-     */
-    private void assignRealRegister(MCInstruction inst) {
-        if (inst instanceof MCBinary) {
-            var bi = ((MCBinary) inst);
-            var op1 = bi.getOperand1();
-            var op2 = bi.getOperand2();
-            var dst = bi.getDestination();
-            var shift = bi.getShift()==null ?null :bi.getShift().getOperand();
-            replace(bi, op1);
-            if (op2 instanceof VirtualRegister)
-                replace(bi, ((VirtualRegister) op2));
-            if (shift instanceof VirtualRegister)
-                replace(bi, ((VirtualRegister) shift));
-            replace(bi, dst);
-        }
-        if (inst instanceof MCSmull) {
-            var smull = (MCSmull) inst;
-            var low = smull.getLow();
-            var high = smull.getHigh();
-            var Rm = smull.getRm();
-            var Rn = smull.getRn();
-            replace(smull, low);
-            replace(smull, high);
-            replace(smull, Rm);
-            replace(smull, Rn);
-        }
-        else if (inst instanceof MCcmp) {
-            var cmp = ((MCcmp) inst);
-            var op1 = cmp.getOperand1();
-            var op2 = cmp.getOperand2();
-            var shift = cmp.getShift()==null ?null :cmp.getShift().getOperand();
-            replace(cmp, op1);
-            if (op2 instanceof VirtualRegister)
-                replace(cmp, ((VirtualRegister) op2));
-            if (shift instanceof VirtualRegister)
-                replace(cmp, ((VirtualRegister) shift));
-        }
-        else if (inst instanceof MCload) {
-            var load = ((MCload) inst);
-            var dst = load.getDst();
-            var addr = load.getAddr();
-            var offset = load.getOffset();
-            replace(load, dst);
-            replace(load, addr);
-            if (offset instanceof VirtualRegister)
-                replace(load, ((VirtualRegister) offset));
-        }
-        else if (inst instanceof MCstore) {
-            var store = ((MCstore) inst);
-            var src = store.getSrc();
-            var addr = store.getAddr();
-            var offset = store.getOffset();
-            replace(store, src);
-            replace(store, addr);
-            if (offset instanceof VirtualRegister)
-                replace(store, ((VirtualRegister) offset));
-        }
-        else if (inst instanceof MCMove) {
-            var move = ((MCMove) inst);
-            var dst = move.getDst();
-            var src = move.getSrc();
-            var shift = move.getShift()==null ?null :move.getShift().getOperand();
-            replace(move, dst);
-            if (src instanceof VirtualRegister)
-                replace(move, ((VirtualRegister) src));
-            if (shift instanceof VirtualRegister)
-                replace(move, ((VirtualRegister) shift));
-        }
-        else if (inst instanceof MCFma) {
-            var fma = ((MCFma) inst);
-            Register accumulate = fma.getAccumulate();
-            Register multiple_1 = fma.getMultiple_1();
-            Register multiple_2 = fma.getMultiple_2();
-            Register dst = fma.getDst();
-            replace(fma, accumulate);
-            replace(fma, multiple_1);
-            replace(fma, multiple_2);
-            replace(fma, dst);
-        }
-        else if (inst instanceof MCFPload) {
-            var load = ((MCFPload) inst);
-            replace(load, load.getAddr());
-        }
-        else if (inst instanceof MCFPstore) {
-            var store = ((MCFPstore) inst);
-            replace(store, store.getAddr());
-        }
-        else if (inst instanceof MCFPmove) {
-            var move = ((MCFPmove) inst);
-            var src1 = move.getSrc1();
-            var dst1 = move.getDst1();
-            if (src1 != null && src1.isVirtualReg())
-                replace(move, (Register) move.getSrc1());
-            if (dst1 != null && dst1.isVirtualReg())
-                replace(move, (Register) move.getDst1());
-        }
-    }
-
-    private void replace(MCInstruction inst, Register old) {
-        inst.replaceRegister(old, RealRegister.get(color.get(old)));
     }
     //</editor-fold>
 }

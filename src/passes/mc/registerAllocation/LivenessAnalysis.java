@@ -71,7 +71,7 @@ public class LivenessAnalysis {
         }
 
         for (var x : last.keySet()) {
-            liveRange.put(x, last.get(x)-first.getOrDefault(x, pc));
+            liveRange.put(x, last.getOrDefault(x, 0)-first.getOrDefault(x, pc));
         }
 
         return liveRange;

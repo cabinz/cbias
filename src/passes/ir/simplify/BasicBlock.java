@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class BasicBlock extends passes.ir.BasicBlock implements IBBRelationship<BasicBlock> {
+class BasicBlock extends passes.ir.BasicBlock implements IBBRelationship<BasicBlock> {
 
     public Set<BasicBlock> prevBlocks = new HashSet<>();
     public Set<BasicBlock> followingBlocks = new HashSet<>();

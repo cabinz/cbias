@@ -6,6 +6,7 @@ import backend.operand.FPImmediate;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -53,11 +54,15 @@ public class MCFPmove extends MCFPInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (src1 != null && src1 == old) src1 = tmp;
-//        if (src2 == old) src2 = tmp;
-        if (dst1 != null && dst1 == old) dst1 = tmp;
-//        if (dst2 == old) dst2 = tmp;
+    public void replaceUse(HashMap<Register, Register> map) {
+        if (src1 != null && src1.isVirtualReg())
+            src1 = map.getOrDefault(src1, (Register) src1);
+    }
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {
+        if (dst1 != null && dst1.isVirtualReg())
+            dst1 = map.getOrDefault(dst1, (Register) dst1);
     }
 
     @Override

@@ -1,20 +1,24 @@
 package passes;
 
 import backend.ARMAssemble;
+import frontend.IREmitter;
 import ir.Module;
 import passes.ir.IRPass;
 import passes.ir.constant_derivation.ConstantDerivation;
 import passes.ir.dce.UnreachableCodeElim;
 import passes.ir.dce.UselessCodeElim;
-import passes.ir.hoist.Hoist;
+import passes.ir.gcm.GlobalCodeMotion;
 import passes.ir.inline.FunctionInline;
 import passes.ir.simplify.BlockMerge;
+import passes.ir.simplify.LoadStoreMerge;
 import passes.mc.MCPass;
 import passes.ir.mem2reg.Mem2reg;
 import passes.mc.buildCFG.BuildCFG;
 import passes.mc.mergeBlock.MergeBlock;
+import passes.mc.peepHole.PeepHole;
 import passes.mc.registerAllocation.RegisterAllocation;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,10 +49,9 @@ public class PassManager {
 
     private void basicOptimize(Module module) {
         run(ConstantDerivation.class, module);
-        run(UselessCodeElim.class, module);
-        run(Hoist.class, module);
-        run(UnreachableCodeElim.class, module);
+        run(GlobalCodeMotion.class, module);
         run(BlockMerge.class, module);
+        run(LoadStoreMerge.class, module);
     }
 
     /**
@@ -59,6 +62,7 @@ public class PassManager {
     public void runPasses(ARMAssemble module){
         run(BuildCFG.class, module);
         run(RegisterAllocation.class, module);
+        run(PeepHole.class, module);
         run(MergeBlock.class, module);
     }
 
@@ -105,9 +109,10 @@ public class PassManager {
             IRPasses.add(new ConstantDerivation());
             IRPasses.add(new UnreachableCodeElim());
             IRPasses.add(new UselessCodeElim());
-            IRPasses.add(new Hoist());
+            IRPasses.add(new GlobalCodeMotion());
             IRPasses.add(new BlockMerge());
             IRPasses.add(new FunctionInline());
+            IRPasses.add(new LoadStoreMerge());
             registerIRPasses(IRPasses);
 
             // MC Passes
@@ -115,6 +120,7 @@ public class PassManager {
             MCPasses.add(new BuildCFG());
             MCPasses.add(new RegisterAllocation());
             MCPasses.add(new MergeBlock());
+            MCPasses.add(new PeepHole());
             registerMCPasses(MCPasses);
         }
         return instance;
