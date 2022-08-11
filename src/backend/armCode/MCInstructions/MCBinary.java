@@ -4,6 +4,7 @@ import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -36,13 +37,20 @@ public class MCBinary extends MCInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (operand1 == old) operand1 = tmp;
-        if (operand2 == old) operand2 = tmp;
-        if (destination == old) destination = tmp;
-        if (shift != null && shift.getOperand() == old) shift.setRegister(tmp);
+    public void replaceUse(HashMap<Register, Register> map) {
+        operand1 = map.getOrDefault(operand1, operand1);
+        if (operand2.isVirtualReg())
+            operand2 = map.getOrDefault(operand2, (Register) operand2);
+        if (shift != null && shift.getOperand().isVirtualReg())
+            shift.setRegister(map.get(shift.getOperand()));
     }
 
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {
+        destination = map.getOrDefault(destination, destination);
+    }
+
+    @Override
     public String emit() {
         return type.name() + emitCond() + ' ' + destination.emit()
                 + ", " + operand1.emit() + ", " + operand2.emit() + emitShift();

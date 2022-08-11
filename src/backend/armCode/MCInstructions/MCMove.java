@@ -7,6 +7,7 @@ import backend.operand.Immediate;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -42,10 +43,16 @@ public class MCMove extends MCInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (dst == old) dst = tmp;
-        if (src == old) src = tmp;
-        if (shift != null && shift.getOperand() == old) shift.setRegister(tmp);
+    public void replaceUse(HashMap<Register, Register> map) {
+        if (src.isVirtualReg())
+            src = map.getOrDefault(src, (Register) src);
+        if (shift != null && shift.getOperand().isVirtualReg())
+            shift.setRegister(map.get(shift.getOperand()));
+    }
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {
+        dst = map.getOrDefault(dst, dst);
     }
 
     public String emit(){

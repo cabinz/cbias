@@ -3,11 +3,13 @@ package backend.armCode.MCInstructions;
 import backend.armCode.MCInstruction;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
  * This class is an aggregation of MLA, MLS. <br/>
  * &emsp; - MLA/MLS Rd, Rm, Rs, Rn     @ Rd := low32(Rn +/- Rm * Rs) <br/>
+ * &emsp; - SMMLA/SMMLS Rd, Rm, Rs, Rn     @ Rd := Rn +/- high32(Rm * Rs) <br/>
  * @see <a href="https://developer.arm.com/documentation/ddi0406/latest/">
  *     ARM Architecture Reference Manual ARMv7 edition </a> <br/>
  *     A8.6.94 MLA, A8.6.95 MLS
@@ -36,11 +38,15 @@ public class MCFma extends MCInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (accumulate == old) accumulate = tmp;
-        if (multiple_1 == old) multiple_1 = tmp;
-        if (multiple_2 == old) multiple_2 = tmp;
-        if (dst == old) dst = tmp;
+    public void replaceUse(HashMap<Register, Register> map) {
+        multiple_1 = map.getOrDefault(multiple_1, multiple_1);
+        multiple_2 = map.getOrDefault(multiple_2, multiple_2);
+        accumulate = map.getOrDefault(accumulate, accumulate);
+    }
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {
+        dst = map.getOrDefault(dst, dst);
     }
 
     @Override

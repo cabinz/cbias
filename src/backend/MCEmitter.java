@@ -65,8 +65,14 @@ public class MCEmitter {
             if (f.isExternal()) continue;
             strBd.append("\t.global " + f.emit() + '\n');
             strBd.append(f.emit() + ":\n");
-            if (PrintInfo.printIR)
-                strBd.append("\t\t\t\t\t\t\t\t@spilled: " + f.getSpilledNode() + '\n');
+            if (PrintInfo.printRegInfo) {
+                strBd.append("\t\t\t\t\t\t\t\t@spilled: ");
+                f.getSpilledNode().forEach(x -> {
+                    if(x!=null) strBd.append(x.emit() + ", ");
+                });
+                strBd.append('\n');
+                strBd.append("\t\t\t\t\t\t\t\t@spilled number: " + f.getSpilledNode().size() + '\n');
+            }
             /* handle each BasicBlock */
             for (MCBasicBlock bb : f) {
                 strBd.append(bb.emit() + ":\n");

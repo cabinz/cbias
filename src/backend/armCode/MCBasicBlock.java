@@ -46,14 +46,15 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
     }
 
     public void removeInst(MCInstruction inst) {instructionList.remove(inst);}
-
+    public void removeLast() {instructionList.removeLast();}
+    public void removeSecondLast() {instructionList.remove(instructionList.size()-2);}
     public void removeAt(int index) {instructionList.remove(index);}
 
     public int getIndex(MCInstruction inst) {return instructionList.indexOf(inst);}
 
     public MCInstruction getFirstInst() {return instructionList.getFirst();}
-
     public MCInstruction getLastInst() {return instructionList.getLast();}
+    public MCInstruction getSecondLastInst() {return instructionList.get(instructionList.size()-2);}
 
     public Iterator<MCInstruction> iterator() {return instructionList.iterator();}
     //</editor-fold>
@@ -64,6 +65,8 @@ public class MCBasicBlock implements Iterable<MCInstruction> {
 
     public void appendAndRemove(MCBasicBlock bb) {
         instructionList.addAll(bb.getInstructionList());
+        for (var inst : bb)
+            inst.setBelongBB(this);
         bb.removeSelf();
     }
     //</editor-fold>

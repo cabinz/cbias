@@ -5,6 +5,7 @@ import backend.armCode.MCInstruction;
 import backend.operand.RealRegister;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -32,7 +33,10 @@ public class MCReturn extends MCInstruction {
     public HashSet<Register> getDef() {return new HashSet<>();}
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {}
+    public void replaceUse(HashMap<Register, Register> map) {}
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {}
 
     @Override
     public String emit() {

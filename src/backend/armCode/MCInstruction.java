@@ -6,6 +6,7 @@ import backend.operand.MCOperand;
 import backend.operand.Register;
 import ir.Value;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -32,6 +33,8 @@ public abstract class MCInstruction {
         ORR,
         MLA,
         MLS,
+        SMMLA,
+        SMMLS,
         MOV,
         RET,
         BRANCH,
@@ -96,6 +99,10 @@ public abstract class MCInstruction {
 
     abstract public HashSet<Register> getDef();
 
+    abstract public void replaceUse(HashMap<Register, Register> map);
+
+    abstract public void replaceDef(HashMap<Register, Register> map);
+
     public void insertBefore(MCInstruction inst) {
         belongBasicBlock.insertAt(belongBasicBlock.getIndex(this), inst);
     }
@@ -105,11 +112,6 @@ public abstract class MCInstruction {
     }
 
     public void removeSelf() {belongBasicBlock.removeInst(this);}
-
-    /**
-     * If use the user as IR, this abstract method is completely unnecessary.
-     */
-    public abstract void replaceRegister(Register old, Register tmp);
     //</editor-fold>
 
 
@@ -135,6 +137,7 @@ public abstract class MCInstruction {
     //<editor-fold desc="Getter & Setter">
     public MCBasicBlock getBelongBB() {return belongBasicBlock;}
     public MCFunction getBelongFunc() {return belongFunc;}
+    public TYPE getType() {return type;}
     public Shift getShift() {return shift;}
     public ConditionField getCond() {return cond;}
 

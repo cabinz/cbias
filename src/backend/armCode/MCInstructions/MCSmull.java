@@ -3,6 +3,7 @@ package backend.armCode.MCInstructions;
 import backend.armCode.MCInstruction;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class MCSmull extends MCInstruction {
@@ -29,11 +30,15 @@ public class MCSmull extends MCInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (low == old) low = tmp;
-        if (high == old) high = tmp;
-        if (Rm == old) Rm = tmp;
-        if (Rn == old) Rn = tmp;
+    public void replaceUse(HashMap<Register, Register> map) {
+        Rm = map.getOrDefault(Rm, Rm);
+        Rn = map.getOrDefault(Rn, Rn);
+    }
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {
+        high = map.getOrDefault(high, high);
+        low = map.getOrDefault(low, low);
     }
 
     @Override

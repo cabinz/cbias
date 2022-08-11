@@ -5,6 +5,7 @@ import backend.operand.ExtensionRegister;
 import backend.operand.Immediate;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -33,9 +34,12 @@ public class MCFPstore extends MCFPInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (addr == old) addr = tmp;
+    public void replaceUse(HashMap<Register, Register> map) {
+        addr = map.getOrDefault(addr, addr);
     }
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {}
 
     @Override
     public HashSet<ExtensionRegister> getExtUse() {

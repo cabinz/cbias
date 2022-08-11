@@ -4,6 +4,7 @@ import backend.armCode.MCInstruction;
 import backend.operand.MCOperand;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -45,10 +46,17 @@ public class MCstore extends MCInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
-        if (src == old) src = tmp;
-        if (addr == old) addr = tmp;
-        if (offset == old) offset = tmp;
+    public void replaceUse(HashMap<Register, Register> map) {
+        src = map.getOrDefault(src, src);
+        addr = map.getOrDefault(addr, addr);
+        if (offset != null && offset.isVirtualReg())
+            offset = map.getOrDefault(offset, (Register) offset);
+    }
+
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {
+        if (write)
+            addr = map.getOrDefault(addr, addr);
     }
 
     public String emit(){

@@ -5,6 +5,7 @@ import backend.operand.ExtensionRegister;
 import backend.operand.RealExtRegister;
 import backend.operand.Register;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class MCFPpush extends MCFPInstruction {
@@ -22,9 +23,10 @@ public class MCFPpush extends MCFPInstruction {
     }
 
     @Override
-    public void replaceRegister(Register old, Register tmp) {
+    public void replaceUse(HashMap<Register, Register> map) {}
 
-    }
+    @Override
+    public void replaceDef(HashMap<Register, Register> map) {}
 
     @Override
     public HashSet<ExtensionRegister> getExtUse() {
