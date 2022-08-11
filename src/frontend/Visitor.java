@@ -1971,45 +1971,57 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // Loop through both the lists of context and type simultaneously.
             for (int i = 0; i < argCtxs.size(); i++) {
                 var argCtx = argCtxs.get(i);
-                Type typeArg = argTypes.get(i);
+                Type typeRequired = argTypes.get(i);
                 // Visit child RParam.
                 visit(argCtx);
-                Value arg = retVal_;
+                Value realArg = retVal_;
+
                 /*
                 Argument type matching check.
                  */
-                // If the typeArg requires an immediate scalar while argCtx (lVal)
+
+                // If typeRequired asks for an immediate scalar while argCtx (lVal)
                 // returns a pointer, load it up.
-                if (!typeArg.isPointerType() && arg.getType().isPointerType()) {
-                    arg = builder.buildLoad(typeArg, arg);
+                if (!typeRequired.isPointerType() && realArg.getType().isPointerType()) {
+                    realArg = builder.buildLoad(typeRequired, realArg);
                 }
-                // If the typeArg requires a pointer to a 1-d array (i32*/float*)
-                // while argCtx returns a pointer to ArrayType Value (e.g. [2 x i32]*),
-                // use GEP to retrieve a correct pointer.
-                if (typeArg.isPointerType() && !((PointerType) typeArg).getPointeeType().isArrayType()) {
-                    while (((PointerType) arg.getType()).getPointeeType().isArrayType()) {
-                        arg = builder.buildGEP(arg, new ArrayList<>() {{
+
+                // If typeRequired asks for a pointer
+                // while argCtx returns a pointer to an array having dimension that doesn't match
+                // (e.g. i32* is required, but [2 x i32]* is given)
+                // (e.g. [2 x i32]* is required, but [3 x [2 x i32]* is given)
+                // GEP to keep de-referencing until a pointer in correct type retrieved.
+                if (typeRequired.isPointerType() && realArg.getType().isPointerType()) {
+                    while (realArg.getType() != typeRequired) {
+                        realArg = builder.buildGEP(realArg, new ArrayList<>() {{
                             add(builder.buildConstant(0));
                             add(builder.buildConstant(0));
                         }});
+                        // Prevent infinite loop caused by bad code input.
+                        // (Stop the loop when realArg is already a non-nested pointer)
+                        if (!((PointerType) realArg.getType()).getPointeeType().isPointerType()) {
+                            break;
+                        }
                     }
                 }
+
                 // sitofp, fptosi and ZExt
-                if (arg.getType().isI1()) {
+                if (realArg.getType().isI1()) {
                     // Technically, i1 Values are not allowed to be as parameters in function calls
                     // according to SysY semantic constraints (cuz opr "!" occurs only in conditional
                     // statement). But we still do the check for safety.
-                    arg = builder.buildZExt(arg);
+                    realArg = builder.buildZExt(realArg);
                 }
-                if (typeArg.isI32() && arg.getType().isFloatType()) {
-                    arg = builder.buildFptosi(arg, (IntegerType) typeArg);
+                if (typeRequired.isI32() && realArg.getType().isFloatType()) {
+                    realArg = builder.buildFptosi(realArg, (IntegerType) typeRequired);
                 }
-                else if (typeArg.isFloatType() && arg.getType().isI32()) {
-                    arg = builder.buildSitofp(arg);
+                else if (typeRequired.isFloatType() && realArg.getType().isI32()) {
+                    realArg = builder.buildSitofp(realArg);
                 }
 
+
                 // Add the argument Value retrieved by visiting to the container.
-                args.add(arg);
+                args.add(realArg);
             }
         }
 
