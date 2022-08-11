@@ -1521,7 +1521,13 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
 
 
-                // Auto type promotion.
+                // Auto type promotion. (i1 -> i32, i32 -> float)
+                if (lOp.getType().isI1()) {
+                    lOp = builder.buildZExt(lOp);
+                }
+                if (rOp.getType().isI1()) {
+                    rOp = builder.buildZExt(rOp);
+                }
                 if (lOp.getType().isIntegerType() && rOp.getType().isFloatType()) {
                     lOp = builder.buildSitofp(lOp);
                 }
@@ -1660,6 +1666,12 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 }
 
                 // Auto type promotion.
+                if (lOp.getType().isI1()) {
+                    lOp = builder.buildZExt(lOp);
+                }
+                if (rOp.getType().isI1()) {
+                    rOp = builder.buildZExt(rOp);
+                }
                 if (lOp.getType().isI32() && rOp.getType().isFloatType()) {
                     lOp = builder.buildSitofp(lOp);
                 }
