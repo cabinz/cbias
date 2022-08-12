@@ -362,7 +362,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             // which will be filled with 0 by visitArrConstInitVal if the number of given initial
             // values is not enough.
             ctx.constInitVal().dimLens = dimLens;
-            ctx.constInitVal().numInitNeeded = getProductOf(dimLens);
+            ctx.constInitVal().sizCurDepth = getProductOf(dimLens);
 
             this.setConstFolding(ON);
             visit(ctx.constInitVal());
@@ -407,7 +407,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (constInitValContext instanceof SysYParser.ArrConstInitValContext) {
                 constInitValContext.dimLens = new ArrayList<>(
                         ctx.dimLens.subList(1, ctx.dimLens.size()));
-                constInitValContext.numInitNeeded = ctx.numInitNeeded / dimLen;
+                constInitValContext.sizCurDepth = ctx.sizCurDepth / dimLen;
                 visit(constInitValContext);
                 initArr.addAll(retValList_);
             }
@@ -417,8 +417,17 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 initArr.add(retVal_);
             }
         }
+
+        // Security check.
+        if (initArr.size() > ctx.sizCurDepth) {
+            throw new RuntimeException("The length of initList (" + initArr.size() + ")" +
+                    " exceeds the maximum size of current depth (" + ctx.sizCurDepth + ")");
+        }
+
         // Fill the initialized list with enough 0.
-        for (int i = initArr.size(); i < ctx.numInitNeeded; i++) {
+        int sizToFillTo = (ctx.getParent() instanceof SysYParser.ArrConstDefContext) ?
+                ctx.sizCurDepth : ctx.dimLens.get(ctx.dimLens.size() - 1);
+        for (int i = initArr.size(); i < sizToFillTo; i++) {
             initArr.add(builder.buildConstant(0));
         }
         retValList_ = initArr;
@@ -547,13 +556,8 @@ public class Visitor extends SysYBaseVisitor<Void> {
     public Void visitArrInitval(SysYParser.ArrInitvalContext ctx) {
 
         // For arr[3][2] with initialization { {1,2}, {3,4}, {5,6} },
-        // the dimLen = 3 and sizSublistInitNeeded = 2.
-        int dimLen = ctx.dimLens.get(0);
-        // Compute the size of each element of current dimension.
-        int sizCurLayerNeeded = 1;
-        for (int i = 1; i < ctx.dimLens.size(); i++) {
-            sizCurLayerNeeded *= ctx.dimLens.get(i);
-        }
+        // the curDimLen = 3 and sizSublistInitNeeded = 2.
+        int curDimLen = ctx.dimLens.get(0);
 
         ArrayList<Value> initArr = new ArrayList<>();
         for (SysYParser.InitValContext initValContext : ctx.initVal()) {
@@ -561,7 +565,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (initValContext instanceof SysYParser.ArrInitvalContext) {
                 initValContext.dimLens = new ArrayList<>(
                         ctx.dimLens.subList(1, ctx.dimLens.size()));
-                initValContext.sizInitNeeded = ctx.sizInitNeeded / dimLen;
+                initValContext.sizCurDepth = ctx.sizCurDepth / curDimLen;
 
                 visit(initValContext);
                 initArr.addAll(retValList_);
@@ -573,10 +577,21 @@ public class Visitor extends SysYBaseVisitor<Void> {
             }
         }
 
+        // Security check.
+        if (initArr.size() > ctx.sizCurDepth) {
+            throw new RuntimeException("The length of initList (" + initArr.size() + ")" +
+                    " exceeds the maximum size of current depth (" + ctx.sizCurDepth + ")");
+        }
+
         // Fill the initialized list of current layer with enough 0.
-        // NOTICE: This step is necessary for dealing with the "{}" initializer in SysY.
+        // NOTICE1: This step is necessary for dealing with the "{}" initializer in SysY.
         // TODO: But this can be a performance bottle neck with big "{}". same as visitArrConstInitVal
-        for (int i = initArr.size(); i < dimLen * sizCurLayerNeeded; i++) {
+        // NOTICE2: Only for the outer-most initializer should fill the return list up to the sizCurDepth required.
+        // Any atom elements in any nested sub-initializer (inner layer) are regarded as the inner-most layer elements,
+        // where the layer should be filled up to only the size of last dimension.
+        int sizToFillTo = (ctx.getParent() instanceof SysYParser.ArrVarDefContext) ?
+                ctx.sizCurDepth : ctx.dimLens.get(ctx.dimLens.size() - 1);
+        for (int i = initArr.size(); i < sizToFillTo; i++) {
             initArr.add(builder.buildConstant(0));
         }
         retValList_ = initArr;
@@ -622,7 +637,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                 // Pass down dim info.
                 // Visit child to retrieve the initialized Value list (stored in retValList_).
                 ctx.initVal().dimLens = dimLens;
-                ctx.initVal().sizInitNeeded = getProductOf(dimLens);
+                ctx.initVal().sizCurDepth = getProductOf(dimLens);
 
                 this.setConstFolding(ON);
                 visit(ctx.initVal());
@@ -655,7 +670,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if (ctx.initVal() != null) {
                 // Compute and pass down dimensional info, visit child to generate initialization assignments.
                 ctx.initVal().dimLens = dimLens;
-                ctx.initVal().sizInitNeeded = getProductOf(dimLens);
+                ctx.initVal().sizCurDepth = getProductOf(dimLens);
 
                 visit(ctx.initVal());
                 int zeroTail = getZeroTailLen(retValList_);
