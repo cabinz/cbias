@@ -9,6 +9,7 @@ import passes.ir.dce.UnreachableCodeElim;
 import passes.ir.dce.UselessCodeElim;
 import passes.ir.gcm.GlobalCodeMotion;
 import passes.ir.inline.FunctionInline;
+import passes.ir.simplify.AddInstMerge;
 import passes.ir.simplify.BlockMerge;
 import passes.ir.simplify.LoadStoreMerge;
 import passes.mc.MCPass;
@@ -43,6 +44,10 @@ public class PassManager {
 
         // Inline functions
         run(FunctionInline.class, module);
+        basicOptimize(module);
+
+        // Merge Add Instructions
+        run(AddInstMerge.class, module);
         basicOptimize(module);
 
     }
@@ -113,6 +118,7 @@ public class PassManager {
             IRPasses.add(new BlockMerge());
             IRPasses.add(new FunctionInline());
             IRPasses.add(new LoadStoreMerge());
+            IRPasses.add(new AddInstMerge());
             registerIRPasses(IRPasses);
 
             // MC Passes
