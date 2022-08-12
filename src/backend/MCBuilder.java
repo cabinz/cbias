@@ -523,7 +523,7 @@ public class MCBuilder {
     }
 
     /**
-     * Reverse the ARM condition field.
+     * Get the opposite ARM condition field.
      * @param cond ARM condition field to be reversed
      * @return the reversed result
      */
@@ -535,6 +535,20 @@ public class MCBuilder {
             case LE -> MCInstruction.ConditionField.GT;
             case GT -> MCInstruction.ConditionField.LE;
             case LT -> MCInstruction.ConditionField.GE;
+        };
+    }
+
+    /**
+     * Get the new condition field after exchanging the compare operands
+     */
+    private MCInstruction.ConditionField exchangeCond(MCInstruction.ConditionField cond) {
+        return switch (cond) {
+            case EQ -> MCInstruction.ConditionField.EQ;
+            case NE -> MCInstruction.ConditionField.NE;
+            case GE -> MCInstruction.ConditionField.LE;
+            case LE -> MCInstruction.ConditionField.GE;
+            case GT -> MCInstruction.ConditionField.LT;
+            case LT -> MCInstruction.ConditionField.GT;
         };
     }
     //</editor-fold>
@@ -729,8 +743,7 @@ public class MCBuilder {
         if (value1 instanceof ConstInt && !(value2 instanceof ConstInt)){
             operand1 = (Register) findContainer(value2);
             operand2 = findContainer(value1);
-            if (armCond != MCInstruction.ConditionField.EQ && armCond != MCInstruction.ConditionField.NE)
-                armCond = reverseCond(armCond);
+            armCond = exchangeCond(armCond);
         }
         else {
             operand1 = (Register) findContainer(value1, true);
