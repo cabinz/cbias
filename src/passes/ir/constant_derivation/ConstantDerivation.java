@@ -328,6 +328,16 @@ public class ConstantDerivation implements IRPass {
                         }
                     }
                 }
+                if(rc1==rc2){
+                    switch (expression.getTag()) {
+                        case LT, NE, GT -> {
+                            return ConstInt.getI1(0);
+                        }
+                        case EQ, LE, GE -> {
+                            return ConstInt.getI1(1);
+                        }
+                    }
+                }
                 return expression;
             }
             case FLT, FGT, FEQ, FNE, FLE, FGE -> {
@@ -357,6 +367,16 @@ public class ConstantDerivation implements IRPass {
                         }
                     }
                 }
+                if(rc1==rc2){
+                    switch (expression.getTag()) {
+                        case FLT, FNE, FGT -> {
+                            return ConstInt.getI1(0);
+                        }
+                        case FEQ, FLE, FGE -> {
+                            return ConstInt.getI1(1);
+                        }
+                    }
+                }
                 return expression;
             }
             case AND, OR -> {
@@ -370,6 +390,7 @@ public class ConstantDerivation implements IRPass {
                         if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 1) && (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 1)) {
                             return ConstInt.getI1(1);
                         }
+                        if(c1==c2) return c1;
                         return expression;
                     }
                     case OR -> {
@@ -379,6 +400,7 @@ public class ConstantDerivation implements IRPass {
                         if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 0) && (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 0)) {
                             return ConstInt.getI1(0);
                         }
+                        if(c1==c2) return c1;
                         return expression;
                     }
                 }
