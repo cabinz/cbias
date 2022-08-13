@@ -2077,14 +2077,19 @@ public class Visitor extends SysYBaseVisitor<Void> {
         bpStk.push(new ArrayList<>());
 
         /*
-        Store current block to add on it a Br to entryBlk.
-        And then build the entry block of the while statement.
+        - Store current block to add on it a Br to entryBlk.
+        - Start a new block as the entry of loop continuing check for
+        jumping back at the end of the loop body, which is also the
+        entry block of the while statement.
          */
         BasicBlock preBlk = builder.getCurBB();
-        BasicBlock entryBlk = builder.buildBB("_WHILE_ENTRY");
+
+        // NOTICE: A new block as condEntryBlk will be created no matter
+        // whether the preBlk is empty or not.
+        BasicBlock condEntryBlk = builder.buildBB("_WHILE_ENTRY");
         // Add a Br from the old preBlk to the new entryBlk.
         builder.setCurBB(preBlk);
-        builder.buildBr(entryBlk);
+        builder.buildBr(condEntryBlk);
 
         /*
         Build an EXIT block no matter if it may become dead code
@@ -2096,19 +2101,6 @@ public class Visitor extends SysYBaseVisitor<Void> {
         /*
         Cope with the condition expression by visiting child cond.
          */
-        // Start a new block as the entry of loop continuing check for
-        // jumping back at the end of the loop body.
-        // If being currently in an empty block, treat it as the check
-        // entry directly.
-        BasicBlock condEntryBlk;
-        if(!entryBlk.isEmpty()) {
-            condEntryBlk = builder.buildBB("_WHILE_COND");
-            builder.setCurBB(entryBlk);
-            builder.buildBr(condEntryBlk);
-        }
-        else {
-            condEntryBlk = entryBlk;
-        }
         // Pass down blocks as inherited attributes for short-circuit evaluation.
         ctx.cond().lOrExp().trueBlk = bodyEntryBlk;
         ctx.cond().lOrExp().falseBlk = exitBlk;
