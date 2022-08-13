@@ -1,11 +1,14 @@
-package passes.ir.gcm;
+package passes.ir.analysis;
+
+import ir.values.BasicBlock;
+import passes.ir.gcm.GlobalCodeMotionRaw;
 
 import java.util.*;
 import java.util.function.Consumer;
 
-public class LoopAnalysis {
+public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
 
-    static class Loop {
+    public class Loop {
         public BasicBlock loopHead;
         public Loop outerLoop;
         private Integer depth;
@@ -27,14 +30,11 @@ public class LoopAnalysis {
 
     }
 
-    private final GlobalCodeMotionRaw gcm;
-
     private final BasicBlock functionEntry;
 
-    private LoopAnalysis(GlobalCodeMotionRaw gcm) {
-        this.gcm = gcm;
+    private LoopAnalysis(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap) {
         BasicBlock functionEntry = null;
-        for (BasicBlock possibleEntry : gcm.getBasicBlockMap().values()) {
+        for (BasicBlock possibleEntry : basicBlockMap.values()) {
             if (possibleEntry.getDomFather() == null) {
                 functionEntry = possibleEntry;
                 break;
@@ -59,7 +59,8 @@ public class LoopAnalysis {
 
     private final Map<BasicBlock, Loop> basicBlockLoopMap = new HashMap<>();
 
-    private static Loop getDeeperLoop(Loop loop1, Loop loop2){
+    private static <BasicBlock extends ILoopAnalysis<BasicBlock>>
+    LoopAnalysis<BasicBlock>.Loop getDeeperLoop(LoopAnalysis<BasicBlock>.Loop loop1, LoopAnalysis<BasicBlock>.Loop loop2){
         if(loop1==null) return loop2;
         if(loop2==null) return loop1;
         return loop1.loopHead.getDomDepth()>=loop2.loopHead.getDomDepth()?loop1:loop2;
@@ -116,8 +117,9 @@ public class LoopAnalysis {
         generateLoopInfo();
     }
 
-    public static void analysis(GlobalCodeMotionRaw gcm) {
-        (new LoopAnalysis(gcm)).__analysis__();
+    public static <BasicBlock extends ILoopAnalysis<BasicBlock>>
+    void analysis(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap) {
+        (new LoopAnalysis<BasicBlock>(basicBlockMap)).__analysis__();
     }
 
 }

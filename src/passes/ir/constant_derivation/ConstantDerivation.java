@@ -3,7 +3,6 @@ package passes.ir.constant_derivation;
 import ir.Module;
 import ir.Use;
 import ir.Value;
-import ir.types.PointerType;
 import ir.types.VoidType;
 import ir.values.*;
 import ir.values.constants.ConstArray;
@@ -13,7 +12,8 @@ import ir.values.instructions.*;
 import passes.PassManager;
 import passes.ir.DummyValue;
 import passes.ir.IRPass;
-import passes.ir.RelationAnalysis;
+import passes.ir.analysis.RelationAnalysis;
+import passes.ir.analysis.RelationUtil;
 import passes.ir.dce.UnreachableCodeElim;
 
 import java.util.*;
@@ -565,7 +565,7 @@ public class ConstantDerivation implements IRPass {
      * @param entry      The entry to be removed.
      */
     static void removeEntry(BasicBlock basicBlock, BasicBlock entry, Queue<Instruction> deriveQueue) {
-        RelationAnalysis.removeEntry(basicBlock.getRawBasicBlock(), entry.getRawBasicBlock());
+        RelationUtil.removeEntry(basicBlock.getRawBasicBlock(), entry.getRawBasicBlock());
         for (Instruction instruction : basicBlock.getRawBasicBlock()) {
             if (instruction instanceof PhiInst) {
                 var phiInst = (PhiInst) instruction;

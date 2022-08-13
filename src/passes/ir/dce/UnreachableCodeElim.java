@@ -4,7 +4,7 @@ import ir.Module;
 import ir.values.BasicBlock;
 import ir.values.Function;
 import passes.ir.IRPass;
-import passes.ir.RelationAnalysis;
+import passes.ir.analysis.RelationUtil;
 
 import java.util.*;
 
@@ -30,7 +30,7 @@ public class UnreachableCodeElim implements IRPass {
         reachedBlocks.add(function.getEntryBB());
         while (!judgeQueue.isEmpty()){
             var curBlock = judgeQueue.remove();
-            for (BasicBlock followingBlock : RelationAnalysis.getFollowingBB(curBlock)) {
+            for (BasicBlock followingBlock : RelationUtil.getFollowingBB(curBlock)) {
                 if(!reachedBlocks.contains(followingBlock)){
                     judgeQueue.add(followingBlock);
                     reachedBlocks.add(followingBlock);
@@ -44,11 +44,11 @@ public class UnreachableCodeElim implements IRPass {
             }
         }
         for (BasicBlock basicBlock : removeSet) {
-            var followedBlocks = RelationAnalysis.getFollowingBB(basicBlock);
-            RelationAnalysis.freeBlock(basicBlock);
+            var followedBlocks = RelationUtil.getFollowingBB(basicBlock);
+            RelationUtil.freeBlock(basicBlock);
             for (BasicBlock followedBlock : followedBlocks) {
                 if(!removeSet.contains(followedBlock)){
-                    RelationAnalysis.removeEntry(followedBlock,basicBlock);
+                    RelationUtil.removeEntry(followedBlock,basicBlock);
                 }
             }
         }

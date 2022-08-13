@@ -4,10 +4,10 @@ import ir.Module;
 import ir.Use;
 import ir.values.Function;
 import ir.values.instructions.*;
-import passes.ir.gcm.domtree.DomTree;
+import passes.ir.analysis.DomAnalysis;
+import passes.ir.analysis.LoopAnalysis;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 public class GlobalCodeMotionRaw {
 
@@ -46,8 +46,8 @@ public class GlobalCodeMotionRaw {
 
     private void analysisFunction() {
         // Run dom tree analysis and loop analysis
-        DomTree.analysis(basicBlockMap);
-        LoopAnalysis.analysis(this);
+        DomAnalysis.analysis(basicBlockMap);
+        LoopAnalysis.analysis(basicBlockMap);
     }
 
     private void generateEarlyPlacement(Instruction instruction) {

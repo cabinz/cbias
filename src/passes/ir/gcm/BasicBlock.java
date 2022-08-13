@@ -1,13 +1,14 @@
 package passes.ir.gcm;
 
-import passes.ir.gcm.domtree.IDomTreeNode;
+import passes.ir.analysis.ILoopAnalysis;
+import passes.ir.analysis.LoopAnalysis;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class BasicBlock extends passes.ir.BasicBlock implements IDomTreeNode<BasicBlock> {
+class BasicBlock extends passes.ir.BasicBlock implements ILoopAnalysis<BasicBlock> {
 
     public BasicBlock(ir.values.BasicBlock rawBasicBlock) {
         super(rawBasicBlock);
@@ -19,14 +20,14 @@ class BasicBlock extends passes.ir.BasicBlock implements IDomTreeNode<BasicBlock
     private final Set<BasicBlock> exitSet = new HashSet<>();
 
     @Override
-    public void addPreviousBasicBlock(BasicBlock previousBlock) {
-        entrySet.add(previousBlock);
+    public void addEntryBlock(BasicBlock entryBlock) {
+        entrySet.add(entryBlock);
     }
 
     @Override
-    public void setFollowingBasicBlocks(List<BasicBlock> followingBasicBlocks) {
+    public void setExitBlocks(List<BasicBlock> exitBlocks) {
         exitSet.clear();
-        exitSet.addAll(followingBasicBlocks);
+        exitSet.addAll(exitBlocks);
     }
 
     /// DOM tree
@@ -49,26 +50,26 @@ class BasicBlock extends passes.ir.BasicBlock implements IDomTreeNode<BasicBlock
     }
 
 
-    public Integer getDomDepth() {
+    public int getDomDepth() {
         return domDepth;
     }
 
-    public void setDomDepth(Integer domDepth) {
+    public void setDomDepth(int domDepth) {
         this.domDepth = domDepth;
     }
 
-    private LoopAnalysis.Loop loop;
+    private LoopAnalysis<BasicBlock>.Loop loop;
 
     public int getLoopDepth(){
         if(loop==null) return 0;
         else return loop.getDepth();
     }
 
-    public LoopAnalysis.Loop getLoop() {
+    public LoopAnalysis<BasicBlock>.Loop getLoop() {
         return loop;
     }
 
-    public void setLoop(LoopAnalysis.Loop loop) {
+    public void setLoop(LoopAnalysis<BasicBlock>.Loop loop) {
         this.loop = loop;
     }
 

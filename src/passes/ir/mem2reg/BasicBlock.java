@@ -4,11 +4,11 @@ import ir.Value;
 import ir.values.Instruction;
 import ir.values.instructions.MemoryInst;
 import ir.values.instructions.PhiInst;
-import passes.ir.IBBRelationship;
+import passes.ir.analysis.IRelationAnalysis;
 
 import java.util.*;
 
-class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction>, IBBRelationship<BasicBlock> {
+class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction>, IRelationAnalysis<BasicBlock> {
 
     List<BasicBlock> previousBasicBlocks = new ArrayList<>();
     List<BasicBlock> followingBasicBlocks = new ArrayList<>();
@@ -36,17 +36,17 @@ class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction>, 
         return getRawBasicBlock().iterator();
     }
 
-    public void addPreviousBasicBlock(BasicBlock basicBlock){
-        previousBasicBlocks.add(basicBlock);
+    public void addEntryBlock(BasicBlock entryBlock){
+        previousBasicBlocks.add(entryBlock);
     }
 
-    public void setFollowingBasicBlocks(List<BasicBlock> followingBasicBlocks){
-        this.followingBasicBlocks = followingBasicBlocks;
+    public void setExitBlocks(List<BasicBlock> exitBlocks){
+        this.followingBasicBlocks = exitBlocks;
     }
 
     /**
      * Filter unpromotable alloca instructions.
-     *
+     * <p>
      * Alloca instructions which are used as address will be filtered.
      *
      * @param allocaInstSet The set of instruction to be filtered.
