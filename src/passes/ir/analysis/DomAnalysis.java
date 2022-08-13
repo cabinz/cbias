@@ -1,6 +1,4 @@
-package passes.ir.gcm.domtree;
-
-import passes.ir.RelationAnalysis;
+package passes.ir.analysis;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,9 +6,9 @@ import java.util.Map;
 
 /// Variable name in this class is strange since it is translated from a code written in C++.
 /// https://www.luogu.com.cn/record/42013604
-public class DomTree<BasicBlock extends passes.ir.BasicBlock & IDomTreeNode<BasicBlock>> {
+public class DomAnalysis<BasicBlock extends IDomAnalysis<BasicBlock>> {
 
-    private DomTree() {
+    private DomAnalysis() {
     }
 
     class NodeAttachment {
@@ -39,7 +37,7 @@ public class DomTree<BasicBlock extends passes.ir.BasicBlock & IDomTreeNode<Basi
     }
 
     private void generateDomTree(){
-        var B = new WeightedUnion<>(attachmentMap);
+        var B = new WeightedUnion(attachmentMap);
         for(int i=currentDfn;i>=2;i--){
             BasicBlock nw = dfn2bbMap.get(i);
             for (BasicBlock x : attachmentMap.get(nw).processList) {
@@ -100,9 +98,53 @@ public class DomTree<BasicBlock extends passes.ir.BasicBlock & IDomTreeNode<Basi
         generateDomTree();
     }
 
-    public static <BasicBlock extends passes.ir.BasicBlock & IDomTreeNode<BasicBlock>>
+    public static <BasicBlock extends passes.ir.BasicBlock & IDomAnalysis<BasicBlock>>
     void analysis(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap) {
-        (new DomTree<BasicBlock>()).__analysis__(basicBlockMap);
+        (new DomAnalysis<BasicBlock>()).__analysis__(basicBlockMap);
     }
 
+    class WeightedUnion {
+        class NodeAttachment {
+            public DomAnalysis<BasicBlock>.NodeAttachment domAttachment;
+            public BasicBlock unionFather, value;
+
+            public NodeAttachment(BasicBlock basicBlock, DomAnalysis<BasicBlock>.NodeAttachment domAttachment) {
+                this.domAttachment = domAttachment;
+                this.unionFather = basicBlock;
+                this.value = basicBlock;
+            }
+
+        }
+
+        private final Map<BasicBlock, NodeAttachment> attachmentMap = new HashMap<>();
+
+        public NodeAttachment getAttachment(BasicBlock basicBlock){
+            return attachmentMap.get(basicBlock);
+        }
+
+        public WeightedUnion(Map<BasicBlock, DomAnalysis<BasicBlock>.NodeAttachment> domAttachmentMap) {
+            domAttachmentMap.forEach((basicBlock, nodeAttachment) -> {
+                attachmentMap.put(basicBlock, new NodeAttachment(basicBlock, nodeAttachment));
+            });
+        }
+
+        public BasicBlock getRoot(BasicBlock basicBlock) {
+            var nodeAttachment = attachmentMap.get(basicBlock);
+            if (nodeAttachment.unionFather != basicBlock) {
+                BasicBlock temp = nodeAttachment.unionFather;
+                nodeAttachment.unionFather = getRoot(nodeAttachment.unionFather);
+                if (attachmentMap.get(attachmentMap.get(attachmentMap.get(temp      ).value).domAttachment.sdom).domAttachment.dfn <
+                    attachmentMap.get(attachmentMap.get(attachmentMap.get(basicBlock).value).domAttachment.sdom).domAttachment.dfn) {
+                    nodeAttachment.value = attachmentMap.get(temp).value;
+                }
+            }
+            return nodeAttachment.unionFather;
+        }
+
+        public void union(BasicBlock u, BasicBlock v){
+            getRoot(v);
+            attachmentMap.get(v).unionFather = u;
+        }
+
+    }
 }

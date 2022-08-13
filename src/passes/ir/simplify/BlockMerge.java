@@ -1,13 +1,12 @@
 package passes.ir.simplify;
 
 import ir.Module;
-import ir.Use;
 import ir.values.Function;
 import ir.values.Instruction;
-import ir.values.instructions.TerminatorInst;
 import passes.PassManager;
 import passes.ir.IRPass;
-import passes.ir.RelationAnalysis;
+import passes.ir.analysis.RelationAnalysis;
+import passes.ir.analysis.RelationUtil;
 import passes.ir.constant_derivation.ConstantDerivation;
 
 import java.util.ArrayDeque;
@@ -92,7 +91,7 @@ public class BlockMerge implements IRPass {
         for (BasicBlock f2block : prevBB.followingBlocks) {
             f2block.prevBlocks.remove(followingBB);
             f2block.prevBlocks.add(prevBB);
-            RelationAnalysis.replaceEntry(f2block.getRawBasicBlock(), followingBB.getRawBasicBlock(), prevBB.getRawBasicBlock());
+            RelationUtil.replaceEntry(f2block.getRawBasicBlock(), followingBB.getRawBasicBlock(), prevBB.getRawBasicBlock());
         }
         basicBlockMap.remove(followingBB.getRawBasicBlock());
         // Remove from function
