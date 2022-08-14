@@ -12,6 +12,23 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         private final Set<Loop> innerLoops = new HashSet<>();
         private Integer depth;
 
+        /**
+         * All basic blocks belonging to the loop, including the inner loop
+         */
+        private List<BasicBlock> bbs = new LinkedList<>();
+
+        /**
+         * The loop node with backedge to the header
+         */
+        private List<BasicBlock> latch = new LinkedList<>();
+
+        /**
+         * The blocks branch out the loop. In the SysY, all loop are 'while',
+         * so that in this compiler all exiting blocks are the 'cond block' or 'break block'.
+         * The last block of the loop body never be the exiting block, must be the latch.
+         */
+        private List<BasicBlock> exiting = new LinkedList<>();
+
         Loop(BasicBlock loopHead) {
             this.loopHead = loopHead;
         }
@@ -49,6 +66,13 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
             return innerLoops;
         }
 
+        public List<BasicBlock> getBBs() {return bbs;}
+        public List<BasicBlock> getLatch() {return latch;}
+        public List<BasicBlock> getExiting() {return exiting;}
+
+        public void addBBs(BasicBlock bb) {bbs.add(bb);}
+        public void addLatch(BasicBlock bb) {latch.add(bb);}
+        public void addExiting(BasicBlock bb) {exiting.add(bb);}
     }
 
     private final BasicBlock functionEntry;
