@@ -46,7 +46,6 @@ public class GlobalCodeMotionRaw {
 
     private void analysisFunction() {
         // Run dom tree analysis and loop analysis
-        DomAnalysis.analysis(basicBlockMap);
         LoopAnalysis.analysis(basicBlockMap);
     }
 

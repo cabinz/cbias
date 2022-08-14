@@ -83,8 +83,6 @@ public class DomAnalysis<BasicBlock extends IDomAnalysis<BasicBlock>> {
     }
 
     private void __analysis__(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap) {
-        // Process cfg
-        RelationAnalysis.analysisBasicBlocks(basicBlockMap);
         // Get function entry
         for (BasicBlock wrappedBB : basicBlockMap.values()) {
             if (wrappedBB.getEntryBlocks().size() == 0) {
@@ -98,8 +96,9 @@ public class DomAnalysis<BasicBlock extends IDomAnalysis<BasicBlock>> {
         generateDomTree();
     }
 
-    public static <BasicBlock extends passes.ir.BasicBlock & IDomAnalysis<BasicBlock>>
+    public static <BasicBlock extends IDomAnalysis<BasicBlock>>
     void analysis(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap) {
+        RelationAnalysis.analysisBasicBlocks(basicBlockMap);
         (new DomAnalysis<BasicBlock>()).__analysis__(basicBlockMap);
     }
 
