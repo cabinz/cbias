@@ -56,14 +56,14 @@ public class GlobalVariable extends User {
      * by other instructions, after which the initVal makes no
      * sense to this Value no more.
      * <br>
-     * NOTICE: We use no GV::isInitialized field for indicating
+     * NOTICE: We use NO Gv::isInitialized field for indicating
      * if a gv is initialized like in LLVM. All uninitialized gv
      * will be assigned with a corresponding zero value.
      * But if in the future, multi-unit compilation requires to be
-     * supported, there has to be the field to help backend to place
-     * gv on .bss or .data section.
+     * supported, the field needs to be added to help backend determine
+     * whether to place gv on .bss or .data section.
      */
-    private Constant initVal;
+    private final Constant initVal;
 
     public Constant getInitVal() {
         return initVal;
@@ -130,13 +130,12 @@ public class GlobalVariable extends User {
         strBuilder.append(this.getName()).append(" = dso_local ") // "@Glb = dso_local "
                 .append(this.isConstant() ? "constant " : "global "); // "[global | constant] "
 
-        // uninitialized array
-        if (initVal.isZero()) {
+        if (initVal.isZero()) { // Uninitialized / zero values
             Type arrType = this.getType().getPointeeType();
             strBuilder.append(arrType)
                     .append(" zeroinitializer");
         }
-        else {
+        else {  // Initialized values.
             strBuilder.append(initVal);
         }
 
