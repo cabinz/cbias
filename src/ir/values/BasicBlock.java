@@ -32,7 +32,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     /**
      * Retrieve a LinkedList of Instructions contained by the BasicBlock.
      * <br>
-     * NOTICE: This method cost O(n) time to conduct traversal and shallow copying.
+     * NOTICE: This method cost O(n) time to conduct scanning and shallow copying.
      * To simply loop through the block without removal/adding of Instructions,
      * use BasicBlock::iterator instead.
      * @return A LinkedList with all Instruction current in the block.

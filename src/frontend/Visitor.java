@@ -699,7 +699,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
                     str = startPoint;
                 }
                 else {
-                    str = builder.buildAddrspacecast(startPoint, PointerType.getType(IntegerType.getI32()));
+                    str = builder.buildBitcast(startPoint, PointerType.getType(IntegerType.getI32()));
                 }
                 ConstInt c = builder.buildConstant(0);
                 // For arg n: In SysY, both supported data types (int/float) are 4 bytes.

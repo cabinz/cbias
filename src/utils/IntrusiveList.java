@@ -1,7 +1,6 @@
 package utils;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 
 /**
  * Intrusive doubly linked list,
@@ -247,6 +246,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
      * Returns true if this list contains the specified element.
      * More formally, returns true if and only if this list contains
      * at least one node such that node.dataElem == elem.
+     * Obviously, it's an O(n) search.
      * @param elem The data element to be looked up.
      * @return true if this list contains the specified element. Otherwise, return false.
      */

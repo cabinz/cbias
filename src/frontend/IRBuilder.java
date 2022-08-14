@@ -368,7 +368,7 @@ public class IRBuilder {
      * @param srcVal The Value to be converted.
      * @return The sitofp instruction inserted.
      */
-    public CastInst.Bitcast buildAddrspacecast(Value srcVal, PointerType dstType) {
+    public CastInst.Bitcast buildBitcast(Value srcVal, PointerType dstType) {
         // Security checks.
         if (!srcVal.getType().isPointerType()) {
             throw new RuntimeException("A non-pointer src Value is given.");
@@ -586,8 +586,8 @@ public class IRBuilder {
     }
 
     /**
-     * Build a GlbVar with initialization.
-     * @param name The name of the GlbVar.
+     * Build a Gv with initialization.
+     * @param name The name of the GlbVar. If it's null, an anonymous Gv will be built.
      * @param init The initial value.
      */
     public GlobalVariable buildGlbVar(String name, Constant init) {
