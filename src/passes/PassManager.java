@@ -9,6 +9,7 @@ import passes.ir.dce.UnreachableCodeElim;
 import passes.ir.dce.UselessCodeElim;
 import passes.ir.gcm.GlobalCodeMotion;
 import passes.ir.inline.FunctionInline;
+import passes.ir.lap.LocalArrayPromotion;
 import passes.ir.simplify.AddInstMerge;
 import passes.ir.simplify.BlockMerge;
 import passes.ir.simplify.LoadStoreMerge;
@@ -37,9 +38,13 @@ public class PassManager {
      *
      * @param module The module to be optimized.
      */
-    public void runPasses(Module module){
+    public void runPasses(Module module) {
         // Basic optimizations
         run(Mem2reg.class, module);
+        basicOptimize(module);
+
+        // Local array promotion
+        run(LocalArrayPromotion.class, module);
         basicOptimize(module);
 
         // Inline functions
@@ -64,40 +69,40 @@ public class PassManager {
      *
      * @param module The module to be optimized.
      */
-    public void runPasses(ARMAssemble module){
+    public void runPasses(ARMAssemble module) {
         run(BuildCFG.class, module);
         run(RegisterAllocation.class, module);
         run(PeepHole.class, module);
         run(MergeBlock.class, module);
     }
 
-    public void run(Class<?> passClass, Module module){
-        if(registeredIRPasses.containsKey(passClass)){
+    public void run(Class<?> passClass, Module module) {
+        if (registeredIRPasses.containsKey(passClass)) {
             registeredIRPasses.get(passClass).runOnModule(module);
         }
     }
 
-    public void run(Class<?> passClass, ARMAssemble module){
-        if(registeredMCPasses.containsKey(passClass)){
+    public void run(Class<?> passClass, ARMAssemble module) {
+        if (registeredMCPasses.containsKey(passClass)) {
             registeredMCPasses.get(passClass).runOnModule(module);
         }
     }
 
     // register pass
 
-    public static void registerPass(IRPass irPass){
+    public static void registerPass(IRPass irPass) {
         getInstance().registeredIRPasses.put(irPass.getClass(), irPass);
     }
 
-    public static void registerPass(MCPass mcPass){
+    public static void registerPass(MCPass mcPass) {
         getInstance().registeredMCPasses.put(mcPass.getClass(), mcPass);
     }
 
-    public static void registerIRPasses(Collection<IRPass> IRPasses){
+    public static void registerIRPasses(Collection<IRPass> IRPasses) {
         IRPasses.forEach(PassManager::registerPass);
     }
 
-    public static void registerMCPasses(Collection<MCPass> IRPasses){
+    public static void registerMCPasses(Collection<MCPass> IRPasses) {
         IRPasses.forEach(PassManager::registerPass);
     }
 
@@ -105,8 +110,8 @@ public class PassManager {
 
     private static PassManager instance = null;
 
-    public static PassManager getInstance(){
-        if(instance==null){
+    public static PassManager getInstance() {
+        if (instance == null) {
             instance = new PassManager();
             // IR Passes
             ArrayList<IRPass> IRPasses = new ArrayList<>();
@@ -119,6 +124,7 @@ public class PassManager {
             IRPasses.add(new FunctionInline());
             IRPasses.add(new LoadStoreMerge());
             IRPasses.add(new AddInstMerge());
+            IRPasses.add(new LocalArrayPromotion());
             registerIRPasses(IRPasses);
 
             // MC Passes
