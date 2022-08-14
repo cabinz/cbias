@@ -3,6 +3,7 @@ package passes.ir.loopOptimization;
 import passes.ir.analysis.LoopAnalysis;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LoopInfo {
 
@@ -18,15 +19,7 @@ public class LoopInfo {
         return loops;
     }
 
-    public static void fillLoopInfo(LoopAnalysis<LoopBB>.Loop loop) {
-        for (var bb : loop.getBBs()) {
-            var exits = bb.getExitBlocks().stream();
-            if (exits.anyMatch(exit -> !loop.contains(exit))) {
-                loop.addExiting(bb);
-            }
-            if (exits.anyMatch(exit -> exit==loop.getLoopHead())) {
-                loop.addLatch(bb);
-            }
-        }
+    public static Set<LoopAnalysis<LoopBB>.Loop> genTopLoop(Set<LoopAnalysis<LoopBB>.Loop> loops) {
+        return loops.stream().filter(loop -> loop.getDepth()==1).collect(Collectors.toSet());
     }
 }

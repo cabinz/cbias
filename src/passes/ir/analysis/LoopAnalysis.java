@@ -5,6 +5,9 @@ import java.util.function.Consumer;
 
 public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
 
+    /**
+     * @see <a href='https://llvm.org/docs/LoopTerminology.html'>LLVM Loop Terminology </a>
+     */
     public class Loop {
         private final BasicBlock loopHead;
         private Loop outerLoop;
@@ -84,6 +87,32 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         public void addBBs(BasicBlock bb) {bbs.add(bb);}
         public void addLatch(BasicBlock bb) {latch.add(bb);}
         public void addExiting(BasicBlock bb) {exiting.add(bb);}
+
+        /**
+         * Generate the other loop info: latch & exiting <br/>
+         * NOTE: Called or recalled before using the latch & exiting!
+         */
+        public void fillLoopInfo() {
+            for (var bb : bbs) {
+                var exits = bb.getExitBlocks().stream();
+                if (exits.anyMatch(exit -> !contains(exit))) {
+                    addExiting(bb);
+                }
+                if (exits.anyMatch(exit -> exit==loopHead)) {
+                    addLatch(bb);
+                }
+            }
+        }
+
+        /**
+         * Get all basic block belonging to the loop
+         * @return a set contains all the blocks, including the inner loop
+         */
+        public List<BasicBlock> getAllBBs() {
+            var allBBs = new LinkedList<>(bbs);
+            innerLoops.forEach(inner -> allBBs.addAll(inner.getAllBBs()));
+            return allBBs;
+        }
     }
 
     private final BasicBlock functionEntry;
