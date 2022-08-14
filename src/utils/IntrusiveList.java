@@ -1,6 +1,7 @@
 package utils;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * Intrusive doubly linked list,
@@ -165,12 +166,11 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
 
         @Override
         public String toString() {
-            String s = "Intrusive Node " + this.hashCode() + ":\t[" +
+            return "Intrusive Node " + this.hashCode() + ":\t[" +
                     (this.prev.isDummy() ? "dummy" : this.prev.hashCode()) + " << " +
                     "{" + this.dataElem + "}" +
                     " >> " + (this.next.isDummy() ? "dummy" : this.next.hashCode())
                     + "]";
-            return s;
         }
     }
 
@@ -241,6 +241,22 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
      */
     public Node<T, P> getLast() {
         return this.isEmpty() ? null : tail.getPrev();
+    }
+
+    /**
+     * Returns true if this list contains the specified element.
+     * More formally, returns true if and only if this list contains
+     * at least one node such that node.dataElem == elem.
+     * @param elem The data element to be looked up.
+     * @return true if this list contains the specified element. Otherwise, return false.
+     */
+    public boolean contains(T elem) {
+        for (Node<T, P> node : this) {
+            if (node.dataElem == elem) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

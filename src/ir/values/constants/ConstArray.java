@@ -124,15 +124,24 @@ public class ConstArray extends Constant {
 
     @Override
     public String toString() {
+        // e.g. [2 x i32] [i32 1, i32 2] or [2 x i32] zeroinitializer
         StringBuilder strBuilder = new StringBuilder();
-        strBuilder.append(this.getType()).append(" [");
-        for (int i = 0; i < this.getNumOperands(); i++) {
-            strBuilder.append(this.getOperandAt(i));
-            if (i < this.getNumOperands() - 1) {
-                strBuilder.append(", ");
-            }
+        strBuilder.append(this.getType()); // "[2 x i32]"
+
+        if (this.isZero()) { // "zeroinitializer"
+            strBuilder.append(" zeroinitializer");
         }
-        strBuilder.append("]");
+        else { // "[i32 1, i32 2]"
+            strBuilder.append(" [");
+            for (int i = 0; i < this.getNumOperands(); i++) {
+                if (i != 0) {
+                    strBuilder.append(", ");
+                }
+                strBuilder.append(this.getOperandAt(i));
+            }
+            strBuilder.append("]");
+        }
+
         return strBuilder.toString();
     }
 
