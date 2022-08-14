@@ -56,7 +56,7 @@ public class LCSSA implements IRPass {
             for (Instruction inst : bb.getRawBasicBlock()) {
                 for (Use use : inst.getUses()) {
                     var user = (Instruction) use.getUser();
-                    if (!user.isPhi() && bbs.stream().noneMatch(loopBB -> loopBB.getRawBasicBlock().contains(user)))
+                    if (!user.isPhi() && !loop.contains(bbmap.get(user.getBB())))
                         ret.add(use);
                 }
             }

@@ -13,7 +13,7 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         private Integer depth;
 
         /**
-         * All basic blocks belonging to the loop, including the inner loop
+         * All basic blocks directly belonging to the loop, excluding the inner loop
          */
         private List<BasicBlock> bbs = new LinkedList<>();
 
@@ -40,6 +40,17 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
             this.outerLoop = outerLoop;
             if(this.outerLoop!=null){
                 this.outerLoop.innerLoops.add(this);
+            }
+        }
+
+        public boolean contains(BasicBlock bb) {
+            if (bbs.contains(bb))
+                return true;
+            else {
+                for (var inner : innerLoops)
+                    if (inner.contains(bb))
+                        return true;
+                return false;
             }
         }
 

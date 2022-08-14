@@ -14,21 +14,14 @@ public class LoopInfo {
 
             loop.addBBs(bb);
             loops.add(loop);
-
-            while (loop.getOuterLoop() != null) {
-                loop = loop.getOuterLoop();
-                loop.addBBs(bb);
-                loops.add(loop);
-            }
         }
         return loops;
     }
 
     public static void fillLoopInfo(LoopAnalysis<LoopBB>.Loop loop) {
-        var bbs = loop.getBBs();
         for (var bb : loop.getBBs()) {
             var exits = bb.getExitBlocks().stream();
-            if (exits.anyMatch(exit -> !bbs.contains(exit))) {
+            if (exits.anyMatch(exit -> !loop.contains(exit))) {
                 loop.addExiting(bb);
             }
             if (exits.anyMatch(exit -> exit==loop.getLoopHead())) {
