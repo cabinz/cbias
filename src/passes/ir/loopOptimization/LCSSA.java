@@ -12,13 +12,15 @@ import java.util.*;
 
 public class LCSSA implements IRPass {
 
+    HashMap<BasicBlock, LoopBB> bbmap;
+
     /* BasicBlock directly contained in loop */
     HashMap<LoopAnalysis<LoopBB>.Loop, List<LoopBB>> loopsMap;
 
     @Override
     public void runOnModule(Module module) {
         for (var func : module.functions) {
-            HashMap<BasicBlock, LoopBB> bbmap = new HashMap<>();
+            bbmap = new HashMap<>();
             func.forEach(bb -> bbmap.put(bb, new LoopBB(bb)));
             LoopAnalysis.analysis(bbmap);
 
@@ -30,8 +32,10 @@ public class LCSSA implements IRPass {
 
     private void fillLoop(Collection<LoopBB> bbs) {
         loopsMap = new HashMap<>();
-        bbs.forEach(bb -> {
+        for (var bb : bbs) {
             var loop = bb.getLoop();
+            if (loop == null) continue;
+
             if (loopsMap.containsKey(loop)) {
                 loopsMap.get(loop).add(bb);
             }
@@ -52,20 +56,24 @@ public class LCSSA implements IRPass {
                     loopsMap.put(loop, loopBBs);
                 }
             }
-        });
+        }
     }
 
     private void replaceOuterUse(LoopAnalysis<LoopBB>.Loop loop) {
+        var bbs = loopsMap.get(loop);
         var outerUses = getOuterUses(loop);
 
         for (var use : outerUses) {
             var usee = (Instruction) use.getUsee();
             var user = (Instruction) use.getUser();
-            var innerBlock = usee.getBB();
             var outerBlock = user.getBB();
 
             var phi = new PhiInst(usee.getType());
-            phi.addMapping(innerBlock, usee);
+            for (var bb : bbmap.get(outerBlock).getEntryBlocks()) {
+                if (bbs.contains(bb)) {
+                    phi.addMapping(bb.getRawBasicBlock(), usee);
+                }
+            }
 
             outerBlock.insertAtFront(phi);
             user.setOperandAt(use.getOperandPos(), phi);
@@ -79,8 +87,8 @@ public class LCSSA implements IRPass {
         for (LoopBB bb : bbs) {
             for (Instruction inst : bb.getRawBasicBlock()) {
                 for (Use use : inst.getUses()) {
-                    var user = use.getUser();
-                    if (bbs.stream().noneMatch(loopBB -> loopBB.getRawBasicBlock().getInstructions().contains(user)))
+                    var user = (Instruction) use.getUser();
+                    if (!user.isPhi() && bbs.stream().noneMatch(loopBB -> loopBB.getRawBasicBlock().getInstructions().contains(user)))
                         ret.add(use);
                 }
             }
