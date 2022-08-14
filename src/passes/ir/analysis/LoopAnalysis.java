@@ -1,31 +1,50 @@
 package passes.ir.analysis;
 
-import ir.values.BasicBlock;
-import passes.ir.gcm.GlobalCodeMotionRaw;
-
 import java.util.*;
 import java.util.function.Consumer;
 
 public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
 
     public class Loop {
-        public BasicBlock loopHead;
-        public Loop outerLoop;
+        private final BasicBlock loopHead;
+        private Loop outerLoop;
+
+        private final Set<Loop> innerLoops = new HashSet<>();
         private Integer depth;
 
-        public Loop(BasicBlock loopHead) {
+        Loop(BasicBlock loopHead) {
             this.loopHead = loopHead;
+        }
+
+        void setOuterLoop(Loop outerLoop) {
+            if (this.outerLoop != null) {
+                this.outerLoop.innerLoops.remove(this);
+            }
+            this.outerLoop = outerLoop;
+            this.outerLoop.innerLoops.add(this);
         }
 
         public int getDepth() {
             if (depth == null) {
-                if (outerLoop == null) {
+                if (getOuterLoop() == null) {
                     depth = 1;
                 } else {
-                    depth = outerLoop.getDepth() + 1;
+                    depth = getOuterLoop().getDepth() + 1;
                 }
             }
             return depth;
+        }
+
+        public BasicBlock getLoopHead() {
+            return loopHead;
+        }
+
+        public Loop getOuterLoop() {
+            return outerLoop;
+        }
+
+        public Set<Loop> getInnerLoops() {
+            return innerLoops;
         }
 
     }
@@ -60,10 +79,10 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
     private final Map<BasicBlock, Loop> basicBlockLoopMap = new HashMap<>();
 
     private static <BasicBlock extends ILoopAnalysis<BasicBlock>>
-    LoopAnalysis<BasicBlock>.Loop getDeeperLoop(LoopAnalysis<BasicBlock>.Loop loop1, LoopAnalysis<BasicBlock>.Loop loop2){
-        if(loop1==null) return loop2;
-        if(loop2==null) return loop1;
-        return loop1.loopHead.getDomDepth()>=loop2.loopHead.getDomDepth()?loop1:loop2;
+    LoopAnalysis<BasicBlock>.Loop getDeeperLoop(LoopAnalysis<BasicBlock>.Loop loop1, LoopAnalysis<BasicBlock>.Loop loop2) {
+        if (loop1 == null) return loop2;
+        if (loop2 == null) return loop1;
+        return loop1.getLoopHead().getDomDepth() >= loop2.getLoopHead().getDomDepth() ? loop1 : loop2;
     }
 
     private void markLoopInfo(BasicBlock start, Loop loop) {
@@ -77,10 +96,10 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         addBlock.accept(start);
         while (!markQueue.isEmpty()) {
             var block = markQueue.remove();
-            block.setLoop(getDeeperLoop(block.getLoop(),loop));
-            if (block != loop.loopHead) {
-                if(block.getLoop().loopHead==block){
-                    block.getLoop().outerLoop = getDeeperLoop(block.getLoop().outerLoop, loop);
+            block.setLoop(getDeeperLoop(block.getLoop(), loop));
+            if (block != loop.getLoopHead()) {
+                if (block.getLoop().getLoopHead() == block) {
+                    block.getLoop().setOuterLoop(getDeeperLoop(block.getLoop().getOuterLoop(), loop));
                 }
                 for (BasicBlock entryBlock : block.getEntryBlocks()) {
                     addBlock.accept(entryBlock);
@@ -100,7 +119,7 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
             if (blocksInPath.contains(exitBlock)) {
                 if (!basicBlockLoopMap.containsKey(exitBlock)) {
                     var newLoop = new Loop(exitBlock);
-                    newLoop.outerLoop = exitBlock.getLoop();
+                    newLoop.setOuterLoop(exitBlock.getLoop());
                     basicBlockLoopMap.put(exitBlock, newLoop);
                 }
                 markLoopInfo(basicBlock, basicBlockLoopMap.get(exitBlock));
