@@ -139,6 +139,15 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     }
 
     /**
+     * Returns true if this BB contains the specified Instruction.
+     * @param inst The Instruction to be looked up.
+     * @return true if this BB contains the specified Instruction. Otherwise, return false.
+     */
+    public boolean contains(Instruction inst) {
+        return this.instructions.contains(inst);
+    }
+
+    /**
      * Removes a specified instruction from the BasicBlock.
      * If the given Inst doesn't exit in the BB, an exception will be thrown.
      * <br>

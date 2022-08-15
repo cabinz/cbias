@@ -115,7 +115,7 @@ public class ConstantDerivation implements IRPass {
         return false;
     }
 
-    static Value runGep(ConstArray array, GetElemPtrInst gep) {
+    static Value runGep(ConstArray array, GetElemPtrInst gep, int finalOffset) {
         if (array == null) {
             var retType = gep.getType().getPointeeType();
             if (retType.isArrayType()) return null;
@@ -126,20 +126,27 @@ public class ConstantDerivation implements IRPass {
         Value result = array;
         for (int i = 2; i < gep.getNumOperands(); i++) { // I don't know why it starts from 2
             var index = ((ConstInt) gep.getOperandAt(i)).getVal();
+            if(i==gep.getNumOperands()-1){
+                index += finalOffset;
+            }
             result = ((ConstArray) result).getOperandAt(index);
         }
         return result;
     }
 
-    static Value deriveGepValue(GetElemPtrInst gep) {
+    static Value deriveGepValue(GetElemPtrInst gep, int offset) {
         var target = gep.getOperandAt(0);
         if (target instanceof GetElemPtrInst) {
-            return runGep((ConstArray) deriveGepValue((GetElemPtrInst) target), gep);
+            if(gep.getNumOperands()==2){
+                return deriveGepValue((GetElemPtrInst) target, ((ConstInt)gep.getOperandAt(1)).getVal());
+            }else{
+                return runGep((ConstArray) deriveGepValue((GetElemPtrInst) target, ((ConstInt)gep.getOperandAt(1)).getVal()), gep, offset);
+            }
         }
         if (target instanceof GlobalVariable) {
             var gv = (GlobalVariable) target;
             if (gv.isConstant()) {
-                return runGep((ConstArray) gv.getInitVal(), gep);
+                return runGep((ConstArray) gv.getInitVal(), gep, offset);
             }
         }
         throw new RuntimeException("Cannot derive gep with operand[0]=" + target);
@@ -450,7 +457,7 @@ public class ConstantDerivation implements IRPass {
                         if((expression.getOperandAt(0) instanceof GetElemPtrInst)&&(retType.isIntegerType() || retType.isFloatType())){
                             var gep = (GetElemPtrInst) expression.getOperandAt(0);
                             if(canDeriveGep(gep)){
-                                return deriveGepValue(gep);
+                                return deriveGepValue(gep,0);
                             }
                         }
                         return expression;

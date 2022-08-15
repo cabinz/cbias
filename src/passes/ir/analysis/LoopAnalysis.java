@@ -21,7 +21,9 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
                 this.outerLoop.innerLoops.remove(this);
             }
             this.outerLoop = outerLoop;
-            this.outerLoop.innerLoops.add(this);
+            if(this.outerLoop!=null){
+                this.outerLoop.innerLoops.add(this);
+            }
         }
 
         public int getDepth() {
@@ -138,6 +140,7 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
 
     public static <BasicBlock extends ILoopAnalysis<BasicBlock>>
     void analysis(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap) {
+        DomAnalysis.analysis(basicBlockMap);
         (new LoopAnalysis<BasicBlock>(basicBlockMap)).__analysis__();
     }
 
