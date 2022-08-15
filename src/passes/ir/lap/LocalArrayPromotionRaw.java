@@ -16,20 +16,31 @@ import ir.values.instructions.CallInst;
 import ir.values.instructions.CastInst;
 import ir.values.instructions.GetElemPtrInst;
 import ir.values.instructions.MemoryInst;
+import passes.ir.analysis.DomAnalysis;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class LocalArrayPromotionRaw {
-
-    private final Map<Instruction, Integer> instructionRanking = new HashMap<>();
+    private final Map<ir.values.BasicBlock, BasicBlock> basicBlockMap = new HashMap<>();
 
     private LocalArrayPromotionRaw() {
     }
 
+    private void dfsForDomDfn(BasicBlock basicBlock, AtomicInteger dfnCount) {
+        basicBlock.setDomDfn(dfnCount.incrementAndGet());
+        for (BasicBlock domSon : basicBlock.getDomSons()) {
+            dfsForDomDfn(domSon, dfnCount);
+        }
+        basicBlock.setDomDfnR(dfnCount.get());
+    }
+
     private void __optimize__(Module module, Function function) {
+        function.forEach(basicBlock -> basicBlockMap.put(basicBlock, new BasicBlock(basicBlock)));
+        DomAnalysis.analysis(basicBlockMap);
+        dfsForDomDfn(basicBlockMap.get(function.getEntryBB()), new AtomicInteger(0));
+
         Set<MemoryInst.Alloca> promotableSet = new HashSet<>();
-        var instructionCount = new AtomicInteger();
         function.getEntryBB().forEach(instruction -> {
             if (instruction instanceof MemoryInst.Alloca) {
                 var alloca = (MemoryInst.Alloca) instruction;
@@ -37,9 +48,8 @@ class LocalArrayPromotionRaw {
                     promotableSet.add(alloca);
                 }
             }
-            instructionRanking.put(instruction, instructionCount.incrementAndGet());
         });
-        promotableSet.forEach(alloca -> new Promoter(module, alloca));
+        promotableSet.forEach(alloca -> (new Promoter()).__promote__(module, alloca));
     }
 
     static class PromoteFailedException extends Exception {
@@ -59,6 +69,13 @@ class LocalArrayPromotionRaw {
         ArrayList<Object> arrayList;
         int arrayLength;
         ArrayType arrayType;
+
+        private final Map<Instruction, Integer> instructionRanking = new HashMap<>();
+
+        private BasicBlock actualEntry = null;
+
+        private Promoter() {
+        }
 
         private void setValue(int offset, Constant value) {
             int atomLen = arrayLength;
@@ -101,6 +118,14 @@ class LocalArrayPromotionRaw {
         }
 
         private void getArrayList(Instruction instruction, Type type, int offset, int atomLen) throws PromoteFailedException {
+            // Check dfn first.
+            if(!(instruction instanceof MemoryInst.Alloca)){
+                var dfn = basicBlockMap.get(instruction.getBB()).getDomDfn();
+                if (dfn < actualEntry.getDomDfnL() || dfn > actualEntry.getDomDfnR()) {
+                    throw new PromoteFailedException("Load before store.");
+                }
+            }
+            // Recurse
             if (instruction instanceof GetElemPtrInst) {
                 var operands = instruction.getOperands();
                 for (int i = 1; i < operands.size(); i++) {
@@ -128,7 +153,7 @@ class LocalArrayPromotionRaw {
                 if (instructionRanking.containsKey(instruction)) {
                     latestModify = Integer.max(latestModify, instructionRanking.get(instruction));
                 } else {
-                    throw new PromoteFailedException("Store inst not in entry bb.");
+                    throw new RuntimeException("Store inst not in entry bb."); // Use RuntimeException since it cannot happen.
                 }
                 if (atomLen == 0) {
                     throw new PromoteFailedException("Cannot determine the address stored.");
@@ -205,8 +230,42 @@ class LocalArrayPromotionRaw {
             throw new RuntimeException("Unexpected instruction type " + instruction.getTag());
         }
 
-        Promoter(Module module, MemoryInst.Alloca alloca) {
+        private void findAllStore(Instruction instruction) throws PromoteFailedException {
+            if (instruction instanceof CallInst || instruction instanceof MemoryInst.Load) {
+                return;
+            }
+            if (instruction instanceof MemoryInst.Store) {
+                if (actualEntry == null) {
+                    actualEntry = basicBlockMap.get(instruction.getBB());
+                } else {
+                    if (actualEntry != basicBlockMap.get(instruction.getBB())) {
+                        throw new PromoteFailedException("Store in multiple bb.");
+                    }
+                }
+                return;
+            }
+            if (instruction instanceof GetElemPtrInst || instruction instanceof MemoryInst.Alloca || instruction instanceof CastInst.Bitcast) {
+                for (Use use : instruction.getUses()) {
+                    var user = (Instruction) use.getUser();
+                    findAllStore(user);
+                }
+                return;
+            }
+            throw new RuntimeException("Unexpected instruction type " + instruction.getTag());
+        }
+
+        private void generateInstructionRanking(MemoryInst.Alloca alloca) throws PromoteFailedException {
+            findAllStore(alloca);
+            AtomicInteger rankCount = new AtomicInteger(0);
+            if (actualEntry == null) {
+                actualEntry = basicBlockMap.get(alloca.getBB().getFunc().getEntryBB());
+            }
+            actualEntry.getRawBasicBlock().forEach(instruction -> instructionRanking.put(instruction, rankCount.incrementAndGet()));
+        }
+
+        private void __promote__(Module module, MemoryInst.Alloca alloca) {
             try {
+                generateInstructionRanking(alloca);
                 arrayList = new ArrayList<>(1);
                 arrayType = (ArrayType) alloca.getAllocatedType();
                 arrayLength = arrayType.getAtomLen();
