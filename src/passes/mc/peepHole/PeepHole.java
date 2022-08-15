@@ -4,10 +4,7 @@ import backend.ARMAssemble;
 import backend.MCBuilder;
 import backend.PrintInfo;
 import backend.armCode.MCInstruction;
-import backend.armCode.MCInstructions.MCBinary;
-import backend.armCode.MCInstructions.MCMove;
-import backend.armCode.MCInstructions.MCload;
-import backend.armCode.MCInstructions.MCstore;
+import backend.armCode.MCInstructions.*;
 import backend.operand.Immediate;
 import passes.mc.MCPass;
 
@@ -155,6 +152,16 @@ public class PeepHole implements MCPass {
                                         System.out.println("remove at " + block.emit() + ": " + prev.emit());
                                     load.setOffset(prev.getSrc());
                                     pre.removeSelf();
+                                    i--;
+                                }
+                            }
+                        }
+                        case BRANCH -> {
+                            var br = ((MCbranch) cur);
+                            if (br.isBranch() && br.getTargetBB().getInstructionList().size() == 1) {
+                                var only = br.getTargetBB().getFirstInst();
+                                if (only instanceof MCbranch && ((MCbranch) only).isBranch() && only.getCond() == null) {
+                                    br.setTargetBB(((MCbranch) only).getTargetBB());
                                     i--;
                                 }
                             }
