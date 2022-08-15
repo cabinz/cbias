@@ -38,9 +38,7 @@ public class LCSSA implements IRPass {
 
             var phi = new PhiInst(usee.getType());
             for (var bb : bbmap.get(outerBlock).getEntryBlocks()) {
-                if (bbs.contains(bb)) {
-                    phi.addMapping(bb.getRawBasicBlock(), usee);
-                }
+                phi.addMapping(bb.getRawBasicBlock(), usee);
             }
 
             outerBlock.insertAtFront(phi);

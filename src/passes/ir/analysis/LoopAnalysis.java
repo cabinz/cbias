@@ -94,11 +94,11 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
          */
         public void fillLoopInfo() {
             for (var bb : bbs) {
-                var exits = bb.getExitBlocks().stream();
-                if (exits.anyMatch(exit -> !contains(exit))) {
+                var exits = bb.getExitBlocks();
+                if (exits.stream().anyMatch(exit -> !contains(exit))) {
                     addExiting(bb);
                 }
-                if (exits.anyMatch(exit -> exit==loopHead)) {
+                if (exits.stream().anyMatch(exit -> exit==loopHead)) {
                     addLatch(bb);
                 }
             }
