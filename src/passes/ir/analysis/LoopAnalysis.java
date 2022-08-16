@@ -15,6 +15,9 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         private final Set<Loop> innerLoops = new HashSet<>();
         private Integer depth;
 
+        private BasicBlock entry;
+        private BasicBlock exit;
+
         /**
          * All basic blocks directly belonging to the loop, excluding the inner loop
          */
@@ -83,6 +86,8 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         public List<BasicBlock> getBBs() {return bbs;}
         public List<BasicBlock> getLatch() {return latch;}
         public List<BasicBlock> getExiting() {return exiting;}
+        public BasicBlock getEntry() {return entry;}
+        public BasicBlock getExit() {return exit;}
 
         public void addBBs(BasicBlock bb) {bbs.add(bb);}
         public void addLatch(BasicBlock bb) {latch.add(bb);}
@@ -93,10 +98,12 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
          * NOTE: Called or recalled before using the latch & exiting!
          */
         public void fillLoopInfo() {
+            entry = loopHead.getEntryBlocks().iterator().next();
             for (var bb : bbs) {
                 var exits = bb.getExitBlocks();
                 if (exits.stream().anyMatch(exit -> !contains(exit))) {
                     addExiting(bb);
+                    exit = exits.stream().filter(exit -> !contains(exit)).iterator().next();
                 }
                 if (exits.stream().anyMatch(exit -> exit==loopHead)) {
                     addLatch(bb);

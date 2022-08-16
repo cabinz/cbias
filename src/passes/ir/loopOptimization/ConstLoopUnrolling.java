@@ -3,7 +3,6 @@ package passes.ir.loopOptimization;
 import ir.Module;
 import ir.Value;
 import ir.values.BasicBlock;
-import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.BinaryOpInst;
@@ -13,6 +12,7 @@ import passes.ir.analysis.LoopAnalysis;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Stack;
 
 public class ConstLoopUnrolling implements IRPass {
@@ -61,9 +61,9 @@ public class ConstLoopUnrolling implements IRPass {
             if (loopVar.loopTime == 0) {
                 removeLoop(loop);
             }
-            else if (loopVar.loopTime > 0){
-                unrollLoop(loop, loopVar);
-            }
+//            else if (loopVar.loopTime > 0){
+//                unrollLoop(loop, loopVar);
+//            }
         }
     }
 
@@ -91,13 +91,16 @@ public class ConstLoopUnrolling implements IRPass {
             var op2 = icmp.getOperandAt(1);
             Value cmpVar;
             ConstInt cmpConst;
+            int varPos;
             if (op1 instanceof ConstInt) {
                 cmpConst = ((ConstInt) op1);
                 cmpVar = op2;
+                varPos = 1;
             }
             else if (op2 instanceof ConstInt){
                 cmpConst = ((ConstInt) op2);
                 cmpVar = op1;
+                varPos = 0;
             }
             else {
                 System.out.println("ICMP非常量表达式");
@@ -136,9 +139,48 @@ public class ConstLoopUnrolling implements IRPass {
                 loopVar.loopTime = -1;
                 return loopVar;
             }
+
+            switch (icmp.getTag()) {
+                case LT -> {
+                    if ((varPos == 0 && loopVar.start >= loopVar.end) || (varPos == 1 && loopVar.end >= loopVar.start)) {
+                        loopVar.loopTime = 0;
+                        return loopVar;
+                    }
+                }
+                case GT -> {
+                    if ((varPos == 0 && loopVar.start <= loopVar.end) || (varPos == 1 && loopVar.end <= loopVar.start)) {
+                        loopVar.loopTime = 0;
+                        return loopVar;
+                    }
+                }
+                case EQ -> {
+                    if ((varPos == 0 && loopVar.start != loopVar.end) || (varPos == 1 && loopVar.end != loopVar.start)) {
+                        loopVar.loopTime = 0;
+                        return loopVar;
+                    }
+                }
+                case NE -> {
+                    if ((varPos == 0 && loopVar.start == loopVar.end) || (varPos == 1 && loopVar.end == loopVar.start)) {
+                        loopVar.loopTime = 0;
+                        return loopVar;
+                    }
+                }
+                case LE -> {
+                    if ((varPos == 0 && loopVar.start > loopVar.end) || (varPos == 1 && loopVar.end > loopVar.start)) {
+                        loopVar.loopTime = 0;
+                        return loopVar;
+                    }
+                }
+                case GE -> {
+                    if ((varPos == 0 && loopVar.start < loopVar.end) || (varPos == 1 && loopVar.end < loopVar.start)) {
+                        loopVar.loopTime = 0;
+                        return loopVar;
+                    }
+                }
+            }
             //</editor-fold>
 
-            // TODO: 预测多循环内入口phi，目前单入口
+            // TODO: 预测多循环内入口phi，目前单入口，即循环中不存在continue
             //<editor-fold desc="Find step">
             Instruction dealing;
             tmp = loopDefs.iterator().next();
@@ -202,9 +244,7 @@ public class ConstLoopUnrolling implements IRPass {
         if (!loop.getInnerLoops().isEmpty())
             loop.getInnerLoops().forEach(this::removeLoop);
 
-        BasicBlock exit = loop.getLoopHead().getExitBlocks().stream()
-                .filter(bb -> !loop.contains(bb))
-                .iterator().next().getRawBasicBlock();
+        BasicBlock exit = loop.getExit().getRawBasicBlock();
 
         /* Replace all the use of the loop. Thanks to LCSSA, this is quite simple */
         for (var bb : loop.getBBs()) {
