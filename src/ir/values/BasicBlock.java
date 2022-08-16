@@ -57,7 +57,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * @return The parent Function. Null if the BB belongs to no Function.
      */
     public Function getFunc() {
-        return node.isDangling() ? null : node.getParentList().getParent();
+        return this.node.getParentHolder();
     }
 
 

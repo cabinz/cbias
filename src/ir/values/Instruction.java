@@ -176,7 +176,7 @@ public abstract class Instruction extends User {
      * @return The parent BasicBlock. Null if the Inst belongs to no BB.
      */
     public BasicBlock getBB() {
-        return node.isDangling() ? null : node.getParentList().getParent();
+        return this.node.getParentHolder();
     }
 
     public Instruction(Type type, InstCategory tag) {

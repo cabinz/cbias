@@ -50,7 +50,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
 
 
         /**
-         * Intrusive list object (parent).
+         * Intrusive list object (parent) where the node resides.
          */
         private IntrusiveList<T, P> parentList = null;
 
@@ -66,6 +66,14 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
             return this.getParentList() == null;
         }
 
+        /**
+         * Retrieve the reference to the Object holding the parent list of the node.
+         * @return Parent object that holds the parent list of the node.
+         * If the node is dangling, return null.
+         */
+        public P getParentHolder() {
+            return this.isDangling() ? null : this.getParentList().getParent();
+        }
 
         /**
          * Previous Node.
