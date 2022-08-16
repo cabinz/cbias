@@ -39,10 +39,13 @@ public abstract class TerminatorInst extends Instruction {
         /**
          * Construct a Ret terminator returning a Value.
          * @param val The return value.
+         *            If it's null, a Ret returning void will be constructed.
          */
         public Ret(Value val) {
             this();
-            this.addOperandAt(0, val);
+            if (val != null) {
+                this.addOperandAt(0, val);
+            }
         }
 
 
