@@ -274,12 +274,7 @@ class LocalArrayPromotionRaw {
                     throw new PromoteFailedException("Store after load.");
                 }
                 var constArray = buildConstArray((ArrayType) alloca.getAllocatedType(), arrayList);
-                var globalVariable = new GlobalVariable(
-                        String.format("%s_%s",
-                                alloca.getBB().getFunc().getName(),
-                                UUID.randomUUID().toString().toUpperCase().replace('-', '_')
-                        ), constArray
-                );
+                var globalVariable = new GlobalVariable(null, constArray);
                 globalVariable.setConstant();
                 module.addGlobalVariable(globalVariable);
                 removeStoreInstructions(alloca);
