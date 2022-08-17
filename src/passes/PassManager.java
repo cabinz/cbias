@@ -1,7 +1,6 @@
 package passes;
 
 import backend.ARMAssemble;
-import frontend.IREmitter;
 import ir.Module;
 import passes.ir.IRPass;
 import passes.ir.constant_derivation.ConstantDerivation;
@@ -9,17 +8,18 @@ import passes.ir.dce.UnreachableCodeElim;
 import passes.ir.dce.UselessCodeElim;
 import passes.ir.gcm.GlobalCodeMotion;
 import passes.ir.inline.FunctionInline;
+import passes.ir.loopOptimization.ConstLoopUnrolling;
+import passes.ir.loopOptimization.LCSSA;
+import passes.ir.mem2reg.Mem2reg;
 import passes.ir.simplify.AddInstMerge;
 import passes.ir.simplify.BlockMerge;
 import passes.ir.simplify.LoadStoreMerge;
 import passes.mc.MCPass;
-import passes.ir.mem2reg.Mem2reg;
 import passes.mc.buildCFG.BuildCFG;
 import passes.mc.mergeBlock.MergeBlock;
 import passes.mc.peepHole.PeepHole;
 import passes.mc.registerAllocation.RegisterAllocation;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,9 +50,13 @@ public class PassManager {
         run(AddInstMerge.class, module);
         basicOptimize(module);
 
+        run(LCSSA.class, module);
+        run(ConstLoopUnrolling.class, module);
+        run(AddInstMerge.class, module);
+        basicOptimize(module);
     }
 
-    private void basicOptimize(Module module) {
+    public void basicOptimize(Module module) {
         run(ConstantDerivation.class, module);
         run(GlobalCodeMotion.class, module);
         run(BlockMerge.class, module);
@@ -119,6 +123,8 @@ public class PassManager {
             IRPasses.add(new FunctionInline());
             IRPasses.add(new LoadStoreMerge());
             IRPasses.add(new AddInstMerge());
+            IRPasses.add(new LCSSA());
+            IRPasses.add(new ConstLoopUnrolling());
             registerIRPasses(IRPasses);
 
             // MC Passes

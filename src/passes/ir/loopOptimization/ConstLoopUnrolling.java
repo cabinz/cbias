@@ -68,7 +68,7 @@ public class ConstLoopUnrolling implements IRPass {
                     }
                 }
 
-                PassManager.getInstance().run(ConstantDerivation.class, module);
+                PassManager.getInstance().basicOptimize(module);
 
                 if (printInfo) {
                     try {
