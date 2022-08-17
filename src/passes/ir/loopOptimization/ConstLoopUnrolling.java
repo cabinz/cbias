@@ -34,13 +34,16 @@ public class ConstLoopUnrolling implements IRPass {
     HashMap<BasicBlock, LoopBB> loopbbMap;
 
     private boolean changed = true;
+    public static boolean printInfo = false;
 
     @Override
     public void runOnModule(Module module) {
-        try {
-            (new IREmitter("test/beforeUnroll.ll")).emit(module);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (printInfo) {
+            try {
+                (new IREmitter("test/beforeUnroll.ll")).emit(module);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         for (var func : module.functions) {
             int counter = 0;
@@ -56,22 +59,26 @@ public class ConstLoopUnrolling implements IRPass {
 
                 topLoops.forEach(this::unrolling);
 
-                try {
-                    System.out.println("unroll done");
-                    (new IREmitter("test/unroll"+ counter +".ll")).emit(module);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (printInfo) {
+                    try {
+                        System.out.println("unroll done");
+                        (new IREmitter("test/unroll"+ counter +".ll")).emit(module);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 PassManager.getInstance().run(ConstantDerivation.class, module);
 
-                try {
-                    System.out.println("D done");
-                    (new IREmitter("test/derivation"+ counter +".ll")).emit(module);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (printInfo) {
+                    try {
+                        System.out.println("D done");
+                        (new IREmitter("test/derivation"+ counter +".ll")).emit(module);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    counter++;
                 }
-                counter++;
             }
         }
     }
@@ -85,19 +92,21 @@ public class ConstLoopUnrolling implements IRPass {
         if (isUnrollable(loop)) {
             var loopVar = getLoopVar(loop);
 
-            System.out.println("Loop info: ");
-            System.out.println("\tloop variable: " + loopVar.variable);
-            System.out.println("\tinitial value: " + loopVar.start);
-            System.out.println("\tfinal value: " + loopVar.end);
-            System.out.println("\tstep: " + loopVar.step);
-            System.out.println("\tloop time: " + loopVar.loopTime);
+            if (printInfo) {
+                System.out.println("Loop info: ");
+                System.out.println("\tloop variable: " + loopVar.variable);
+                System.out.println("\tinitial value: " + loopVar.start);
+                System.out.println("\tfinal value: " + loopVar.end);
+                System.out.println("\tstep: " + loopVar.step);
+                System.out.println("\tloop time: " + loopVar.loopTime);
+            }
 
             if (loopVar.loopTime == 0) {
-                System.out.println("无用循环删除");
+                if (printInfo) System.out.println("无用循环删除");
                 removeLoop(loop);
             }
             else if (loopVar.loopTime > 0){
-                System.out.println("循环展开");
+                if (printInfo) System.out.println("循环展开");
                 unrollLoop(loop, loopVar);
             }
         }
@@ -108,10 +117,7 @@ public class ConstLoopUnrolling implements IRPass {
         var header = loop.getLoopHead();
         /* Only unroll the single condition loop */
         // TODO: 万一body第一句就是if...break的话识别不出来，不过这样也变相相当于多重条件
-        if (exiting.contains(header) && header.getExitBlocks().stream().anyMatch(e -> loop.contains(e) && !exiting.contains(e))) {
-            return true;
-        }
-        return false;
+        return exiting.contains(header) && header.getExitBlocks().stream().anyMatch(e -> loop.contains(e) && !exiting.contains(e));
     }
 
     private LoopVariable getLoopVar(LoopAnalysis<LoopBB>.Loop loop) {
@@ -139,7 +145,7 @@ public class ConstLoopUnrolling implements IRPass {
                 varPos = 0;
             }
             else {
-                System.out.println("ICMP非常量表达式");
+                if (printInfo) System.out.println("ICMP非常量表达式");
                 loopVar.loopTime = -1;
                 return loopVar;
             }
@@ -148,7 +154,7 @@ public class ConstLoopUnrolling implements IRPass {
 
             // TODO: 处理条件判断为循环变量的数学表达式，目前只允许i<10这种形式
             if (!(cmpVar instanceof PhiInst)) {
-                System.out.println("Cond非单一逻辑比较");
+                if (printInfo) System.out.println("Cond非单一逻辑比较");
                 loopVar.loopTime = -1;
                 return loopVar;
             }
@@ -171,7 +177,7 @@ public class ConstLoopUnrolling implements IRPass {
                 loopVar.start = ((ConstInt) tmp).getVal();
             }
             else {
-                System.out.println("初始值非常量");
+                if (printInfo) System.out.println("初始值非常量");
                 loopVar.loopTime = -1;
                 return loopVar;
             }
@@ -224,7 +230,7 @@ public class ConstLoopUnrolling implements IRPass {
                 dealing = ((Instruction) tmp);
             }
             else {
-                System.out.println("循环内多phi入口");
+                if (printInfo) System.out.println("循环内多phi入口");
                 loopVar.loopTime = -1;
                 return loopVar;
             }
@@ -246,7 +252,7 @@ public class ConstLoopUnrolling implements IRPass {
                         dealing = (Instruction) op1;
                     }
                     else {
-                        System.out.println("循环变量加减法非常量表达式");
+                        if (printInfo) System.out.println("循环变量加减法非常量表达式");
                         loopVar.loopTime = -1;
                         return loopVar;
                     }
@@ -255,7 +261,7 @@ public class ConstLoopUnrolling implements IRPass {
                     break;
                 }
                 else {
-                    System.out.println("循环变量表达式不是加减法");
+                    if (printInfo) System.out.println("循环变量表达式不是加减法");
                     loopVar.loopTime = -1;
                     return loopVar;
                 }
@@ -263,15 +269,16 @@ public class ConstLoopUnrolling implements IRPass {
             //</editor-fold>
 
             if (loopVar.step != 0) {
-                int loopTime = (loopVar.end - loopVar.start) / loopVar.step;
+                int range = loopVar.end - loopVar.start;
+                int loopTime = range / loopVar.step + (range%loopVar.step==0 ?0 :1);
                 loopVar.loopTime = Math.max(loopTime, 0);
                 return loopVar;
             }
             else {
-                System.out.println("步进为0");
+                if (printInfo) System.out.println("步进为0");
             }
         }
-        System.out.println("非ICMP");
+        if (printInfo) System.out.println("非ICMP");
         loopVar.loopTime = -1;
         return loopVar;
     }
@@ -465,7 +472,11 @@ public class ConstLoopUnrolling implements IRPass {
                 if (inst instanceof PhiInst) {
                     var phi = ((PhiInst) inst);
                     for (var bb : cloned.latch) {
-                        phi.addMapping(bb, instMap.get(phi.findValue(header.getRawBasicBlock())));
+                        var val = phi.findValue(header.getRawBasicBlock());
+                        if (loopVarMap.containsKey(val))
+                            phi.addMapping(bb, loopVarMap.get(val));
+                        else
+                            phi.addMapping(bb, instMap.get(val));
                     }
                 }
                 else

@@ -101,7 +101,7 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
          * NOTE: Called or recalled before using the latch & exiting!
          */
         public void fillLoopInfo() {
-            entry = loopHead.getEntryBlocks().iterator().next();
+            entry = loopHead.getEntryBlocks().stream().filter(bb -> !contains(bb)).iterator().next();
             for (var bb : bbs) {
                 var exits = bb.getExitBlocks();
                 if (exits.stream().anyMatch(exit -> !contains(exit))) {
@@ -113,13 +113,6 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
                 }
             }
             bodyEntry = loopHead.getExitBlocks().stream().filter(e -> (e != exit)).iterator().next();
-            System.out.println("entry: " + entry.getRawBasicBlock().getName());
-            System.out.println("exit: " + exit.getRawBasicBlock().getName());
-            System.out.println("Body entry: "  + bodyEntry.getRawBasicBlock().getName());
-            System.out.println("exiting: ");
-            exiting.forEach(exitin -> System.out.println(exitin.getRawBasicBlock().getName()));
-            System.out.println("latch: ");
-            latch.forEach(l -> System.out.println(l.getRawBasicBlock().getName()));
         }
 
         /**
