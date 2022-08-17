@@ -1,19 +1,25 @@
 package passes.ir.loopOptimization;
 
+import frontend.IREmitter;
 import ir.Module;
+import ir.Use;
 import ir.Value;
+import ir.types.IntegerType;
+import ir.types.PointerType;
 import ir.values.BasicBlock;
+import ir.values.Constant;
+import ir.values.Function;
 import ir.values.Instruction;
 import ir.values.constants.ConstInt;
-import ir.values.instructions.BinaryOpInst;
-import ir.values.instructions.PhiInst;
+import ir.values.instructions.*;
+import passes.PassManager;
+import passes.ir.DummyValue;
 import passes.ir.IRPass;
 import passes.ir.analysis.LoopAnalysis;
+import passes.ir.constant_derivation.ConstantDerivation;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Stack;
+import java.io.IOException;
+import java.util.*;
 
 public class ConstLoopUnrolling implements IRPass {
 
@@ -25,20 +31,48 @@ public class ConstLoopUnrolling implements IRPass {
         public int loopTime;
     }
 
-    HashMap<BasicBlock, LoopBB> bbmap;
+    HashMap<BasicBlock, LoopBB> loopbbMap;
+
+    private boolean changed = true;
 
     @Override
     public void runOnModule(Module module) {
+        try {
+            (new IREmitter("test/beforeUnroll.ll")).emit(module);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         for (var func : module.functions) {
-            bbmap = new HashMap<>();
-            func.forEach(bb -> bbmap.put(bb, new LoopBB(bb)));
-            LoopAnalysis.analysis(bbmap);
+            int counter = 0;
+            while (changed) {
+                changed = false;
+                loopbbMap = new HashMap<>();
+                func.forEach(bb -> loopbbMap.put(bb, new LoopBB(bb)));
+                LoopAnalysis.analysis(loopbbMap);
 
-            var loops = LoopInfo.genLoopsWithBBs(bbmap.values());
+                var loops = LoopInfo.genLoopsWithBBs(loopbbMap.values());
 
-            var topLoops = LoopInfo.genTopLoop(loops);
+                var topLoops = LoopInfo.genTopLoop(loops);
 
-            topLoops.forEach(this::unrolling);
+                topLoops.forEach(this::unrolling);
+
+                try {
+                    System.out.println("unroll done");
+                    (new IREmitter("test/unroll"+ counter +".ll")).emit(module);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                PassManager.getInstance().run(ConstantDerivation.class, module);
+
+                try {
+                    System.out.println("D done");
+                    (new IREmitter("test/derivation"+ counter +".ll")).emit(module);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                counter++;
+            }
         }
     }
 
@@ -59,11 +93,13 @@ public class ConstLoopUnrolling implements IRPass {
             System.out.println("\tloop time: " + loopVar.loopTime);
 
             if (loopVar.loopTime == 0) {
+                System.out.println("无用循环删除");
                 removeLoop(loop);
             }
-//            else if (loopVar.loopTime > 0){
-//                unrollLoop(loop, loopVar);
-//            }
+            else if (loopVar.loopTime > 0){
+                System.out.println("循环展开");
+                unrollLoop(loop, loopVar);
+            }
         }
     }
 
@@ -122,7 +158,7 @@ public class ConstLoopUnrolling implements IRPass {
             var loopDefs = new HashSet<Value>();
             var inits = new HashSet<Value>();
             for (var bb : loopPhi.getEntries()) {
-                if (loop.contains(bbmap.get(bb)))
+                if (loop.contains(loopbbMap.get(bb)))
                     loopDefs.add(loopPhi.findValue(bb));
                 else
                     inits.add(loopPhi.findValue(bb));
@@ -251,7 +287,7 @@ public class ConstLoopUnrolling implements IRPass {
             var basicBlock = bb.getRawBasicBlock();
             for (var use : basicBlock.getUses()) {
                 Instruction user = (Instruction) use.getUser();
-                if (loop.contains(bbmap.get(user.getBB())))
+                if (loop.contains(loopbbMap.get(user.getBB())))
                     continue;
 
                 if (user.isPhi()) {
@@ -259,7 +295,7 @@ public class ConstLoopUnrolling implements IRPass {
                     if (phi.findValue(basicBlock) instanceof PhiInst) {
                         var usedPhi = ((PhiInst) phi.findValue(basicBlock));
                         var entry = usedPhi.getEntries().stream()
-                                .filter(in -> !loop.contains(bbmap.get(in)))
+                                .filter(in -> !loop.contains(loopbbMap.get(in)))
                                 .iterator().next();
                         var init = usedPhi.findValue(entry);
                         phi.addMapping(entry, init);
@@ -277,12 +313,274 @@ public class ConstLoopUnrolling implements IRPass {
         }
     }
 
+    class Loop4Copy {
+        public BasicBlock header;
+        public LinkedList<BasicBlock> bbs = new LinkedList<>();
+        public LinkedList<BasicBlock> exiting = new LinkedList<>();
+        public LinkedList<BasicBlock> latch = new LinkedList<>();
+    }
+
     private void unrollLoop(LoopAnalysis<LoopBB>.Loop loop, LoopVariable loopVar) {
+        if (changed)
+            return;
+        else
+            changed = true;
+
+        /* 因为循环是单入口单出口，所以展开比较方便 */
         var header = loop.getLoopHead();
         var func = header.getRawBasicBlock().getFunc();
 
-        for (int i=0; i<loopVar.loopTime-1; i++) {
+        var exit = loop.getExit().getRawBasicBlock();
 
+        HashMap<Value, Value> loopVarMap = new HashMap<>();
+        for (var inst : header.getRawBasicBlock()) {
+            if (inst.isPhi()) {
+                Value init = null;
+                var phi = ((PhiInst) inst);
+                for (var bb : phi.getEntries()) {
+                    if (!loop.contains(loopbbMap.get(bb))) {
+                        init = phi.findValue(bb);
+                        break;
+                    }
+                }
+                loopVarMap.put(inst, init);
+            }
+            else
+                break;
+        }
+
+        HashSet<BasicBlock> entris = new HashSet<>();
+        entris.add(loop.getEntry().getRawBasicBlock());
+
+        for (int i=loopVar.loopTime-1; i>=0; i--) {
+            var cloned
+                    = cloneLoop(loop, loopVarMap, i);
+            cloned.bbs.forEach(func::addBB);
+
+            for (var entry : entris) {
+                branchTo(entry, cloned.header);
+            }
+            entris.clear();
+            entris.addAll(cloned.latch);
+
+            for (var exiting : cloned.exiting) {
+                branchTo(exiting, exit);
+            }
+        }
+
+        for (var entry : entris) {
+            branchTo(entry, exit);
+        }
+
+        for (var bb : loop.getBBs()) {
+            for (var use : bb.getRawBasicBlock().getUses()) {
+                if (use.getUser() instanceof PhiInst) {
+                    var phi = ((PhiInst) use.getUser());
+                    phi.removeMapping(bb.getRawBasicBlock());
+                }
+            }
+        }
+    }
+
+    private Loop4Copy cloneLoop(LoopAnalysis<LoopBB>.Loop loop, HashMap<Value, Value> loopVarMap, int i) {
+        var cloned = new Loop4Copy();
+        int counter = 0;
+
+        var allBB = loop.getAllBBs();
+        var instMap = new HashMap<Instruction, Value>();
+        var bbMap = new HashMap<LoopBB, BasicBlock>();
+
+        var exiting = loop.getExiting();
+        var latch = loop.getLatch();
+        var header = loop.getLoopHead();
+
+        //<editor-fold desc="Clone blocks">
+        for (var bb : allBB) {
+            for (var inst : bb.getRawBasicBlock()) {
+                instMap.put(inst, new DummyValue(inst.getType()));
+            }
+            var clonedBB = new BasicBlock("clonedLoopBlock_" + i + "_" + counter++);
+            bbMap.put(bb, clonedBB);
+            cloned.bbs.add(clonedBB);
+            if (bb == header)
+                cloned.header = clonedBB;
+            else if (exiting.contains(bb))
+                cloned.exiting.add(clonedBB);
+            if (latch.contains(bb))
+                cloned.latch.add(clonedBB);
+        }
+
+        for (var bb : allBB) {
+            for (var inst : bb.getRawBasicBlock()) {
+                var curBB = bbMap.get(bb);
+                var dummy = instMap.get(inst);
+                if (loopVarMap.containsKey(inst)){
+                    var toReplace = loopVarMap.get(inst);
+                    dummy.replaceSelfTo(toReplace);
+                    instMap.put(inst, toReplace);
+                }
+                else {
+                    var clonedInst = cloneInst(inst, instMap, bbMap);
+                    dummy.replaceSelfTo(clonedInst);
+                    instMap.put(inst, clonedInst);
+                    curBB.insertAtEnd(clonedInst);
+                }
+            }
+        }
+        //</editor-fold>
+
+        //<editor-fold desc="Adjust header">
+        BasicBlock body = bbMap.get(loop.getBodyEntry());
+        var loopBr = bbMap.get(header).getLastInst();
+        Instruction loopCmp = (Instruction) loopBr.getOperandAt(0);
+        loopBr.markWasted();
+        loopCmp.markWasted();
+
+        bbMap.get(header).insertAtEnd(new TerminatorInst.Br(body));
+        //</editor-fold>
+
+        //<editor-fold desc="Adjust loop variable to the new value">
+        loopVarMap.forEach((k, origin) -> {
+            var phi = ((PhiInst) k);
+            loopVarMap.put(k, instMap.get(phi.findValue(latch.iterator().next().getRawBasicBlock())));
+        });
+        //</editor-fold>
+
+        //<editor-fold desc="Adjust the use outside the loop">
+        for (var bb : exiting) {
+            for (var use : bb.getRawBasicBlock().getUses()) {
+                if (bb != header && use.getUser() instanceof PhiInst) {
+                    var phi = ((PhiInst) use.getUser());
+                    var originValue = phi.findValue(bb.getRawBasicBlock());
+                    if (originValue instanceof Constant)
+                        phi.addMapping(bbMap.get(bb), originValue);
+                    else
+                        phi.addMapping(bbMap.get(bb), instMap.get(originValue));
+                }
+            }
+        }
+
+        if (i==0) {
+            for (var inst : loop.getExit().getRawBasicBlock()) {
+                if (inst instanceof PhiInst) {
+                    var phi = ((PhiInst) inst);
+                    for (var bb : cloned.latch) {
+                        phi.addMapping(bb, instMap.get(phi.findValue(header.getRawBasicBlock())));
+                    }
+                }
+                else
+                    break;
+            }
+        }
+        //</editor-fold>
+
+        return cloned;
+    }
+
+    /**
+     * Cloned from {@link passes.ir.inline.ClonedFunction#cloneOps(Instruction)}
+     */
+    private Map<Integer,Value> cloneOps(Instruction source, Map<Instruction, Value> valueMap, Map<LoopBB, BasicBlock> bbMap){
+        Map<Integer,Value> map = new HashMap<>();
+        for (Use use : source.getOperands()) {
+            var usee = use.getUsee();
+            Value value;
+            if(usee instanceof BasicBlock){
+                value = bbMap.getOrDefault(loopbbMap.get(usee), ((BasicBlock) usee));
+            }else{
+                value = valueMap.getOrDefault(usee, usee);
+            }
+            map.put(use.getOperandPos(), value);
+        }
+        return map;
+    }
+
+    /**
+     * Cloned from {@link passes.ir.inline.ClonedFunction#cloneInst(Instruction)}
+     */
+    private Instruction cloneInst(Instruction source, Map<Instruction, Value> valueMap, Map<LoopBB, BasicBlock> bbMap){
+        var type = source.getType();
+        var category = source.getTag();
+        var ops = cloneOps(source, valueMap, bbMap);
+        if(source instanceof UnaryOpInst){
+            return new UnaryOpInst(type,category,ops.get(0));
+        }
+        if(source instanceof BinaryOpInst){
+            return new BinaryOpInst(type,category,ops.get(0),ops.get(1));
+        }
+        if(source instanceof CallInst){
+            int argNum = ops.size()-1;
+            ArrayList<Value> args = new ArrayList<>();
+            for(int i=1;i<=argNum;i++){
+                args.add(ops.get(i));
+            }
+            return new CallInst((Function) ops.get(0),args);
+        }
+        if(source instanceof CastInst){
+            if(source instanceof CastInst.ZExt){
+                return new CastInst.ZExt(ops.get(0));
+            }
+            if(source instanceof CastInst.Fptosi){
+                return new CastInst.Fptosi(ops.get(0),(IntegerType) type);
+            }
+            if(source instanceof CastInst.Sitofp){
+                return new CastInst.Sitofp(ops.get(0));
+            }
+            if(source instanceof CastInst.Bitcast){
+                return new CastInst.Bitcast(ops.get(0),type);
+            }
+        }
+        if(source instanceof GetElemPtrInst){
+            var indexNum = ops.size()-1;
+            ArrayList<Value> indices = new ArrayList<>();
+            for(int i=1;i<=indexNum;i++){
+                indices.add(ops.get(i));
+            }
+            return new GetElemPtrInst(type, ops.get(0),indices);
+        }
+        if(source instanceof MemoryInst){
+            if(source instanceof MemoryInst.Store){
+                return new MemoryInst.Store(ops.get(0),ops.get(1));
+            }
+            if(source instanceof MemoryInst.Load){
+                return new MemoryInst.Load(type,ops.get(0));
+            }
+            if(source instanceof MemoryInst.Alloca){
+                return new MemoryInst.Alloca(((PointerType)type).getPointeeType());
+            }
+        }
+        if(source instanceof PhiInst){
+            var srcPhi = (PhiInst) source;
+            var phi = new PhiInst(type);
+            for (BasicBlock entry : srcPhi.getEntries()) {
+                var value = srcPhi.findValue(entry);
+                phi.addMapping(bbMap.getOrDefault(entry, entry), valueMap.getOrDefault(value,value));
+            }
+            return phi;
+        }
+        if(source instanceof TerminatorInst){
+            if(source instanceof TerminatorInst.Br){
+                if(((TerminatorInst.Br)source).isCondJmp()){
+                    return new TerminatorInst.Br(ops.get(0), (BasicBlock) ops.get(1), (BasicBlock) ops.get(2));
+                }else{
+                    return new TerminatorInst.Br((BasicBlock) ops.get(0));
+                }
+            }
+            if(source instanceof TerminatorInst.Ret){
+                if (source.getNumOperands() == 0)
+                    return new TerminatorInst.Ret();
+                else
+                    return new TerminatorInst.Ret(ops.get(0));
+            }
+        }
+        throw new RuntimeException("Unable to clone instruction of type "+source.getClass());
+    }
+
+    private void branchTo(BasicBlock src, BasicBlock dst) {
+        /* 因为其他优化不会把退出处理成条件跳转才可以这样做 */
+        var last = src.getLastInst();
+        if (last.isBr()) {
+            last.setOperandAt(0, dst);
         }
     }
 }

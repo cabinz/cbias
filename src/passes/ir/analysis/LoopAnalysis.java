@@ -18,6 +18,8 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         private BasicBlock entry;
         private BasicBlock exit;
 
+        private BasicBlock bodyEntry;
+
         /**
          * All basic blocks directly belonging to the loop, excluding the inner loop
          */
@@ -88,6 +90,7 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         public List<BasicBlock> getExiting() {return exiting;}
         public BasicBlock getEntry() {return entry;}
         public BasicBlock getExit() {return exit;}
+        public BasicBlock getBodyEntry() {return bodyEntry;}
 
         public void addBBs(BasicBlock bb) {bbs.add(bb);}
         public void addLatch(BasicBlock bb) {latch.add(bb);}
@@ -109,6 +112,14 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
                     addLatch(bb);
                 }
             }
+            bodyEntry = loopHead.getExitBlocks().stream().filter(e -> (e != exit)).iterator().next();
+            System.out.println("entry: " + entry.getRawBasicBlock().getName());
+            System.out.println("exit: " + exit.getRawBasicBlock().getName());
+            System.out.println("Body entry: "  + bodyEntry.getRawBasicBlock().getName());
+            System.out.println("exiting: ");
+            exiting.forEach(exitin -> System.out.println(exitin.getRawBasicBlock().getName()));
+            System.out.println("latch: ");
+            latch.forEach(l -> System.out.println(l.getRawBasicBlock().getName()));
         }
 
         /**
