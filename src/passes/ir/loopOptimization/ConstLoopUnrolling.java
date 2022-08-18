@@ -70,6 +70,7 @@ public class ConstLoopUnrolling implements IRPass {
                 }
 
                 PassManager.getInstance().basicOptimize(module);
+                PassManager.getInstance().run(LCSSA.class, module);
 
                 if (printInfo) {
                     try {
