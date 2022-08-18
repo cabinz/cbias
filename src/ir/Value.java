@@ -105,4 +105,30 @@ public abstract class Value {
             use.setUsee(value);
         }
     }
+
+    /**
+     * Extra descriptive information abt the Value, which can be
+     * printed by emitter for debugging.
+     */
+    private String info = "";
+
+    public String getInfo() {
+        return this.info;
+    }
+
+    public void setInfo(String info) {
+        this.info = info;
+    }
+
+    /**
+     * Add more information to the Value.info field.
+     * @param moreInfo Info string to be appended.
+     */
+    public void appendInfo(String moreInfo) {
+        this.info += moreInfo;
+    }
+
+    public void clearInfo() {
+        this.setInfo("");
+    }
 }
