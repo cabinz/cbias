@@ -1,6 +1,5 @@
 package ir.values;
 
-import ir.Use;
 import ir.Value;
 import ir.types.LabelType;
 import utils.IntrusiveList;
@@ -60,11 +59,13 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
         return this.node.getParentHolder();
     }
 
-
-    public BasicBlock(String name) {
+    public BasicBlock() {
         super(LabelType.getType());
+    }
 
-        this.setName(name);
+    public BasicBlock(String info) {
+        this();
+        this.setInfo(info);
     }
 
     /**

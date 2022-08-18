@@ -1113,7 +1113,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
         //<editor-fold desc="For first N-1 lAndExp blocks.">
         for(int i = 0; i < ctx.lAndExp().size() - 1; i++) {
             BasicBlock curLOrBlk = builder.getCurBB();
-            BasicBlock nxtLOrBlk = builder.buildBB("");
+            BasicBlock nxtLOrBlk = builder.buildBB();
 
             // Pass down blocks as inherited attributes for short-circuit evaluation.
             ctx.lAndExp(i).falseBlk = nxtLOrBlk;
@@ -1184,7 +1184,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
             if(i < ctx.eqExp().size() - 1) {
                 // Build following blocks for short-circuit evaluation.
                 BasicBlock originBlk = builder.getCurBB();
-                BasicBlock nxtAndBlk = builder.buildBB("");
+                BasicBlock nxtAndBlk = builder.buildBB();
                 // Add a branch instruction to terminate this block.
                 builder.setCurBB(originBlk);
                 builder.buildBr(retVal_, nxtAndBlk, ctx.falseBlk);

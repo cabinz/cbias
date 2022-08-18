@@ -182,11 +182,23 @@ public class IRBuilder {
 
     /**
      * Insert a new basic block at the end of current function.
-     * @param bbName Name of the basic block to be created.
+     *
+     * @param bbInfo Descriptive Information of the basic block to be created.
      * @return Reference of the basic block created.
      */
-    public BasicBlock buildBB(String bbName) {
-        BasicBlock bb = new BasicBlock(bbName);
+    public BasicBlock buildBB(String bbInfo) {
+        BasicBlock bb = this.buildBB();
+        bb.setInfo(bbInfo);
+        return bb;
+    }
+
+    /**
+     * Insert a new basic block at the end of current function.
+     *
+     * @return Reference of the basic block created.
+     */
+    public BasicBlock buildBB() {
+        BasicBlock bb = new BasicBlock();
         curFunc.addBB(bb);
         // Set the pointer.
         this.setCurBB(bb);
