@@ -34,6 +34,7 @@ public class ConstLoopUnrolling implements IRPass {
     HashMap<BasicBlock, LoopBB> loopbbMap;
 
     private boolean changed = true;
+//    public static boolean printInfo = true;
     public static boolean printInfo = false;
 
     @Override
@@ -394,7 +395,7 @@ public class ConstLoopUnrolling implements IRPass {
         int counter = 0;
 
         var allBB = loop.getAllBBs();
-        var instMap = new HashMap<Instruction, Value>();
+        var instMap = new HashMap<Value, Value>();
         var bbMap = new HashMap<LoopBB, BasicBlock>();
 
         var exiting = loop.getExiting();
@@ -491,7 +492,7 @@ public class ConstLoopUnrolling implements IRPass {
     /**
      * Cloned from {@link passes.ir.inline.ClonedFunction#cloneOps(Instruction)}
      */
-    private Map<Integer,Value> cloneOps(Instruction source, Map<Instruction, Value> valueMap, Map<LoopBB, BasicBlock> bbMap){
+    private Map<Integer,Value> cloneOps(Instruction source, Map<Value, Value> valueMap, Map<LoopBB, BasicBlock> bbMap){
         Map<Integer,Value> map = new HashMap<>();
         for (Use use : source.getOperands()) {
             var usee = use.getUsee();
@@ -509,7 +510,7 @@ public class ConstLoopUnrolling implements IRPass {
     /**
      * Cloned from {@link passes.ir.inline.ClonedFunction#cloneInst(Instruction)}
      */
-    private Instruction cloneInst(Instruction source, Map<Instruction, Value> valueMap, Map<LoopBB, BasicBlock> bbMap){
+    private Instruction cloneInst(Instruction source, Map<Value, Value> valueMap, Map<LoopBB, BasicBlock> bbMap){
         var type = source.getType();
         var category = source.getTag();
         var ops = cloneOps(source, valueMap, bbMap);
@@ -565,7 +566,7 @@ public class ConstLoopUnrolling implements IRPass {
             var phi = new PhiInst(type);
             for (BasicBlock entry : srcPhi.getEntries()) {
                 var value = srcPhi.findValue(entry);
-                phi.addMapping(bbMap.getOrDefault(entry, entry), valueMap.getOrDefault(value,value));
+                phi.addMapping(bbMap.getOrDefault(loopbbMap.get(entry), entry), valueMap.getOrDefault(value,value));
             }
             return phi;
         }
