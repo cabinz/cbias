@@ -28,20 +28,23 @@ public class LCSSA implements IRPass {
     }
 
     private void replaceOuterUse(LoopAnalysis<LoopBB>.Loop loop) {
-        var bbs = loop.getBBs();
+        loop.fillLoopInfo();
+
         var outerUses = getOuterUses(loop);
 
         for (var use : outerUses) {
             var usee = (Instruction) use.getUsee();
             var user = (Instruction) use.getUser();
-            var outerBlock = user.getBB();
+
+            var exiting = loop.getExiting();
+            var exit = loop.getExit().getRawBasicBlock();
 
             var phi = new PhiInst(usee.getType());
-            for (var bb : bbmap.get(outerBlock).getEntryBlocks()) {
+            for (var bb : exiting) {
                 phi.addMapping(bb.getRawBasicBlock(), usee);
             }
 
-            outerBlock.insertAtFront(phi);
+            exit.insertAtFront(phi);
             user.setOperandAt(use.getOperandPos(), phi);
         }
     }
@@ -54,7 +57,7 @@ public class LCSSA implements IRPass {
             for (Instruction inst : bb.getRawBasicBlock()) {
                 for (Use use : inst.getUses()) {
                     var user = (Instruction) use.getUser();
-                    if (!user.isPhi() && !loop.contains(bbmap.get(user.getBB())))
+                    if (!loop.contains(bbmap.get(user.getBB())))
                         ret.add(use);
                 }
             }
