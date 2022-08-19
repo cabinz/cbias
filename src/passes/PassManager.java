@@ -50,7 +50,6 @@ public class PassManager {
         run(AddInstMerge.class, module);
         basicOptimize(module);
 
-        run(LCSSA.class, module);
         run(ConstLoopUnrolling.class, module);
         run(AddInstMerge.class, module);
         basicOptimize(module);

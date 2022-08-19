@@ -16,7 +16,8 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         private Integer depth;
 
         private BasicBlock entry;
-        private BasicBlock exit;
+        private HashMap<BasicBlock, BasicBlock> exit = new HashMap<>();
+        private BasicBlock headerExit;
 
         private BasicBlock bodyEntry;
 
@@ -89,8 +90,9 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         public List<BasicBlock> getLatch() {return latch;}
         public List<BasicBlock> getExiting() {return exiting;}
         public BasicBlock getEntry() {return entry;}
-        public BasicBlock getExit() {return exit;}
+        public HashMap<BasicBlock, BasicBlock> getExit() {return exit;}
         public BasicBlock getBodyEntry() {return bodyEntry;}
+        public BasicBlock getHeaderExit() {return headerExit;}
 
         public void addBBs(BasicBlock bb) {bbs.add(bb);}
         public void addLatch(BasicBlock bb) {latch.add(bb);}
@@ -104,15 +106,17 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
             entry = loopHead.getEntryBlocks().stream().filter(bb -> !contains(bb)).iterator().next();
             for (var bb : bbs) {
                 var exits = bb.getExitBlocks();
-                if (exits.stream().anyMatch(exit -> !contains(exit))) {
+                var ex = exits.stream().filter(e -> !contains(e)).toList();
+                if (!ex.isEmpty()) {
                     addExiting(bb);
-                    exit = exits.stream().filter(exit -> !contains(exit)).iterator().next();
+                    exit.put(bb, ex.iterator().next());
                 }
                 if (exits.stream().anyMatch(exit -> exit==loopHead)) {
                     addLatch(bb);
                 }
             }
-            bodyEntry = loopHead.getExitBlocks().stream().filter(e -> (e != exit)).iterator().next();
+            headerExit = exit.get(loopHead);
+            bodyEntry = loopHead.getExitBlocks().stream().filter(e -> (e != headerExit)).iterator().next();
         }
 
         /**

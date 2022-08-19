@@ -36,15 +36,14 @@ public class LCSSA implements IRPass {
             var usee = (Instruction) use.getUsee();
             var user = (Instruction) use.getUser();
 
-            var exiting = loop.getExiting();
-            var exit = loop.getExit().getRawBasicBlock();
+            var exit = loop.getHeaderExit();
 
             var phi = new PhiInst(usee.getType());
-            for (var bb : exiting) {
+            for (var bb : exit.getEntryBlocks()) {
                 phi.addMapping(bb.getRawBasicBlock(), usee);
             }
 
-            exit.insertAtFront(phi);
+            exit.getRawBasicBlock().insertAtFront(phi);
             user.setOperandAt(use.getOperandPos(), phi);
         }
     }

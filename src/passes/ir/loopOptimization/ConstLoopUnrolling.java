@@ -33,8 +33,8 @@ public class ConstLoopUnrolling implements IRPass {
     HashMap<BasicBlock, LoopBB> loopbbMap;
 
     private boolean changed = true;
-//    public static boolean printInfo = true;
-    public static boolean printInfo = false;
+    public static boolean printInfo = true;
+//    public static boolean printInfo = false;
 
     @Override
     public void runOnModule(Module module) {
@@ -127,8 +127,8 @@ public class ConstLoopUnrolling implements IRPass {
         var exiting = loop.getExiting();
         var header = loop.getLoopHead();
         /* Only unroll the single condition loop */
-        // TODO: 万一body第一句就是if...break的话识别不出来，不过这样也变相相当于多重条件
-        return exiting.contains(header) && header.getExitBlocks().stream().anyMatch(e -> loop.contains(e) && !exiting.contains(e));
+        // TODO: 目前仅允许最简单的循环：不包含continue和break语句
+        return header.getEntryBlocks().size() == 2 && loop.getExit().size() == 1;
     }
 
     private LoopVariable getLoopVar(LoopAnalysis<LoopBB>.Loop loop) {
@@ -281,6 +281,13 @@ public class ConstLoopUnrolling implements IRPass {
 
             if (loopVar.step != 0) {
                 int range = loopVar.end - loopVar.start;
+                switch (icmp.getTag()) {
+                    case LE, GE -> range++;
+                    case EQ -> {
+                        loopVar.loopTime = 1;
+                        return loopVar;
+                    }
+                }
                 int loopTime = range / loopVar.step + (range%loopVar.step==0 ?0 :1);
                 loopVar.loopTime = Math.max(loopTime, 0);
                 return loopVar;
@@ -300,7 +307,7 @@ public class ConstLoopUnrolling implements IRPass {
         if (!loop.getInnerLoops().isEmpty())
             loop.getInnerLoops().forEach(this::removeLoop);
 
-        BasicBlock exit = loop.getExit().getRawBasicBlock();
+        var exit = loop.getHeaderExit().getRawBasicBlock();
 
         /* Replace all the use of the loop. Thanks to LCSSA, this is quite simple */
         for (var bb : loop.getExiting()) {
@@ -350,7 +357,8 @@ public class ConstLoopUnrolling implements IRPass {
         var header = loop.getLoopHead();
         var func = header.getRawBasicBlock().getFunc();
 
-        var exit = loop.getExit().getRawBasicBlock();
+        var headerExit = loop.getHeaderExit().getRawBasicBlock();
+        var exitMap = loop.getExit();
 
         HashMap<Value, Value> loopVarMap = new HashMap<>();
         for (var inst : header.getRawBasicBlock()) {
@@ -382,23 +390,10 @@ public class ConstLoopUnrolling implements IRPass {
             }
             entris.clear();
             entris.addAll(cloned.latch);
-
-            for (var exiting : cloned.exiting) {
-                branchTo(exiting, exit);
-            }
         }
 
         for (var entry : entris) {
-            branchTo(entry, exit);
-        }
-
-        for (var bb : loop.getExiting()) {
-            for (var use : bb.getRawBasicBlock().getUses()) {
-                if (use.getUser() instanceof PhiInst) {
-                    var phi = ((PhiInst) use.getUser());
-                    phi.removeMapping(bb.getRawBasicBlock());
-                }
-            }
+            branchTo(entry, headerExit);
         }
     }
 
@@ -456,6 +451,8 @@ public class ConstLoopUnrolling implements IRPass {
         loopBr.markWasted();
         loopCmp.markWasted();
 
+        if (body == null)
+            System.out.println("循环bodyEntry空了！");
         bbMap.get(header).insertAtEnd(new TerminatorInst.Br(body));
         //</editor-fold>
 
@@ -482,18 +479,25 @@ public class ConstLoopUnrolling implements IRPass {
         }
 
         if (i==0) {
-            for (var inst : loop.getExit().getRawBasicBlock()) {
+            for (var inst : loop.getHeaderExit().getRawBasicBlock()) {
                 if (inst instanceof PhiInst) {
                     var phi = ((PhiInst) inst);
-                    for (var bb : cloned.latch) {
-                        var val = phi.findValue(header.getRawBasicBlock());
-                        if (loopVarMap.containsKey(val))
-                            phi.addMapping(bb, loopVarMap.get(val));
-                        else
-                            phi.addMapping(bb, instMap.getOrDefault(val, val));
+                    var val = phi.findValue(header.getRawBasicBlock());
+                    val = loopVarMap.containsKey(val) ?loopVarMap.get(val) :instMap.getOrDefault(val, val);
+                    var entries = loop.getHeaderExit().getEntryBlocks();
+                    for (var bb : entries) {
+                        var rawBB = bb.getRawBasicBlock();
+                        if (loop.contains(bb))
+                            phi.removeMapping(rawBB);
+                        else {
+                            phi.removeMapping(rawBB);
+                            phi.addMapping(rawBB, val);
+                        }
                     }
-                }
-                else
+                    for (var bb : cloned.latch) {
+                        phi.addMapping(bb, val);
+                    }
+                } else
                     break;
             }
         }
@@ -579,7 +583,7 @@ public class ConstLoopUnrolling implements IRPass {
             var phi = new PhiInst(type);
             for (BasicBlock entry : srcPhi.getEntries()) {
                 var value = srcPhi.findValue(entry);
-                phi.addMapping(bbMap.getOrDefault(loopbbMap.get(entry), entry), valueMap.get(value));
+                phi.addMapping(bbMap.getOrDefault(loopbbMap.get(entry), entry), valueMap.getOrDefault(value, value));
             }
             return phi;
         }
