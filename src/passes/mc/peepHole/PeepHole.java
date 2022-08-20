@@ -1,12 +1,10 @@
 package passes.mc.peepHole;
 
 import backend.ARMAssemble;
+import backend.MCBuilder;
 import backend.PrintInfo;
 import backend.armCode.MCInstruction;
-import backend.armCode.MCInstructions.MCBinary;
-import backend.armCode.MCInstructions.MCMove;
-import backend.armCode.MCInstructions.MCload;
-import backend.armCode.MCInstructions.MCstore;
+import backend.armCode.MCInstructions.*;
 import backend.operand.Immediate;
 import passes.mc.MCPass;
 
@@ -48,6 +46,23 @@ public class PeepHole implements MCPass {
                                     System.out.println("remove at " + block.emit() + ": " + bi.emit());
                                 bi.removeSelf();
                                 i--;
+                            }
+                            /*
+                             *  MOV x, #imm
+                             *  ADD/SUB y, y, x  <-  cur
+                             *  =>
+                             *  ADD/SUB y, y, #imm  <-  cur
+                             */
+                            else if (pre instanceof MCMove) {
+                                var mov = ((MCMove) pre);
+                                if (mov.getSrc().isImmediate()) {
+                                    var imm = ((Immediate) mov.getSrc());
+                                    if (MCBuilder.canEncodeImm(imm.getIntValue())) {
+                                        pre.removeSelf();
+                                        bi.setOperand2(imm);
+                                        i--;
+                                    }
+                                }
                             }
                         }
                         case MOV -> {
@@ -137,6 +152,16 @@ public class PeepHole implements MCPass {
                                         System.out.println("remove at " + block.emit() + ": " + prev.emit());
                                     load.setOffset(prev.getSrc());
                                     pre.removeSelf();
+                                    i--;
+                                }
+                            }
+                        }
+                        case BRANCH -> {
+                            var br = ((MCbranch) cur);
+                            if (br.isBranch() && br.getTargetBB().getInstructionList().size() == 1) {
+                                var only = br.getTargetBB().getFirstInst();
+                                if (only instanceof MCbranch && ((MCbranch) only).isBranch() && only.getCond() == null) {
+                                    br.setTargetBB(((MCbranch) only).getTargetBB());
                                     i--;
                                 }
                             }
