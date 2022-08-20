@@ -1,12 +1,12 @@
 package passes.ir.constant_derivation;
 
-import passes.ir.IBBRelationship;
+import passes.ir.analysis.IRelationAnalysis;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class BasicBlock extends passes.ir.BasicBlock implements IBBRelationship<BasicBlock> {
+public class BasicBlock extends passes.ir.BasicBlock implements IRelationAnalysis<BasicBlock> {
 
     public Set<BasicBlock> prevBlocks = new HashSet<>();
     public Set<BasicBlock> followingBlocks = new HashSet<>();
@@ -16,13 +16,13 @@ public class BasicBlock extends passes.ir.BasicBlock implements IBBRelationship<
     }
 
     @Override
-    public void addPreviousBasicBlock(BasicBlock previousBlock) {
-        prevBlocks.add(previousBlock);
+    public void addEntryBlock(BasicBlock entryBlock) {
+        prevBlocks.add(entryBlock);
     }
 
     @Override
-    public void setFollowingBasicBlocks(List<BasicBlock> followingBasicBlocks) {
-        followingBlocks.addAll(followingBasicBlocks);
+    public void setExitBlocks(List<BasicBlock> exitBlocks) {
+        followingBlocks.addAll(exitBlocks);
     }
 
 }

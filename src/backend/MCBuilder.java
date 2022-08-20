@@ -14,8 +14,8 @@ import ir.values.*;
 import ir.values.constants.ConstFloat;
 import ir.values.constants.ConstInt;
 import ir.values.instructions.*;
-import passes.ir.IBBRelationship;
-import passes.ir.RelationAnalysis;
+import passes.ir.analysis.IRelationAnalysis;
+import passes.ir.analysis.RelationAnalysis;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -26,24 +26,24 @@ import java.util.*;
  */
 public class MCBuilder {
 
-    class IRBlockInfo extends passes.ir.BasicBlock implements IBBRelationship<IRBlockInfo> {
+    class IRBlockInfo extends passes.ir.BasicBlock implements IRelationAnalysis<IRBlockInfo> {
 
         public LinkedList<IRBlockInfo> predecessors = new LinkedList<>();
         public IRBlockInfo trueBlock;
         public IRBlockInfo falseBlock;
 
         @Override
-        public void addPreviousBasicBlock(IRBlockInfo previousBlock) {
-            predecessors.add(previousBlock);
+        public void addEntryBlock(IRBlockInfo entryBlock) {
+            predecessors.add(entryBlock);
         }
 
         @Override
-        public void setFollowingBasicBlocks(List<IRBlockInfo> followingBasicBlocks) {
-            switch (followingBasicBlocks.size()) {
-                case 1 -> trueBlock = followingBasicBlocks.get(0);
+        public void setExitBlocks(List<IRBlockInfo> exitBlocks) {
+            switch (exitBlocks.size()) {
+                case 1 -> trueBlock = exitBlocks.get(0);
                 case 2 -> {
-                    trueBlock = followingBasicBlocks.get(0);
-                    falseBlock = followingBasicBlocks.get(1);
+                    trueBlock = exitBlocks.get(0);
+                    falseBlock = exitBlocks.get(1);
                 }
             }
         }

@@ -1,8 +1,7 @@
 package passes.ir.mem2reg;
 
 import ir.values.instructions.MemoryInst;
-import ir.values.instructions.TerminatorInst;
-import passes.ir.RelationAnalysis;
+import passes.ir.analysis.RelationAnalysis;
 
 import java.util.*;
 
@@ -30,7 +29,7 @@ class Function extends passes.ir.Function implements Iterable<BasicBlock> {
 
     /**
      * Returns the promotable alloca instructions in this function.
-     *
+     * <p>
      * An alloca is unpromotable iff it is used as an address.(aka. used outside Load and Store)
      *
      * @return The set of promotable instructions.

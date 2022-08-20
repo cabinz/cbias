@@ -3,7 +3,6 @@ package passes.ir.constant_derivation;
 import ir.Module;
 import ir.Use;
 import ir.Value;
-import ir.types.PointerType;
 import ir.types.VoidType;
 import ir.values.*;
 import ir.values.constants.ConstArray;
@@ -13,7 +12,8 @@ import ir.values.instructions.*;
 import passes.PassManager;
 import passes.ir.DummyValue;
 import passes.ir.IRPass;
-import passes.ir.RelationAnalysis;
+import passes.ir.analysis.RelationAnalysis;
+import passes.ir.analysis.RelationUtil;
 import passes.ir.dce.UnreachableCodeElim;
 
 import java.util.*;
@@ -115,7 +115,7 @@ public class ConstantDerivation implements IRPass {
         return false;
     }
 
-    static Value runGep(ConstArray array, GetElemPtrInst gep) {
+    static Value runGep(ConstArray array, GetElemPtrInst gep, int finalOffset) {
         if (array == null) {
             var retType = gep.getType().getPointeeType();
             if (retType.isArrayType()) return null;
@@ -126,20 +126,27 @@ public class ConstantDerivation implements IRPass {
         Value result = array;
         for (int i = 2; i < gep.getNumOperands(); i++) { // I don't know why it starts from 2
             var index = ((ConstInt) gep.getOperandAt(i)).getVal();
+            if(i==gep.getNumOperands()-1){
+                index += finalOffset;
+            }
             result = ((ConstArray) result).getOperandAt(index);
         }
         return result;
     }
 
-    static Value deriveGepValue(GetElemPtrInst gep) {
+    static Value deriveGepValue(GetElemPtrInst gep, int offset) {
         var target = gep.getOperandAt(0);
         if (target instanceof GetElemPtrInst) {
-            return runGep((ConstArray) deriveGepValue((GetElemPtrInst) target), gep);
+            if(gep.getNumOperands()==2){
+                return deriveGepValue((GetElemPtrInst) target, ((ConstInt)gep.getOperandAt(1)).getVal());
+            }else{
+                return runGep((ConstArray) deriveGepValue((GetElemPtrInst) target, ((ConstInt)gep.getOperandAt(1)).getVal()), gep, offset);
+            }
         }
         if (target instanceof GlobalVariable) {
             var gv = (GlobalVariable) target;
             if (gv.isConstant()) {
-                return runGep((ConstArray) gv.getInitVal(), gep);
+                return runGep((ConstArray) gv.getInitVal(), gep, offset);
             }
         }
         throw new RuntimeException("Cannot derive gep with operand[0]=" + target);
@@ -328,6 +335,16 @@ public class ConstantDerivation implements IRPass {
                         }
                     }
                 }
+                if(rc1==rc2){
+                    switch (expression.getTag()) {
+                        case LT, NE, GT -> {
+                            return ConstInt.getI1(0);
+                        }
+                        case EQ, LE, GE -> {
+                            return ConstInt.getI1(1);
+                        }
+                    }
+                }
                 return expression;
             }
             case FLT, FGT, FEQ, FNE, FLE, FGE -> {
@@ -357,6 +374,16 @@ public class ConstantDerivation implements IRPass {
                         }
                     }
                 }
+                if(rc1==rc2){
+                    switch (expression.getTag()) {
+                        case FLT, FNE, FGT -> {
+                            return ConstInt.getI1(0);
+                        }
+                        case FEQ, FLE, FGE -> {
+                            return ConstInt.getI1(1);
+                        }
+                    }
+                }
                 return expression;
             }
             case AND, OR -> {
@@ -370,6 +397,7 @@ public class ConstantDerivation implements IRPass {
                         if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 1) && (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 1)) {
                             return ConstInt.getI1(1);
                         }
+                        if(c1==c2) return c1;
                         return expression;
                     }
                     case OR -> {
@@ -379,6 +407,7 @@ public class ConstantDerivation implements IRPass {
                         if ((c1 instanceof ConstInt && ((ConstInt) c1).getVal() == 0) && (c2 instanceof ConstInt && ((ConstInt) c2).getVal() == 0)) {
                             return ConstInt.getI1(0);
                         }
+                        if(c1==c2) return c1;
                         return expression;
                     }
                 }
@@ -428,7 +457,7 @@ public class ConstantDerivation implements IRPass {
                         if((expression.getOperandAt(0) instanceof GetElemPtrInst)&&(retType.isIntegerType() || retType.isFloatType())){
                             var gep = (GetElemPtrInst) expression.getOperandAt(0);
                             if(canDeriveGep(gep)){
-                                return deriveGepValue(gep);
+                                return deriveGepValue(gep,0);
                             }
                         }
                         return expression;
@@ -543,7 +572,7 @@ public class ConstantDerivation implements IRPass {
      * @param entry      The entry to be removed.
      */
     static void removeEntry(BasicBlock basicBlock, BasicBlock entry, Queue<Instruction> deriveQueue) {
-        RelationAnalysis.removeEntry(basicBlock.getRawBasicBlock(), entry.getRawBasicBlock());
+        RelationUtil.removeEntry(basicBlock.getRawBasicBlock(), entry.getRawBasicBlock());
         for (Instruction instruction : basicBlock.getRawBasicBlock()) {
             if (instruction instanceof PhiInst) {
                 var phiInst = (PhiInst) instruction;
