@@ -116,6 +116,10 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
                 }
             }
             headerExit = exit.get(loopHead);
+            if (headerExit == null) {
+//                System.out.println("header退出块为空" + loopHead.getRawBasicBlock().getName());
+                headerExit = exit.values().iterator().next();
+            }
             bodyEntry = loopHead.getExitBlocks().stream().filter(e -> (e != headerExit)).iterator().next();
         }
 

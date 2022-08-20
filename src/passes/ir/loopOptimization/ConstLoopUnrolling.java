@@ -128,7 +128,7 @@ public class ConstLoopUnrolling implements IRPass {
         var header = loop.getLoopHead();
         /* Only unroll the single condition loop */
         // TODO: 目前仅允许最简单的循环：不包含continue和break语句
-        return header.getEntryBlocks().size() == 2 && loop.getExit().size() == 1;
+        return header.getEntryBlocks().size() == 2 && loop.getExiting().size() == 1;
     }
 
     private LoopVariable getLoopVar(LoopAnalysis<LoopBB>.Loop loop) {
