@@ -176,7 +176,7 @@ public abstract class Instruction extends User {
      * @return The parent BasicBlock. Null if the Inst belongs to no BB.
      */
     public BasicBlock getBB() {
-        return node.isDangling() ? null : node.getParentList().getParent();
+        return this.node.getParentHolder();
     }
 
     public Instruction(Type type, InstCategory tag) {
@@ -219,7 +219,8 @@ public abstract class Instruction extends User {
      *     <li>All related Use links of the Inst will be removed.</li>
      * </ul>
      * Notice that only when an Instruction is not used by other Values,
-     * it is valid to be marked as wasted.
+     * it is valid to be marked as wasted. An exception will be thrown during
+     * an invalid marking.
      */
     public void markWasted() {
         /*

@@ -272,12 +272,6 @@ public class MCBuilder {
         else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
-        else if (floatValueMap.containsKey(value)) {
-            var vr = curFunc.createVirReg(value);
-            valueMap.put(value, vr);
-            curMCBB.appendInst(new MCFPmove(vr, floatValueMap.get(value)));
-            return vr;
-        }
         else if (value instanceof Instruction) {
             var inst = ((Instruction) value);
             VirtualRegister vr;
@@ -371,11 +365,6 @@ public class MCBuilder {
                 return extVr;
             }
         }
-        else if (valueMap.containsKey(value)) {
-            var extVr = curFunc.createExtVirReg(value);
-            curMCBB.appendInst(new MCFPmove(extVr, valueMap.get(value)));
-            return extVr;
-        }
         else if (floatValueMap.containsKey(value)) {
             return floatValueMap.get(value);
         }
@@ -383,15 +372,6 @@ public class MCBuilder {
             var inst = ((Instruction) value);
             var extVr = curFunc.createExtVirReg(inst);
             floatValueMap.put(value, extVr);
-            /* If a phi value is going to be converted, the condition below will be true */
-            /* At the moment, there is NOT a corresponding core register container for phi. */
-            /* And then every thing is going wrong! */
-            /* Create a core register for phi and then VMOV to solve */
-            if (inst.isPhi() && !inst.getType().isFloatType()) {
-                var vr = curFunc.createVirReg(inst);
-                valueMap.put(inst, vr);
-                curMCBB.appendInst(new MCFPmove(extVr, vr));
-            }
             return extVr;
         }
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
@@ -523,7 +503,7 @@ public class MCBuilder {
     }
 
     /**
-     * Reverse the ARM condition field.
+     * Get the opposite ARM condition field.
      * @param cond ARM condition field to be reversed
      * @return the reversed result
      */
@@ -535,6 +515,20 @@ public class MCBuilder {
             case LE -> MCInstruction.ConditionField.GT;
             case GT -> MCInstruction.ConditionField.LE;
             case LT -> MCInstruction.ConditionField.GE;
+        };
+    }
+
+    /**
+     * Get the new condition field after exchanging the compare operands
+     */
+    private MCInstruction.ConditionField exchangeCond(MCInstruction.ConditionField cond) {
+        return switch (cond) {
+            case EQ -> MCInstruction.ConditionField.EQ;
+            case NE -> MCInstruction.ConditionField.NE;
+            case GE -> MCInstruction.ConditionField.LE;
+            case LE -> MCInstruction.ConditionField.GE;
+            case GT -> MCInstruction.ConditionField.LT;
+            case LT -> MCInstruction.ConditionField.GT;
         };
     }
     //</editor-fold>
@@ -729,8 +723,7 @@ public class MCBuilder {
         if (value1 instanceof ConstInt && !(value2 instanceof ConstInt)){
             operand1 = (Register) findContainer(value2);
             operand2 = findContainer(value1);
-            if (armCond != MCInstruction.ConditionField.EQ && armCond != MCInstruction.ConditionField.NE)
-                armCond = reverseCond(armCond);
+            armCond = exchangeCond(armCond);
         }
         else {
             operand1 = (Register) findContainer(value1, true);
@@ -1002,14 +995,18 @@ public class MCBuilder {
      * sitofp needs to insert VMOV from core register, while fptosi needs to VMOV from extReg back
      */
     private void translateConvert(CastInst IRinst, boolean f2i) {
+        var operand = IRinst.getOperandAt(0);
+        if (!f2i) {
+            curMCBB.appendInst(new MCFPmove((ExtensionRegister) findFloatContainer(operand),(Register) findContainer(operand)));
+        }
         curMCBB.appendInst(new MCFPconvert(
                 f2i,
                 (ExtensionRegister) findFloatContainer(IRinst),
-                (ExtensionRegister) findFloatContainer(IRinst.getOperandAt(0))
+                (ExtensionRegister) findFloatContainer(operand)
         ));
-        /* Move it back to core register */
-        if (f2i)
-            findContainer(IRinst);
+        if (f2i) {
+            curMCBB.appendInst(new MCFPmove((Register) findContainer(IRinst),(ExtensionRegister) findFloatContainer(IRinst)));
+        }
     }
 
     /**
@@ -1153,6 +1150,8 @@ public class MCBuilder {
                         var mov = isInt ?new MCMove((Register) dealing, tmp) :new MCFPmove(dealing, tmp);
                         if (PrintInfo.printIR && dealing.isVirtualReg())
                             mov.val = ((VirtualRegister) dealing).getValue();
+                        else if (PrintInfo.printIR && dealing.isVirtualExtReg())
+                            mov.val = ((VirtualExtRegister) dealing).getValue();
                         moves.addLast(mov);
                     }
                     /* Dealing nested phi, the ONLY immediate can be here is dealing itself */
@@ -1178,6 +1177,8 @@ public class MCBuilder {
                             mov = isInt ?new MCMove((Register) dst, src) :new MCFPmove(dst, src);
                         if (PrintInfo.printIR && dst.isVirtualReg())
                             mov.val = ((VirtualRegister) dst).getValue();
+                        else if (PrintInfo.printIR && dst.isVirtualExtReg())
+                            mov.val = ((VirtualExtRegister) dst).getValue();
                         moves.addFirst(mov);
                         src = dst;
                         phiMap.remove(dst);

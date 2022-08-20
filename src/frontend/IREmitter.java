@@ -22,6 +22,8 @@ public class IREmitter {
      */
     private int nextName = 0;
 
+    private final String bbInfoIndent = "\t".repeat(10);
+
 
     /**
      * The IR text will cover the original content if the file already exists.
@@ -87,7 +89,7 @@ public class IREmitter {
      * @param m The module to be emitted.
      * @throws IOException Exception when reading/writing the output .ll file.
      */
-    public void emit(Module m) throws IOException {
+    public void emit(Module m, boolean emitInfo) throws IOException {
 
         // Initialize the module by assigning names.
         nameModule(m);
@@ -122,7 +124,9 @@ public class IREmitter {
             // Body of a function: basic blocks in it.
             for (BasicBlock bb : func) {
                 // Label of the block.
-                strBuilder.append(bb.getName()).append(":\n");
+                strBuilder.append(bb.getName()).append(":")
+                        .append(emitInfo ? (bbInfoIndent + ";" + bb.getInfo()) : "")
+                        .append("\n");
                 // Content (instructions) in the block. [Intended \t x 1]
                 for (Instruction inst : bb) {
                     strBuilder.append("\t")

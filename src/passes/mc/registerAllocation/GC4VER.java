@@ -368,7 +368,7 @@ public class GC4VER {
         while (!selectStack.isEmpty()) {
             /* Initialize */
             var n = selectStack.pop();
-            var okColor = IntStream.range(0, K).boxed()// TODO: 考虑使用r14 lr? 使用r12 ip
+            var okColor = IntStream.range(0, K).boxed()
                     .collect(Collectors.toList());
 
             /* Remove unavailable color */
@@ -392,52 +392,80 @@ public class GC4VER {
         coalescedNodes.forEach(n -> color.put(n, color.get(GetAlias(n))));
     }
 
-    /**
-     * Spilling using store after def and load before use. <br/>
-     * That's ugly, but useful and simple.
-     */
+
     private void RewriteProgram() {
         for (var v : spilledNodes) {
             int offset = curFunc.getStackSize();
 
             for (var block : curFunc) {
+                MCFPInstruction lastDef = null;
+                boolean firstUse = true;
+                int counter = 0;
+
+                ExtensionRegister v_tmp = curFunc.createExtVirReg(((VirtualExtRegister) v).getValue());
+
                 var list = block.getInstructionList();
                 for (int i=0; i<list.size(); i++) {
-                    var instruction = list.get(i);
-                    if (!(instruction instanceof MCFPInstruction)) continue;
-                    var inst = (MCFPInstruction) instruction;
+                    var curInst = list.get(i);
+                    counter ++;
 
-                    /* If def, store the def into memory */
-                    if (inst.getExtDef().contains(v)) {
-                        /* The max size can the offset can be */
-                        if (1020 > offset && offset > -1020)
-                            inst.insertAfter(new MCFPstore(v, RealRegister.get(13), new Immediate(offset)));
-                        else {
-                            VirtualRegister addr = curFunc.createVirReg(offset);
-                            inst.insertAfter(new MCFPstore(v, addr));
-                            inst.insertAfter(new MCBinary(MCInstruction.TYPE.ADD, addr, RealRegister.get(13), addr));
-                            inst.insertAfter(new MCMove(addr, new Immediate(offset), true));
-                            i++;
+                    if (curInst instanceof MCFPInstruction) {
+                        var inst = ((MCFPInstruction) curInst);
+                        /* If use, load from memory */
+                        if (inst.getExtUse().contains(v)) {
+                            if (lastDef == null && firstUse) {
+                                if (1020 > offset && offset > -1020)
+                                    inst.insertBefore(new MCFPload(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                                else {
+                                    VirtualRegister addr = curFunc.createVirReg(offset);
+                                    inst.insertBefore(new MCMove(addr, new Immediate(offset), true));
+                                    inst.insertBefore(new MCBinary(MCInstruction.TYPE.ADD, addr, RealRegister.get(13), addr));
+                                    inst.insertBefore(new MCFPload(v_tmp, addr));
+                                    i++;
+                                }
+
+                                firstUse = false;
+                                i++;
+                            }
+
+                            inst.replaceExtReg(v, v_tmp);
                         }
-                        i++;
+
+                        /* If def, store the def into memory */
+                        if (inst.getExtDef().contains(v)) {
+                            lastDef = inst;
+                            inst.replaceExtReg(v, v_tmp);
+                        }
+
+                        if (counter >= 30) {
+                            if (lastDef != null) {
+                                if (1020 > offset && offset > -1020)
+                                    lastDef.insertAfter(new MCFPstore(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                                else {
+                                    VirtualRegister addr = curFunc.createVirReg(offset);
+                                    lastDef.insertAfter(new MCFPstore(v_tmp, addr));
+                                    lastDef.insertAfter(new MCBinary(MCInstruction.TYPE.ADD, addr, RealRegister.get(13), addr));
+                                    lastDef.insertAfter(new MCMove(addr, new Immediate(offset), true));
+                                    i++;
+                                }
+                                lastDef = null;
+                                i++;
+                            }
+
+                            counter = 0;
+                            firstUse = true;
+                            v_tmp = curFunc.createExtVirReg(((VirtualExtRegister) v).getValue());
+                        }
                     }
-
-                    /* If use, load from memory */
-                    if (inst.getExtUse().contains(v)) {
-                        // TODO: 更好的方法？
-                        /* Create a temporary v_tmp for the use */
-                        VirtualExtRegister v_tmp = curFunc.createExtVirReg(((VirtualExtRegister) v).getValue());
-                        if (1020 > offset && offset > -1020)
-                            inst.insertBefore(new MCFPload(v_tmp, RealRegister.get(13), new Immediate(offset)));
-                        else {
-                            VirtualRegister addr = curFunc.createVirReg(offset);
-                            inst.insertBefore(new MCMove(addr, new Immediate(offset), true));
-                            inst.insertBefore(new MCBinary(MCInstruction.TYPE.ADD, addr, RealRegister.get(13), addr));
-                            inst.insertBefore(new MCFPload(v_tmp, addr));
-                            i++;
-                        }
-                        inst.replaceExtReg(v, v_tmp);
-                        i++;
+                }
+                if (lastDef != null) {
+                    if (1020 > offset && offset > -1020)
+                        lastDef.insertAfter(new MCFPstore(v_tmp, RealRegister.get(13), new Immediate(offset)));
+                    else {
+                        VirtualRegister addr = curFunc.createVirReg(offset);
+                        lastDef.insertAfter(new MCFPstore(v_tmp, addr));
+                        lastDef.insertAfter(new MCBinary(MCInstruction.TYPE.ADD, addr, RealRegister.get(13), addr));
+                        lastDef.insertAfter(new MCMove(addr, new Immediate(offset), true));
                     }
                 }
             }

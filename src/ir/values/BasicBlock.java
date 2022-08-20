@@ -1,6 +1,5 @@
 package ir.values;
 
-import ir.Use;
 import ir.Value;
 import ir.types.LabelType;
 import utils.IntrusiveList;
@@ -32,7 +31,7 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
     /**
      * Retrieve a LinkedList of Instructions contained by the BasicBlock.
      * <br>
-     * NOTICE: This method cost O(n) time to conduct traversal and shallow copying.
+     * NOTICE: This method cost O(n) time to conduct scanning and shallow copying.
      * To simply loop through the block without removal/adding of Instructions,
      * use BasicBlock::iterator instead.
      * @return A LinkedList with all Instruction current in the block.
@@ -57,14 +56,16 @@ public class BasicBlock extends Value implements Iterable<Instruction>{
      * @return The parent Function. Null if the BB belongs to no Function.
      */
     public Function getFunc() {
-        return node.isDangling() ? null : node.getParentList().getParent();
+        return this.node.getParentHolder();
     }
 
-
-    public BasicBlock(String name) {
+    public BasicBlock() {
         super(LabelType.getType());
+    }
 
-        this.setName(name);
+    public BasicBlock(String info) {
+        this();
+        this.setInfo(info);
     }
 
     /**

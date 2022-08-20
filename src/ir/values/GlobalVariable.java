@@ -82,8 +82,8 @@ public class GlobalVariable extends User {
     /**
      * Construct a GlbVar w/o initialization.
      * <br>
-     * The initial value will automatically be assigned according to the type.
-     * @param name The name of the GlbVar.
+     * The initial value will automatically be assigned as zero of the type.
+     * @param name The name of the Gv. If it's null, an anonymous one will be constructed.
      * @param type The type of the memory block it references.
      */
     public GlobalVariable(String name, Type type) {
@@ -98,7 +98,7 @@ public class GlobalVariable extends User {
      * <br>
      * The type will automatically be assigned according to
      * the given initial Constant.
-     * @param name The name of the GlbVar.
+     * @param name The name of the Gv. If it's null, an anonymous one will be constructed.
      * @param init The initial value.
      */
     public GlobalVariable(String name, Constant init) {
@@ -144,6 +144,7 @@ public class GlobalVariable extends User {
 
     /**
      * Get the PointerType to the memory block referenced.
+     * (To get Type of the variable directly, use Gv::getVariableType instead.)
      * @return Corresponding PointerType of the GlbVar.
      */
     @Override

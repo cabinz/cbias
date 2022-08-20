@@ -60,6 +60,8 @@ public class ARMAssemble implements Iterable<MCFunction>{
      */
     public MCFunction findMCFunc(Function IRFunc) {return functionMap.get(IRFunc);}
 
+    private int counter = 0;
+
     /**
      * Create a GlobalVariable in ARM for an
      * IR GlobalVariable, while return the corresponding label
@@ -70,26 +72,27 @@ public class ARMAssemble implements Iterable<MCFunction>{
         Label label;
 
         var type = gv.getType().getRootType();
+        String name = gv.isAnonymous() ?"glb_"+(counter++) :gv.getName().substring(1);
         if (type.isIntegerType() || (type.isArrayType() && ((ArrayType) type).getAtomType().isIntegerType())) {
             if (type.isArrayType() && gv.getInitVal().isZero()) {
-                label = new Label(gv.getName().substring(1), Label.TAG.Int, ((ArrayType) type).getAtomLen());
+                label = new Label(name, Label.TAG.Int, ((ArrayType) type).getAtomLen());
             }
             else {
                 ArrayList<Integer> initial = new ArrayList<>();
                 genInitial(gv.getInitVal(), initial);
                 /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
-                label = new Label(gv.getName().substring(1), Label.TAG.Int, initial);
+                label = new Label(name, Label.TAG.Int, initial);
             }
         }
         else {
             if (type.isArrayType() && gv.getInitVal().isZero()) {
-                label = new Label(gv.getName().substring(1), Label.TAG.Float, ((ArrayType) type).getAtomLen());
+                label = new Label(name, Label.TAG.Float, ((ArrayType) type).getAtomLen());
             }
             else {
                 ArrayList<Float> initial = new ArrayList<>();
                 genInitial(gv.getInitVal(), initial);
                 /* 可恶的前端大佬，全局变量名字里带'@'，只能在这里消掉 */
-                label = new Label(gv.getName().substring(1), Label.TAG.Float, initial);
+                label = new Label(name, Label.TAG.Float, initial);
             }
         }
 

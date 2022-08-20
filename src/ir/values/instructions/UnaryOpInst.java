@@ -6,7 +6,7 @@ import ir.values.Instruction;
 
 public class UnaryOpInst extends Instruction {
     /**
-     * User (Builder) needs to guarantee parameters passed correct.
+     * User (Builder) needs to guarantee parameters passed correctly.
      *
      * @param type Type of operation result.
      * @param tag  Instruction category.

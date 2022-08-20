@@ -43,7 +43,7 @@ public class Driver{
         /* Emit the IR text to an output file for testing. */
         if (config.llOut != null) {
             IREmitter emitter = new IREmitter(config.llOut);
-            emitter.emit(module);
+            emitter.emit(module, true);
         }
 
         if (config.ASMout == null) return;

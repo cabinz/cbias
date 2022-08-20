@@ -1,7 +1,6 @@
 package utils;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 
 /**
  * Intrusive doubly linked list,
@@ -51,7 +50,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
 
 
         /**
-         * Intrusive list object (parent).
+         * Intrusive list object (parent) where the node resides.
          */
         private IntrusiveList<T, P> parentList = null;
 
@@ -67,6 +66,14 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
             return this.getParentList() == null;
         }
 
+        /**
+         * Retrieve the reference to the Object holding the parent list of the node.
+         * @return Parent object that holds the parent list of the node.
+         * If the node is dangling, return null.
+         */
+        public P getParentHolder() {
+            return this.isDangling() ? null : this.getParentList().getParent();
+        }
 
         /**
          * Previous Node.
@@ -247,6 +254,7 @@ public class IntrusiveList<T, P> implements Iterable<IntrusiveList.Node<T, P>> {
      * Returns true if this list contains the specified element.
      * More formally, returns true if and only if this list contains
      * at least one node such that node.dataElem == elem.
+     * Obviously, it's an O(n) search.
      * @param elem The data element to be looked up.
      * @return true if this list contains the specified element. Otherwise, return false.
      */

@@ -182,11 +182,23 @@ public class IRBuilder {
 
     /**
      * Insert a new basic block at the end of current function.
-     * @param bbName Name of the basic block to be created.
+     *
+     * @param bbInfo Descriptive Information of the basic block to be created.
      * @return Reference of the basic block created.
      */
-    public BasicBlock buildBB(String bbName) {
-        BasicBlock bb = new BasicBlock(bbName);
+    public BasicBlock buildBB(String bbInfo) {
+        BasicBlock bb = this.buildBB();
+        bb.setInfo(bbInfo);
+        return bb;
+    }
+
+    /**
+     * Insert a new basic block at the end of current function.
+     *
+     * @return Reference of the basic block created.
+     */
+    public BasicBlock buildBB() {
+        BasicBlock bb = new BasicBlock();
         curFunc.addBB(bb);
         // Set the pointer.
         this.setCurBB(bb);
@@ -368,7 +380,7 @@ public class IRBuilder {
      * @param srcVal The Value to be converted.
      * @return The sitofp instruction inserted.
      */
-    public CastInst.Bitcast buildAddrspacecast(Value srcVal, PointerType dstType) {
+    public CastInst.Bitcast buildBitcast(Value srcVal, PointerType dstType) {
         // Security checks.
         if (!srcVal.getType().isPointerType()) {
             throw new RuntimeException("A non-pointer src Value is given.");
@@ -586,8 +598,8 @@ public class IRBuilder {
     }
 
     /**
-     * Build a GlbVar with initialization.
-     * @param name The name of the GlbVar.
+     * Build a Gv with initialization.
+     * @param name The name of the GlbVar. If it's null, an anonymous Gv will be built.
      * @param init The initial value.
      */
     public GlobalVariable buildGlbVar(String name, Constant init) {
