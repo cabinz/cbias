@@ -35,8 +35,8 @@ public class ConstLoopUnrolling implements IRPass {
     HashMap<BasicBlock, LoopBB> loopbbMap;
 
     private boolean changed = true;
-    public static boolean printInfo = true;
-//    public static boolean printInfo = false;
+//    public static boolean printInfo = true;
+    public static boolean printInfo = false;
 
     @Override
     public void runOnModule(Module module) {

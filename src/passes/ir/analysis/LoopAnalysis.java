@@ -2,6 +2,7 @@ package passes.ir.analysis;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
 
@@ -117,7 +118,7 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
             entry = loopHead.getEntryBlocks().stream().filter(bb -> !contains(bb)).iterator().next();
             for (var bb : bbs) {
                 var exits = bb.getExitBlocks();
-                var ex = exits.stream().filter(e -> !contains(e)).toList();
+                var ex = exits.stream().filter(e -> !contains(e)).collect(Collectors.toList());
                 if (!ex.isEmpty()) {
                     addExiting(bb);
                     exit.put(bb, ex.iterator().next());
