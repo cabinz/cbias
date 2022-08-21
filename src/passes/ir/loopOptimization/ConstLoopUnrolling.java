@@ -22,6 +22,8 @@ import java.util.*;
 
 public class ConstLoopUnrolling implements IRPass {
 
+    private final int UNROLLING_LIMIT = 10000;
+
     private class LoopVariable {
         public Value variable;
         public int start;
@@ -40,7 +42,7 @@ public class ConstLoopUnrolling implements IRPass {
     public void runOnModule(Module module) {
         if (printInfo) {
             try {
-                (new IREmitter("test/beforeUnroll.ll")).emit(module);
+                (new IREmitter("test/loop/beforeUnroll.ll")).emit(module, true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -54,14 +56,17 @@ public class ConstLoopUnrolling implements IRPass {
                 if (printInfo) {
                     try {
                         System.out.println("LCSSA done");
-                        (new IREmitter("test/LCSSA"+ counter +".ll")).emit(module);
+                        (new IREmitter("test/loop/LCSSA"+ counter +".ll")).emit(module, true);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
 
                 loopbbMap = new HashMap<>();
-                func.forEach(bb -> loopbbMap.put(bb, new LoopBB(bb)));
+                func.forEach(bb -> {
+                    loopbbMap.put(bb, new LoopBB(bb));
+                    bb.clearInfo();
+                });
                 LoopAnalysis.analysis(loopbbMap);
 
                 var loops = LoopInfo.genLoopsWithBBs(loopbbMap.values());
@@ -73,7 +78,7 @@ public class ConstLoopUnrolling implements IRPass {
                 if (printInfo) {
                     try {
                         System.out.println("unroll done");
-                        (new IREmitter("test/unroll"+ counter +".ll")).emit(module);
+                        (new IREmitter("test/loop/unroll"+ counter +".ll")).emit(module, true);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -84,7 +89,7 @@ public class ConstLoopUnrolling implements IRPass {
                 if (printInfo) {
                     try {
                         System.out.println("D done");
-                        (new IREmitter("test/derivation"+ counter +".ll")).emit(module);
+                        (new IREmitter("test/loop/derivation"+ counter +".ll")).emit(module, true);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -95,6 +100,10 @@ public class ConstLoopUnrolling implements IRPass {
     }
 
     private void unrolling(LoopAnalysis<LoopBB>.Loop loop) {
+        if (loop.getMaxDepth() > 3) {
+            return;
+        }
+
         if (!loop.getInnerLoops().isEmpty())
             loop.getInnerLoops().forEach(this::unrolling);
 
@@ -116,7 +125,7 @@ public class ConstLoopUnrolling implements IRPass {
                 if (printInfo) System.out.println("无用循环删除");
                 removeLoop(loop);
             }
-            else if (loopVar.loopTime > 0){
+            else if (loopVar.loopTime > 0 && loopVar.loopTime*loop.getSize() < UNROLLING_LIMIT){
                 if (printInfo) System.out.println("循环展开");
                 unrollLoop(loop, loopVar);
             }
@@ -282,13 +291,14 @@ public class ConstLoopUnrolling implements IRPass {
             if (loopVar.step != 0) {
                 int range = loopVar.end - loopVar.start;
                 switch (icmp.getTag()) {
-                    case LE, GE -> range++;
+                    case LE -> range++;
+                    case GE -> range--;
                     case EQ -> {
                         loopVar.loopTime = 1;
                         return loopVar;
                     }
                 }
-                int loopTime = range / loopVar.step + (range%loopVar.step==0 ?0 :1);
+                int loopTime = range / loopVar.step;
                 loopVar.loopTime = Math.max(loopTime, 0);
                 return loopVar;
             }
@@ -358,8 +368,8 @@ public class ConstLoopUnrolling implements IRPass {
         var func = header.getRawBasicBlock().getFunc();
 
         var headerExit = loop.getHeaderExit().getRawBasicBlock();
-        var exitMap = loop.getExit();
 
+        //<editor-fold desc="Initialize the loop variable">
         HashMap<Value, Value> loopVarMap = new HashMap<>();
         for (var inst : header.getRawBasicBlock()) {
             if (inst.isPhi()) {
@@ -376,7 +386,9 @@ public class ConstLoopUnrolling implements IRPass {
             else
                 break;
         }
+        //</editor-fold>
 
+        //<editor-fold desc="Clone loops and sort">
         HashSet<BasicBlock> entris = new HashSet<>();
         entris.add(loop.getEntry().getRawBasicBlock());
 
@@ -391,6 +403,7 @@ public class ConstLoopUnrolling implements IRPass {
             entris.clear();
             entris.addAll(cloned.latch);
         }
+        //</editor-fold>
 
         for (var entry : entris) {
             branchTo(entry, headerExit);
@@ -435,7 +448,7 @@ public class ConstLoopUnrolling implements IRPass {
                     instMap.put(inst, toReplace);
                 }
                 else {
-                    var clonedInst = cloneInst(inst, instMap, bbMap);
+                    var clonedInst = cloneInst(inst, instMap, loopVarMap, bbMap);
                     dummy.replaceSelfTo(clonedInst);
                     instMap.put(inst, clonedInst);
                     curBB.insertAtEnd(clonedInst);
@@ -447,9 +460,7 @@ public class ConstLoopUnrolling implements IRPass {
         //<editor-fold desc="Adjust header">
         BasicBlock body = bbMap.get(loop.getBodyEntry());
         var loopBr = bbMap.get(header).getLastInst();
-        Instruction loopCmp = (Instruction) loopBr.getOperandAt(0);
         loopBr.markWasted();
-        loopCmp.markWasted();
 
         if (body == null)
             System.out.println("循环bodyEntry空了！");
@@ -457,28 +468,52 @@ public class ConstLoopUnrolling implements IRPass {
         //</editor-fold>
 
         //<editor-fold desc="Adjust loop variable to the new value">
-        loopVarMap.forEach((k, origin) -> {
+        loopVarMap.keySet().forEach(k -> {
             var phi = ((PhiInst) k);
-            var originVal = phi.findValue(latch.iterator().next().getRawBasicBlock());
+            var originVal = phi.findValue(latch.get(0).getRawBasicBlock());
+            if (!instMap.containsKey(originVal) && !(originVal instanceof Constant)) {
+                    throw new RuntimeException("循环内找不到新的丁真");
+            }
             loopVarMap.put(k, instMap.getOrDefault(originVal, originVal));
         });
         //</editor-fold>
 
         //<editor-fold desc="Adjust the use outside the loop">
-        for (var bb : exiting) {
-            for (var use : bb.getRawBasicBlock().getUses()) {
-                if (bb != header && use.getUser() instanceof PhiInst) {
-                    var phi = ((PhiInst) use.getUser());
-                    var originValue = phi.findValue(bb.getRawBasicBlock());
-                    if (originValue instanceof Constant)
-                        phi.addMapping(bbMap.get(bb), originValue);
-                    else
-                        phi.addMapping(bbMap.get(bb), instMap.get(originValue));
-                }
-            }
-        }
+//        for (var bb : exiting) {
+//            for (var use : bb.getRawBasicBlock().getUses()) {
+//                if (bb != header && use.getUser() instanceof PhiInst) {
+//                    var phi = ((PhiInst) use.getUser());
+//                    var originValue = phi.findValue(bb.getRawBasicBlock());
+//                    if (originValue instanceof Constant)
+//                        phi.addMapping(bbMap.get(bb), originValue);
+//                    else
+//                        phi.addMapping(bbMap.get(bb), instMap.get(originValue));
+//                }
+//            }
+//        }
 
         if (i==0) {
+            var lastHeader = new BasicBlock("cloned_last_header");
+            cloned.bbs.add(lastHeader);
+            for (var inst : header.getRawBasicBlock()) {
+                if (inst.isPhi()) {
+                    instMap.put(inst, loopVarMap.get(inst));
+                }
+                else {
+                    var newInst = cloneInst(inst, instMap, loopVarMap, bbMap);
+                    instMap.put(inst, newInst);
+                    lastHeader.insertAtEnd(newInst);
+                }
+            }
+            lastHeader.getLastInst().markWasted();
+            lastHeader.insertAtEnd(new TerminatorInst.Br(loop.getHeaderExit().getRawBasicBlock()));
+
+            for (var bb : cloned.latch) {
+                branchTo(bb, lastHeader);
+            }
+            cloned.latch.clear();
+            cloned.latch.add(lastHeader);
+
             for (var inst : loop.getHeaderExit().getRawBasicBlock()) {
                 if (inst instanceof PhiInst) {
                     var phi = ((PhiInst) inst);
@@ -494,9 +529,7 @@ public class ConstLoopUnrolling implements IRPass {
                             phi.addMapping(rawBB, val);
                         }
                     }
-                    for (var bb : cloned.latch) {
-                        phi.addMapping(bb, val);
-                    }
+                    phi.addMapping(lastHeader, val);
                 } else
                     break;
             }
@@ -509,7 +542,7 @@ public class ConstLoopUnrolling implements IRPass {
     /**
      * Cloned from {@link passes.ir.inline.ClonedFunction#cloneOps(Instruction)}
      */
-    private Map<Integer,Value> cloneOps(Instruction source, Map<Value, Value> valueMap, Map<LoopBB, BasicBlock> bbMap){
+    private Map<Integer,Value> cloneOps(Instruction source, Map<Value, Value> valueMap, Map<Value, Value> loopVarMap, Map<LoopBB, BasicBlock> bbMap){
         Map<Integer,Value> map = new HashMap<>();
         for (Use use : source.getOperands()) {
             var usee = use.getUsee();
@@ -517,7 +550,7 @@ public class ConstLoopUnrolling implements IRPass {
             if(usee instanceof BasicBlock){
                 value = bbMap.getOrDefault(loopbbMap.get(usee), ((BasicBlock) usee));
             }else{
-                value = valueMap.getOrDefault(usee, usee);
+                value = loopVarMap.containsKey(usee) ?loopVarMap.get(usee) :valueMap.getOrDefault(usee, usee);
             }
             map.put(use.getOperandPos(), value);
         }
@@ -527,10 +560,10 @@ public class ConstLoopUnrolling implements IRPass {
     /**
      * Cloned from {@link passes.ir.inline.ClonedFunction#cloneInst(Instruction)}
      */
-    private Instruction cloneInst(Instruction source, Map<Value, Value> valueMap, Map<LoopBB, BasicBlock> bbMap){
+    private Instruction cloneInst(Instruction source, Map<Value, Value> valueMap, Map<Value, Value> loopVarMap, Map<LoopBB, BasicBlock> bbMap){
         var type = source.getType();
         var category = source.getTag();
-        var ops = cloneOps(source, valueMap, bbMap);
+        var ops = cloneOps(source, valueMap, loopVarMap, bbMap);
         if(source instanceof UnaryOpInst){
             return new UnaryOpInst(type,category,ops.get(0));
         }

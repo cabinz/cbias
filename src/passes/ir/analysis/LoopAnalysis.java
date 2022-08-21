@@ -74,6 +74,17 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
             return depth;
         }
 
+        public int getMaxDepth() {
+            if (innerLoops.isEmpty()) {
+                return getDepth();
+            }
+            else {
+                return innerLoops.stream()
+                        .max(Comparator.comparingInt(Loop::getMaxDepth))
+                        .get().getMaxDepth();
+            }
+        }
+
         public BasicBlock getLoopHead() {
             return loopHead;
         }
@@ -131,6 +142,14 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
             var allBBs = new LinkedList<>(bbs);
             innerLoops.forEach(inner -> allBBs.addAll(inner.getAllBBs()));
             return allBBs;
+        }
+
+        public int getSize() {
+            int size = bbs.size();
+            for (var inner : innerLoops) {
+                size += inner.getSize();
+            }
+            return size;
         }
     }
 
