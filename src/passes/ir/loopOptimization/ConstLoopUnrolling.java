@@ -22,7 +22,7 @@ import java.util.*;
 
 public class ConstLoopUnrolling implements IRPass {
 
-    private final int MAX_BB_LIMIT = 5000;
+    private final int MAX_BB_LIMIT = 4000;
     private final int MAX_UNROLLING_DEPTH = 3;
 
     private class LoopVariable {

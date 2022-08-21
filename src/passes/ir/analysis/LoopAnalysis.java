@@ -146,7 +146,10 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         }
 
         public int getSize() {
-            int size = bbs.size();
+            int size = 0;
+            for (var bb : bbs) {
+                size += bb.getRawBasicBlock().getInstructions().size();
+            }
             for (var inner : innerLoops) {
                 size += inner.getSize();
             }
