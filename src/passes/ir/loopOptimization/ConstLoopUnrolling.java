@@ -298,7 +298,7 @@ public class ConstLoopUnrolling implements IRPass {
                         return loopVar;
                     }
                 }
-                int loopTime = range / loopVar.step;
+                int loopTime = range / loopVar.step + (range%loopVar.step==0 ?0 :1);
                 loopVar.loopTime = Math.max(loopTime, 0);
                 return loopVar;
             }
