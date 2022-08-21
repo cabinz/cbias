@@ -22,7 +22,8 @@ import java.util.*;
 
 public class ConstLoopUnrolling implements IRPass {
 
-    private final int UNROLLING_LIMIT = 5000;
+    private final int MAX_BB_LIMIT = 5000;
+    private final int MAX_UNROLLING_DEPTH = 3;
 
     private class LoopVariable {
         public Value variable;
@@ -100,7 +101,7 @@ public class ConstLoopUnrolling implements IRPass {
     }
 
     private void unrolling(LoopAnalysis<LoopBB>.Loop loop) {
-        if (loop.getMaxDepth() > 3) {
+        if (loop.getMaxDepth() > MAX_UNROLLING_DEPTH) {
             return;
         }
 
@@ -125,7 +126,7 @@ public class ConstLoopUnrolling implements IRPass {
                 if (printInfo) System.out.println("无用循环删除");
                 removeLoop(loop);
             }
-            else if (loopVar.loopTime > 0 && loopVar.loopTime*loop.getSize() < UNROLLING_LIMIT){
+            else if (loopVar.loopTime > 0 && loopVar.loopTime*loop.getSize() < MAX_BB_LIMIT){
                 if (printInfo) System.out.println("循环展开");
                 unrollLoop(loop, loopVar);
             }
