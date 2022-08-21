@@ -111,8 +111,8 @@ public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
         public void addExiting(BasicBlock bb) {exiting.add(bb);}
 
         /**
-         * Generate the other loop info: latch & exiting <br/>
-         * NOTE: Called or recalled before using the latch & exiting!
+         * Generate the other loop info: latch &amp; exiting <br/>
+         * NOTE: Called or recalled before using the latch &amp; exiting!
          */
         public void fillLoopInfo() {
             entry = loopHead.getEntryBlocks().stream().filter(bb -> !contains(bb)).iterator().next();

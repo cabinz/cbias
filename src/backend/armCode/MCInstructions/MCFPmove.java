@@ -11,11 +11,11 @@ import java.util.HashSet;
 
 /**
  * This class represent the register transfer instructions of VFP, <br/>
- * including VMOV & VMRS. The instruction is legal ONLY when transferring:<br/>
- * &#09; an immediate to extension <br/>
- * &#09; from core to extension <br/>
- * &#09; from extension to core <br/>
- * &#09; from extension to extension (except MRS)<br/>
+ * including VMOV &amp; VMRS. The instruction is legal ONLY when transferring:<br/>
+ * &emsp; an immediate to extension <br/>
+ * &emsp; from core to extension <br/>
+ * &emsp; from extension to core <br/>
+ * &emsp; from extension to extension (except MRS)<br/>
  * @see <a href="https://developer.arm.com/documentation/ddi0406/latest/">
  *     ARM Architecture Reference Manual ARMv7 edition </a> A4.12 Page: A4-29
  */

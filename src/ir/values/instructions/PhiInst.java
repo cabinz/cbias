@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * The ‘phi’ instruction is used to implement the φ node in the SSA graph representing the function.
+ * The 'phi' instruction is used to implement the φ node in the SSA graph representing the function.
  * @see <a href="https://llvm.org/docs/LangRef.html#phi-instruction">
  *     LLVM IR LangRef: phi instruction</a>
  */

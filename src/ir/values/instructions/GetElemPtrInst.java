@@ -12,10 +12,10 @@ import java.util.ArrayList;
  * The Get Element Pointer (GEP) IR instruction.
  * <br>
  * Type for a GEP is a PointerType for the pointer retrieved.
- * @see <a href=">
+ * @see <a href='https://docs.hdoc.io/hdoc/llvm-project/r3F5681CF2722A4CA.html'>
  *     LLVM IR Source: </a>
- * @see <a href="https://llvm.org/docs/LangRef.html#getelementptr-instruction">
- *     LLVM LangRef: ‘getelementptr’ Instruction</a>
+ * @see <a href='https://llvm.org/docs/LangRef.html#getelementptr-instruction'>
+ *     LLVM LangRef: 'getelementptr' Instruction</a>
  * @see <a href="https://llvm.org/docs/GetElementPtr.html">
  *     LLVM LangRef: The Often Misunderstood GEP Instruction</a>
  */

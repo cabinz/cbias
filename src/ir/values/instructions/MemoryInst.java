@@ -56,7 +56,7 @@ public abstract class MemoryInst extends Instruction {
     }
 
     /**
-     * Represents a ‘load’ instruction used to read from memory,
+     * Represents a 'load' instruction used to read from memory,
      * which yields the result of loaded memory block.
      * The argument (operand) to the load instruction specifies
      * the memory address from which to load.

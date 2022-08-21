@@ -9,11 +9,11 @@ import java.util.HashSet;
 
 /**
  * This class represents the VCVT in ARM. <br/>
- * The competition has only two type: signed int & float. <br/>
+ * The competition has only two type: signed int &amp; float. <br/>
  * So this class only support the conversion between this two. <br/>
  * Format: <br/>
- * &#09; float2int: VCVT.S32.F32 Sd, Sm <br/>
- * &#09; int2float: VCVT.F32.S32 Sd, Sm
+ * &emsp; float2int: VCVT.S32.F32 Sd, Sm <br/>
+ * &emsp; int2float: VCVT.F32.S32 Sd, Sm
  * @see <a href="https://developer.arm.com/documentation/ddi0406/latest/">
  *     ARM Architecture Reference Manual ARMv7 edition </a><br/>
  *     A8.6.295  Page: A8-578

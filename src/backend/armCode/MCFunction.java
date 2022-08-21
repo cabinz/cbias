@@ -40,7 +40,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     //<editor-fold desc="Stack frame info">
     /**
-     * Total stackSize, including local variables & spilled nodes. <br/>
+     * Total stackSize, including local variables &amp; spilled nodes. <br/>
      * stackSize = localVariable + spilledNode*4; <br/>
      * Function stack (from high to low): parameter, context, spilled nodes, local variables
      */
@@ -196,7 +196,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     public void addParamCal(MCMove move) {paramCal.add(move);}
 
     /**
-     * Get total stackSize, including local variables & spilled nodes. <br/>
+     * Get total stackSize, including local variables &amp; spilled nodes. <br/>
      * stackSize = localVariable + spilledNode*4
      */
     public int getStackSize() {
@@ -215,7 +215,7 @@ public class MCFunction implements Iterable<MCBasicBlock> {
 
     /**
      * Iterable implement
-     * @return Iterator<MCBasicBlock>
+     * @return Iterator&lt;MCBasicBlock&gt;
      */
     public Iterator<MCBasicBlock> iterator(){return BasicBlockList.iterator();}
 

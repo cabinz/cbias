@@ -11,9 +11,9 @@ import java.util.ArrayList;
  * <br>
  * Type for a CallInst is the return type of the function invoked,
  * which might be VoidType.
- * @see <a href="https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L1475>
+ * @see <a href='https://github.com/hdoc/llvm-project/blob/release/13.x/llvm/include/llvm/IR/Instructions.h#L1475'>
  *     LLVM IR Source: CallInst</a>
- * @see <a href="https://llvm.org/docs/LangRef.html#call-instruction">
+ * @see <a href='https://llvm.org/docs/LangRef.html#call-instruction'>
  *     LLVM LangRef: Call Instruction</a>
  */
 public class CallInst extends Instruction {

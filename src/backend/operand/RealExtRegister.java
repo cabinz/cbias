@@ -3,7 +3,7 @@ package backend.operand;
 import java.util.ArrayList;
 
 /**
- * ARM VFP & Advanced SIMD share the same register set, <br/>
+ * ARM VFP &amp; Advanced SIMD share the same register set, <br/>
  * distinguishing from the ARM core register set (r0-r15). <br/>
  * Those registers are generally referred to as <b>extension registers</b>. <br/>
  * Considering that the competition only define 32 bits floating <br/>

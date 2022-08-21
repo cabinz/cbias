@@ -112,7 +112,7 @@ public class MCBuilder {
      *     <li>Map IR function into target function list and Map IR BasicBlock into target function BasicBlock</li>
      *     <li>Travel the BasicBlock and then translate into ARM instruction</li>
      *     <li>Handle PHI instruction</li>
-     *     <li>Calculate loop info of function & block ( TO BE FINISHED )</li>
+     *     <li>Calculate loop info of function &amp; block ( TO BE FINISHED )</li>
      * </ul>
      * @return generated ARM assemble target
      */
@@ -418,7 +418,7 @@ public class MCBuilder {
      * ARM can ONLY use 12 bits to represent an immediate, which is separated
      * into 8 bits representing number and 4 bits representing rotate right(ROR).
      * This means 'shifter_operand = immed_8 Rotate_Right (rotate_imm * 2)'. <br/>
-     * @see <a href='https://www.cnblogs.com/walzer/archive/2006/02/05/325610.html'>ARM汇编中的立即数<a/> <br/>
+     * @see <a href='https://www.cnblogs.com/walzer/archive/2006/02/05/325610.html'>ARM汇编中的立即数</a> <br/>
      * ARM Architecture Reference Manual(ARMARM) P446.
      * @param n the to be determined
      * @return the result
@@ -537,12 +537,12 @@ public class MCBuilder {
     //<editor-fold desc="Translate functions">
     /**
      * Translate IR Call instruction into ARM instruction. <br/>
-     * r0-r3 & s0-s15 are caller-saved registers, via which the first 4 int & 16 float arguments will be passed. <br/>
+     * r0-r3 &amp; s0-s15 are caller-saved registers, via which the first 4 int &amp; 16 float arguments will be passed. <br/>
      * The other arguments will be copied to memory, pushed in the reversed order. <br/>
      * Function stack (from high to low): parameter, context, spilled nodes, local variables <br/>
      * @param IRinst IR call instruction
      * @see <a href='https://web.eecs.umich.edu/~prabal/teaching/resources/eecs373/ARM-AAPCS-EABI-v2.08.pdf'>Procedure Call Standard for the ARM Architecture</a> <br/>
-     * Charpter 5 The Base Procedure Call Standard & Charpter 6 The Standard Variants
+     * Charpter 5 The Base Procedure Call Standard &amp; Charpter 6 The Standard Variants
      */
     private void translateCall(CallInst IRinst) {
         var callee = (Function) IRinst.getOperandAt(0);
@@ -991,7 +991,7 @@ public class MCBuilder {
     }
 
     /**
-     * Translate sitofp & fptosi. <br/>
+     * Translate sitofp &amp; fptosi. <br/>
      * sitofp needs to insert VMOV from core register, while fptosi needs to VMOV from extReg back
      */
     private void translateConvert(CastInst IRinst, boolean f2i) {

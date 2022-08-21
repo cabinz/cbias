@@ -54,7 +54,7 @@ public abstract class CastInst extends Instruction {
     /**
      * Convert a FloatType Value into IntegerType.
      * @see <a href="https://llvm.org/docs/LangRef.html#fptosi-to-instruction">
-     *     LLVM LangRef: ‘fptosi .. to’ Instruction</a>
+     *     LLVM LangRef: 'fptosi .. to' Instruction</a>
      */
     public static class Fptosi extends CastInst {
 
@@ -82,7 +82,7 @@ public abstract class CastInst extends Instruction {
     /**
      * Convert a IntegerType Value into FloatType.
      * @see <a href="https://llvm.org/docs/LangRef.html#sitofp-to-instruction">
-     *     LLVM LangRef: ‘sitofp .. to’ Instruction</a>
+     *     LLVM LangRef: 'sitofp .. to' Instruction</a>
      */
     public static class Sitofp extends CastInst {
 
@@ -109,7 +109,7 @@ public abstract class CastInst extends Instruction {
      * Converts value to type ty2 without changing any bits.
      * In SysY, this instruction is only for convert float* to i32*.
      * @see <a href="https://llvm.org/docs/LangRef.html#bitcast-to-instruction">
-     *     LLVM LangRef: ‘bitcast .. to’ Instruction</a>
+     *     LLVM LangRef: 'bitcast .. to' Instruction</a>
      */
     public static class Bitcast extends CastInst {
 

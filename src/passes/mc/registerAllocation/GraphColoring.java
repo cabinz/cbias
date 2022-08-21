@@ -87,7 +87,7 @@ public class GraphColoring {
     //<editor-fold desc="Node Info">
     /**
      * The registers that have been coalesced;
-     * when <i>u</i> &#8592<i>v</i> is coalesced, <i>v</i> is added to this set
+     * when <i>u</i> &#8592;<i>v</i> is coalesced, <i>v</i> is added to this set
      * and <i>u</i> put back on some worklist (or vice versa)
      */
     private HashSet<Register> coalescedNodes;
@@ -217,7 +217,7 @@ public class GraphColoring {
     }
 
     /**
-     * Build the RIG & moveList
+     * Build the RIG &amp; moveList
      */
     private void Build() {
         for (var block : curFunc) {
@@ -679,7 +679,7 @@ public class GraphColoring {
 
     /**
      * Combine <i>v</i>  to <i>u</i> <br/>
-     * <i>u</i> &#8592<i>v</i>
+     * <i>u</i> &#8592;<i>v</i>
      * @param u the node combine to
      * @param v the node to be combined
      */

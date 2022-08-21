@@ -1136,7 +1136,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     }
 
     /**
-     * lAndExp : eqExp ('&&' eqExp)*
+     * lAndExp : eqExp ('&amp;&amp;' eqExp)*
      * ---------------------------------
      * lOrExp : lAndExp ('||' lAndExp)*
      * eqExp : relExp (('==' | '!=') relExp)*
@@ -1202,7 +1202,7 @@ public class Visitor extends SysYBaseVisitor<Void> {
     /**
      * eqExp : relExp (('==' | '!=') relExp)*
      * --------------------------------------------------
-     * relExp : addExp (('<' | '>' | '<=' | '>=') addExp)*
+     * relExp : addExp (('&lt;' | '&gt;' | '&lt;=' | '&gt;=') addExp)*
      * <br>
      * For "rel1 == rel2 == rel3", the executing order is
      * "(rel1 == rel2) === rel3"
@@ -1251,11 +1251,11 @@ public class Visitor extends SysYBaseVisitor<Void> {
     }
 
     /**
-     * relExp : addExp (('<' | '>' | '<=' | '>=') addExp)*
+     * relExp : addExp (('&lt;' | '&gt;' | '&lt;=' | '&gt;=') addExp)*
      * ----------------------------------------------------------
      * <br>
-     * For "addExp1 < addExp2 >= addExp3", the executing order is
-     * "(rel1 < rel2) >= rel3"
+     * For "addExp1 &lt; addExp2 &gt;= addExp3", the executing order is
+     * "(rel1 &lt; rel2) &gt;= rel3"
      */
     @Override
     public Void visitRelExp(SysYParser.RelExpContext ctx) {
