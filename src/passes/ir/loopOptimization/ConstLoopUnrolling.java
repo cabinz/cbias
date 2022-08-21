@@ -42,7 +42,7 @@ public class ConstLoopUnrolling implements IRPass {
     public void runOnModule(Module module) {
         if (printInfo) {
             try {
-                (new IREmitter("test/loop/beforeUnroll.ll")).emit(module, true);
+                (new IREmitter("test/loop/0_beforeUnroll.ll")).emit(module, true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -56,7 +56,7 @@ public class ConstLoopUnrolling implements IRPass {
                 if (printInfo) {
                     try {
                         System.out.println("LCSSA done");
-                        (new IREmitter("test/loop/LCSSA"+ counter +".ll")).emit(module, true);
+                        (new IREmitter("test/loop/1_LCSSA"+ counter +".ll")).emit(module, true);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -78,7 +78,7 @@ public class ConstLoopUnrolling implements IRPass {
                 if (printInfo) {
                     try {
                         System.out.println("unroll done");
-                        (new IREmitter("test/loop/unroll"+ counter +".ll")).emit(module, true);
+                        (new IREmitter("test/loop/2_unroll"+ counter +".ll")).emit(module, true);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -89,7 +89,7 @@ public class ConstLoopUnrolling implements IRPass {
                 if (printInfo) {
                     try {
                         System.out.println("D done");
-                        (new IREmitter("test/loop/derivation"+ counter +".ll")).emit(module, true);
+                        (new IREmitter("test/loop/3_derivation"+ counter +".ll")).emit(module, true);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -137,7 +137,7 @@ public class ConstLoopUnrolling implements IRPass {
         var header = loop.getLoopHead();
         /* Only unroll the single condition loop */
         // TODO: 目前仅允许最简单的循环：不包含continue和break语句
-        return header.getEntryBlocks().size() == 2 && loop.getExiting().size() == 1;
+        return header.getEntryBlocks().size() == 2 && exiting.size() == 1 && exiting.contains(header);
     }
 
     private LoopVariable getLoopVar(LoopAnalysis<LoopBB>.Loop loop) {
