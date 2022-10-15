@@ -2,15 +2,16 @@
 
 Welcome to the official repo of Cbias! :D
 
-Cbias is abbreviation of "a Compiler Built In A Semester". As a product for contest, 
-the complier translates [SysY](doc/ref/SysY2022-lang-def.pdf) (a subset of C programming 
-language) to ARM assembly code running on Raspberry Pi <?>. It's named for memorizing the
+Cbias is abbreviation of "a Compiler Built In A Semester" for memorizing the
 time we spent together learning, coding and debugging within one semester (2021-2022-2).
+
+As a product for contest, the compiler translates [SysY](doc/ref/SysY2022-lang-def.pdf) 
+(a subset of C programming language) to ARM assembly code running on Raspberry Pi <?>. 
 
 ## Environment
 
 IntelliJ is recommended as programming IDE for the project (not necessarily). To build and run
-this source on your machine, configuration requirements below are required.
+this source on your machine, configuration requirements are as below.
 
 ### JDK 15+
 
