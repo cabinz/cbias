@@ -4,7 +4,7 @@ Welcome to the official repo of Cbias! :D
 
 Cbias is abbreviation of "a Compiler Built In A Semester". As a product for contest, 
 the complier translates [SysY](doc/ref/SysY2022-lang-def.pdf) (a subset of C programming 
-language) to ARM assembly code running on Raspberry Pi <?>. It's named for memorizing the
+language) to ARMv7ve assembly code running on Raspberry Pi 4 Model B 4GB. It's named for memorizing the
 time we spent together learning, coding and debugging within one semester (2021-2022-2).
 
 ## Environment
@@ -80,5 +80,5 @@ Under the root dir of `src`, there are three classes:
 
 * `src/Compiler.java`: The class directly run with commandline, resolving input source and user arguments for Driver.
 * `src/Driver.java`: The driver control the concrete compiling flow.
-* `src/Compiler.java`: Configuration info (commandline argument resolved) passing from Compiler to Driver.
+* `src/CompileConfig.java`: Configuration info (commandline argument resolved) passing from Compiler to Driver.
 
