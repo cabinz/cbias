@@ -2,7 +2,7 @@
 
 Welcome to the official repo of Cbias! :D 
 
-Cbias is abbreviation of "a Compiler Built In A Semester", for commemorating the
+Cbias is the abbreviation of "a Compiler Built In A Semester", for commemorating the
 time we a three-member team spent together learning, coding and debugging in semester 2021-2022-2.
 
 As a product for contest, the compiler translates [SysY](doc/ref/SysY2022-lang-def.pdf)
@@ -24,7 +24,7 @@ The project is programmed following **JDK 15** rules. Thus, JDK 15+ is recommend
 
 ### ANTLR 4.8+
 
-NTLRv4 is used for generating lexer and parser parts of our frontend. Thus, to build and run
+ANTLRv4 is used for generating lexer and parser in our frontend. Thus, to build and run
 the repo code, an antlr-runtime jar package is required to be manually downloaded and added
 as a library of the source.
 
@@ -32,7 +32,7 @@ as a library of the source.
 may be needed to inhibit version mismatch warnings/errors.
 
 The runtime lib (e.g. antlr4-runtime-4.8.jar) can be placed under path 
-[third-party/ANTLR](third-party/ANTLR).  
+[third-party/ANTLR](third-party/ANTLR). Lastest ANTLR runtime can be found [here](https://www.antlr.org/download.html).
 
 ## Usage
 
@@ -40,7 +40,7 @@ After build the project, run to translate any .sy source file (text SysY code) w
 below.
 
 To compile source file `test/test.sy` to ARM assembly code, use argument `-S`. 
-Use `-o` to specify output path (e.g. `test/test.s`):
+Use `-o` to specify an output path (e.g. `test/test.s`):
 ```
 java Compiler test/test.sy -S -o test/test.s
 ```
