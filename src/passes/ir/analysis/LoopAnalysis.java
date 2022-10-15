@@ -4,6 +4,10 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * Tool for loop analysis.
+ * @param <BasicBlock> Type where information are stored in.
+ */
 public class LoopAnalysis<BasicBlock extends ILoopAnalysis<BasicBlock>> {
 
     /**

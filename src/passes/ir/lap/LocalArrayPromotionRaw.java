@@ -21,6 +21,11 @@ import passes.ir.analysis.DomAnalysis;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Distinguish whether an array is a constant array.
+ * If so, promote it as a global constant array, so that we do not need to construct this array every time we call
+ * the function.
+ */
 class LocalArrayPromotionRaw {
     private final Map<ir.values.BasicBlock, BasicBlock> basicBlockMap = new HashMap<>();
 
@@ -119,7 +124,7 @@ class LocalArrayPromotionRaw {
 
         private void getArrayList(Instruction instruction, Type type, int offset, int atomLen) throws PromoteFailedException {
             // Check dfn first.
-            if(!(instruction instanceof MemoryInst.Alloca)){
+            if (!(instruction instanceof MemoryInst.Alloca)) {
                 var dfn = basicBlockMap.get(instruction.getBB()).getDomDfn();
                 if (dfn < actualEntry.getDomDfnL() || dfn > actualEntry.getDomDfnR()) {
                     throw new PromoteFailedException("Load before store.");

@@ -6,7 +6,7 @@ import passes.ir.analysis.RelationAnalysis;
 import java.util.*;
 
 /**
- * A function which is contains more information about its context.
+ * Function with extra information.
  */
 class Function extends passes.ir.Function implements Iterable<BasicBlock> {
 

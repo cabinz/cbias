@@ -8,6 +8,9 @@ import passes.ir.analysis.IRelationAnalysis;
 
 import java.util.*;
 
+/**
+ * BasicBlock with extra information.
+ */
 class BasicBlock extends passes.ir.BasicBlock implements Iterable<Instruction>, IRelationAnalysis<BasicBlock> {
 
     List<BasicBlock> previousBasicBlocks = new ArrayList<>();

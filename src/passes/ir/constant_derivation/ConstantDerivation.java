@@ -115,6 +115,13 @@ public class ConstantDerivation implements IRPass {
         return false;
     }
 
+    /**
+     * Running through gep instruction to get the value it points to.
+     * @param array Array for the gep instruction. (Not using the one in gep because it may be another gep instruction.)
+     * @param gep Gep instruction. (Only use its values.)
+     * @param finalOffset Extra offset for the last dimension. (This parameter comes from the strange definition of gep instruction.)
+     * @return The value gep points to.
+     */
     static Value runGep(ConstArray array, GetElemPtrInst gep, int finalOffset) {
         if (array == null) {
             var retType = gep.getType().getPointeeType();
@@ -134,6 +141,12 @@ public class ConstantDerivation implements IRPass {
         return result;
     }
 
+    /**
+     * Get the value of a gep instruction recursively.
+     * @param gep Gep instruction.
+     * @param offset Extra offset for the last dimension. (This parameter comes from the strange definition of gep instruction.)
+     * @return The value of gep instruction.
+     */
     static Value deriveGepValue(GetElemPtrInst gep, int offset) {
         var target = gep.getOperandAt(0);
         if (target instanceof GetElemPtrInst) {
@@ -152,6 +165,11 @@ public class ConstantDerivation implements IRPass {
         throw new RuntimeException("Cannot derive gep with operand[0]=" + target);
     }
 
+    /**
+     * Trying to simplify the expression given.
+     * @param expression The expression to be optimized.
+     * @return A simplified expression or the original expression(If cannot optimize).
+     */
     static Value calculateExpressionValue(Instruction expression) {
         // Refuse to derive value outside bb, because they may be invalid instructions.
         // Actually, valid check should be inside switch below while necessity to derive should be checked in deriveConstantExpression
@@ -492,6 +510,10 @@ public class ConstantDerivation implements IRPass {
         throw new RuntimeException("Unable to derive expression of type " + expression.getTag());
     }
 
+    /**
+     * Optimize a function.
+     * @param function Function to be optimized.
+     */
     static void deriveConstantExpression(Function function) {
         Map<ir.values.BasicBlock, BasicBlock> basicBlockMap = new HashMap<>();
         for (ir.values.BasicBlock basicBlock : function) {
@@ -534,6 +556,12 @@ public class ConstantDerivation implements IRPass {
         }
     }
 
+    /**
+     * Try to simplify a br instruction.
+     * @param basicBlockMap Mapping for BasicBlock with extra information.
+     * @param deriveQueue DeriveQueue in deriveConstantExpression
+     * @param br Br instruction to be optimized.
+     */
     private static void optimizeBr(Map<ir.values.BasicBlock, BasicBlock> basicBlockMap, Queue<Instruction> deriveQueue, TerminatorInst.Br br) {
         if (!br.isCondJmp()) return;
         var o0 = br.getOperandAt(0);

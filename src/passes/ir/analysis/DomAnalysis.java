@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Tool for analysis domination relationship.
+ * @param <BasicBlock> Type where information are stored in.
+ */
 /// Variable name in this class is strange since it is translated from a code written in C++.
 /// https://www.luogu.com.cn/record/42013604
 public class DomAnalysis<BasicBlock extends IDomAnalysis<BasicBlock>> {

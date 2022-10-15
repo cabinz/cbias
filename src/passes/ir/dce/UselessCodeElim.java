@@ -13,6 +13,14 @@ import passes.ir.IRPass;
 
 import java.util.*;
 
+/**
+ * <p>Remove all useless code.</p>
+ *
+ * <p>
+ * All codes with no effect will be removed.
+ * Note that we will judge whether a function has side effect, so that we can determine whether to remove a call instruction or not.
+ * </p>
+ */
 public class UselessCodeElim implements IRPass {
 
     Map<ir.values.Function, Function> functionMap = new HashMap<>();
