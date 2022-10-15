@@ -6,6 +6,9 @@ import backend.operand.Register;
 import java.util.HashMap;
 import java.util.HashSet;
 
+/**
+ * Signed long mul of integer registers
+ */
 public class MCSmull extends MCInstruction {
 
     private Register low;
