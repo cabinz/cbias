@@ -18,22 +18,21 @@ public class MCFunction implements Iterable<MCBasicBlock> {
     //<editor-fold desc="Basic info">
     private LinkedList<MCBasicBlock> BasicBlockList;
     private final Function IRFunction;
-    /* Arguments passed via core register */
+    /** Arguments passed via core register */
     private final ArrayList<Function.FuncArg> APVCR;
-    /* Arguments passed via extension register */
+    /** Arguments passed via extension register */
     private final ArrayList<Function.FuncArg> APVER;
-    /* Arguments copied to memory */
+    /** Arguments copied to memory */
     private final ArrayList<Function.FuncArg> ACTM;
     /* 起名真的太难了 */
     //</editor-fold>
 
     //<editor-fold desc="Registers">
-    /**
-     * This is used to name the virtual register.
-     */
+    /** This is used to name the virtual register. */
     private int VirtualRegCounter = 0;
     private final ArrayList<VirtualRegister> VirtualRegisters;
 
+    /** This is used to name the virtual extension register. */
     private int virtualExtRegCounter = 0;
     private final ArrayList<VirtualExtRegister> virtualExtRegisters;
     //</editor-fold>
@@ -114,6 +113,9 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         return BasicBlockList.getFirst();
     }
 
+    /**
+     * Classify parameters into core register, extension registers and memory
+     */
     public void paramAnalysis() {
         var args = IRFunction.getArgs();
         int argNum = args.size();
@@ -204,6 +206,9 @@ public class MCFunction implements Iterable<MCBasicBlock> {
         return stackSize;
     }
 
+    /**
+     * Full, including float size
+     */
     public int getFullStackSize() {
         return context.size()*4 + extContext.size()*4 + localVariable + spilledNode.size()*4;
     }
