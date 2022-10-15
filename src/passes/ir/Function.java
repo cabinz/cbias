@@ -1,5 +1,8 @@
 package passes.ir;
 
+/**
+ * Function wrapper, which will be inherited to store extra information.
+ */
 public class Function {
     protected final ir.values.Function rawFunction;
 

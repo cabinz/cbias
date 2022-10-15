@@ -9,6 +9,9 @@ import ir.values.instructions.TerminatorInst;
 import java.util.ArrayList;
 import java.util.Collection;
 
+/**
+ * Tool functions for CFG analysis.
+ */
 public class RelationUtil {
     public static Collection<BasicBlock> getFollowingBB(BasicBlock basicBlock){
         var lastInst = basicBlock.getLastInst();

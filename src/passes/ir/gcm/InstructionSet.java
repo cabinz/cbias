@@ -8,6 +8,13 @@ import ir.values.instructions.PhiInst;
 
 import java.util.*;
 
+/**
+ * <p>A tool class to judge same codes.</p>
+ * <p>
+ * This tool can distinguish codes with commutative law and so on.
+ * It is achieved through the function getFeatures, which extract features of an instruction.
+ * </p>
+ */
 public class InstructionSet {
 
     static class Node<E>{

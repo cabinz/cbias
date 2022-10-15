@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * BasicBlock with extra information.
+ */
 public class BasicBlock extends passes.ir.BasicBlock implements IDomAnalysis<BasicBlock> {
 
     public BasicBlock(ir.values.BasicBlock rawBasicBlock) {

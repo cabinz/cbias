@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 
+/**
+ * Merge blocks to reduce jmp instructions.
+ */
 public class BlockMerge implements IRPass {
     @Override
     public void runOnModule(Module module) {

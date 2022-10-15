@@ -20,8 +20,16 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+/**
+ * <p>Merge add instructions.</p>
+ * <p>This pass is designed for the test set.</p>
+ * <p>It tries to merge add instructions into multiply ones.</p>
+ */
 public class AddInstMerge implements IRPass {
 
+    /**
+     * An expression like a1*v1+a2*v2+...+an*vn.
+     */
     static class Expression {
         Map<Value, Integer> terms = new HashMap<>();
 
@@ -32,6 +40,10 @@ public class AddInstMerge implements IRPass {
             terms.put(value, 1);
         }
 
+        /**
+         * Write this expression as instructions.
+         * @return Instructions to calculate this expression and the final value of this expression.
+         */
         public Pair<List<Instruction>,Value> getInstructions(){
             List<Instruction> instructionList = new ArrayList<>();
             AtomicInteger sumConstant = new AtomicInteger();
@@ -62,6 +74,12 @@ public class AddInstMerge implements IRPass {
             return new Pair<>(instructionList, finalValue);
         }
 
+        /**
+         * Get expression for the given value(instruction).
+         * @param value Given value.
+         * @param expressionMap A map to accelerate.
+         * @return The expression for the value.
+         */
         public static Expression fromValue(Value value, Map<Instruction, Expression> expressionMap) {
             if (value instanceof Instruction) {
                 var instruction = (Instruction) value;
@@ -85,6 +103,9 @@ public class AddInstMerge implements IRPass {
             }
         }
 
+        /**
+         * Add two expressions.
+         */
         private static Expression combine(Expression lhs, Expression rhs, boolean isSub) {
             var expression = new Expression();
             BiConsumer<Value, Integer> add = (value, time) -> {

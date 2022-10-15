@@ -1,5 +1,8 @@
 package passes.ir.gcm;
 
+/**
+ * Instruction with extra information.
+ */
 class Instruction extends passes.ir.Instruction {
 
     public Instruction(ir.values.Instruction instruction) {

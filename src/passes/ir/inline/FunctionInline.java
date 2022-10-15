@@ -13,6 +13,10 @@ import passes.ir.IRPass;
 
 import java.util.*;
 
+/**
+ * <p>Inline functions as much as possible.(Even it is bad to do so sometimes.)</p>
+ * <p>It prefer to inline small functions to bigger ones.</p>
+ */
 public class FunctionInline implements IRPass {
 
     static class FunctionElement{
@@ -102,6 +106,10 @@ public class FunctionInline implements IRPass {
         }
     }
 
+    /**
+     * Split the block of the call instruction.
+     * @return The newly created block. (Containing instructions after call inst)
+     */
     private static BasicBlock splitBlockByInst(Instruction instruction){
         BasicBlock prevBlock = instruction.getBB();
         BasicBlock followingBlock = new BasicBlock("INLINE_EXIT");

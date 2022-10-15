@@ -15,6 +15,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Temporary regard global variables as local ones to reduce load/store instructions.
+ */
 public class LoadStoreMerge implements IRPass {
     @Override
     public void runOnModule(Module module) {
@@ -55,6 +58,9 @@ public class LoadStoreMerge implements IRPass {
         }
     }
 
+    /**
+     * Store all changed value.
+     */
     private static void flushAllStores(Map<Value, Value> lastValueMap, Set<Value> updatedAddress, Instruction instruction) {
         lastValueMap.forEach((address, value)->{
             if(updatedAddress.contains(address)){

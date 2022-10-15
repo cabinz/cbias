@@ -13,6 +13,10 @@ import passes.ir.DummyValue;
 
 import java.util.*;
 
+/**
+ * <p>Tool for cloning a function.</p>
+ * <p>This class accepts an actual call of a function, and generates codes according to the function called.</p>
+ */
 public class ClonedFunction {
 
     private final Function function;

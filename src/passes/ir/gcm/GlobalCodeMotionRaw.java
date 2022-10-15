@@ -9,6 +9,13 @@ import passes.ir.analysis.LoopAnalysis;
 
 import java.util.*;
 
+/**
+ * <p>This pass will combine same codes and place it back to a proper place.</p>
+ * <p>
+ * Same codes are judged by InstructionSet.
+ * A proper place is the LCA of all BasicBlocks where original codes are placed in the DomTree.
+ * </p>
+ */
 public class GlobalCodeMotionRaw {
 
     private GlobalCodeMotionRaw() {
@@ -49,6 +56,10 @@ public class GlobalCodeMotionRaw {
         LoopAnalysis.analysis(basicBlockMap);
     }
 
+    /**
+     * Find the earliest place to place the instruction.
+     * @param instruction Instruction to be placed.
+     */
     private void generateEarlyPlacement(Instruction instruction) {
         if (instruction.getEarlyPlacement() != null) return;
         BasicBlock earlyPlacement = functionEntry;
@@ -77,6 +88,11 @@ public class GlobalCodeMotionRaw {
         instruction.setEarlyPlacement(earlyPlacement);
     }
 
+    /**
+     * Sort instructions according to the UD relationship.
+     * @param instructions_ Collection of instruction to be sorted.
+     * @return Sorted instructions
+     */
     private Collection<Instruction> getEarlyTopoOrder(Collection<Instruction> instructions_) {
         Set<Instruction> instructions = new HashSet<>(instructions_);
         Map<Instruction, Integer> pendingInstructions = new HashMap<>();
@@ -122,6 +138,9 @@ public class GlobalCodeMotionRaw {
         getEarlyTopoOrder(instructionMap.values()).forEach(this::generateEarlyPlacement);
     }
 
+    /**
+     * Prepare work for calculating LCA.
+     */
     private void dfsForFastJumpInfo(BasicBlock basicBlock) {
         for (int i = 0; i < basicBlock.getFastJumps().size(); i++) {
             var l1f = basicBlock.getFastJumps().get(i);
@@ -162,6 +181,10 @@ public class GlobalCodeMotionRaw {
         return u.getFastJumps().get(0);
     }
 
+    /**
+     * Get the latest place to place instructions.
+     * @param instruction Instruction to be placed.
+     */
     private void generateLatePlacement(Instruction instruction) {
         BasicBlock latePlacement = null;
         for (Use use : instruction.getRawInstruction().getUses()) {
@@ -195,6 +218,11 @@ public class GlobalCodeMotionRaw {
         instruction.setLatePlacement(latePlacement);
     }
 
+    /**
+     * Sort instructions according to the UD relationship.
+     * @param instructions_ Collection of instruction to be sorted.
+     * @return Sorted instructions
+     */
     private Collection<Instruction> getLateTopoOrder(Collection<Instruction> instructions_) {
         Set<Instruction> instructions = new HashSet<>(instructions_);
         Map<Instruction, Integer> pendingInstructions = new HashMap<>();
@@ -244,6 +272,10 @@ public class GlobalCodeMotionRaw {
         instructionMap.values().removeIf(instruction -> instruction.getLatePlacement() == null);
     }
 
+    /**
+     * Try to place a before b.
+     */
+    /// Does not call a.insertBefore(b) due to the use relationship
     private void placeBefore(ir.values.Instruction a, ir.values.Instruction b) {
         Deque<ir.values.Instruction> placeQueue = new ArrayDeque<>();
         placeQueue.add(a);

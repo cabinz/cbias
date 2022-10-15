@@ -4,6 +4,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Function with extra information.
+ */
 class Function extends passes.ir.Function {
 
     private boolean sideEffect;

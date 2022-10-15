@@ -1,5 +1,8 @@
 package passes.ir;
 
+/**
+ * BasicBlock wrapper, which will be inherited to store extra information.
+ */
 public class BasicBlock {
     protected final ir.values.BasicBlock rawBasicBlock;
 

@@ -7,7 +7,7 @@ import java.util.Map;
 public class RelationAnalysis {
 
     /**
-     * Analysis relationship of the given basic blocks.
+     * Analysis CFG relationship of the given basic blocks.
      * @param basicBlockMap Mapping from raw BB to wrapped BB.
      * @param <BasicBlock> The type of wrapped BB.
      */
