@@ -22,10 +22,13 @@ import java.util.*;
 
 /**
  * This class is used to CodeGen, or translate LLVM IR into ARM assemble
- * (both are in memory). As the emitter, it's a Singleton.
+ * (both are in memory). Like the emitter, it's a Singleton.
  */
 public class MCBuilder {
 
+    /**
+     * This class is used to get the CFG in IR, for the {@link MCBuilder#translatePhi()}
+     */
     class IRBlockInfo extends passes.ir.BasicBlock implements IRelationAnalysis<IRBlockInfo> {
 
         public LinkedList<IRBlockInfo> predecessors = new LinkedList<>();
@@ -112,8 +115,7 @@ public class MCBuilder {
      *     <li>Map IR function into target function list and Map IR BasicBlock into target function BasicBlock</li>
      *     <li>Travel the BasicBlock and then translate into ARM instruction</li>
      *     <li>Handle PHI instruction</li>
-     *     <li>Calculate loop info of function &amp; block ( TO BE FINISHED )</li>
-     * </ul>
+     * </ol>
      * @return generated ARM assemble target
      */
     public ARMAssemble codeGeneration() {
@@ -130,11 +132,13 @@ public class MCBuilder {
     }
 
     /**
-     * Map IR Function into MC Function and Add into assemble target
+     * Map IR Function into MC Function and Add into assemble target <br/>
+     * Function will allocate the full stack, then the SP will never change till function call or return.
      * <ul>
      *     <li>Create MC Function</li>
      *     <li>Create MC BasicBlock for each BasicBlock in IR Function</li>
      *     <li>Translate BasicBlock</li>
+     *     <li>Adjust the offset of the SP</li>
      * </ul>
      */
     private void mapFunction(Module IRModule, ARMAssemble target) {
@@ -221,21 +225,31 @@ public class MCBuilder {
     //<editor-fold desc="Tools">
     /**
      * Allocate a container or find the virtual register for a IR value.<br/><br/>
-     * What's a container? I consider a MC operand as a container. IR
-     * values are stored in the immediate position, or register. <br/><br/>
-     * This function is the key of the codegen, which manages and determines all the containers of all instructions. <br/><br/>
-     * The IF order in the function matters! ValueMap as the watershed,
+     *
+     * What's a container? I consider an MC operand as a container.<br/>
+     * Each IR value is stored in a container (immediate or register). <br/><br/>
+     *
+     * All float value should be stored in a float container(extReg or FPimm) and all int value should be stored in an int container(reg or imm),
+     * except CVT instruction, which need to store an int value in a float container(as source or result).<br/>
+     * However, this function will return int container ONLY, meaning CVT problem need to be solved by user.<br/><br/>
+     *
+     * This function is the key of the codegen, which determines and manages all the containers of all values. <br/><br/>
+     * <b>The IF order in the function matters!</b><br/>
+     * ValueMap as the watershed,
      * all the IF before it will generate a bunch of instructions in the front of current instruction EACH TIME when called with the same argument,
      * while the IF after it will be executed ONLY ONCE and generate code in the front of entry block to DOM all the node! <br/><br/>
+     *
      * Therefore, the IF before valueMap can be optimized to insert the code in first node before, which DOMs all the use of it, which may decrease the number of redundant code,
      * while IF after valueMap can be optimized to delay the code to the last node DOMing all the use of it, which may shorten the live range of variable in code.
      * The optimization above may need the GCM pass. <br/><br/>
+     *
      * @param value the value to handle
      * @param forceAllocReg force allocate a virtual register if true
      * @return the corresponding container (ONLY core register or integer immediate)
      */
     private MCOperand findContainer(Value value, boolean forceAllocReg) {
         // TODO: GCM maybe?
+        /* Create a container for each constant */
         if (value instanceof Constant) {
             int val = value instanceof ConstInt
                     ? ((ConstInt) value).getVal()
@@ -246,7 +260,7 @@ public class MCBuilder {
             /* temp is immediate */
             else {
                 if (forceAllocReg){
-                    /* TODO: If force to allocate a register, should we create a new one or attempt to find one hold in VR? */
+                    /* TODO: If force to allocate a register, should we create a new one or attempt to find the same one stored in a VR? */
                         /* Create new one: more MOV instruction is created */
                         /* Find old one: Expand the live range of one VR, may cause SPILLING, and must follow the CFG */
                     /* For now, considering the same constant may NOT be too many, try to create new one */
@@ -263,15 +277,18 @@ public class MCBuilder {
                     return temp;
             }
         }
+        /* Use MOV to load the address of the global variable */
         else if (value instanceof GlobalVariable) {
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             curMCBB.appendInst(new MCMove(vr, target.findGlobalVar((GlobalVariable) value)));
             return vr;
         }
+        /* Find the old container */
         else if (valueMap.containsKey(value)) {
             return valueMap.get(value);
         }
+        /* If an instruction has no container, create one */
         else if (value instanceof Instruction) {
             var inst = ((Instruction) value);
             VirtualRegister vr;
@@ -289,8 +306,9 @@ public class MCBuilder {
             valueMap.put(inst, vr);
             return vr;
         }
+        /* If a function argument has no container, create one and load it at the beginning of the function */
         else if (value instanceof Function.FuncArg && curIRFunc.getArgs().contains(value)) {
-            // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别
+            // TODO: better way: 在spill的时候选择load源地址，不过运行时间没有区别，能节约一些arm运行空间
             VirtualRegister vr = curFunc.createVirReg(value);
             valueMap.put(value, vr);
             MCBasicBlock entry = curFunc.getEntryBlock();
@@ -334,6 +352,7 @@ public class MCBuilder {
      * @see #findContainer(Value, boolean)
      */
     private MCOperand findFloatContainer(Value value, boolean forceAllocReg) {
+        /* Create a container for each constant */
         if (value instanceof Constant) {
             /* Find a float container for the const float (the format is IEEE 754 FLOAT) */
             if (value instanceof ConstFloat) {
@@ -413,13 +432,8 @@ public class MCBuilder {
 
 
     /**
-     * This function is used to determine whether a number can
-     * be put into an immediate container. <br/><br/>
-     * ARM can ONLY use 12 bits to represent an immediate, which is separated
-     * into 8 bits representing number and 4 bits representing rotate right(ROR).
-     * This means 'shifter_operand = immed_8 Rotate_Right (rotate_imm * 2)'. <br/>
-     * @see <a href='https://www.cnblogs.com/walzer/archive/2006/02/05/325610.html'>ARM汇编中的立即数</a> <br/>
-     * ARM Architecture Reference Manual(ARMARM) P446.
+     * This function should NOT be placed here. It should be placed at {@link backend.operand.Immediate#canEncodeImm(int)}. <br/>
+     * But 已经这样了，懒得改了。
      * @param n the to be determined
      * @return the result
      */
@@ -436,7 +450,8 @@ public class MCBuilder {
     }
 
     /**
-     * Float immedaite can only be +/- m * 2 ^ (-n)
+     * This function should NOT be placed here. It should be placed at FPImmediate.canEncodeImm(int). <br/>
+     * But 已经这样了，懒得改了。
      * @see FPImmediate
      */
     public static boolean canEncodeFloat(float n) {
@@ -1014,7 +1029,6 @@ public class MCBuilder {
      * Each index's base address is the last address resolution.
      */
     private void translateGEP(GetElemPtrInst IRinst) {
-        // 不能确定的elementType是否是一层指针
         Type elemetType = ((PointerType) IRinst.getOperandAt(0).getType()).getPointeeType();
         /* The number of GEP */
         int operandNum = IRinst.getNumOperands() - 1;
