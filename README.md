@@ -1,12 +1,15 @@
 # CBIAS
 
-Welcome to the official repo of Cbias! :D
+Welcome to the official repo of Cbias! :D 
 
-Cbias is abbreviation of "a Compiler Built In A Semester" for memorizing the
-time we spent together learning, coding and debugging within one semester (2021-2022-2).
+Cbias is abbreviation of "a Compiler Built In A Semester", for commemorating the
+time we spent together learning, coding and debugging in semester 2021-2022-2.
 
 As a product for contest, the compiler translates [SysY](doc/ref/SysY2022-lang-def.pdf)
 (a subset of C programming language) to ARM assembly code running on a Raspberry Pi 4 Model B 4GB.
+
+This project is planned to serve as a teaching sample compiler for BIT compiler
+courses starting in 2023.
 
 ## Environment
 
