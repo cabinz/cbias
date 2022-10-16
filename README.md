@@ -57,6 +57,9 @@ and store the output to `test/test.ll`, use argument `-emit-llvm`:
 java Compiler test/test.sy -S -emit-llvm test/test.ll
 ```
 
+During the development, we also build a tester project [CbiasTester](https://github.com/cabinz/cbias-tester) 
+for batch testing on frontend and the whole pipeline respectively. 
+
 ## Project Structure
 
 The partial skeleton of the project is as below: 

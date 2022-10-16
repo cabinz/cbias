@@ -1,5 +1,6 @@
-# Front End
+# Frontend
 
+## Structure
 What frontend does is to equivalently translate SysY source to in-memory IR for further processing
 including middle end IR optimization and backend target code generation. Theoretically, it contains lexical
 analysis, syntax analysis and (source-IR) translation.
@@ -19,3 +20,14 @@ through the parse tree with tools in both hands -- a mini hammer [Builder](IRBui
 a dictionary [Scope](Scope.java), knocking up in-memory IR constructs one by one :D
 
 Finally, [Emitter](IREmitter.java) is the one to emit the in-memory IR in text-based format when needed. 
+
+## Test
+
+Frontend tester can be found [here](https://github.com/cabinz/cbias-tester).
+
+## References
+
+- [ANTLR condensed tut](https://github.com/antlr/antlr4/blob/master/doc/index.md)
+- [ANTLR tut slides](https://gfx.cse.taylor.edu/courses/cos382/slides/04_ANTLR.md.html?scale)
+- [IntelliJ Antlr setup](https://gfx.cse.taylor.edu/courses/cos382/notes.md.html#antlr)
+- [BUAA SE course sample frontend](https://github.com/BUAA-SE-Compiling/miniSysY_example_compiler)
