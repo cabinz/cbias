@@ -16,6 +16,6 @@ parse tree (ANTLR AST).
 
 You can imagine the translation process done by front end as a tiny [Visitor](SysYVisitor.java) traveling
 through the parse tree with tools in both hands -- a mini hammer [Builder](IRBuilder.java) and 
-a dictionary [Scope](Scope.java), knocking up in-memory IR constructs one by one. 
+a dictionary [Scope](Scope.java), knocking up in-memory IR constructs one by one :D
 
 Finally, [Emitter](IREmitter.java) is the one to emit the in-memory IR in text-based format when needed. 
