@@ -99,5 +99,5 @@ Under the root dir of [src](src), there are three classes:
 
 * [Compiler.java](src/Compiler.java): The class directly run with commandline, resolving input source and user arguments for Driver.
 * [Driver.java](src/Driver.java): The driver control the concrete compiling flow.
-* [CompileConfig](src/CompileConfig.java): Configuration info (commandline argument resolved) passing from Compiler to Driver.
+* [CompileConfig.java](src/CompileConfig.java): Configuration info (commandline arguments resolved) to be passed from Compiler to Driver.
 
