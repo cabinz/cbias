@@ -9,8 +9,6 @@ import passes.ir.dce.UselessCodeElim;
 import passes.ir.gcm.GlobalCodeMotion;
 import passes.ir.inline.FunctionInline;
 import passes.ir.lap.LocalArrayPromotion;
-import passes.ir.loopOptimization.ConstLoopUnrolling;
-import passes.ir.loopOptimization.LCSSA;
 import passes.ir.mem2reg.Mem2reg;
 import passes.ir.simplify.AddInstMerge;
 import passes.ir.simplify.BlockMerge;
@@ -52,10 +50,6 @@ public class PassManager {
         basicOptimize(module);
 
         // Merge Add Instructions
-        run(AddInstMerge.class, module);
-        basicOptimize(module);
-
-        run(ConstLoopUnrolling.class, module);
         run(AddInstMerge.class, module);
         basicOptimize(module);
     }
@@ -128,8 +122,6 @@ public class PassManager {
             IRPasses.add(new LoadStoreMerge());
             IRPasses.add(new AddInstMerge());
             IRPasses.add(new LocalArrayPromotion());
-            IRPasses.add(new LCSSA());
-            IRPasses.add(new ConstLoopUnrolling());
             registerIRPasses(IRPasses);
 
             // MC Passes
