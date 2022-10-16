@@ -3,10 +3,14 @@
 Welcome to the official repo of Cbias! :D 
 
 Cbias is the abbreviation of "a Compiler Built In A Semester", for commemorating the
-time we a three-member team spent together learning, coding and debugging in semester 2021-2022-2.
+time we, a three-member team spent together learning, coding and debugging in semester 2021-2022-2.
 
-As a product for contest, the compiler translates [SysY](doc/ref/SysY2022-lang-def.pdf)
-(a subset of C programming language) to ARM assembly code running on a Raspberry Pi 4 Model B 4GB.
+As a 2nd prize awarded work in [CSCC compiler contest](https://compiler.educg.net/) 2022, the compiler translates 
+[SysY](doc/ref/SysY2022-lang-def.pdf) (a subset of C programming language) to ARM assembly code running on a Raspberry 
+Pi 4 Model B 4GB. 
+
+"A subset of C" is another reason for the project name "C Bias", with only partial features of C
+are biased out to be supported.
 
 This project is planned to serve as a teaching sample for BIT compiler
 courses starting in 2023.
@@ -70,6 +74,11 @@ The partial skeleton of the project is as below:
 ```
 where the source majority code locate under `src`. `doc` stores references used in documentation. 
 `third-party` contain 3rd-party services used by the project, e.g. ANTLR related modules.
+
+All components work together as a complete pipeline translating a `.sy` source file into a `.s` assembly code file
+as the figure below.
+
+![cbias' arch](doc/image/compiler-arch.drawio.png)
 
 * `src/ir`: Definitions of the IR (intermediate representation) used in the project.
 * `src/frontend`: Compiler frontend, conducting lexical, syntax analysis, translating source .sy code 
