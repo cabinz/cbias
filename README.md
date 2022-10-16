@@ -62,10 +62,10 @@ for batch testing on frontend and the whole pipeline respectively.
 
 ## Project Structure
 
-Most of the code and packages are documented with comments and README files. Try read them when you have difficult to understand
+Most of the code and packages are documented with comments and README files. Try to read them when you have difficulty understanding
 structure or logic of the code. There are also a lot of helpful references for beginners to learn how to build a compiler.
 
-The rough skeleton of the project is as below: 
+A rough skeleton of the project is as below: 
 ```
 ├─doc
 ├─src
@@ -78,8 +78,8 @@ The rough skeleton of the project is as below:
 │  └─utils
 └─third-party
 ```
-where the source majority code locate under `src`. `doc` stores references used in documentation. 
-`third-party` contain 3rd-party services used by the project, e.g. ANTLR related modules.
+where the majority of source code locate under [src](src). [doc](doc) stores references used in documentation. 
+[third-party](third-party) contain 3rd-party services used by the project, e.g. ANTLR related modules.
 
 All components work together as a complete pipeline translating a `.sy` source file into a `.s` assembly code file
 as the figure below.
