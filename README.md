@@ -12,8 +12,8 @@ Pi 4 Model B 4GB.
 "A subset of C" is another reason for the project name "C Bias", with only partial features of C
 are biased out to be supported.
 
-This project is planned to serve as a teaching sample for BIT compiler
-courses starting in 2023.
+This project is planned to serve as a [teaching sample](https://github.com/BIT-SYS/SuperCC) to be iterated on
+for BIT compiler courses starting from 2023.
 
 ## Environment
 
