@@ -8,6 +8,8 @@ Pipeline: IR => MCBuilder => Optimize => MCEmitter => Assembly
 
 # References
 
+For beginners, here are some helpful materials for you.
+
 ## ARM Intruction
 
 - [The ARM Instruction Set Architecture](https://github.com/jiweixing/build-a-compiler-within-30-days/blob/master/ARM/Arm_EE382N_4.pdf)
