@@ -62,7 +62,10 @@ for batch testing on frontend and the whole pipeline respectively.
 
 ## Project Structure
 
-The partial skeleton of the project is as below: 
+Most of the code and packages are documented with comments and README files. Try read them when you have difficult to understand
+structure or logic of the code. There are also a lot of helpful references for beginners to learn how to build a compiler.
+
+The rough skeleton of the project is as below: 
 ```
 ├─doc
 ├─src
@@ -83,18 +86,18 @@ as the figure below.
 
 ![cbias' arch](doc/image/compiler-arch.drawio.png)
 
-* `src/ir`: Definitions of the IR (intermediate representation) used in the project.
-* `src/frontend`: Compiler frontend, conducting lexical, syntax analysis, translating source .sy code 
+* [src/ir](src/ir): Definitions of the IR (intermediate representation) used in the project.
+* [src/frontend](src/frontend): Compiler frontend, conducting lexical, syntax analysis, translating source .sy code 
 to in-memory IR.
-* `src/backend`: Compiler backend, processing in-memory IR to generate correct assembly code.
-* `src/passes`: Each separated reusable "pass" is a self-contained process on IR or MC
+* [src/backend](src/backend): Compiler backend, processing in-memory IR to generate correct assembly code.
+* [src/passes](src/passes): Each separated reusable "pass" is a self-contained process on IR or MC
 (lower-level ir in backend) conducting optimizing or translating. Various passes are registered to the 
 compiling processes. To customize these passes, delve into PassManager for IR and MC respectively.
-* `src/utils`: Common tool data structures.
+* [src/utils](src/utils): Common tool data structures.
 
-Under the root dir of `src`, there are three classes:
+Under the root dir of [src](src), there are three classes:
 
-* `src/Compiler.java`: The class directly run with commandline, resolving input source and user arguments for Driver.
-* `src/Driver.java`: The driver control the concrete compiling flow.
-* `src/CompileConfig.java`: Configuration info (commandline argument resolved) passing from Compiler to Driver.
+* [Compiler.java](src/Compiler.java): The class directly run with commandline, resolving input source and user arguments for Driver.
+* [Driver.java](src/Driver.java): The driver control the concrete compiling flow.
+* [CompileConfig](src/CompileConfig.java): Configuration info (commandline argument resolved) passing from Compiler to Driver.
 
