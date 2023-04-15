@@ -15,11 +15,16 @@ the ones can be remained unchanged since generated. The former two transcribe th
 parse tree (ANTLR AST).
 * [SysYVisitor](SysYVisitor.java) is the key class performs traversal on the tree and generates IR. 
 
-You can imagine the translation process done by front end as a tiny [Visitor](SysYVisitor.java) traveling
+**You can imagine the translation process done by front end as a tiny [Visitor](SysYVisitor.java) traveling
 through the parse tree with tools in both hands -- a mini hammer [Builder](IRBuilder.java) and 
-a dictionary [Scope](Scope.java), knocking up in-memory IR constructs one by one :D
+a dictionary [Scope](Scope.java), knocking up in-memory IR constructs one by one :D** 
 
 Finally, [Emitter](IREmitter.java) is the one to emit the in-memory IR in text-based format when needed. 
+
+Here is a video illustrating how cbias' frontend build up an in-memory IR block by block:
+
+https://user-images.githubusercontent.com/60537086/232201868-27d7b70f-f13b-4ada-83da-08fedbe65632.mov
+
 
 ## Test
 
