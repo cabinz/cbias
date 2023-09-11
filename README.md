@@ -2,14 +2,12 @@
 
 Welcome to the official repo of Cbias! :D 
 
-Cbias is the abbreviation of "a Compiler Built In A Semester", for commemorating the
-time we, a three-member team spent together learning, coding and debugging in semester 2021-2022-2.
-
-As a 2nd prize awarded work in [CSCC compiler contest](https://compiler.educg.net/) 2022, the compiler translates 
+Cbias is a compiler translates 
 [SysY](doc/ref/SysY2022-lang-def.pdf) (a subset of C programming language) to ARM assembly code running on a Raspberry 
-Pi 4 Model B 4GB. 
+Pi 4 Model B 4GB. It is a 2nd prize awarded work in [CSCC compiler contest](https://compiler.educg.net/) 2022.
 
-"A subset of C" is another reason for the project name "C Bias", with only partial features of C
+The name of Cbias is the abbreviation of "a Compiler Built In A Semester", for commemorating the
+time we, a three-member team spent together learning, coding and debugging in semester 2021-2022-2. "A subset of C" is another reason for the project name "C Bias", with only partial features of C
 are biased out to be supported.
 
 This project is planned to serve as a [teaching sample](https://github.com/BIT-SYS/SuperCC) to be iterated on
@@ -40,7 +38,7 @@ The runtime lib (e.g. antlr4-runtime-4.8.jar) can be placed under path
 
 ## Usage
 
-After build the project, run to translate any .sy source file (text SysY code) with command lines
+After building the project, it can be run to translate any .sy source file (text SysY code) with command lines
 below.
 
 To compile source file `test/test.sy` to ARM assembly code, use argument `-S`. 
@@ -62,10 +60,10 @@ for batch testing on frontend and the whole pipeline respectively.
 
 ## Project Structure
 
-Most of the code and packages are documented with comments and README files. Try to read them when you have difficulty understanding
-structure or logic of the code. There are also a lot of helpful references for beginners to learn how to build a compiler.
+Most of the code and packages are documented with comments and README files. Try to read them when you have difficulties understanding
+structure or logic of the code. There are also a lot of helpful references in the docs for beginners to learn how to build a compiler.
 
-A rough skeleton of the project is as below: 
+A rough skeleton of the project is listed below: 
 ```
 ├─doc
 ├─src
@@ -78,7 +76,7 @@ A rough skeleton of the project is as below:
 │  └─utils
 └─third-party
 ```
-where the majority of source code locate under [src](src). [doc](doc) stores references used in documentation. 
+where the majority of source code locates under [src](src). [doc](doc) stores references used in documentation. 
 [third-party](third-party) contain 3rd-party services used by the project, e.g. ANTLR related modules.
 
 All components work together as a complete pipeline translating a `.sy` source file into a `.s` assembly code file
@@ -95,9 +93,9 @@ to in-memory IR.
 compiling processes. To customize these passes, delve into PassManager for IR and MC respectively.
 * [src/utils](src/utils): Common tool data structures.
 
-Under the root dir of [src](src), there are three classes:
+Under the root directory of [src](src), there are three classes:
 
-* [Compiler.java](src/Compiler.java): The class directly run with commandline, resolving input source and user arguments for Driver.
-* [Driver.java](src/Driver.java): The driver control the concrete compiling flow.
+* [Compiler.java](src/Compiler.java): The class to be run directly with commandline, resolving input source and user arguments for Driver.
+* [Driver.java](src/Driver.java): The driver controls the concrete compiling flow.
 * [CompileConfig.java](src/CompileConfig.java): Configuration info (commandline arguments resolved) to be passed from Compiler to Driver.
 
